@@ -1,0 +1,125 @@
+.jobHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--kt-space-3);
+  padding: var(--kt-space-4);
+  background: var(--kt-surface-raised);
+  border-radius: var(--kt-radius-md);
+  margin-bottom: var(--kt-space-5);
+}
+
+.logoCircle {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--kt-radius-md);
+  background: var(--kt-primary);
+  color: var(--kt-text-on-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--kt-text-sm);
+  font-weight: var(--kt-weight-bold);
+  flex-shrink: 0;
+}
+
+.jobTitle {
+  font-size: var(--kt-text-md);
+  font-weight: var(--kt-weight-semibold);
+  color: var(--kt-text);
+  line-height: var(--kt-leading-tight);
+  margin-bottom: 2px;
+}
+
+.jobMeta {
+  font-size: var(--kt-text-sm);
+  color: var(--kt-text-muted);
+}
+
+.workerRow {
+  display: flex;
+  align-items: center;
+  gap: var(--kt-space-3);
+  padding: var(--kt-space-4);
+  border: 1px solid var(--kt-border);
+  border-radius: var(--kt-radius-md);
+  margin-bottom: var(--kt-space-5);
+}
+
+.workerAvatar {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--kt-radius-full);
+  background: var(--kt-primary);
+  color: var(--kt-text-on-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--kt-text-sm);
+  font-weight: var(--kt-weight-bold);
+  flex-shrink: 0;
+}
+
+.workerInfo {
+  flex: 1;
+}
+
+.workerName {
+  font-size: var(--kt-text-sm);
+  font-weight: var(--kt-weight-semibold);
+  color: var(--kt-text);
+}
+
+.workerHeadline {
+  font-size: var(--kt-text-xs);
+  color: var(--kt-text-muted);
+}
+
+.readyBadge {
+  font-size: var(--kt-text-xs);
+  color: var(--kt-success);
+  font-weight: var(--kt-weight-medium);
+  background: color-mix(in srgb, var(--kt-success) 10%, transparent);
+  padding: 2px var(--kt-space-2);
+  border-radius: var(--kt-radius-full);
+}
+
+.coverNote {
+  margin-bottom: var(--kt-space-5);
+}
+
+.coverLabel {
+  display: block;
+  font-size: var(--kt-text-sm);
+  font-weight: var(--kt-weight-medium);
+  color: var(--kt-text);
+  margin-bottom: var(--kt-space-2);
+}
+
+.tip {
+  font-size: var(--kt-text-xs);
+  color: var(--kt-text-muted);
+  margin-top: var(--kt-space-2);
+}
+
+.successState {
+  text-align: center;
+  padding: var(--kt-space-8) var(--kt-space-4);
+}
+
+.successIcon {
+  font-size: 48px;
+  margin-bottom: var(--kt-space-4);
+}
+
+.successTitle {
+  font-size: var(--kt-text-xl);
+  font-weight: var(--kt-weight-bold);
+  color: var(--kt-text);
+  margin-bottom: var(--kt-space-2);
+}
+
+.successBody {
+  font-size: var(--kt-text-sm);
+  color: var(--kt-text-muted);
+  line-height: var(--kt-leading-normal);
+}

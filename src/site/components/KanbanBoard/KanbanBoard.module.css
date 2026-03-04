@@ -1,0 +1,226 @@
+.board {
+  display: flex;
+  gap: var(--kt-space-4);
+  overflow-x: auto;
+  padding-bottom: var(--kt-space-4);
+  min-height: 500px;
+}
+
+.board::-webkit-scrollbar {
+  height: 6px;
+}
+
+.board::-webkit-scrollbar-track {
+  background: var(--kt-surface-raised);
+  border-radius: var(--kt-radius-full);
+}
+
+.board::-webkit-scrollbar-thumb {
+  background: var(--kt-border-strong);
+  border-radius: var(--kt-radius-full);
+}
+
+.column {
+  flex: 0 0 220px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--kt-space-3);
+}
+
+.columnHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--kt-space-2) var(--kt-space-3);
+  border-radius: var(--kt-radius-md);
+  font-size: var(--kt-text-xs);
+  font-weight: var(--kt-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.columnHeader.new { background: color-mix(in srgb, var(--kt-info) 12%, transparent); color: var(--kt-info); }
+.columnHeader.screening { background: color-mix(in srgb, var(--kt-warning) 12%, transparent); color: var(--kt-warning); }
+.columnHeader.interview { background: color-mix(in srgb, var(--kt-primary) 12%, transparent); color: var(--kt-primary); }
+.columnHeader.offer { background: color-mix(in srgb, var(--kt-accent) 12%, transparent); color: var(--kt-accent); }
+.columnHeader.hired { background: color-mix(in srgb, var(--kt-success) 12%, transparent); color: var(--kt-success); }
+.columnHeader.rejected { background: color-mix(in srgb, var(--kt-danger) 12%, transparent); color: var(--kt-danger); }
+
+.columnCount {
+  font-size: var(--kt-text-xs);
+  background: rgba(255,255,255,0.5);
+  border-radius: var(--kt-radius-full);
+  padding: 1px 7px;
+}
+
+.dropZone {
+  flex: 1;
+  border: 2px dashed transparent;
+  border-radius: var(--kt-radius-md);
+  transition: border-color var(--kt-duration-fast) var(--kt-ease), background var(--kt-duration-fast) var(--kt-ease);
+  padding: var(--kt-space-1);
+  display: flex;
+  flex-direction: column;
+  gap: var(--kt-space-2);
+  min-height: 60px;
+}
+
+.dropZone.dragOver {
+  border-color: var(--kt-primary);
+  background: color-mix(in srgb, var(--kt-primary) 4%, transparent);
+}
+
+.emptyDrop {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60px;
+  color: var(--kt-text-placeholder);
+  font-size: var(--kt-text-xs);
+  font-style: italic;
+}
+
+.card {
+  background: var(--kt-surface);
+  border: 1px solid var(--kt-border);
+  border-radius: var(--kt-radius-md);
+  padding: var(--kt-space-3);
+  cursor: grab;
+  transition: box-shadow var(--kt-duration-fast) var(--kt-ease), transform var(--kt-duration-fast) var(--kt-ease);
+  user-select: none;
+}
+
+.card:hover {
+  box-shadow: var(--kt-shadow-md);
+  transform: translateY(-1px);
+}
+
+.card.dragging {
+  opacity: 0.4;
+  cursor: grabbing;
+}
+
+.cardTop {
+  display: flex;
+  align-items: center;
+  gap: var(--kt-space-2);
+  margin-bottom: var(--kt-space-2);
+}
+
+.cardAvatar {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--kt-radius-full);
+  background: var(--kt-primary);
+  color: var(--kt-text-on-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: var(--kt-weight-bold);
+  flex-shrink: 0;
+}
+
+.cardName {
+  font-size: var(--kt-text-sm);
+  font-weight: var(--kt-weight-semibold);
+  color: var(--kt-text);
+  line-height: 1.2;
+}
+
+.cardMeta {
+  display: flex;
+  align-items: center;
+  gap: var(--kt-space-2);
+  margin-bottom: var(--kt-space-2);
+}
+
+.regulixChip {
+  font-size: 10px;
+  color: var(--kt-success);
+  background: color-mix(in srgb, var(--kt-success) 10%, transparent);
+  padding: 1px var(--kt-space-2);
+  border-radius: var(--kt-radius-full);
+  font-weight: var(--kt-weight-semibold);
+  white-space: nowrap;
+}
+
+.scoreChip {
+  font-size: 10px;
+  color: var(--kt-text-muted);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.cardFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: var(--kt-space-2);
+}
+
+.cardDaysAgo {
+  font-size: 10px;
+  color: var(--kt-text-placeholder);
+}
+
+.cardActions {
+  display: flex;
+  gap: var(--kt-space-1);
+}
+
+.actionBtn {
+  font-size: 10px;
+  padding: 2px var(--kt-space-2);
+  border-radius: var(--kt-radius-sm);
+  border: 1px solid var(--kt-border);
+  background: transparent;
+  color: var(--kt-text-muted);
+  cursor: pointer;
+  font-family: var(--kt-font-sans);
+  font-weight: var(--kt-weight-medium);
+  transition: background var(--kt-duration-fast) var(--kt-ease);
+}
+
+.actionBtn:hover {
+  background: var(--kt-surface-raised);
+  color: var(--kt-text);
+}
+
+.actionBtn.reject {
+  border-color: color-mix(in srgb, var(--kt-danger) 30%, transparent);
+  color: var(--kt-danger);
+}
+
+.actionBtn.reject:hover {
+  background: color-mix(in srgb, var(--kt-danger) 8%, transparent);
+}
+
+.noteInput {
+  width: 100%;
+  font-size: 10px;
+  padding: var(--kt-space-1) var(--kt-space-2);
+  border: 1px solid var(--kt-border);
+  border-radius: var(--kt-radius-sm);
+  margin-top: var(--kt-space-2);
+  color: var(--kt-text-muted);
+  background: var(--kt-bg);
+  font-family: var(--kt-font-sans);
+  resize: none;
+  box-sizing: border-box;
+  outline: none;
+}
+
+.noteInput:focus {
+  border-color: var(--kt-primary);
+}
+
+.jobTag {
+  font-size: 10px;
+  color: var(--kt-text-placeholder);
+  margin-bottom: var(--kt-space-1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

@@ -1,0 +1,31 @@
+.label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--kt-space-1);
+  font-family: var(--kt-font-sans);
+  font-size: var(--kt-text-sm);
+  font-weight: var(--kt-weight-medium);
+  color: var(--kt-text);
+  line-height: var(--kt-leading-normal);
+  cursor: default;
+  user-select: none;
+}
+
+.label.required::after {
+  content: '*';
+  color: var(--kt-danger);
+  margin-left: 2px;
+}
+
+.label.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.hint {
+  display: block;
+  font-size: var(--kt-text-xs);
+  font-weight: var(--kt-weight-normal);
+  color: var(--kt-text-muted);
+  margin-top: 2px;
+}

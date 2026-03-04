@@ -1,0 +1,280 @@
+/* ============================================================
+   KREWTREE DESIGN TOKENS
+   Brand colors sourced from Krewtree Brand Guidelines (Feb 2026)
+
+   Primary palette:
+     Navy      #0A232D  — 60% usage (dominant background/surface)
+     Sand Dune #E5DAC3  — 30% usage (warm accent / light surfaces)
+     Olive     #6D7531  — 10% usage (accent / CTA)
+
+   Supporting:
+     Charcoal  #454545
+     Silver    #C7C7C7
+     Ink       #161616
+     White     #FFFFFF
+============================================================ */
+
+:root {
+  /* --- Brand primitives --- */
+  --kt-navy-950:  #060f13;
+  --kt-navy-900:  #0a232d;   /* brand Navy */
+  --kt-navy-800:  #0d2d3a;
+  --kt-navy-700:  #113648;
+  --kt-navy-600:  #164355;
+  --kt-navy-500:  #1d5669;
+  --kt-navy-400:  #2e7a94;
+  --kt-navy-300:  #4da0bd;
+  --kt-navy-200:  #8dcada;
+  --kt-navy-100:  #c5e5ef;
+  --kt-navy-50:   #eaf5f9;
+
+  --kt-sand-950:  #3a2d19;
+  --kt-sand-900:  #7a5c32;
+  --kt-sand-800:  #a07a4a;
+  --kt-sand-700:  #c49a60;
+  --kt-sand-600:  #d4b48a;
+  --kt-sand-500:  #ddc9a8;
+  --kt-sand-400:  #e5dac3;   /* brand Sand Dune */
+  --kt-sand-300:  #ede5d3;
+  --kt-sand-200:  #f3ede3;
+  --kt-sand-100:  #f8f4ef;
+  --kt-sand-50:   #fdfcfa;
+
+  --kt-olive-950: #1e2109;
+  --kt-olive-900: #343d0f;
+  --kt-olive-800: #4d5a16;
+  --kt-olive-700: #6d7531;   /* brand Olive */
+  --kt-olive-600: #869142;
+  --kt-olive-500: #9fac55;
+  --kt-olive-400: #b8c572;
+  --kt-olive-300: #cedb95;
+  --kt-olive-200: #e2ecb8;
+  --kt-olive-100: #f1f6da;
+  --kt-olive-50:  #f8fbee;
+
+  --kt-grey-900:  #161616;   /* Ink */
+  --kt-grey-700:  #454545;   /* Charcoal */
+  --kt-grey-500:  #737373;
+  --kt-grey-400:  #9b9b9b;
+  --kt-grey-300:  #c7c7c7;   /* Silver */
+  --kt-grey-200:  #dbdbdb;
+  --kt-grey-100:  #f0f0f0;
+  --kt-grey-50:   #fafafa;
+  --kt-white:     #ffffff;
+
+  /* --- Semantic tokens: Light Mode (default) --- */
+  --kt-bg:                  var(--kt-white);
+  --kt-bg-subtle:           var(--kt-sand-50);
+  --kt-surface:             var(--kt-white);
+  --kt-surface-raised:      var(--kt-sand-100);
+  --kt-surface-overlay:     rgba(10, 35, 45, 0.5);
+
+  --kt-border:              var(--kt-grey-200);
+  --kt-border-strong:       var(--kt-grey-300);
+
+  --kt-text:                var(--kt-grey-900);
+  --kt-text-muted:          var(--kt-grey-700);
+  --kt-text-placeholder:    var(--kt-grey-400);
+  --kt-text-inverse:        var(--kt-white);
+  --kt-text-on-primary:     var(--kt-sand-400);
+  --kt-text-on-accent:      var(--kt-white);
+
+  /* Primary — Navy */
+  --kt-primary:             var(--kt-navy-900);
+  --kt-primary-hover:       var(--kt-navy-800);
+  --kt-primary-active:      var(--kt-navy-950);
+  --kt-primary-subtle:      var(--kt-navy-50);
+  --kt-primary-fg:          var(--kt-sand-400);
+
+  /* Secondary — Sand Dune */
+  --kt-secondary:           var(--kt-sand-400);
+  --kt-secondary-hover:     var(--kt-sand-500);
+  --kt-secondary-active:    var(--kt-sand-600);
+  --kt-secondary-subtle:    var(--kt-sand-50);
+  --kt-secondary-fg:        var(--kt-navy-900);
+
+  /* Accent — Olive */
+  --kt-accent:              var(--kt-olive-700);
+  --kt-accent-hover:        var(--kt-olive-800);
+  --kt-accent-active:       var(--kt-olive-900);
+  --kt-accent-subtle:       var(--kt-olive-50);
+  --kt-accent-fg:           var(--kt-white);
+
+  /* Status */
+  --kt-success:             #2d7a4f;
+  --kt-success-subtle:      #edf7f1;
+  --kt-success-fg:          #ffffff;
+  --kt-warning:             #c97c1a;
+  --kt-warning-subtle:      #fef7ec;
+  --kt-warning-fg:          #ffffff;
+  --kt-danger:              #c0392b;
+  --kt-danger-subtle:       #fdf0ef;
+  --kt-danger-fg:           #ffffff;
+  --kt-info:                #1d5669;
+  --kt-info-subtle:         #eaf5f9;
+  --kt-info-fg:             #ffffff;
+
+  /* --- Spacing --- */
+  --kt-space-1:   4px;
+  --kt-space-2:   8px;
+  --kt-space-3:   12px;
+  --kt-space-4:   16px;
+  --kt-space-5:   20px;
+  --kt-space-6:   24px;
+  --kt-space-8:   32px;
+  --kt-space-10:  40px;
+  --kt-space-12:  48px;
+  --kt-space-16:  64px;
+
+  /* --- Radius --- */
+  --kt-radius-sm:   6px;
+  --kt-radius-md:   10px;
+  --kt-radius-lg:   16px;
+  --kt-radius-xl:   24px;
+  --kt-radius-full: 9999px;
+
+  /* --- Shadows --- */
+  --kt-shadow-sm:  0 1px 2px rgba(10, 35, 45, 0.06);
+  --kt-shadow-md:  0 4px 12px rgba(10, 35, 45, 0.10);
+  --kt-shadow-lg:  0 12px 32px rgba(10, 35, 45, 0.14);
+  --kt-shadow-xl:  0 24px 56px rgba(10, 35, 45, 0.18);
+
+  /* --- Typography --- */
+  --kt-font-sans:  'Gotham', 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --kt-font-mono:  'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+
+  --kt-text-xs:   11px;
+  --kt-text-sm:   13px;
+  --kt-text-md:   15px;
+  --kt-text-lg:   17px;
+  --kt-text-xl:   20px;
+  --kt-text-2xl:  24px;
+  --kt-text-3xl:  30px;
+  --kt-text-4xl:  36px;
+
+  --kt-leading-tight:  1.2;
+  --kt-leading-normal: 1.5;
+  --kt-leading-loose:  1.75;
+
+  --kt-weight-light:   300;
+  --kt-weight-normal:  400;
+  --kt-weight-medium:  500;
+  --kt-weight-semibold: 600;
+  --kt-weight-bold:    700;
+
+  /* --- Transitions --- */
+  --kt-ease:        cubic-bezier(0.4, 0, 0.2, 1);
+  --kt-duration-fast:   120ms;
+  --kt-duration-base:   200ms;
+  --kt-duration-slow:   350ms;
+
+  /* --- Z-index --- */
+  --kt-z-base:      0;
+  --kt-z-raised:    10;
+  --kt-z-dropdown:  200;
+  --kt-z-sticky:    300;
+  --kt-z-overlay:   400;
+  --kt-z-modal:     500;
+  --kt-z-toast:     600;
+  --kt-z-tooltip:   700;
+}
+
+/* ============================================================
+   DARK MODE
+============================================================ */
+[data-theme="dark"] {
+  --kt-bg:                  var(--kt-navy-900);
+  --kt-bg-subtle:           var(--kt-navy-800);
+  --kt-surface:             var(--kt-navy-800);
+  --kt-surface-raised:      var(--kt-navy-700);
+  --kt-surface-overlay:     rgba(0, 0, 0, 0.65);
+
+  --kt-border:              var(--kt-navy-700);
+  --kt-border-strong:       var(--kt-navy-600);
+
+  --kt-text:                var(--kt-sand-300);
+  --kt-text-muted:          var(--kt-sand-500);
+  --kt-text-placeholder:    var(--kt-navy-400);
+  --kt-text-inverse:        var(--kt-navy-900);
+  --kt-text-on-primary:     var(--kt-navy-900);
+  --kt-text-on-accent:      var(--kt-white);
+
+  /* Primary — Sand Dune (inverted role in dark) */
+  --kt-primary:             var(--kt-sand-400);
+  --kt-primary-hover:       var(--kt-sand-300);
+  --kt-primary-active:      var(--kt-sand-200);
+  --kt-primary-subtle:      rgba(229, 218, 195, 0.08);
+  --kt-primary-fg:          var(--kt-navy-900);
+
+  /* Secondary */
+  --kt-secondary:           var(--kt-navy-700);
+  --kt-secondary-hover:     var(--kt-navy-600);
+  --kt-secondary-active:    var(--kt-navy-500);
+  --kt-secondary-subtle:    rgba(255,255,255,0.04);
+  --kt-secondary-fg:        var(--kt-sand-300);
+
+  /* Accent — Olive (brighter in dark) */
+  --kt-accent:              var(--kt-olive-600);
+  --kt-accent-hover:        var(--kt-olive-500);
+  --kt-accent-active:       var(--kt-olive-400);
+  --kt-accent-subtle:       rgba(109, 117, 49, 0.15);
+  --kt-accent-fg:           var(--kt-white);
+
+  /* Status */
+  --kt-success:             #3da666;
+  --kt-success-subtle:      rgba(61, 166, 102, 0.12);
+  --kt-warning:             #e08d28;
+  --kt-warning-subtle:      rgba(224, 141, 40, 0.12);
+  --kt-danger:              #e05252;
+  --kt-danger-subtle:       rgba(224, 82, 82, 0.12);
+  --kt-info:                #4da0bd;
+  --kt-info-subtle:         rgba(77, 160, 189, 0.12);
+
+  --kt-shadow-sm:  0 1px 2px rgba(0, 0, 0, 0.25);
+  --kt-shadow-md:  0 4px 12px rgba(0, 0, 0, 0.35);
+  --kt-shadow-lg:  0 12px 32px rgba(0, 0, 0, 0.45);
+  --kt-shadow-xl:  0 24px 56px rgba(0, 0, 0, 0.55);
+}
+
+/* Optional: respect OS preference */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --kt-bg:                  var(--kt-navy-900);
+    --kt-bg-subtle:           var(--kt-navy-800);
+    --kt-surface:             var(--kt-navy-800);
+    --kt-surface-raised:      var(--kt-navy-700);
+    --kt-surface-overlay:     rgba(0, 0, 0, 0.65);
+    --kt-border:              var(--kt-navy-700);
+    --kt-border-strong:       var(--kt-navy-600);
+    --kt-text:                var(--kt-sand-300);
+    --kt-text-muted:          var(--kt-sand-500);
+    --kt-text-placeholder:    var(--kt-navy-400);
+    --kt-text-inverse:        var(--kt-navy-900);
+    --kt-text-on-primary:     var(--kt-navy-900);
+    --kt-primary:             var(--kt-sand-400);
+    --kt-primary-hover:       var(--kt-sand-300);
+    --kt-primary-active:      var(--kt-sand-200);
+    --kt-primary-subtle:      rgba(229, 218, 195, 0.08);
+    --kt-primary-fg:          var(--kt-navy-900);
+    --kt-secondary:           var(--kt-navy-700);
+    --kt-secondary-hover:     var(--kt-navy-600);
+    --kt-secondary-active:    var(--kt-navy-500);
+    --kt-secondary-subtle:    rgba(255,255,255,0.04);
+    --kt-secondary-fg:        var(--kt-sand-300);
+    --kt-accent:              var(--kt-olive-600);
+    --kt-accent-hover:        var(--kt-olive-500);
+    --kt-accent-active:       var(--kt-olive-400);
+    --kt-accent-subtle:       rgba(109, 117, 49, 0.15);
+    --kt-shadow-sm:  0 1px 2px rgba(0, 0, 0, 0.25);
+    --kt-shadow-md:  0 4px 12px rgba(0, 0, 0, 0.35);
+    --kt-shadow-lg:  0 12px 32px rgba(0, 0, 0, 0.45);
+    --kt-success:    #3da666;
+    --kt-success-subtle: rgba(61, 166, 102, 0.12);
+    --kt-warning:    #e08d28;
+    --kt-warning-subtle: rgba(224, 141, 40, 0.12);
+    --kt-danger:     #e05252;
+    --kt-danger-subtle: rgba(224, 82, 82, 0.12);
+    --kt-info:       #4da0bd;
+    --kt-info-subtle: rgba(77, 160, 189, 0.12);
+  }
+}

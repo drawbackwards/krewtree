@@ -1,0 +1,106 @@
+.panel {
+  padding: var(--kt-space-5);
+  background: color-mix(in srgb, var(--kt-primary) 3%, var(--kt-surface));
+  border-top: 1px solid var(--kt-border);
+}
+
+.statsRow {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--kt-space-4);
+  margin-bottom: var(--kt-space-5);
+}
+
+.stat {
+  text-align: center;
+}
+
+.statValue {
+  font-size: var(--kt-text-2xl);
+  font-weight: var(--kt-weight-bold);
+  color: var(--kt-text);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.statLabel {
+  font-size: var(--kt-text-xs);
+  color: var(--kt-text-muted);
+  font-weight: var(--kt-weight-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.chartSection {
+  margin-top: var(--kt-space-4);
+}
+
+.chartLabel {
+  font-size: var(--kt-text-sm);
+  font-weight: var(--kt-weight-semibold);
+  color: var(--kt-text);
+  margin-bottom: var(--kt-space-3);
+}
+
+.chartBars {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--kt-space-2);
+  height: 60px;
+  padding-bottom: var(--kt-space-1);
+}
+
+.barWrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  height: 100%;
+  justify-content: flex-end;
+}
+
+.bar {
+  width: 100%;
+  border-radius: var(--kt-radius-sm) var(--kt-radius-sm) 0 0;
+  transition: height var(--kt-duration-base) var(--kt-ease);
+  min-height: 4px;
+}
+
+.bar.views {
+  background: var(--kt-primary);
+  opacity: 0.7;
+}
+
+.bar.applications {
+  background: var(--kt-accent);
+}
+
+.barDay {
+  font-size: 10px;
+  color: var(--kt-text-placeholder);
+  margin-top: 4px;
+}
+
+.chartLegend {
+  display: flex;
+  gap: var(--kt-space-5);
+  margin-top: var(--kt-space-3);
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: var(--kt-space-2);
+  font-size: var(--kt-text-xs);
+  color: var(--kt-text-muted);
+}
+
+.legendDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+.legendDot.views { background: var(--kt-primary); opacity: 0.7; }
+.legendDot.applications { background: var(--kt-accent); }

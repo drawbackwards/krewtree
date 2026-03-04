@@ -1,0 +1,31 @@
+.divider {
+  display: flex;
+  align-items: center;
+  gap: var(--kt-space-3);
+  color: var(--kt-text-muted);
+  font-size: var(--kt-text-sm);
+}
+
+.line {
+  flex: 1;
+  border: none;
+  border-top: 1px solid var(--kt-border);
+}
+
+.vertical {
+  flex-direction: row;
+  height: 100%;
+  width: auto;
+  align-self: stretch;
+}
+
+.vertical .line {
+  flex: 1;
+  border: none;
+  border-left: 1px solid var(--kt-border);
+  width: 0;
+}
+
+.strong .line {
+  border-color: var(--kt-border-strong);
+}

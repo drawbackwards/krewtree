@@ -1,0 +1,1018 @@
+// ============================================================
+// KREWTREE — Mock Data
+// ============================================================
+
+export type Industry = {
+  id: string
+  name: string
+  slug: string
+  icon: string
+  jobCount: number
+  color: string
+}
+
+export type Company = {
+  id: string
+  name: string
+  logo: string
+  location: string
+  industry: string
+  isVerified: boolean
+  description: string
+  size: string
+  website: string
+}
+
+export type Job = {
+  id: string
+  companyId: string
+  company: Company
+  title: string
+  industry: string
+  industrySlug: string
+  type: 'Full-time' | 'Part-time' | 'Contract' | 'Temporary'
+  location: string
+  payMin: number
+  payMax: number
+  payType: 'hour' | 'salary'
+  description: string
+  requirements: string[]
+  skills: string[]
+  isSponsored: boolean
+  regulixReadyApplicants: number
+  totalApplicants: number
+  postedDaysAgo: number
+  status: 'active' | 'paused' | 'closed'
+}
+
+export type WorkerSkill = { name: string; level: 'Beginner' | 'Intermediate' | 'Expert' }
+
+export type WorkerJobHistory = {
+  employer: string
+  title: string
+  startDate: string
+  endDate: string | null
+  isRegulixVerified: boolean
+}
+
+export type Worker = {
+  id: string
+  name: string
+  headline: string
+  avatar: string
+  initials: string
+  location: string
+  isRegulixReady: boolean
+  performanceScore: number | null
+  ratingCount: number
+  skills: WorkerSkill[]
+  jobHistory: WorkerJobHistory[]
+  bio: string
+  profileCompletePct: number
+  totalHoursWorked: number | null
+  isPremium: boolean
+  industries: string[]
+  socialLinks: { facebook?: string; instagram?: string; linkedin?: string }
+}
+
+export type Application = {
+  id: string
+  jobId: string
+  job: Job
+  status: 'Applied' | 'Viewed' | 'Interviewing' | 'Offer' | 'Rejected'
+  appliedDaysAgo: number
+  isBoosted: boolean
+}
+
+// ---- Industries ----
+export const industries: Industry[] = [
+  { id: '1', name: 'Construction', slug: 'construction', icon: '🏗️', jobCount: 2841, color: '#8B6914' },
+  { id: '2', name: 'Healthcare', slug: 'healthcare', icon: '🏥', jobCount: 3102, color: '#1d5669' },
+  { id: '3', name: 'Hospitality', slug: 'hospitality', icon: '🍽️', jobCount: 1953, color: '#7a3e6d' },
+  { id: '4', name: 'Retail', slug: 'retail', icon: '🛍️', jobCount: 2210, color: '#6D7531' },
+  { id: '5', name: 'Transportation', slug: 'transportation', icon: '🚛', jobCount: 1677, color: '#0A232D' },
+  { id: '6', name: 'Manufacturing', slug: 'manufacturing', icon: '🏭', jobCount: 1389, color: '#454545' },
+  { id: '7', name: 'Landscaping', slug: 'landscaping', icon: '🌿', jobCount: 894, color: '#4d5a16' },
+  { id: '8', name: 'Security', slug: 'security', icon: '🛡️', jobCount: 762, color: '#164355' },
+]
+
+// ---- Companies ----
+export const companies: Company[] = [
+  {
+    id: 'c1',
+    name: 'Apex Builders',
+    logo: '',
+    location: 'Phoenix, AZ',
+    industry: 'Construction',
+    isVerified: true,
+    description: 'Commercial and residential construction firm with 20+ years in the Southwest.',
+    size: '51–200',
+    website: 'apexbuilders.com',
+  },
+  {
+    id: 'c2',
+    name: 'SunState Health',
+    logo: '',
+    location: 'Scottsdale, AZ',
+    industry: 'Healthcare',
+    isVerified: true,
+    description: 'Regional healthcare network operating urgent care and home health services.',
+    size: '201–500',
+    website: 'sunstatehealth.com',
+  },
+  {
+    id: 'c3',
+    name: 'Mesa Prime Hospitality',
+    logo: '',
+    location: 'Mesa, AZ',
+    industry: 'Hospitality',
+    isVerified: false,
+    description: 'Group operating three upscale restaurants and a catering division.',
+    size: '11–50',
+    website: 'mesaprime.com',
+  },
+  {
+    id: 'c4',
+    name: 'RouteOne Logistics',
+    logo: '',
+    location: 'Tempe, AZ',
+    industry: 'Transportation',
+    isVerified: true,
+    description: 'Last-mile and regional freight carrier serving the greater Phoenix area.',
+    size: '51–200',
+    website: 'routeone.com',
+  },
+  {
+    id: 'c5',
+    name: 'GreenEdge Landscaping',
+    logo: '',
+    location: 'Chandler, AZ',
+    industry: 'Landscaping',
+    isVerified: true,
+    description: 'Full-service commercial and residential landscaping company.',
+    size: '11–50',
+    website: 'greenedge.com',
+  },
+]
+
+// ---- Jobs ----
+export const jobs: Job[] = [
+  {
+    id: 'j1',
+    companyId: 'c1',
+    company: companies[0],
+    title: 'Framing Carpenter',
+    industry: 'Construction',
+    industrySlug: 'construction',
+    type: 'Full-time',
+    location: 'Phoenix, AZ',
+    payMin: 28,
+    payMax: 38,
+    payType: 'hour',
+    description:
+      'Apex Builders is hiring experienced framing carpenters for active commercial projects across the Phoenix metro. You will work alongside a seasoned crew on multi-story commercial builds, responsible for layout, framing walls, floors, and roof structures.',
+    requirements: [
+      '3+ years of framing experience',
+      'Ability to read blueprints',
+      'OSHA 10 certification preferred',
+      'Own hand tools required',
+      'Valid driver\'s license',
+    ],
+    skills: ['Framing', 'Blueprint Reading', 'OSHA 10', 'Power Tools'],
+    isSponsored: true,
+    regulixReadyApplicants: 4,
+    totalApplicants: 11,
+    postedDaysAgo: 2,
+    status: 'active',
+  },
+  {
+    id: 'j2',
+    companyId: 'c1',
+    company: companies[0],
+    title: 'General Laborer — Site Cleanup',
+    industry: 'Construction',
+    industrySlug: 'construction',
+    type: 'Temporary',
+    location: 'Glendale, AZ',
+    payMin: 18,
+    payMax: 22,
+    payType: 'hour',
+    description:
+      'Looking for reliable general laborers for site cleanup and material handling on an active construction project. Great entry point for workers wanting to break into the construction industry.',
+    requirements: [
+      'Physical stamina — lifting up to 50 lbs',
+      'Steel-toe boots required',
+      'Ability to work outdoors in Arizona heat',
+      'Reliable transportation',
+    ],
+    skills: ['Material Handling', 'Site Cleanup', 'Safety Awareness'],
+    isSponsored: false,
+    regulixReadyApplicants: 7,
+    totalApplicants: 23,
+    postedDaysAgo: 1,
+    status: 'active',
+  },
+  {
+    id: 'j3',
+    companyId: 'c2',
+    company: companies[1],
+    title: 'Certified Nursing Assistant (CNA)',
+    industry: 'Healthcare',
+    industrySlug: 'healthcare',
+    type: 'Part-time',
+    location: 'Scottsdale, AZ',
+    payMin: 20,
+    payMax: 26,
+    payType: 'hour',
+    description:
+      'SunState Health is seeking compassionate CNAs for our home health division. You\'ll provide daily living support, vitals monitoring, and companionship to patients in their homes.',
+    requirements: [
+      'Active AZ CNA certification',
+      'CPR/BLS certified',
+      'Valid driver\'s license & reliable vehicle',
+      'Background check required',
+    ],
+    skills: ['Patient Care', 'Vitals Monitoring', 'CPR/BLS', 'Medication Reminders'],
+    isSponsored: true,
+    regulixReadyApplicants: 2,
+    totalApplicants: 8,
+    postedDaysAgo: 3,
+    status: 'active',
+  },
+  {
+    id: 'j4',
+    companyId: 'c2',
+    company: companies[1],
+    title: 'Medical Receptionist',
+    industry: 'Healthcare',
+    industrySlug: 'healthcare',
+    type: 'Full-time',
+    location: 'Scottsdale, AZ',
+    payMin: 19,
+    payMax: 24,
+    payType: 'hour',
+    description:
+      'Front-desk receptionist for a busy urgent care clinic. Responsibilities include patient check-in, insurance verification, scheduling, and general administrative duties.',
+    requirements: [
+      '1+ year medical office experience preferred',
+      'Familiarity with EMR software',
+      'Strong communication skills',
+    ],
+    skills: ['EMR', 'Scheduling', 'Insurance Verification', 'Customer Service'],
+    isSponsored: false,
+    regulixReadyApplicants: 3,
+    totalApplicants: 16,
+    postedDaysAgo: 5,
+    status: 'active',
+  },
+  {
+    id: 'j5',
+    companyId: 'c3',
+    company: companies[2],
+    title: 'Line Cook',
+    industry: 'Hospitality',
+    industrySlug: 'hospitality',
+    type: 'Full-time',
+    location: 'Mesa, AZ',
+    payMin: 18,
+    payMax: 24,
+    payType: 'hour',
+    description:
+      'Mesa Prime Hospitality is hiring energetic line cooks for our flagship restaurant. Dinner service focus, high-volume kitchen. Weekends required.',
+    requirements: [
+      '2+ years kitchen experience',
+      'Food Handler\'s Card (AZ)',
+      'Ability to work evenings & weekends',
+      'Team-first attitude',
+    ],
+    skills: ['Prep Cook', 'Grill', 'Knife Skills', 'Food Safety', 'High Volume'],
+    isSponsored: false,
+    regulixReadyApplicants: 5,
+    totalApplicants: 19,
+    postedDaysAgo: 4,
+    status: 'active',
+  },
+  {
+    id: 'j6',
+    companyId: 'c4',
+    company: companies[3],
+    title: 'CDL-A Delivery Driver',
+    industry: 'Transportation',
+    industrySlug: 'transportation',
+    type: 'Full-time',
+    location: 'Tempe, AZ',
+    payMin: 28,
+    payMax: 36,
+    payType: 'hour',
+    description:
+      'RouteOne Logistics is expanding our regional fleet. CDL-A drivers needed for day and night routes throughout Maricopa County. Home daily. Safety bonus program.',
+    requirements: [
+      'Active CDL-A license',
+      'Clean MVR (3 years)',
+      'DOT physical current',
+      '1+ year Class A experience',
+    ],
+    skills: ['CDL-A', 'Route Navigation', 'DOT Compliance', 'Load Securement'],
+    isSponsored: true,
+    regulixReadyApplicants: 3,
+    totalApplicants: 9,
+    postedDaysAgo: 1,
+    status: 'active',
+  },
+  {
+    id: 'j7',
+    companyId: 'c5',
+    company: companies[4],
+    title: 'Landscape Crew Member',
+    industry: 'Landscaping',
+    industrySlug: 'landscaping',
+    type: 'Full-time',
+    location: 'Chandler, AZ',
+    payMin: 17,
+    payMax: 22,
+    payType: 'hour',
+    description:
+      'Join GreenEdge\'s commercial maintenance crew. Work includes mowing, trimming, irrigation inspection, and seasonal planting on business park accounts.',
+    requirements: [
+      'Landscaping or grounds experience preferred',
+      'Ability to work outdoors daily',
+      'Early morning start times (5:30 AM)',
+      'Valid driver\'s license',
+    ],
+    skills: ['Mowing', 'Trimming', 'Irrigation', 'Planting'],
+    isSponsored: false,
+    regulixReadyApplicants: 6,
+    totalApplicants: 14,
+    postedDaysAgo: 6,
+    status: 'active',
+  },
+  {
+    id: 'j8',
+    companyId: 'c3',
+    company: companies[2],
+    title: 'Banquet Server',
+    industry: 'Hospitality',
+    industrySlug: 'hospitality',
+    type: 'Part-time',
+    location: 'Mesa, AZ',
+    payMin: 15,
+    payMax: 20,
+    payType: 'hour',
+    description:
+      'Part-time banquet servers for our catering division. Events include corporate functions, weddings, and private dinners. Flexible schedule, tips on top of hourly.',
+    requirements: [
+      'Customer service experience',
+      'Professional appearance',
+      'Food Handler\'s Card preferred',
+      'Weekend availability',
+    ],
+    skills: ['Table Service', 'Event Setup', 'Customer Service', 'Food Safety'],
+    isSponsored: false,
+    regulixReadyApplicants: 9,
+    totalApplicants: 31,
+    postedDaysAgo: 7,
+    status: 'active',
+  },
+]
+
+// ---- Workers ----
+export const workers: Worker[] = [
+  {
+    id: 'w1',
+    name: 'Marcus T.',
+    headline: 'Journeyman Carpenter · 8 yrs experience',
+    avatar: '',
+    initials: 'MT',
+    location: 'Phoenix, AZ',
+    isRegulixReady: true,
+    performanceScore: 4.8,
+    ratingCount: 23,
+    skills: [
+      { name: 'Framing', level: 'Expert' },
+      { name: 'Blueprint Reading', level: 'Expert' },
+      { name: 'OSHA 30', level: 'Intermediate' },
+    ],
+    jobHistory: [
+      { employer: 'Desert Sun Construction', title: 'Lead Carpenter', startDate: '2021-03', endDate: null, isRegulixVerified: true },
+      { employer: 'Pinnacle Builds', title: 'Framing Carpenter', startDate: '2018-06', endDate: '2021-02', isRegulixVerified: true },
+    ],
+    bio: 'Experienced journeyman carpenter specializing in commercial framing. Safety-first mindset, OSHA 30 certified. Reliable, team-oriented, always on time.',
+    profileCompletePct: 100,
+    totalHoursWorked: 14800,
+    isPremium: true,
+    industries: ['Construction'],
+    socialLinks: { linkedin: '#' },
+  },
+  {
+    id: 'w2',
+    name: 'Priya S.',
+    headline: 'CNA · Home Health & Urgent Care',
+    avatar: '',
+    initials: 'PS',
+    location: 'Scottsdale, AZ',
+    isRegulixReady: true,
+    performanceScore: 4.9,
+    ratingCount: 41,
+    skills: [
+      { name: 'Patient Care', level: 'Expert' },
+      { name: 'CPR/BLS', level: 'Expert' },
+      { name: 'Vitals Monitoring', level: 'Expert' },
+    ],
+    jobHistory: [
+      { employer: 'SunState Health', title: 'CNA', startDate: '2020-01', endDate: null, isRegulixVerified: true },
+      { employer: 'Comfort Care Agency', title: 'Home Health Aide', startDate: '2017-09', endDate: '2019-12', isRegulixVerified: false },
+    ],
+    bio: 'Compassionate CNA with 7 years in home health and urgent care settings. Active AZ certification. Known for building strong patient rapport and calm demeanor.',
+    profileCompletePct: 98,
+    totalHoursWorked: 11200,
+    isPremium: false,
+    industries: ['Healthcare'],
+    socialLinks: {},
+  },
+  {
+    id: 'w3',
+    name: 'Diego R.',
+    headline: 'CDL-A Driver · 5 yrs clean record',
+    avatar: '',
+    initials: 'DR',
+    location: 'Tempe, AZ',
+    isRegulixReady: true,
+    performanceScore: 4.7,
+    ratingCount: 18,
+    skills: [
+      { name: 'CDL-A', level: 'Expert' },
+      { name: 'DOT Compliance', level: 'Expert' },
+      { name: 'Load Securement', level: 'Intermediate' },
+    ],
+    jobHistory: [
+      { employer: 'Swift Transport', title: 'Regional Driver', startDate: '2022-01', endDate: null, isRegulixVerified: true },
+      { employer: 'AZ Freight Co.', title: 'Local Driver', startDate: '2019-04', endDate: '2021-11', isRegulixVerified: true },
+    ],
+    bio: 'Safety-focused CDL-A driver with a spotless 5-year MVR. Experienced in local and regional routes across AZ and NM. Home daily preferred.',
+    profileCompletePct: 92,
+    totalHoursWorked: 9400,
+    isPremium: false,
+    industries: ['Transportation'],
+    socialLinks: { instagram: '#' },
+  },
+  {
+    id: 'w4',
+    name: 'Aaliyah M.',
+    headline: 'Line Cook & Prep Cook · Culinary School Grad',
+    avatar: '',
+    initials: 'AM',
+    location: 'Mesa, AZ',
+    isRegulixReady: false,
+    performanceScore: 4.4,
+    ratingCount: 9,
+    skills: [
+      { name: 'Knife Skills', level: 'Expert' },
+      { name: 'Grill', level: 'Intermediate' },
+      { name: 'Food Safety', level: 'Expert' },
+    ],
+    jobHistory: [
+      { employer: 'Saguaro Bistro', title: 'Line Cook', startDate: '2023-03', endDate: null, isRegulixVerified: false },
+    ],
+    bio: 'Culinary school graduate with 2 years of line cook experience. Passionate about food and fast in a high-volume kitchen. Looking for growth opportunities.',
+    profileCompletePct: 75,
+    totalHoursWorked: null,
+    isPremium: false,
+    industries: ['Hospitality'],
+    socialLinks: { instagram: '#', facebook: '#' },
+  },
+  {
+    id: 'w5',
+    name: 'James K.',
+    headline: 'Landscape Crew Leader · Irrigation Specialist',
+    avatar: '',
+    initials: 'JK',
+    location: 'Chandler, AZ',
+    isRegulixReady: true,
+    performanceScore: 4.6,
+    ratingCount: 15,
+    skills: [
+      { name: 'Irrigation', level: 'Expert' },
+      { name: 'Crew Leadership', level: 'Intermediate' },
+      { name: 'Planting', level: 'Expert' },
+    ],
+    jobHistory: [
+      { employer: 'GreenEdge Landscaping', title: 'Crew Leader', startDate: '2021-09', endDate: null, isRegulixVerified: true },
+      { employer: 'Desert Greens LLC', title: 'Landscape Tech', startDate: '2019-01', endDate: '2021-08', isRegulixVerified: true },
+    ],
+    bio: 'Experienced landscape crew leader with expertise in commercial irrigation systems and drought-tolerant planting. Organized, punctual, and safety-minded.',
+    profileCompletePct: 88,
+    totalHoursWorked: 7200,
+    isPremium: true,
+    industries: ['Landscaping'],
+    socialLinks: {},
+  },
+]
+
+// ---- Worker's Applications (for dashboard) ----
+export const myApplications: Application[] = [
+  { id: 'a1', jobId: 'j1', job: jobs[0], status: 'Interviewing', appliedDaysAgo: 5, isBoosted: true },
+  { id: 'a2', jobId: 'j2', job: jobs[1], status: 'Viewed', appliedDaysAgo: 2, isBoosted: false },
+  { id: 'a3', jobId: 'j6', job: jobs[5], status: 'Applied', appliedDaysAgo: 1, isBoosted: false },
+  { id: 'a4', jobId: 'j7', job: jobs[6], status: 'Rejected', appliedDaysAgo: 10, isBoosted: false },
+  { id: 'a5', jobId: 'j5', job: jobs[4], status: 'Offer', appliedDaysAgo: 14, isBoosted: true },
+]
+
+// ---- Company's Active Jobs (for dashboard) ----
+export const companyJobs = jobs.filter(j => j.companyId === 'c1')
+
+// ---- Recent applicants to company's jobs ----
+export const recentApplicants = [
+  { ...workers[0], appliedJobTitle: 'Framing Carpenter', appliedDaysAgo: 1 },
+  { ...workers[4], appliedJobTitle: 'Framing Carpenter', appliedDaysAgo: 1 },
+  { ...workers[2], appliedJobTitle: 'General Laborer — Site Cleanup', appliedDaysAgo: 2 },
+  { ...workers[3], appliedJobTitle: 'General Laborer — Site Cleanup', appliedDaysAgo: 3 },
+]
+
+export const currentWorker = workers[0]
+export const currentCompany = companies[0]
+
+// ============================================================
+// NEW TYPES & DATA — Feature Expansion
+// ============================================================
+
+// ---- Saved Search / Job Alert ----
+export type SavedSearch = {
+  id: string
+  label: string
+  query: string
+  industrySlug: string | null
+  types: string[]
+  payRangeIdx: number
+  regulixOnly: boolean
+  createdDaysAgo: number
+  alertEnabled: boolean
+  newMatchesCount: number
+}
+
+// ---- Location Region (for location browse view) ----
+export type LocationRegion = {
+  id: string
+  city: string
+  state: string
+  slug: string
+  jobCount: number
+  featuredIndustries: string[]
+}
+
+// ---- Saved Job ----
+export type SavedJob = {
+  id: string
+  jobId: string
+  job: Job
+  savedDaysAgo: number
+  note: string
+}
+
+// ---- Resume & Portfolio ----
+export type ResumeDocument = {
+  id: string
+  workerId: string
+  filename: string
+  uploadedDaysAgo: number
+  isPrimary: boolean
+  fileType: 'pdf' | 'doc'
+  sizeKb: number
+}
+
+export type PortfolioItem = {
+  id: string
+  workerId: string
+  title: string
+  description: string
+  projectDate: string
+  tags: string[]
+  imageEmoji: string
+}
+
+// ---- Application Timeline ----
+export type ApplicationEvent = {
+  id: string
+  applicationId: string
+  status: Application['status']
+  note: string
+  occurredDaysAgo: number
+}
+
+// ---- Company Detail (extended profile) ----
+export type CompanyBenefit = {
+  icon: string
+  label: string
+}
+
+export type CompanyDetail = {
+  companyId: string
+  tagline: string
+  culture: string
+  mission: string
+  benefits: CompanyBenefit[]
+  teamSize: number
+  founded: number
+  headquarters: string
+  perks: string[]
+  avgRating: number
+  reviewCount: number
+  photoEmojis: string[]
+}
+
+// ---- Company Review ----
+export type CompanyReview = {
+  id: string
+  workerId: string
+  workerName: string
+  workerInitials: string
+  companyId: string
+  rating: number
+  title: string
+  body: string
+  pros: string
+  cons: string
+  recommend: boolean
+  datedMonthsAgo: number
+  isVerified: boolean
+}
+
+// ---- Skill Endorsement ----
+export type SkillEndorsement = {
+  skillName: string
+  endorserId: string
+  endorserName: string
+  endorserInitials: string
+}
+
+// ---- Referral ----
+export type Referral = {
+  id: string
+  referrerId: string
+  name: string
+  email: string
+  type: 'worker' | 'company'
+  status: 'pending' | 'joined' | 'hired'
+  daysAgo: number
+  reward: number
+}
+
+// ---- Messaging ----
+export type Message = {
+  id: string
+  fromId: string
+  fromName: string
+  fromInitials: string
+  isCompany: boolean
+  content: string
+  timestamp: string
+  isRead: boolean
+}
+
+export type Conversation = {
+  id: string
+  workerId: string
+  workerName: string
+  workerInitials: string
+  companyId: string
+  companyName: string
+  jobId: string
+  jobTitle: string
+  messages: Message[]
+  lastActivity: string
+  unreadCount: number
+}
+
+// ---- Notifications ----
+export type Notification = {
+  id: string
+  type: 'application' | 'message' | 'status_change' | 'job_alert' | 'review'
+  title: string
+  body: string
+  isRead: boolean
+  createdDaysAgo: number
+  link: string
+}
+
+// ---- Kanban Applicant ----
+export type KanbanStage = 'new' | 'screening' | 'interview' | 'offer' | 'hired' | 'rejected'
+
+export type KanbanApplicant = {
+  id: string
+  workerId: string
+  workerName: string
+  workerInitials: string
+  isRegulixReady: boolean
+  performanceScore: number | null
+  jobId: string
+  jobTitle: string
+  stage: KanbanStage
+  appliedDaysAgo: number
+  notes: string
+}
+
+// ---- Job Analytics ----
+export type JobAnalytics = {
+  jobId: string
+  viewsTotal: number
+  applicationsTotal: number
+  viewsByDay: number[]
+  applicationsByDay: number[]
+  conversionRate: number
+  avgTimeToApplyHours: number
+}
+
+// ============================================================
+// MOCK DATA — Feature Expansion
+// ============================================================
+
+// ---- Location Regions ----
+export const locationRegions: LocationRegion[] = [
+  { id: 'lr1', city: 'Phoenix', state: 'AZ', slug: 'phoenix-az', jobCount: 3241, featuredIndustries: ['Construction', 'Healthcare', 'Retail'] },
+  { id: 'lr2', city: 'Dallas', state: 'TX', slug: 'dallas-tx', jobCount: 2887, featuredIndustries: ['Transportation', 'Manufacturing', 'Hospitality'] },
+  { id: 'lr3', city: 'Atlanta', state: 'GA', slug: 'atlanta-ga', jobCount: 2104, featuredIndustries: ['Healthcare', 'Hospitality', 'Security'] },
+  { id: 'lr4', city: 'Chicago', state: 'IL', slug: 'chicago-il', jobCount: 1956, featuredIndustries: ['Manufacturing', 'Retail', 'Transportation'] },
+  { id: 'lr5', city: 'Denver', state: 'CO', slug: 'denver-co', jobCount: 1432, featuredIndustries: ['Construction', 'Landscaping', 'Healthcare'] },
+  { id: 'lr6', city: 'Miami', state: 'FL', slug: 'miami-fl', jobCount: 1788, featuredIndustries: ['Hospitality', 'Security', 'Retail'] },
+  { id: 'lr7', city: 'Seattle', state: 'WA', slug: 'seattle-wa', jobCount: 1123, featuredIndustries: ['Healthcare', 'Transportation', 'Construction'] },
+  { id: 'lr8', city: 'Austin', state: 'TX', slug: 'austin-tx', jobCount: 987, featuredIndustries: ['Construction', 'Landscaping', 'Retail'] },
+]
+
+// ---- Saved Searches ----
+export const savedSearches: SavedSearch[] = [
+  { id: 'ss1', label: 'Construction Full-time', query: 'carpenter', industrySlug: 'construction', types: ['Full-time'], payRangeIdx: 2, regulixOnly: false, createdDaysAgo: 7, alertEnabled: true, newMatchesCount: 3 },
+  { id: 'ss2', label: 'All Regulix Jobs', query: '', industrySlug: null, types: [], payRangeIdx: 0, regulixOnly: true, createdDaysAgo: 14, alertEnabled: true, newMatchesCount: 11 },
+  { id: 'ss3', label: 'Phoenix $30+/hr', query: '', industrySlug: null, types: [], payRangeIdx: 3, regulixOnly: false, createdDaysAgo: 21, alertEnabled: false, newMatchesCount: 0 },
+]
+
+// ---- Saved Jobs ----
+export const savedJobs: SavedJob[] = [
+  { id: 'sj1', jobId: 'j1', job: jobs[0], savedDaysAgo: 2, note: 'Good pay, check requirements' },
+  { id: 'sj2', jobId: 'j6', job: jobs[5], savedDaysAgo: 4, note: '' },
+  { id: 'sj3', jobId: 'j3', job: jobs[2], savedDaysAgo: 7, note: 'Backup option' },
+]
+
+// ---- Resume Documents ----
+export const resumeDocuments: ResumeDocument[] = [
+  { id: 'rd1', workerId: 'w1', filename: 'Marcus_Thompson_Resume_2025.pdf', uploadedDaysAgo: 30, isPrimary: true, fileType: 'pdf', sizeKb: 248 },
+  { id: 'rd2', workerId: 'w1', filename: 'Marcus_Thompson_Resume_2024.pdf', uploadedDaysAgo: 365, isPrimary: false, fileType: 'pdf', sizeKb: 231 },
+]
+
+// ---- Portfolio Items ----
+export const portfolioItems: PortfolioItem[] = [
+  { id: 'pi1', workerId: 'w1', title: 'Camelback Office Complex Framing', description: 'Led framing crew for 4-story commercial build. Completed 2 weeks ahead of schedule.', projectDate: 'Oct 2024', tags: ['Framing', 'Commercial', 'Leadership'], imageEmoji: '🏗️' },
+  { id: 'pi2', workerId: 'w1', title: 'Desert Ridge Residential Development', description: '22-unit single family homes. Managed all rough framing from foundation to roof deck.', projectDate: 'Mar 2024', tags: ['Residential', 'Framing', 'OSHA 30'], imageEmoji: '🏠' },
+  { id: 'pi3', workerId: 'w1', title: 'Scottsdale Medical Office Renovation', description: 'Interior framing and partition walls for medical office build-out.', projectDate: 'Nov 2023', tags: ['Renovation', 'Interior', 'Blueprint Reading'], imageEmoji: '🏥' },
+]
+
+// ---- Application Events (timeline per application) ----
+export const applicationEvents: ApplicationEvent[] = [
+  // a1 - Interviewing
+  { id: 'ae1', applicationId: 'a1', status: 'Applied', note: 'Application submitted via Krewtree', occurredDaysAgo: 5 },
+  { id: 'ae2', applicationId: 'a1', status: 'Viewed', note: 'Employer viewed your profile', occurredDaysAgo: 4 },
+  { id: 'ae3', applicationId: 'a1', status: 'Interviewing', note: 'Interview scheduled for Tuesday 2pm', occurredDaysAgo: 2 },
+  // a2 - Viewed
+  { id: 'ae4', applicationId: 'a2', status: 'Applied', note: 'Application submitted via Krewtree', occurredDaysAgo: 2 },
+  { id: 'ae5', applicationId: 'a2', status: 'Viewed', note: 'Employer viewed your profile', occurredDaysAgo: 1 },
+  // a3 - Applied
+  { id: 'ae6', applicationId: 'a3', status: 'Applied', note: 'Application submitted via Krewtree', occurredDaysAgo: 1 },
+  // a4 - Rejected
+  { id: 'ae7', applicationId: 'a4', status: 'Applied', note: 'Application submitted via Krewtree', occurredDaysAgo: 10 },
+  { id: 'ae8', applicationId: 'a4', status: 'Viewed', note: 'Employer viewed your profile', occurredDaysAgo: 8 },
+  { id: 'ae9', applicationId: 'a4', status: 'Rejected', note: 'Position filled — employer wished you luck', occurredDaysAgo: 6 },
+  // a5 - Offer
+  { id: 'ae10', applicationId: 'a5', status: 'Applied', note: 'Application submitted via Krewtree', occurredDaysAgo: 14 },
+  { id: 'ae11', applicationId: 'a5', status: 'Viewed', note: 'Employer viewed your profile', occurredDaysAgo: 12 },
+  { id: 'ae12', applicationId: 'a5', status: 'Interviewing', note: 'Phone screen completed', occurredDaysAgo: 9 },
+  { id: 'ae13', applicationId: 'a5', status: 'Offer', note: '🎉 Offer extended! $22/hr + benefits', occurredDaysAgo: 3 },
+]
+
+// ---- Company Details (extended profiles) ----
+export const companyDetails: CompanyDetail[] = [
+  {
+    companyId: 'c1',
+    tagline: 'Building Arizona\'s future, one frame at a time.',
+    culture: 'At Apex Builders, we operate with a safety-first, crew-first mentality. Our teams are tight-knit, our job sites are organized, and our standards are high. We believe in promoting from within and rewarding hard work with real advancement.',
+    mission: 'To deliver exceptional construction quality while setting the standard for worker safety and satisfaction in the Southwest.',
+    benefits: [
+      { icon: '🏥', label: 'Health Insurance' },
+      { icon: '🦷', label: 'Dental & Vision' },
+      { icon: '💰', label: '401(k) + Match' },
+      { icon: '🏖️', label: 'Paid Time Off' },
+      { icon: '🔧', label: 'Tool Allowance' },
+      { icon: '📈', label: 'Performance Bonuses' },
+    ],
+    teamSize: 87,
+    founded: 2003,
+    headquarters: 'Phoenix, AZ',
+    perks: ['Weekly pay', 'Overtime available', 'Crew lunches on Fridays', 'Safety certification reimbursement', 'Company trucks on large projects'],
+    avgRating: 4.2,
+    reviewCount: 34,
+    photoEmojis: ['🏗️', '👷', '🔨', '🏢'],
+  },
+  {
+    companyId: 'c2',
+    tagline: 'Caring for communities across the Southwest.',
+    culture: 'SunState Health is built on compassion, excellence, and respect. We support our staff with strong training programs, flexible scheduling, and a culture where every role matters.',
+    mission: 'To provide accessible, high-quality healthcare that improves the lives of patients and strengthens communities.',
+    benefits: [
+      { icon: '🏥', label: 'Full Medical Coverage' },
+      { icon: '🦷', label: 'Dental & Vision' },
+      { icon: '💰', label: '401(k) + 5% Match' },
+      { icon: '👶', label: 'Parental Leave' },
+      { icon: '📚', label: 'Tuition Reimbursement' },
+      { icon: '🏖️', label: '15 Days PTO' },
+    ],
+    teamSize: 342,
+    founded: 2010,
+    headquarters: 'Scottsdale, AZ',
+    perks: ['Shift differentials', 'Free continuing education credits', 'On-site gym at HQ', 'Employee recognition program', 'Referral bonuses'],
+    avgRating: 4.5,
+    reviewCount: 61,
+    photoEmojis: ['🏥', '👩‍⚕️', '💊', '❤️'],
+  },
+  {
+    companyId: 'c3',
+    tagline: 'Where every event becomes a memory.',
+    culture: 'Fast-paced, creative, and guest-obsessed. Our teams thrive in high-energy environments and take pride in crafting unforgettable dining experiences.',
+    mission: 'To deliver exceptional hospitality through passionate people, exceptional food, and flawless service.',
+    benefits: [
+      { icon: '🍽️', label: 'Free Staff Meals' },
+      { icon: '🏥', label: 'Health Insurance' },
+      { icon: '💵', label: 'Tips + Hourly' },
+      { icon: '⏰', label: 'Flexible Scheduling' },
+    ],
+    teamSize: 43,
+    founded: 2015,
+    headquarters: 'Mesa, AZ',
+    perks: ['Industry-leading tips', 'Flexible schedule', 'Staff events & dinners', 'Cross-training across venues'],
+    avgRating: 3.8,
+    reviewCount: 19,
+    photoEmojis: ['🍽️', '👨‍🍳', '🥂', '🎉'],
+  },
+  {
+    companyId: 'c4',
+    tagline: 'Moving the Southwest forward.',
+    culture: 'RouteOne is a family. Our drivers are the backbone of our operation and we treat them that way — with fair pay, home-daily routes, and a management team that actually listens.',
+    mission: 'To be the most reliable and driver-friendly last-mile carrier in the region.',
+    benefits: [
+      { icon: '🚛', label: 'Home Daily Routes' },
+      { icon: '🏥', label: 'Health & Dental' },
+      { icon: '💰', label: '401(k)' },
+      { icon: '🎯', label: 'Safety Bonus Program' },
+      { icon: '🔧', label: 'Company Vehicles' },
+    ],
+    teamSize: 124,
+    founded: 2008,
+    headquarters: 'Tempe, AZ',
+    perks: ['Home daily guarantee', 'Safety bonuses up to $500/qtr', 'Clean MVR bonuses', 'Newer fleet (2021+)', 'Rider program'],
+    avgRating: 4.3,
+    reviewCount: 28,
+    photoEmojis: ['🚛', '🛣️', '📦', '🔑'],
+  },
+  {
+    companyId: 'c5',
+    tagline: 'Green spaces, great careers.',
+    culture: 'Outdoor work, real teamwork. GreenEdge is built on early mornings, good pay, and crews that look out for each other. We invest in people who want to grow.',
+    mission: 'To enhance Arizona\'s outdoor spaces while building careers in the green industry.',
+    benefits: [
+      { icon: '🏥', label: 'Health Insurance' },
+      { icon: '💰', label: 'Competitive Pay' },
+      { icon: '🌿', label: 'Uniform Provided' },
+      { icon: '📈', label: 'Crew Leader Path' },
+    ],
+    teamSize: 38,
+    founded: 2012,
+    headquarters: 'Chandler, AZ',
+    perks: ['Company vehicles & equipment', 'Uniforms & PPE provided', 'Overtime available', 'Referral bonus', 'Advancement to crew leader'],
+    avgRating: 4.1,
+    reviewCount: 22,
+    photoEmojis: ['🌿', '✂️', '💧', '☀️'],
+  },
+]
+
+// ---- Company Reviews ----
+export const companyReviews: CompanyReview[] = [
+  { id: 'cr1', workerId: 'w2', workerName: 'Priya S.', workerInitials: 'PS', companyId: 'c1', rating: 4, title: 'Great crew, solid pay', body: 'Worked on the Camelback project for 6 months. Management was fair and pay was always on time. Would come back.', pros: 'Good pay, strong crew culture, weekly paychecks', cons: 'Long hours in summer heat, limited shade on site', recommend: true, datedMonthsAgo: 3, isVerified: true },
+  { id: 'cr2', workerId: 'w3', workerName: 'Diego R.', workerInitials: 'DR', companyId: 'c1', rating: 5, title: 'Best construction company I\'ve worked for', body: 'Safety is taken seriously here. Superintendent actually walks the site every morning. Tools and equipment are well-maintained.', pros: 'Safety culture, quality equipment, advancement opportunities', cons: 'Busy season can mean 6-day weeks', recommend: true, datedMonthsAgo: 6, isVerified: true },
+  { id: 'cr3', workerId: 'w4', workerName: 'Aaliyah M.', workerInitials: 'AM', companyId: 'c1', rating: 3, title: 'Decent but inconsistent', body: 'Pay was good and crew was solid but scheduling was all over the place. Some weeks 50 hours, some weeks 30.', pros: 'Good hourly rate, friendly crew', cons: 'Inconsistent hours, communication could be better', recommend: true, datedMonthsAgo: 9, isVerified: false },
+  { id: 'cr4', workerId: 'w1', workerName: 'Marcus T.', workerInitials: 'MT', companyId: 'c2', rating: 5, title: 'Amazing employer — truly cares', body: 'SunState is the best healthcare employer I\'ve encountered in AZ. The training was thorough, shifts are fair, and management actually listens.', pros: 'Great benefits, flexible scheduling, respectful management', cons: 'Can get busy during flu season', recommend: true, datedMonthsAgo: 2, isVerified: true },
+  { id: 'cr5', workerId: 'w5', workerName: 'James K.', workerInitials: 'JK', companyId: 'c2', rating: 4, title: 'Professional environment, solid team', body: 'Worked as a CNA sub for 3 months. Great onboarding, clean facilities, patients well cared for.', pros: 'Well-organized, good pay differential, CEU support', cons: 'High patient volume at urgent care sites', recommend: true, datedMonthsAgo: 5, isVerified: true },
+  { id: 'cr6', workerId: 'w2', workerName: 'Priya S.', workerInitials: 'PS', companyId: 'c3', rating: 4, title: 'Great vibes, good tips', body: 'The work is fast and fun. My team was awesome. Tips were consistently good on banquet nights.', pros: 'Fun team culture, strong tips, free staff meals', cons: 'Late nights and weekend-heavy schedule', recommend: true, datedMonthsAgo: 4, isVerified: true },
+  { id: 'cr7', workerId: 'w3', workerName: 'Diego R.', workerInitials: 'DR', companyId: 'c3', rating: 3, title: 'Fun work but inconsistent management', body: 'Kitchen culture is great but scheduling felt disorganized. Got called in last minute twice.', pros: 'Good food perks, energetic environment', cons: 'Scheduling chaos, short notice call-ins', recommend: false, datedMonthsAgo: 8, isVerified: false },
+  { id: 'cr8', workerId: 'w1', workerName: 'Marcus T.', workerInitials: 'MT', companyId: 'c4', rating: 5, title: 'Home daily, honest management', body: 'RouteOne actually delivers on their home-daily promise. Management is straightforward, truck was clean, routes are fair.', pros: 'Home every night, newer trucks, safety bonuses paid out', cons: 'Could use more dispatcher staff during peak', recommend: true, datedMonthsAgo: 1, isVerified: true },
+  { id: 'cr9', workerId: 'w4', workerName: 'Aaliyah M.', workerInitials: 'AM', companyId: 'c5', rating: 4, title: 'Good outdoor job, solid crew', body: 'Started as a crew member, got promoted to lead within 8 months. They truly invest in people who show up.', pros: 'Promotion opportunities, good equipment, outdoor work', cons: 'Arizona summers are brutal starting at 5:30am', recommend: true, datedMonthsAgo: 3, isVerified: true },
+]
+
+// ---- Skill Endorsements ----
+export const skillEndorsements: SkillEndorsement[] = [
+  { skillName: 'Framing', endorserId: 'w5', endorserName: 'James K.', endorserInitials: 'JK' },
+  { skillName: 'Framing', endorserId: 'w3', endorserName: 'Diego R.', endorserInitials: 'DR' },
+  { skillName: 'Framing', endorserId: 'w2', endorserName: 'Priya S.', endorserInitials: 'PS' },
+  { skillName: 'Blueprint Reading', endorserId: 'w4', endorserName: 'Aaliyah M.', endorserInitials: 'AM' },
+  { skillName: 'Blueprint Reading', endorserId: 'w5', endorserName: 'James K.', endorserInitials: 'JK' },
+  { skillName: 'OSHA 30', endorserId: 'w3', endorserName: 'Diego R.', endorserInitials: 'DR' },
+]
+
+// ---- Referrals ----
+export const referrals: Referral[] = [
+  { id: 'ref1', referrerId: 'w1', name: 'Tony Alvarez', email: 'tony@email.com', type: 'worker', status: 'hired', daysAgo: 45, reward: 50 },
+  { id: 'ref2', referrerId: 'w1', name: 'Maria Chen', email: 'maria@email.com', type: 'worker', status: 'joined', daysAgo: 22, reward: 25 },
+  { id: 'ref3', referrerId: 'w1', name: 'Sunbelt Staffing', email: 'hr@sunbelt.com', type: 'company', status: 'pending', daysAgo: 7, reward: 0 },
+  { id: 'ref4', referrerId: 'w1', name: 'Kevin Park', email: 'kpark@email.com', type: 'worker', status: 'joined', daysAgo: 60, reward: 25 },
+]
+
+// ---- Conversations ----
+export const conversations: Conversation[] = [
+  {
+    id: 'conv1',
+    workerId: 'w1',
+    workerName: 'Marcus T.',
+    workerInitials: 'MT',
+    companyId: 'c1',
+    companyName: 'Apex Builders',
+    jobId: 'j1',
+    jobTitle: 'Framing Carpenter',
+    lastActivity: '2h ago',
+    unreadCount: 2,
+    messages: [
+      { id: 'm1', fromId: 'w1', fromName: 'Marcus T.', fromInitials: 'MT', isCompany: false, content: 'Hi, I applied for the Framing Carpenter role. I have 8 years of experience and am OSHA 30 certified.', timestamp: '3 days ago', isRead: true },
+      { id: 'm2', fromId: 'c1', fromName: 'Apex Builders', fromInitials: 'AB', isCompany: true, content: 'Thanks Marcus! Your profile looks great. Are you available for an interview this Tuesday at 2pm?', timestamp: '2 days ago', isRead: true },
+      { id: 'm3', fromId: 'w1', fromName: 'Marcus T.', fromInitials: 'MT', isCompany: false, content: 'Tuesday at 2pm works perfectly. Should I come to the office or the job site?', timestamp: '2 days ago', isRead: true },
+      { id: 'm4', fromId: 'c1', fromName: 'Apex Builders', fromInitials: 'AB', isCompany: true, content: 'Come to our office at 4520 N 19th Ave, Phoenix. Ask for Sarah at the front desk.', timestamp: '2h ago', isRead: false },
+      { id: 'm5', fromId: 'c1', fromName: 'Apex Builders', fromInitials: 'AB', isCompany: true, content: 'Also, please bring a copy of your OSHA 30 card if you have it!', timestamp: '2h ago', isRead: false },
+    ],
+  },
+  {
+    id: 'conv2',
+    workerId: 'w1',
+    workerName: 'Marcus T.',
+    workerInitials: 'MT',
+    companyId: 'c4',
+    companyName: 'RouteOne Logistics',
+    jobId: 'j6',
+    jobTitle: 'CDL-A Delivery Driver',
+    lastActivity: '1 day ago',
+    unreadCount: 0,
+    messages: [
+      { id: 'm6', fromId: 'c4', fromName: 'RouteOne Logistics', fromInitials: 'RL', isCompany: true, content: 'Hi Marcus! We saw your profile and think you\'d be a great fit for our CDL-A Driver role. Interested?', timestamp: '3 days ago', isRead: true },
+      { id: 'm7', fromId: 'w1', fromName: 'Marcus T.', fromInitials: 'MT', isCompany: false, content: 'Thanks for reaching out! I\'m primarily a carpenter but I do have a CDL from years back. What does the role look like day-to-day?', timestamp: '2 days ago', isRead: true },
+      { id: 'm8', fromId: 'c4', fromName: 'RouteOne Logistics', fromInitials: 'RL', isCompany: true, content: 'Home daily, 6am–4pm routes around Maricopa County. $34/hr starting. Safety bonus every quarter.', timestamp: '1 day ago', isRead: true },
+    ],
+  },
+  {
+    id: 'conv3',
+    workerId: 'w1',
+    workerName: 'Marcus T.',
+    workerInitials: 'MT',
+    companyId: 'c5',
+    companyName: 'GreenEdge Landscaping',
+    jobId: 'j7',
+    jobTitle: 'Landscape Crew Member',
+    lastActivity: '5 days ago',
+    unreadCount: 0,
+    messages: [
+      { id: 'm9', fromId: 'w1', fromName: 'Marcus T.', fromInitials: 'MT', isCompany: false, content: 'Hi GreenEdge! I noticed you\'re hiring crew members. I don\'t have landscaping experience but I\'m a hard worker and learn fast.', timestamp: '5 days ago', isRead: true },
+      { id: 'm10', fromId: 'c5', fromName: 'GreenEdge Landscaping', fromInitials: 'GL', isCompany: true, content: 'Thanks for your interest! We do prefer some grounds experience. We\'ll keep your profile on file for future openings.', timestamp: '5 days ago', isRead: true },
+    ],
+  },
+]
+
+// ---- Notifications ----
+export const notifications: Notification[] = [
+  { id: 'n1', type: 'message', title: 'New message from Apex Builders', body: 'Come to our office at 4520 N 19th Ave...', isRead: false, createdDaysAgo: 0, link: '/site/messages' },
+  { id: 'n2', type: 'status_change', title: 'Application status updated', body: 'Your application to Line Cook at Mesa Prime Hospitality is now: Offer 🎉', isRead: false, createdDaysAgo: 0, link: '/site/dashboard/worker' },
+  { id: 'n3', type: 'job_alert', title: 'Job alert: 3 new Construction jobs', body: 'New matches for your "Construction Full-time" saved search', isRead: false, createdDaysAgo: 1, link: '/site/jobs?industry=construction' },
+  { id: 'n4', type: 'application', title: 'Application viewed', body: 'Apex Builders viewed your application for Framing Carpenter', isRead: true, createdDaysAgo: 4, link: '/site/dashboard/worker' },
+  { id: 'n5', type: 'message', title: 'New message from RouteOne Logistics', body: 'Home daily, 6am–4pm routes around Maricopa County...', isRead: true, createdDaysAgo: 1, link: '/site/messages' },
+  { id: 'n6', type: 'review', title: 'Your review was approved', body: 'Your review of Apex Builders is now live', isRead: true, createdDaysAgo: 5, link: '/site/company/c1' },
+  { id: 'n7', type: 'job_alert', title: 'Job alert: 11 new Regulix jobs', body: 'New matches for your "All Regulix Jobs" saved search', isRead: true, createdDaysAgo: 7, link: '/site/jobs' },
+  { id: 'n8', type: 'application', title: 'Application submitted', body: 'Successfully applied to CDL-A Delivery Driver at RouteOne Logistics', isRead: true, createdDaysAgo: 1, link: '/site/dashboard/worker' },
+]
+
+// ---- Kanban Applicants (for company pipeline view) ----
+export const kanbanApplicants: KanbanApplicant[] = [
+  { id: 'ka1', workerId: 'w1', workerName: 'Marcus T.', workerInitials: 'MT', isRegulixReady: true, performanceScore: 4.8, jobId: 'j1', jobTitle: 'Framing Carpenter', stage: 'interview', appliedDaysAgo: 5, notes: 'Strong candidate — OSHA 30, 8 years exp' },
+  { id: 'ka2', workerId: 'w5', workerName: 'James K.', workerInitials: 'JK', isRegulixReady: true, performanceScore: 4.6, jobId: 'j1', jobTitle: 'Framing Carpenter', stage: 'screening', appliedDaysAgo: 4, notes: '' },
+  { id: 'ka3', workerId: 'w3', workerName: 'Diego R.', workerInitials: 'DR', isRegulixReady: true, performanceScore: 4.7, jobId: 'j1', jobTitle: 'Framing Carpenter', stage: 'new', appliedDaysAgo: 2, notes: '' },
+  { id: 'ka4', workerId: 'w2', workerName: 'Priya S.', workerInitials: 'PS', isRegulixReady: true, performanceScore: 4.9, jobId: 'j1', jobTitle: 'Framing Carpenter', stage: 'offer', appliedDaysAgo: 8, notes: 'Sent offer letter — awaiting response' },
+  { id: 'ka5', workerId: 'w4', workerName: 'Aaliyah M.', workerInitials: 'AM', isRegulixReady: false, performanceScore: 4.4, jobId: 'j1', jobTitle: 'Framing Carpenter', stage: 'rejected', appliedDaysAgo: 10, notes: 'Missing OSHA certification' },
+  { id: 'ka6', workerId: 'w1', workerName: 'Marcus T.', workerInitials: 'MT', isRegulixReady: true, performanceScore: 4.8, jobId: 'j2', jobTitle: 'General Laborer', stage: 'hired', appliedDaysAgo: 14, notes: 'Starts Monday' },
+  { id: 'ka7', workerId: 'w3', workerName: 'Diego R.', workerInitials: 'DR', isRegulixReady: true, performanceScore: 4.7, jobId: 'j2', jobTitle: 'General Laborer', stage: 'new', appliedDaysAgo: 1, notes: '' },
+  { id: 'ka8', workerId: 'w5', workerName: 'James K.', workerInitials: 'JK', isRegulixReady: true, performanceScore: 4.6, jobId: 'j2', jobTitle: 'General Laborer', stage: 'screening', appliedDaysAgo: 3, notes: 'Solid references' },
+  { id: 'ka9', workerId: 'w4', workerName: 'Aaliyah M.', workerInitials: 'AM', isRegulixReady: false, performanceScore: 4.4, jobId: 'j2', jobTitle: 'General Laborer', stage: 'new', appliedDaysAgo: 2, notes: '' },
+  { id: 'ka10', workerId: 'w2', workerName: 'Priya S.', workerInitials: 'PS', isRegulixReady: true, performanceScore: 4.9, jobId: 'j2', jobTitle: 'General Laborer', stage: 'interview', appliedDaysAgo: 5, notes: '' },
+  { id: 'ka11', workerId: 'w3', workerName: 'Diego R.', workerInitials: 'DR', isRegulixReady: true, performanceScore: 4.7, jobId: 'j1', jobTitle: 'Framing Carpenter', stage: 'screening', appliedDaysAgo: 6, notes: 'Needs reference check' },
+  { id: 'ka12', workerId: 'w5', workerName: 'James K.', workerInitials: 'JK', isRegulixReady: true, performanceScore: 4.6, jobId: 'j2', jobTitle: 'General Laborer', stage: 'rejected', appliedDaysAgo: 12, notes: 'Overqualified for this role' },
+]
+
+// ---- Job Analytics ----
+export const jobAnalytics: JobAnalytics[] = [
+  { jobId: 'j1', viewsTotal: 412, applicationsTotal: 11, viewsByDay: [48, 62, 71, 55, 43, 67, 66], applicationsByDay: [1, 2, 3, 1, 1, 2, 1], conversionRate: 2.7, avgTimeToApplyHours: 4.2 },
+  { jobId: 'j2', viewsTotal: 287, applicationsTotal: 23, viewsByDay: [31, 44, 52, 47, 38, 41, 34], applicationsByDay: [3, 4, 5, 3, 3, 3, 2], conversionRate: 8.0, avgTimeToApplyHours: 1.8 },
+  { jobId: 'j3', viewsTotal: 198, applicationsTotal: 8, viewsByDay: [22, 29, 34, 28, 31, 27, 27], applicationsByDay: [1, 1, 2, 1, 1, 1, 1], conversionRate: 4.0, avgTimeToApplyHours: 6.1 },
+  { jobId: 'j4', viewsTotal: 341, applicationsTotal: 16, viewsByDay: [40, 52, 48, 45, 55, 52, 49], applicationsByDay: [2, 3, 2, 2, 3, 2, 2], conversionRate: 4.7, avgTimeToApplyHours: 3.4 },
+  { jobId: 'j5', viewsTotal: 224, applicationsTotal: 19, viewsByDay: [28, 34, 37, 32, 30, 36, 27], applicationsByDay: [2, 3, 4, 2, 3, 3, 2], conversionRate: 8.5, avgTimeToApplyHours: 2.2 },
+  { jobId: 'j6', viewsTotal: 178, applicationsTotal: 9, viewsByDay: [19, 27, 31, 24, 26, 28, 23], applicationsByDay: [1, 1, 2, 1, 1, 2, 1], conversionRate: 5.1, avgTimeToApplyHours: 5.8 },
+  { jobId: 'j7', viewsTotal: 156, applicationsTotal: 14, viewsByDay: [18, 24, 26, 21, 22, 25, 20], applicationsByDay: [2, 2, 3, 2, 2, 2, 1], conversionRate: 9.0, avgTimeToApplyHours: 2.9 },
+  { jobId: 'j8', viewsTotal: 389, applicationsTotal: 31, viewsByDay: [45, 58, 62, 54, 58, 61, 51], applicationsByDay: [4, 5, 5, 4, 5, 4, 4], conversionRate: 8.0, avgTimeToApplyHours: 1.5 },
+]

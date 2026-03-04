@@ -1,0 +1,198 @@
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: var(--kt-z-sticky);
+  background-color: var(--kt-navy-900);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 1px 16px rgba(0,0,0,0.2);
+}
+
+.inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 var(--kt-space-6);
+  height: 64px;
+  display: flex;
+  align-items: center;
+  gap: var(--kt-space-6);
+}
+
+/* Logo */
+.logo {
+  display: flex;
+  align-items: center;
+  gap: var(--kt-space-2);
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.logoMark {
+  width: 32px;
+  height: 32px;
+  background: var(--kt-sand-400);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.logoText {
+  font-size: var(--kt-text-xl);
+  font-weight: var(--kt-weight-bold);
+  color: var(--kt-sand-400);
+  letter-spacing: -0.3px;
+}
+
+/* Links */
+.links {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: 1;
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px var(--kt-space-3);
+  border-radius: var(--kt-radius-sm);
+  font-size: var(--kt-text-sm);
+  font-weight: var(--kt-weight-medium);
+  color: rgba(229, 218, 195, 0.7);
+  text-decoration: none;
+  transition: color var(--kt-duration-fast), background-color var(--kt-duration-fast);
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.link:hover, .link.active {
+  color: var(--kt-sand-400);
+  background-color: rgba(229, 218, 195, 0.08);
+}
+
+.link.active {
+  color: var(--kt-sand-300);
+}
+
+/* Persona switcher */
+.personaSwitcher {
+  display: flex;
+  align-items: center;
+  background-color: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: var(--kt-radius-full);
+  padding: 3px;
+  gap: 2px;
+}
+
+.personaBtn {
+  padding: 4px 12px;
+  border-radius: var(--kt-radius-full);
+  font-size: var(--kt-text-sm);
+  font-weight: var(--kt-weight-medium);
+  color: rgba(229, 218, 195, 0.6);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: all var(--kt-duration-fast) var(--kt-ease);
+}
+
+.personaBtn.personaActive {
+  background-color: var(--kt-sand-400);
+  color: var(--kt-navy-900);
+  font-weight: var(--kt-weight-semibold);
+}
+
+/* Right side */
+.right {
+  display: flex;
+  align-items: center;
+  gap: var(--kt-space-3);
+  flex-shrink: 0;
+}
+
+.notifBtn {
+  appearance: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: var(--kt-space-2);
+  color: rgba(229, 218, 195, 0.6);
+  border-radius: var(--kt-radius-sm);
+  display: flex;
+  align-items: center;
+  position: relative;
+  transition: color var(--kt-duration-fast);
+}
+.notifBtn:hover { color: var(--kt-sand-400); }
+
+.notifDot {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 8px;
+  height: 8px;
+  background-color: var(--kt-olive-600);
+  border-radius: 50%;
+  border: 2px solid var(--kt-navy-900);
+}
+
+.notifBadge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 16px;
+  height: 16px;
+  background-color: #e03e3e;
+  color: white;
+  border-radius: var(--kt-radius-full);
+  font-size: 10px;
+  font-weight: var(--kt-weight-bold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 3px;
+  border: 1.5px solid var(--kt-navy-900);
+  line-height: 1;
+}
+
+.notifBtnActive {
+  color: var(--kt-sand-400);
+  background-color: rgba(229, 218, 195, 0.08);
+}
+
+.avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background-color: var(--kt-sand-400);
+  color: var(--kt-navy-900);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--kt-text-sm);
+  font-weight: var(--kt-weight-bold);
+  cursor: pointer;
+  flex-shrink: 0;
+  border: 2px solid rgba(229, 218, 195, 0.3);
+  transition: border-color var(--kt-duration-fast);
+}
+.avatar:hover { border-color: var(--kt-sand-400); }
+
+.postJobBtn {
+  background-color: var(--kt-olive-700);
+  color: white;
+  border: none;
+  border-radius: var(--kt-radius-md);
+  padding: 8px 16px;
+  font-size: var(--kt-text-sm);
+  font-weight: var(--kt-weight-semibold);
+  cursor: pointer;
+  font-family: var(--kt-font-sans);
+  transition: background-color var(--kt-duration-fast);
+  white-space: nowrap;
+}
+.postJobBtn:hover { background-color: var(--kt-olive-800); }

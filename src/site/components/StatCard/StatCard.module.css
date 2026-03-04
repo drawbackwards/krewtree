@@ -1,0 +1,62 @@
+.card {
+  background-color: var(--kt-surface);
+  border: 1px solid var(--kt-border);
+  border-radius: var(--kt-radius-lg);
+  padding: var(--kt-space-5) var(--kt-space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--kt-space-2);
+}
+
+.card.accent { border-left: 3px solid var(--kt-accent); }
+.card.primary { border-left: 3px solid var(--kt-primary); }
+.card.success { border-left: 3px solid var(--kt-success); }
+.card.warning { border-left: 3px solid var(--kt-warning); }
+.card.info    { border-left: 3px solid var(--kt-info); }
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.label {
+  font-size: var(--kt-text-sm);
+  color: var(--kt-text-muted);
+  font-weight: var(--kt-weight-medium);
+}
+
+.iconWrap {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--kt-radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.iconWrap.accent  { background-color: var(--kt-accent-subtle); color: var(--kt-accent); }
+.iconWrap.primary { background-color: var(--kt-primary-subtle); color: var(--kt-primary); }
+.iconWrap.success { background-color: var(--kt-success-subtle); color: var(--kt-success); }
+.iconWrap.warning { background-color: var(--kt-warning-subtle); color: var(--kt-warning); }
+.iconWrap.info    { background-color: var(--kt-info-subtle); color: var(--kt-info); }
+
+.value {
+  font-size: var(--kt-text-3xl);
+  font-weight: var(--kt-weight-bold);
+  color: var(--kt-text);
+  line-height: 1;
+}
+
+.trend {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--kt-text-xs);
+  font-weight: var(--kt-weight-medium);
+}
+
+.trendUp   { color: var(--kt-success); }
+.trendDown { color: var(--kt-danger); }
+.trendFlat { color: var(--kt-text-muted); }

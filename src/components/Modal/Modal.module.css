@@ -1,0 +1,103 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background-color: var(--kt-surface-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--kt-space-4);
+  z-index: var(--kt-z-modal);
+  animation: overlayIn var(--kt-duration-base) var(--kt-ease);
+}
+
+@keyframes overlayIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.modal {
+  background-color: var(--kt-surface);
+  border: 1px solid var(--kt-border);
+  border-radius: var(--kt-radius-xl);
+  box-shadow: var(--kt-shadow-xl);
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - var(--kt-space-8));
+  overflow: hidden;
+  animation: modalIn var(--kt-duration-base) var(--kt-ease);
+  position: relative;
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.96) translateY(8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* ---- Sizes ---- */
+.sm  { width: 100%; max-width: 400px; }
+.md  { width: 100%; max-width: 560px; }
+.lg  { width: 100%; max-width: 760px; }
+.xl  { width: 100%; max-width: 1024px; }
+.full { width: 100%; max-width: calc(100vw - var(--kt-space-8)); height: calc(100vh - var(--kt-space-8)); max-height: none; }
+
+/* ---- Parts ---- */
+.header {
+  padding: var(--kt-space-5) var(--kt-space-6);
+  border-bottom: 1px solid var(--kt-border);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--kt-space-4);
+  flex-shrink: 0;
+}
+
+.titleWrap {}
+
+.title {
+  font-size: var(--kt-text-xl);
+  font-weight: var(--kt-weight-semibold);
+  color: var(--kt-text);
+  line-height: var(--kt-leading-tight);
+}
+
+.description {
+  font-size: var(--kt-text-sm);
+  color: var(--kt-text-muted);
+  margin-top: var(--kt-space-1);
+}
+
+.closeBtn {
+  appearance: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: var(--kt-space-1);
+  color: var(--kt-text-muted);
+  border-radius: var(--kt-radius-sm);
+  display: flex;
+  align-items: center;
+  transition: color var(--kt-duration-fast) var(--kt-ease), background var(--kt-duration-fast) var(--kt-ease);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.closeBtn:hover {
+  color: var(--kt-text);
+  background-color: var(--kt-surface-raised);
+}
+
+.body {
+  padding: var(--kt-space-5) var(--kt-space-6);
+  overflow-y: auto;
+  flex: 1;
+}
+
+.footer {
+  padding: var(--kt-space-4) var(--kt-space-6);
+  border-top: 1px solid var(--kt-border);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--kt-space-3);
+  flex-shrink: 0;
+  background-color: var(--kt-bg-subtle);
+}

@@ -1,0 +1,71 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--kt-space-1);
+  font-family: var(--kt-font-sans);
+  font-weight: var(--kt-weight-medium);
+  line-height: 1;
+  white-space: nowrap;
+  border: 1px solid transparent;
+  border-radius: var(--kt-radius-full);
+}
+
+/* ---- Sizes ---- */
+.sm {
+  font-size: var(--kt-text-xs);
+  padding: 2px var(--kt-space-2);
+}
+.md {
+  font-size: var(--kt-text-sm);
+  padding: var(--kt-space-1) var(--kt-space-3);
+}
+.lg {
+  font-size: var(--kt-text-md);
+  padding: var(--kt-space-2) var(--kt-space-3);
+}
+
+/* ---- Variants ---- */
+.primary {
+  background-color: var(--kt-primary-subtle);
+  color: var(--kt-primary);
+  border-color: var(--kt-primary);
+}
+.secondary {
+  background-color: var(--kt-secondary-subtle);
+  color: var(--kt-secondary-fg);
+  border-color: var(--kt-secondary);
+}
+.accent {
+  background-color: var(--kt-accent);
+  color: var(--kt-accent-fg);
+}
+.success {
+  background-color: var(--kt-success-subtle);
+  color: var(--kt-success);
+}
+.warning {
+  background-color: var(--kt-warning-subtle);
+  color: var(--kt-warning);
+}
+.danger {
+  background-color: var(--kt-danger-subtle);
+  color: var(--kt-danger);
+}
+.info {
+  background-color: var(--kt-info-subtle);
+  color: var(--kt-info);
+}
+.neutral {
+  background-color: var(--kt-surface-raised);
+  color: var(--kt-text-muted);
+  border-color: var(--kt-border);
+}
+
+/* ---- Dot indicator ---- */
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: currentColor;
+  flex-shrink: 0;
+}

@@ -1,0 +1,154 @@
+.card {
+  background: var(--kt-surface);
+  border: 1px solid var(--kt-border);
+  border-radius: var(--kt-radius-md);
+  padding: var(--kt-space-5);
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: var(--kt-space-3);
+}
+
+.reviewer {
+  display: flex;
+  align-items: center;
+  gap: var(--kt-space-3);
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--kt-radius-full);
+  background: var(--kt-primary);
+  color: var(--kt-text-on-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--kt-text-xs);
+  font-weight: var(--kt-weight-bold);
+  flex-shrink: 0;
+}
+
+.reviewerInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.reviewerName {
+  font-size: var(--kt-text-sm);
+  font-weight: var(--kt-weight-semibold);
+  color: var(--kt-text);
+  display: flex;
+  align-items: center;
+  gap: var(--kt-space-2);
+}
+
+.verifiedBadge {
+  font-size: 10px;
+  color: var(--kt-success);
+  background: color-mix(in srgb, var(--kt-success) 10%, transparent);
+  padding: 1px var(--kt-space-2);
+  border-radius: var(--kt-radius-full);
+  font-weight: var(--kt-weight-medium);
+}
+
+.reviewDate {
+  font-size: var(--kt-text-xs);
+  color: var(--kt-text-muted);
+}
+
+.starRow {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.star {
+  font-size: 14px;
+  color: var(--kt-border-strong);
+}
+
+.star.filled {
+  color: #F5A623;
+}
+
+.title {
+  font-size: var(--kt-text-sm);
+  font-weight: var(--kt-weight-semibold);
+  color: var(--kt-text);
+  margin-bottom: var(--kt-space-3);
+}
+
+.body {
+  font-size: var(--kt-text-sm);
+  color: var(--kt-text-muted);
+  line-height: var(--kt-leading-normal);
+  margin-bottom: var(--kt-space-4);
+}
+
+.prosConsRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--kt-space-3);
+  margin-bottom: var(--kt-space-4);
+}
+
+.prosBox,
+.consBox {
+  padding: var(--kt-space-3);
+  border-radius: var(--kt-radius-sm);
+  font-size: var(--kt-text-xs);
+}
+
+.prosBox {
+  background: color-mix(in srgb, var(--kt-success) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--kt-success) 20%, transparent);
+}
+
+.consBox {
+  background: color-mix(in srgb, var(--kt-warning) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--kt-warning) 20%, transparent);
+}
+
+.prosLabel,
+.consLabel {
+  font-weight: var(--kt-weight-semibold);
+  margin-bottom: 3px;
+}
+
+.prosLabel { color: var(--kt-success); }
+.consLabel { color: var(--kt-warning); }
+
+.prosText,
+.consText {
+  color: var(--kt-text-muted);
+  line-height: var(--kt-leading-normal);
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  gap: var(--kt-space-2);
+  font-size: var(--kt-text-xs);
+  color: var(--kt-text-muted);
+}
+
+.recommendBadge {
+  font-size: var(--kt-text-xs);
+  padding: 2px var(--kt-space-2);
+  border-radius: var(--kt-radius-full);
+  font-weight: var(--kt-weight-medium);
+}
+
+.recommendBadge.yes {
+  background: color-mix(in srgb, var(--kt-success) 10%, transparent);
+  color: var(--kt-success);
+}
+
+.recommendBadge.no {
+  background: color-mix(in srgb, var(--kt-danger) 10%, transparent);
+  color: var(--kt-danger);
+}

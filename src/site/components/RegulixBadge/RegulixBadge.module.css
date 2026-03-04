@@ -1,0 +1,67 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--kt-font-sans);
+  font-weight: var(--kt-weight-semibold);
+  white-space: nowrap;
+  border-radius: var(--kt-radius-full);
+  line-height: 1;
+}
+
+/* ---- Sizes ---- */
+.sm {
+  font-size: 11px;
+  padding: 3px 8px;
+}
+.md {
+  font-size: var(--kt-text-sm);
+  padding: 5px 10px;
+}
+.lg {
+  font-size: var(--kt-text-md);
+  padding: 7px 14px;
+}
+
+/* ---- Filled (default) ---- */
+.filled {
+  background-color: var(--kt-olive-700);
+  color: #fff;
+}
+
+/* ---- Outline ---- */
+.outline {
+  background-color: var(--kt-olive-50);
+  color: var(--kt-olive-700);
+  border: 1.5px solid var(--kt-olive-700);
+}
+
+/* ---- On dark surface ---- */
+.onDark {
+  background-color: rgba(109, 117, 49, 0.2);
+  color: var(--kt-olive-300);
+  border: 1.5px solid var(--kt-olive-600);
+}
+
+/* ---- Pending (not yet connected) ---- */
+.pending {
+  background-color: var(--kt-surface-raised);
+  color: var(--kt-text-muted);
+  border: 1.5px solid var(--kt-border);
+}
+
+.icon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* ---- Pulse animation (optional, for CTAs) ---- */
+.pulse {
+  animation: regulix-pulse 2s ease-in-out infinite;
+}
+
+@keyframes regulix-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(109, 117, 49, 0); }
+  50% { box-shadow: 0 0 0 5px rgba(109, 117, 49, 0.15); }
+}

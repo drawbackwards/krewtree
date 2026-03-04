@@ -1,0 +1,86 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kt-space-1);
+  width: 100%;
+}
+
+.inputWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.input {
+  width: 100%;
+  font-family: var(--kt-font-sans);
+  color: var(--kt-text);
+  background-color: var(--kt-surface);
+  border: 1.5px solid var(--kt-border);
+  border-radius: var(--kt-radius-md);
+  transition:
+    border-color var(--kt-duration-fast) var(--kt-ease),
+    box-shadow var(--kt-duration-fast) var(--kt-ease),
+    background-color var(--kt-duration-base) var(--kt-ease);
+  outline: none;
+  appearance: none;
+}
+
+.input::placeholder {
+  color: var(--kt-text-placeholder);
+}
+
+.input:hover:not(:disabled):not(.error) {
+  border-color: var(--kt-border-strong);
+}
+
+.input:focus:not(:disabled) {
+  border-color: var(--kt-accent);
+  box-shadow: 0 0 0 3px var(--kt-accent-subtle);
+}
+
+.input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: var(--kt-surface-raised);
+}
+
+.input.error {
+  border-color: var(--kt-danger);
+}
+.input.error:focus {
+  box-shadow: 0 0 0 3px var(--kt-danger-subtle);
+}
+
+/* ---- Sizes ---- */
+.sm .input { font-size: var(--kt-text-sm); padding: 6px var(--kt-space-3); height: 32px; }
+.md .input { font-size: var(--kt-text-md); padding: var(--kt-space-2) var(--kt-space-3); height: 40px; }
+.lg .input { font-size: var(--kt-text-lg); padding: var(--kt-space-3) var(--kt-space-4); height: 48px; }
+
+/* ---- Adornments ---- */
+.leadingIcon,
+.trailingIcon {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  color: var(--kt-text-placeholder);
+  pointer-events: none;
+}
+.leadingIcon  { left: var(--kt-space-3); }
+.trailingIcon { right: var(--kt-space-3); }
+
+.hasLeading .input  { padding-left: var(--kt-space-8); }
+.hasTrailing .input { padding-right: var(--kt-space-8); }
+
+/* ---- Helper / Error ---- */
+.helperText {
+  font-size: var(--kt-text-xs);
+  color: var(--kt-text-muted);
+}
+.errorText {
+  font-size: var(--kt-text-xs);
+  color: var(--kt-danger);
+}
