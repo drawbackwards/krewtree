@@ -113,27 +113,27 @@ export const WorkerDashboard: React.FC = () => {
     <div style={{ minHeight: '100vh', background: 'var(--kt-bg)' }}>
 
       {/* Page header */}
-      <div style={{ background: 'var(--kt-navy-900)', padding: '28px var(--kt-space-6)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+      <div style={{ background: 'var(--kt-surface)', padding: '28px var(--kt-space-6)', borderBottom: '1px solid var(--kt-border)' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
             {/* Avatar */}
             <div style={{
               width: 52, height: 52, borderRadius: '50%',
-              background: 'var(--kt-sand-400)', color: 'var(--kt-navy-900)',
+              background: 'var(--kt-primary)', color: 'var(--kt-primary-fg)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontWeight: 'var(--kt-weight-bold)', fontSize: 'var(--kt-text-xl)',
-              border: '2px solid var(--kt-olive-500)',
+              border: '2px solid var(--kt-border)',
             }}>
               {currentWorker.initials}
             </div>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                <h1 style={{ fontSize: 'var(--kt-text-xl)', fontWeight: 'var(--kt-weight-bold)', color: 'var(--kt-sand-300)', margin: 0 }}>
+                <h1 style={{ fontSize: 'var(--kt-text-xl)', fontWeight: 'var(--kt-weight-bold)', color: 'var(--kt-text)', margin: 0 }}>
                   Welcome back, {currentWorker.name.split(' ')[0]}
                 </h1>
-                {currentWorker.isRegulixReady && <RegulixBadge variant="onDark" size="sm" />}
+                {currentWorker.isRegulixReady && <RegulixBadge size="sm" />}
               </div>
-              <p style={{ fontSize: 'var(--kt-text-sm)', color: 'rgba(229,218,195,0.6)', margin: 0 }}>
+              <p style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text-muted)', margin: 0 }}>
                 {currentWorker.headline} · {currentWorker.location}
               </p>
             </div>
@@ -154,17 +154,18 @@ export const WorkerDashboard: React.FC = () => {
           {/* Regulix CTA — only if not ready */}
           {!currentWorker.isRegulixReady && (
             <div style={{
-              background: 'var(--kt-navy-900)',
+              background: 'color-mix(in srgb, var(--kt-accent) 6%, var(--kt-surface))',
+              border: '1px solid color-mix(in srgb, var(--kt-accent) 20%, var(--kt-border))',
               borderRadius: 'var(--kt-radius-lg)',
               padding: '20px 24px',
               display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap',
             }}>
               <RegulixBadge size="lg" pulse />
               <div style={{ flex: 1 }}>
-                <p style={{ fontWeight: 'var(--kt-weight-semibold)', color: 'var(--kt-sand-300)', fontSize: 'var(--kt-text-md)', marginBottom: 4 }}>
+                <p style={{ fontWeight: 'var(--kt-weight-semibold)', color: 'var(--kt-text)', fontSize: 'var(--kt-text-md)', marginBottom: 4 }}>
                   Get Regulix Ready — Stand out to employers
                 </p>
-                <p style={{ fontSize: 'var(--kt-text-sm)', color: 'rgba(229,218,195,0.6)', lineHeight: 1.5 }}>
+                <p style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text-muted)', lineHeight: 1.5 }}>
                   Complete your W-4, I-9, direct deposit, and background check. Become Day-1 hire-ready.
                 </p>
               </div>

@@ -85,53 +85,54 @@ export const CompanyProfilePage: React.FC = () => {
     <div style={{ minHeight: '100vh', background: 'var(--kt-bg)' }}>
 
       {/* Hero Banner */}
-      <div style={{ background: 'var(--kt-navy-900)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-        <div style={{ height: 140, background: 'linear-gradient(135deg, var(--kt-navy-800) 0%, #2a3010 100%)' }} />
+      <div style={{ background: 'var(--kt-surface)', borderBottom: '1px solid var(--kt-border)' }}>
+        <div style={{ height: 140, background: 'linear-gradient(135deg, var(--kt-grey-100) 0%, var(--kt-grey-50, #f9f9fb) 100%)' }} />
         <div style={{ maxWidth: 960, margin: '0 auto', padding: '0 var(--kt-space-6)', paddingBottom: 28 }}>
           <div style={{ display: 'flex', gap: 20, alignItems: 'flex-end', marginTop: -40, flexWrap: 'wrap' }}>
             {/* Logo */}
             <div style={{
               width: 80, height: 80, borderRadius: 'var(--kt-radius-lg)',
-              background: 'var(--kt-sand-400)', color: 'var(--kt-navy-900)',
+              background: 'var(--kt-grey-100)', color: 'var(--kt-navy-900)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontWeight: 'var(--kt-weight-bold)', fontSize: 'var(--kt-text-2xl)',
-              border: '4px solid var(--kt-navy-900)', flexShrink: 0,
+              border: '4px solid var(--kt-white)', flexShrink: 0,
+              boxShadow: 'var(--kt-shadow-sm)',
             }}>
               {company.name.slice(0, 2).toUpperCase()}
             </div>
             <div style={{ flex: 1, paddingBottom: 4 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 4 }}>
-                <h1 style={{ fontSize: 'var(--kt-text-2xl)', fontWeight: 'var(--kt-weight-bold)', color: 'var(--kt-sand-300)', margin: 0 }}>
+                <h1 style={{ fontSize: 'var(--kt-text-2xl)', fontWeight: 'var(--kt-weight-bold)', color: 'var(--kt-text)', margin: 0 }}>
                   {company.name}
                 </h1>
                 {company.isVerified && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                     <VerifiedIcon />
-                    <span style={{ fontSize: 'var(--kt-text-xs)', color: 'var(--kt-olive-400)', fontWeight: 'var(--kt-weight-medium)' }}>Verified</span>
+                    <span style={{ fontSize: 'var(--kt-text-xs)', color: 'var(--kt-accent)', fontWeight: 'var(--kt-weight-medium)' }}>Verified</span>
                   </div>
                 )}
               </div>
-              <p style={{ fontSize: 'var(--kt-text-sm)', color: 'rgba(229,218,195,0.65)', margin: 0 }}>{detail.tagline}</p>
+              <p style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text-muted)', margin: 0 }}>{detail.tagline}</p>
               <div style={{ display: 'flex', gap: 16, marginTop: 8, flexWrap: 'wrap' }}>
-                <span style={{ fontSize: 'var(--kt-text-xs)', color: 'rgba(229,218,195,0.5)' }}>📍 {detail.headquarters}</span>
-                <span style={{ fontSize: 'var(--kt-text-xs)', color: 'rgba(229,218,195,0.5)' }}>👥 {detail.teamSize} employees</span>
-                <span style={{ fontSize: 'var(--kt-text-xs)', color: 'rgba(229,218,195,0.5)' }}>📅 Founded {detail.founded}</span>
+                <span style={{ fontSize: 'var(--kt-text-xs)', color: 'var(--kt-text-muted)' }}>📍 {detail.headquarters}</span>
+                <span style={{ fontSize: 'var(--kt-text-xs)', color: 'var(--kt-text-muted)' }}>👥 {detail.teamSize} employees</span>
+                <span style={{ fontSize: 'var(--kt-text-xs)', color: 'var(--kt-text-muted)' }}>📅 Founded {detail.founded}</span>
               </div>
             </div>
             {/* Stats */}
             <div style={{ display: 'flex', gap: 20, paddingBottom: 4, flexShrink: 0 }}>
               <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: 'var(--kt-text-lg)', fontWeight: 'var(--kt-weight-bold)', color: 'var(--kt-sand-300)' }}>
+                <div style={{ fontSize: 'var(--kt-text-lg)', fontWeight: 'var(--kt-weight-bold)', color: 'var(--kt-text)' }}>
                   {avgRating.toFixed(1)}
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'center', gap: 1, marginBottom: 2 }}>
                   {[1,2,3,4,5].map(s => <StarIcon key={s} filled={s <= Math.round(avgRating)} />)}
                 </div>
-                <div style={{ fontSize: '10px', color: 'rgba(229,218,195,0.5)' }}>{reviews.length} reviews</div>
+                <div style={{ fontSize: '10px', color: 'var(--kt-text-muted)' }}>{reviews.length} reviews</div>
               </div>
               <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: 'var(--kt-text-lg)', fontWeight: 'var(--kt-weight-bold)', color: 'var(--kt-sand-300)' }}>{companyJobs.length}</div>
-                <div style={{ fontSize: '10px', color: 'rgba(229,218,195,0.5)' }}>Open Jobs</div>
+                <div style={{ fontSize: 'var(--kt-text-lg)', fontWeight: 'var(--kt-weight-bold)', color: 'var(--kt-text)' }}>{companyJobs.length}</div>
+                <div style={{ fontSize: '10px', color: 'var(--kt-text-muted)' }}>Open Jobs</div>
               </div>
             </div>
           </div>

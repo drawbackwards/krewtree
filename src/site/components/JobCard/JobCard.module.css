@@ -1,8 +1,8 @@
 .card {
-  background-color: var(--kt-surface);
+  background-color: var(--kt-white);
   border: 1px solid var(--kt-border);
   border-radius: var(--kt-radius-lg);
-  padding: var(--kt-space-5);
+  padding: var(--kt-space-6);
   display: flex;
   flex-direction: column;
   gap: var(--kt-space-4);
@@ -11,30 +11,29 @@
     border-color var(--kt-duration-base) var(--kt-ease),
     transform var(--kt-duration-base) var(--kt-ease);
   cursor: pointer;
-  text-decoration: none;
   position: relative;
 }
 
 .card:hover {
-  box-shadow: var(--kt-shadow-lg);
-  border-color: var(--kt-border-strong);
-  transform: translateY(-2px);
+  box-shadow: var(--kt-shadow-md);
+  border-color: var(--kt-grey-300);
+  transform: translateY(-1px);
 }
 
 .sponsored {
-  border-color: var(--kt-olive-300);
-  background: linear-gradient(135deg, var(--kt-surface) 0%, var(--kt-olive-50) 100%);
+  border-color: var(--kt-olive-200);
+  background: linear-gradient(to bottom right, var(--kt-white), var(--kt-olive-50));
 }
 
 .sponsoredBanner {
   position: absolute;
   top: -1px;
   right: 20px;
-  background-color: var(--kt-olive-700);
+  background-color: var(--kt-accent);
   color: white;
   font-size: 10px;
-  font-weight: var(--kt-weight-bold);
-  letter-spacing: 0.5px;
+  font-weight: var(--kt-weight-semibold);
+  letter-spacing: 0.4px;
   text-transform: uppercase;
   padding: 3px 10px;
   border-radius: 0 0 var(--kt-radius-sm) var(--kt-radius-sm);
@@ -43,15 +42,15 @@
 .header {
   display: flex;
   align-items: flex-start;
-  gap: var(--kt-space-3);
+  gap: var(--kt-space-4);
 }
 
 .companyLogo {
-  width: 44px;
-  height: 44px;
+  width: 48px;
+  height: 48px;
   border-radius: var(--kt-radius-md);
-  background-color: var(--kt-primary);
-  color: var(--kt-primary-fg);
+  background-color: var(--kt-grey-100);
+  color: var(--kt-grey-700);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -59,6 +58,7 @@
   font-weight: var(--kt-weight-bold);
   flex-shrink: 0;
   font-family: var(--kt-font-sans);
+  border: 1px solid var(--kt-border);
 }
 
 .headerText {
@@ -67,14 +67,15 @@
 }
 
 .jobTitle {
-  font-size: var(--kt-text-lg);
+  font-size: var(--kt-text-xl);
   font-weight: var(--kt-weight-semibold);
-  color: var(--kt-text);
+  color: var(--kt-grey-900);
   line-height: var(--kt-leading-tight);
-  margin-bottom: 3px;
+  margin-bottom: 4px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  letter-spacing: -0.01em;
 }
 
 .companyName {
@@ -93,6 +94,7 @@
 .meta {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: var(--kt-space-2);
 }
 
@@ -106,23 +108,24 @@
 
 .metaIcon {
   display: flex;
-  opacity: 0.6;
+  opacity: 0.5;
   flex-shrink: 0;
 }
 
 .skills {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--kt-space-2);
+  gap: 6px;
 }
 
 .skillTag {
   font-size: var(--kt-text-xs);
   font-weight: var(--kt-weight-medium);
-  color: var(--kt-primary);
-  background-color: var(--kt-primary-subtle);
-  padding: 3px 8px;
+  color: var(--kt-navy-600);
+  background-color: var(--kt-navy-50);
+  padding: 4px 10px;
   border-radius: var(--kt-radius-full);
+  border: 1px solid var(--kt-navy-100);
 }
 
 .footer {
@@ -130,15 +133,16 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--kt-space-3);
-  padding-top: var(--kt-space-3);
+  padding-top: var(--kt-space-4);
   border-top: 1px solid var(--kt-border);
   flex-wrap: wrap;
 }
 
 .pay {
-  font-size: var(--kt-text-lg);
-  font-weight: var(--kt-weight-bold);
-  color: var(--kt-text);
+  font-size: var(--kt-text-xl);
+  font-weight: var(--kt-weight-semibold);
+  color: var(--kt-grey-900);
+  letter-spacing: -0.01em;
 }
 
 .payUnit {
@@ -165,7 +169,7 @@
 
 .regulixCount {
   font-size: var(--kt-text-xs);
-  color: var(--kt-olive-700);
+  color: var(--kt-accent);
   font-weight: var(--kt-weight-medium);
   display: flex;
   align-items: center;

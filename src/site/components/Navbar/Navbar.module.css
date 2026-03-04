@@ -2,16 +2,16 @@
   position: sticky;
   top: 0;
   z-index: var(--kt-z-sticky);
-  background-color: var(--kt-navy-900);
-  border-bottom: 1px solid rgba(255,255,255,0.08);
-  box-shadow: 0 1px 16px rgba(0,0,0,0.2);
+  background-color: var(--kt-white);
+  border-bottom: 1px solid var(--kt-border);
+  box-shadow: var(--kt-shadow-sm);
 }
 
 .inner {
   max-width: 1280px;
   margin: 0 auto;
   padding: 0 var(--kt-space-6);
-  height: 64px;
+  height: 60px;
   display: flex;
   align-items: center;
   gap: var(--kt-space-6);
@@ -27,9 +27,9 @@
 }
 
 .logoMark {
-  width: 32px;
-  height: 32px;
-  background: var(--kt-sand-400);
+  width: 30px;
+  height: 30px;
+  background: var(--kt-navy-900);
   border-radius: 8px;
   display: flex;
   align-items: center;
@@ -38,10 +38,10 @@
 }
 
 .logoText {
-  font-size: var(--kt-text-xl);
+  font-size: var(--kt-text-lg);
   font-weight: var(--kt-weight-bold);
-  color: var(--kt-sand-400);
-  letter-spacing: -0.3px;
+  color: var(--kt-grey-900);
+  letter-spacing: -0.4px;
 }
 
 /* Links */
@@ -60,7 +60,7 @@
   border-radius: var(--kt-radius-sm);
   font-size: var(--kt-text-sm);
   font-weight: var(--kt-weight-medium);
-  color: rgba(229, 218, 195, 0.7);
+  color: var(--kt-text-muted);
   text-decoration: none;
   transition: color var(--kt-duration-fast), background-color var(--kt-duration-fast);
   border: none;
@@ -68,32 +68,33 @@
   cursor: pointer;
 }
 
-.link:hover, .link.active {
-  color: var(--kt-sand-400);
-  background-color: rgba(229, 218, 195, 0.08);
+.link:hover {
+  color: var(--kt-text);
+  background-color: var(--kt-grey-100);
 }
 
 .link.active {
-  color: var(--kt-sand-300);
+  color: var(--kt-grey-900);
+  font-weight: var(--kt-weight-semibold);
 }
 
 /* Persona switcher */
 .personaSwitcher {
   display: flex;
   align-items: center;
-  background-color: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.1);
+  background-color: var(--kt-grey-100);
+  border: 1px solid var(--kt-border);
   border-radius: var(--kt-radius-full);
   padding: 3px;
   gap: 2px;
 }
 
 .personaBtn {
-  padding: 4px 12px;
+  padding: 4px 14px;
   border-radius: var(--kt-radius-full);
   font-size: var(--kt-text-sm);
   font-weight: var(--kt-weight-medium);
-  color: rgba(229, 218, 195, 0.6);
+  color: var(--kt-text-muted);
   background: none;
   border: none;
   cursor: pointer;
@@ -101,9 +102,10 @@
 }
 
 .personaBtn.personaActive {
-  background-color: var(--kt-sand-400);
-  color: var(--kt-navy-900);
+  background-color: var(--kt-white);
+  color: var(--kt-grey-900);
   font-weight: var(--kt-weight-semibold);
+  box-shadow: var(--kt-shadow-sm);
 }
 
 /* Right side */
@@ -120,24 +122,24 @@
   border: none;
   cursor: pointer;
   padding: var(--kt-space-2);
-  color: rgba(229, 218, 195, 0.6);
+  color: var(--kt-text-muted);
   border-radius: var(--kt-radius-sm);
   display: flex;
   align-items: center;
   position: relative;
-  transition: color var(--kt-duration-fast);
+  transition: color var(--kt-duration-fast), background-color var(--kt-duration-fast);
 }
-.notifBtn:hover { color: var(--kt-sand-400); }
+.notifBtn:hover { color: var(--kt-text); background-color: var(--kt-grey-100); }
 
 .notifDot {
   position: absolute;
   top: 5px;
   right: 5px;
-  width: 8px;
-  height: 8px;
-  background-color: var(--kt-olive-600);
+  width: 7px;
+  height: 7px;
+  background-color: var(--kt-accent);
   border-radius: 50%;
-  border: 2px solid var(--kt-navy-900);
+  border: 2px solid var(--kt-white);
 }
 
 .notifBadge {
@@ -146,7 +148,7 @@
   right: 2px;
   min-width: 16px;
   height: 16px;
-  background-color: #e03e3e;
+  background-color: var(--kt-danger);
   color: white;
   border-radius: var(--kt-radius-full);
   font-size: 10px;
@@ -155,39 +157,39 @@
   align-items: center;
   justify-content: center;
   padding: 0 3px;
-  border: 1.5px solid var(--kt-navy-900);
+  border: 1.5px solid var(--kt-white);
   line-height: 1;
 }
 
 .notifBtnActive {
-  color: var(--kt-sand-400);
-  background-color: rgba(229, 218, 195, 0.08);
+  color: var(--kt-text);
+  background-color: var(--kt-grey-100);
 }
 
 .avatar {
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  background-color: var(--kt-sand-400);
-  color: var(--kt-navy-900);
+  background-color: var(--kt-navy-900);
+  color: var(--kt-white);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: var(--kt-text-sm);
+  font-size: var(--kt-text-xs);
   font-weight: var(--kt-weight-bold);
   cursor: pointer;
   flex-shrink: 0;
-  border: 2px solid rgba(229, 218, 195, 0.3);
+  border: 2px solid transparent;
   transition: border-color var(--kt-duration-fast);
 }
-.avatar:hover { border-color: var(--kt-sand-400); }
+.avatar:hover { border-color: var(--kt-border-strong); }
 
 .postJobBtn {
-  background-color: var(--kt-olive-700);
+  background-color: var(--kt-accent);
   color: white;
   border: none;
-  border-radius: var(--kt-radius-md);
-  padding: 8px 16px;
+  border-radius: var(--kt-radius-full);
+  padding: 8px 18px;
   font-size: var(--kt-text-sm);
   font-weight: var(--kt-weight-semibold);
   cursor: pointer;
@@ -195,4 +197,4 @@
   transition: background-color var(--kt-duration-fast);
   white-space: nowrap;
 }
-.postJobBtn:hover { background-color: var(--kt-olive-800); }
+.postJobBtn:hover { background-color: var(--kt-accent-hover); }

@@ -141,13 +141,13 @@ export const JobDetailPage: React.FC = () => {
     <div style={{ minHeight: '100vh', background: 'var(--kt-bg)' }}>
 
       {/* Header breadcrumb */}
-      <div style={{ background: 'var(--kt-navy-900)', padding: '16px var(--kt-space-6)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+      <div style={{ background: 'var(--kt-surface)', padding: '12px var(--kt-space-6)', borderBottom: '1px solid var(--kt-border)' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Link to="/site/jobs" style={{ color: 'var(--kt-sand-400)', fontSize: 'var(--kt-text-sm)', textDecoration: 'none', opacity: 0.7 }}>Jobs</Link>
-          <span style={{ color: 'rgba(229,218,195,0.4)', fontSize: 'var(--kt-text-sm)' }}>›</span>
-          <span style={{ color: 'var(--kt-sand-300)', fontSize: 'var(--kt-text-sm)' }}>{job.industry}</span>
-          <span style={{ color: 'rgba(229,218,195,0.4)', fontSize: 'var(--kt-text-sm)' }}>›</span>
-          <span style={{ color: 'var(--kt-sand-400)', fontSize: 'var(--kt-text-sm)' }}>{job.title}</span>
+          <Link to="/site/jobs" style={{ color: 'var(--kt-text-muted)', fontSize: 'var(--kt-text-sm)', textDecoration: 'none' }}>Jobs</Link>
+          <span style={{ color: 'var(--kt-text-placeholder)', fontSize: 'var(--kt-text-sm)' }}>›</span>
+          <span style={{ color: 'var(--kt-text-muted)', fontSize: 'var(--kt-text-sm)' }}>{job.industry}</span>
+          <span style={{ color: 'var(--kt-text-placeholder)', fontSize: 'var(--kt-text-sm)' }}>›</span>
+          <span style={{ color: 'var(--kt-text)', fontSize: 'var(--kt-text-sm)', fontWeight: 'var(--kt-weight-medium)' }}>{job.title}</span>
         </div>
       </div>
 
@@ -173,9 +173,9 @@ export const JobDetailPage: React.FC = () => {
               {/* Company logo */}
               <div style={{
                 width: 60, height: 60, borderRadius: 12,
-                background: 'var(--kt-navy-900)',
+                background: 'var(--kt-grey-100)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: 'var(--kt-sand-300)', fontWeight: 'var(--kt-weight-bold)',
+                color: 'var(--kt-grey-700)', fontWeight: 'var(--kt-weight-bold)',
                 fontSize: 'var(--kt-text-xl)', flexShrink: 0,
                 border: '1px solid var(--kt-border)',
               }}>

@@ -153,19 +153,19 @@ export const JobsPage: React.FC = () => {
     <div style={{ minHeight: '100vh', background: 'var(--kt-bg)' }}>
 
       {/* Page header */}
-      <div style={{ background: 'var(--kt-navy-900)', padding: '32px var(--kt-space-6)' }}>
+      <div style={{ background: 'var(--kt-bg)', padding: '48px var(--kt-space-6) 36px', borderBottom: '1px solid var(--kt-border)' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
-            <h1 style={{ fontSize: 'var(--kt-text-3xl)', fontWeight: 'var(--kt-weight-bold)', color: 'var(--kt-sand-300)' }}>
+            <h1 style={{ fontSize: 'var(--kt-text-3xl)', fontWeight: 'var(--kt-weight-display)', color: 'var(--kt-text)', letterSpacing: '-0.03em' }}>
               Browse Jobs
             </h1>
             <button
               onClick={() => { setLocationView(v => !v); setPage(1) }}
               style={{
                 padding: '8px 16px', borderRadius: 'var(--kt-radius-md)',
-                border: `1.5px solid ${locationView ? 'var(--kt-sand-400)' : 'rgba(229,218,195,0.3)'}`,
-                background: locationView ? 'var(--kt-sand-400)' : 'transparent',
-                color: locationView ? 'var(--kt-navy-900)' : 'var(--kt-sand-300)',
+                border: `1.5px solid ${locationView ? 'var(--kt-primary)' : 'var(--kt-border)'}`,
+                background: locationView ? 'color-mix(in srgb, var(--kt-primary) 8%, transparent)' : 'transparent',
+                color: locationView ? 'var(--kt-primary)' : 'var(--kt-text-muted)',
                 fontSize: 'var(--kt-text-sm)', fontWeight: 'var(--kt-weight-semibold)',
                 cursor: 'pointer', fontFamily: 'var(--kt-font-sans)',
                 transition: 'all 0.15s',
@@ -193,7 +193,7 @@ export const JobsPage: React.FC = () => {
             <button
               onClick={handleSearch}
               style={{
-                background: 'var(--kt-olive-700)', color: 'white', border: 'none',
+                background: 'var(--kt-accent)', color: 'white', border: 'none',
                 borderRadius: 'var(--kt-radius-md)', padding: '0 24px',
                 fontWeight: 'var(--kt-weight-semibold)', fontSize: 'var(--kt-text-md)',
                 cursor: 'pointer', fontFamily: 'var(--kt-font-sans)', height: 40,

@@ -89,27 +89,28 @@ export const CompanyDashboard: React.FC = () => {
     <div style={{ minHeight: '100vh', background: 'var(--kt-bg)' }}>
 
       {/* Header */}
-      <div style={{ background: 'var(--kt-navy-900)', padding: '28px var(--kt-space-6)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+      <div style={{ background: 'var(--kt-surface)', padding: '28px var(--kt-space-6)', borderBottom: '1px solid var(--kt-border)' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
             <div style={{
               width: 52, height: 52, borderRadius: 12,
-              background: 'var(--kt-sand-400)',
+              background: 'var(--kt-grey-100)',
               color: 'var(--kt-navy-900)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontWeight: 'var(--kt-weight-bold)', fontSize: 'var(--kt-text-xl)',
               flexShrink: 0,
+              border: '1px solid var(--kt-border)',
             }}>
               {currentCompany.name.charAt(0)}
             </div>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
-                <h1 style={{ fontSize: 'var(--kt-text-xl)', fontWeight: 'var(--kt-weight-bold)', color: 'var(--kt-sand-300)', margin: 0 }}>
+                <h1 style={{ fontSize: 'var(--kt-text-xl)', fontWeight: 'var(--kt-weight-bold)', color: 'var(--kt-text)', margin: 0 }}>
                   {currentCompany.name}
                 </h1>
                 {currentCompany.isVerified && <VerifiedIcon />}
               </div>
-              <p style={{ fontSize: 'var(--kt-text-sm)', color: 'rgba(229,218,195,0.6)', margin: 0 }}>
+              <p style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text-muted)', margin: 0 }}>
                 {currentCompany.industry} · {currentCompany.location} · {currentCompany.size} employees
               </p>
             </div>
@@ -136,17 +137,18 @@ export const CompanyDashboard: React.FC = () => {
 
           {/* Regulix Promo Banner */}
           <div style={{
-            background: 'var(--kt-navy-900)',
+            background: 'color-mix(in srgb, var(--kt-accent) 6%, var(--kt-surface))',
+            border: '1px solid color-mix(in srgb, var(--kt-accent) 20%, var(--kt-border))',
             borderRadius: 'var(--kt-radius-lg)',
             padding: '20px 24px',
             display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap',
           }}>
-            <RegulixBadge size="lg" variant="onDark" pulse />
+            <RegulixBadge size="lg" pulse />
             <div style={{ flex: 1 }}>
-              <p style={{ fontWeight: 'var(--kt-weight-semibold)', color: 'var(--kt-sand-300)', fontSize: 'var(--kt-text-md)', marginBottom: 3 }}>
+              <p style={{ fontWeight: 'var(--kt-weight-semibold)', color: 'var(--kt-text)', fontSize: 'var(--kt-text-md)', marginBottom: 3 }}>
                 {totalRegulixApplicants} Regulix Ready Applicants In Your Pool
               </p>
-              <p style={{ fontSize: 'var(--kt-text-sm)', color: 'rgba(229,218,195,0.6)' }}>
+              <p style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text-muted)' }}>
                 These workers have completed W-4, I-9, direct deposit, and drug screening. Zero onboarding paperwork.
               </p>
             </div>

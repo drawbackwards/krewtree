@@ -89,11 +89,11 @@ export const WorkerProfilePage: React.FC = () => {
 
       {/* Cover / Hero */}
       <div style={{
-        background: 'var(--kt-navy-900)',
-        borderBottom: '1px solid rgba(255,255,255,0.08)',
+        background: 'var(--kt-surface)',
+        borderBottom: '1px solid var(--kt-border)',
       }}>
         {/* Cover bar */}
-        <div style={{ height: 120, background: 'linear-gradient(135deg, var(--kt-navy-800) 0%, var(--kt-olive-900, #3d4418) 100%)', opacity: 0.9 }} />
+        <div style={{ height: 120, background: 'linear-gradient(135deg, var(--kt-grey-100) 0%, var(--kt-grey-50, #f9f9fb) 100%)' }} />
 
         {/* Profile row */}
         <div style={{ maxWidth: 900, margin: '0 auto', padding: '0 var(--kt-space-6)', paddingBottom: 24 }}>
@@ -101,31 +101,31 @@ export const WorkerProfilePage: React.FC = () => {
             {/* Avatar */}
             <div style={{
               width: 88, height: 88, borderRadius: '50%',
-              background: 'var(--kt-sand-400)',
-              color: 'var(--kt-navy-900)',
+              background: 'var(--kt-primary)',
+              color: 'var(--kt-primary-fg)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontWeight: 'var(--kt-weight-bold)', fontSize: 'var(--kt-text-2xl)',
-              border: `4px solid ${worker.isPremium ? 'var(--kt-olive-400)' : 'var(--kt-navy-900)'}`,
+              border: `4px solid ${worker.isPremium ? 'var(--kt-accent)' : 'var(--kt-white)'}`,
               flexShrink: 0,
-              boxShadow: worker.isPremium ? '0 0 0 2px var(--kt-olive-600)' : 'none',
+              boxShadow: worker.isPremium ? '0 0 0 2px var(--kt-accent)' : 'var(--kt-shadow-sm)',
             }}>
               {worker.initials}
             </div>
 
             <div style={{ flex: 1, paddingBottom: 4, minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 4 }}>
-                <h1 style={{ fontSize: 'var(--kt-text-2xl)', fontWeight: 'var(--kt-weight-bold)', color: 'var(--kt-sand-300)', margin: 0 }}>
+                <h1 style={{ fontSize: 'var(--kt-text-2xl)', fontWeight: 'var(--kt-weight-bold)', color: 'var(--kt-text)', margin: 0 }}>
                   {worker.name}
                 </h1>
-                {worker.isRegulixReady && <RegulixBadge variant="onDark" size="md" />}
+                {worker.isRegulixReady && <RegulixBadge size="md" />}
                 {worker.isPremium && <Badge variant="accent" size="sm">Premium</Badge>}
               </div>
-              <p style={{ fontSize: 'var(--kt-text-sm)', color: 'rgba(229,218,195,0.7)', margin: 0 }}>{worker.headline}</p>
+              <p style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text-muted)', margin: 0 }}>{worker.headline}</p>
               <div style={{ display: 'flex', gap: 16, marginTop: 8, flexWrap: 'wrap' }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 'var(--kt-text-xs)', color: 'rgba(229,218,195,0.5)' }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 'var(--kt-text-xs)', color: 'var(--kt-text-muted)' }}>
                   <MapPinIcon />{worker.location}
                 </span>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 'var(--kt-text-xs)', color: 'rgba(229,218,195,0.5)' }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 'var(--kt-text-xs)', color: 'var(--kt-text-muted)' }}>
                   <IndustryIcon />{worker.industries.join(', ')}
                 </span>
               </div>
@@ -134,9 +134,7 @@ export const WorkerProfilePage: React.FC = () => {
             {/* Actions */}
             <div style={{ display: 'flex', gap: 8, flexShrink: 0, paddingBottom: 4 }}>
               <Button variant="primary" size="md">Message</Button>
-              <Button variant="outline" size="md" style={{ borderColor: 'rgba(229,218,195,0.3)', color: 'var(--kt-sand-300)', background: 'transparent' }}>
-                Save
-              </Button>
+              <Button variant="outline" size="md">Save</Button>
             </div>
           </div>
 
@@ -145,33 +143,33 @@ export const WorkerProfilePage: React.FC = () => {
             {worker.performanceScore && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <StarFilledIcon />
-                <span style={{ fontSize: 'var(--kt-text-sm)', fontWeight: 'var(--kt-weight-semibold)', color: 'var(--kt-sand-300)' }}>
+                <span style={{ fontSize: 'var(--kt-text-sm)', fontWeight: 'var(--kt-weight-semibold)', color: 'var(--kt-text)' }}>
                   {worker.performanceScore}
                 </span>
-                <span style={{ fontSize: 'var(--kt-text-xs)', color: 'rgba(229,218,195,0.5)' }}>
+                <span style={{ fontSize: 'var(--kt-text-xs)', color: 'var(--kt-text-muted)' }}>
                   ({worker.ratingCount} ratings)
                 </span>
               </div>
             )}
             {worker.totalHoursWorked && (
-              <div style={{ fontSize: 'var(--kt-text-xs)', color: 'rgba(229,218,195,0.5)' }}>
+              <div style={{ fontSize: 'var(--kt-text-xs)', color: 'var(--kt-text-muted)' }}>
                 {worker.totalHoursWorked.toLocaleString()} verified hours worked
               </div>
             )}
             {/* Social links */}
             <div style={{ display: 'flex', gap: 8, marginLeft: 'auto' }}>
               {worker.socialLinks.linkedin && (
-                <a href={worker.socialLinks.linkedin} style={{ color: 'rgba(229,218,195,0.5)', display: 'flex', alignItems: 'center' }}>
+                <a href={worker.socialLinks.linkedin} style={{ color: 'var(--kt-text-muted)', display: 'flex', alignItems: 'center' }}>
                   <LinkedInIcon />
                 </a>
               )}
               {worker.socialLinks.instagram && (
-                <a href={worker.socialLinks.instagram} style={{ color: 'rgba(229,218,195,0.5)', display: 'flex', alignItems: 'center' }}>
+                <a href={worker.socialLinks.instagram} style={{ color: 'var(--kt-text-muted)', display: 'flex', alignItems: 'center' }}>
                   <InstagramIcon />
                 </a>
               )}
               {worker.socialLinks.facebook && (
-                <a href={worker.socialLinks.facebook} style={{ color: 'rgba(229,218,195,0.5)', display: 'flex', alignItems: 'center' }}>
+                <a href={worker.socialLinks.facebook} style={{ color: 'var(--kt-text-muted)', display: 'flex', alignItems: 'center' }}>
                   <FacebookIcon />
                 </a>
               )}

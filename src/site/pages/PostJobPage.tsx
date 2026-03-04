@@ -127,12 +127,12 @@ export const PostJobPage: React.FC = () => {
     <div style={{ minHeight: '100vh', background: 'var(--kt-bg)' }}>
 
       {/* Page Header */}
-      <div style={{ background: 'var(--kt-navy-900)', padding: '28px var(--kt-space-6)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+      <div style={{ background: 'var(--kt-surface)', padding: '36px var(--kt-space-6) 28px', borderBottom: '1px solid var(--kt-border)' }}>
         <div style={{ maxWidth: 860, margin: '0 auto' }}>
-          <h1 style={{ fontSize: 'var(--kt-text-2xl)', fontWeight: 'var(--kt-weight-bold)', color: 'var(--kt-sand-300)', marginBottom: 6 }}>
+          <h1 style={{ fontSize: 'var(--kt-text-2xl)', fontWeight: 'var(--kt-weight-display)', color: 'var(--kt-text)', marginBottom: 6, letterSpacing: '-0.02em' }}>
             Post a Job
           </h1>
-          <p style={{ fontSize: 'var(--kt-text-sm)', color: 'rgba(229,218,195,0.6)' }}>
+          <p style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text-muted)' }}>
             Fill in the details below to publish your job listing to thousands of qualified workers.
           </p>
         </div>

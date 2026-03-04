@@ -102,43 +102,44 @@ export const LandingPage: React.FC = () => {
 
       {/* ======== HERO ======== */}
       <section style={{
-        background: `linear-gradient(160deg, var(--kt-navy-950) 0%, var(--kt-navy-900) 50%, #0f2e3a 100%)`,
-        padding: '100px var(--kt-space-6) 80px',
+        background: 'var(--kt-bg)',
+        padding: '80px var(--kt-space-6) 72px',
         position: 'relative',
         overflow: 'hidden',
+        borderBottom: '1px solid var(--kt-border)',
       }}>
         {/* Background decoration */}
         <div style={{
-          position: 'absolute', inset: 0, opacity: 0.035,
-          backgroundImage: 'radial-gradient(var(--kt-sand-400) 1px, transparent 1px)',
+          position: 'absolute', inset: 0, opacity: 0.025,
+          backgroundImage: 'radial-gradient(var(--kt-grey-400, #aaa) 1px, transparent 1px)',
           backgroundSize: '28px 28px',
           pointerEvents: 'none',
         }} />
 
         <div style={{ maxWidth: 1200, margin: '0 auto', position: 'relative' }}>
           <div style={{ maxWidth: 720 }}>
-            <div style={{ display: 'flex', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: 10, marginBottom: 24, flexWrap: 'wrap' }}>
               <Badge variant="accent" size="sm">
                 Now Live — 12,400+ Active Jobs
               </Badge>
-              <RegulixBadge size="sm" variant="onDark" showTooltip={false} />
+              <RegulixBadge size="sm" showTooltip={false} />
             </div>
 
             <h1 style={{
               fontSize: 'clamp(38px, 6vw, 72px)',
-              fontWeight: 'var(--kt-weight-bold)',
-              color: 'var(--kt-sand-400)',
-              lineHeight: 1.1,
+              fontWeight: 300,
+              color: 'var(--kt-text)',
+              lineHeight: 1.05,
               marginBottom: 20,
-              letterSpacing: '-1.5px',
+              letterSpacing: '-2px',
             }}>
               Find your krew.<br />
-              <span style={{ color: 'white', opacity: 0.9 }}>Grow your tree.</span>
+              <span style={{ color: 'var(--kt-primary)', fontWeight: 600 }}>Grow your tree.</span>
             </h1>
 
             <p style={{
               fontSize: 'var(--kt-text-xl)',
-              color: 'rgba(229,218,195,0.65)',
+              color: 'var(--kt-text-muted)',
               lineHeight: 1.6,
               marginBottom: 40,
               maxWidth: 540,
@@ -149,11 +150,12 @@ export const LandingPage: React.FC = () => {
             {/* Search bar */}
             <div style={{
               display: 'flex',
-              background: 'white',
+              background: 'var(--kt-surface)',
               borderRadius: 'var(--kt-radius-lg)',
               overflow: 'hidden',
-              boxShadow: 'var(--kt-shadow-xl)',
+              boxShadow: 'var(--kt-shadow-md)',
               maxWidth: 640,
+              border: '1px solid var(--kt-border)',
             }}>
               <input
                 type="text"
@@ -172,7 +174,7 @@ export const LandingPage: React.FC = () => {
                   background: 'transparent',
                 }}
               />
-              <div style={{ width: 1, background: '#e5e5e5', margin: '12px 0' }} />
+              <div style={{ width: 1, background: 'var(--kt-border)', margin: '12px 0' }} />
               <input
                 type="text"
                 placeholder="Phoenix, AZ"
@@ -190,7 +192,7 @@ export const LandingPage: React.FC = () => {
               <button
                 onClick={handleSearch}
                 style={{
-                  background: 'var(--kt-olive-700)',
+                  background: 'var(--kt-accent)',
                   color: 'white',
                   border: 'none',
                   padding: '0 28px',
@@ -201,14 +203,14 @@ export const LandingPage: React.FC = () => {
                   transition: 'background var(--kt-duration-fast)',
                   whiteSpace: 'nowrap',
                 }}
-                onMouseOver={e => (e.currentTarget.style.background = 'var(--kt-olive-800)')}
-                onMouseOut={e => (e.currentTarget.style.background = 'var(--kt-olive-700)')}
+                onMouseOver={e => (e.currentTarget.style.background = 'var(--kt-accent-hover, #5a6128)')}
+                onMouseOut={e => (e.currentTarget.style.background = 'var(--kt-accent)')}
               >
                 Search Jobs
               </button>
             </div>
 
-            <p style={{ marginTop: 16, fontSize: 'var(--kt-text-sm)', color: 'rgba(229,218,195,0.4)' }}>
+            <p style={{ marginTop: 16, fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text-placeholder)' }}>
               Popular: CDL Driver · Framing Carpenter · CNA · Line Cook · Landscape Tech
             </p>
           </div>
@@ -218,7 +220,7 @@ export const LandingPage: React.FC = () => {
             display: 'flex',
             gap: 0,
             marginTop: 64,
-            borderTop: '1px solid rgba(255,255,255,0.08)',
+            borderTop: '1px solid var(--kt-border)',
             paddingTop: 40,
             flexWrap: 'wrap',
           }}>
@@ -231,14 +233,14 @@ export const LandingPage: React.FC = () => {
               <div key={i} style={{
                 flex: '1 1 140px',
                 padding: '0 32px 0 0',
-                borderRight: i < 3 ? '1px solid rgba(255,255,255,0.08)' : 'none',
+                borderRight: i < 3 ? '1px solid var(--kt-border)' : 'none',
                 marginRight: i < 3 ? 32 : 0,
                 marginBottom: 20,
               }}>
-                <div style={{ fontSize: 'clamp(24px, 3vw, 36px)', fontWeight: 'var(--kt-weight-bold)', color: 'var(--kt-sand-300)', lineHeight: 1 }}>
+                <div style={{ fontSize: 'clamp(24px, 3vw, 36px)', fontWeight: 'var(--kt-weight-bold)', color: 'var(--kt-text)', lineHeight: 1 }}>
                   {s.num}
                 </div>
-                <div style={{ fontSize: 'var(--kt-text-sm)', color: 'rgba(229,218,195,0.45)', marginTop: 4 }}>{s.label}</div>
+                <div style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text-muted)', marginTop: 4 }}>{s.label}</div>
               </div>
             ))}
           </div>
