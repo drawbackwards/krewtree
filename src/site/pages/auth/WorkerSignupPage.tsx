@@ -10,17 +10,37 @@ const TreeIcon = () => (
   </svg>
 )
 
+const BgMark = () => (
+  <svg
+    width="680"
+    height="680"
+    viewBox="0 0 32 32"
+    fill="rgba(229,218,195,0.05)"
+    aria-hidden="true"
+    style={{
+      position: 'absolute',
+      right: '-60px',
+      top: '50%',
+      transform: 'translateY(-50%)',
+      pointerEvents: 'none',
+      userSelect: 'none',
+    }}
+  >
+    <path d="M16 3L4 17h8l-3 12h14l-3-12h8z" />
+    <rect x="14" y="24" width="4" height="5" rx="1" />
+  </svg>
+)
+
 const BENEFITS = [
   { icon: '💼', label: 'Browse 12,400+ jobs across 8 industries' },
   { icon: '🪪', label: 'One profile works everywhere you want to work' },
-  { icon: '⚡', label: 'Get Regulix Ready — get hired same day' },
+  { icon: '⚡', label: 'Get Regulix Ready — get hired the same day' },
   { icon: '✨', label: 'Free to sign up, always' },
 ]
 
 export const WorkerSignupPage: React.FC = () => {
   const navigate = useNavigate()
 
-  // Form state
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -39,36 +59,34 @@ export const WorkerSignupPage: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!termsAgreed) return
-    // Mock: navigate to worker dashboard
     navigate('/site/dashboard/worker')
   }
 
   return (
     <div
       style={{
-        display: 'flex',
         minHeight: '100vh',
+        background: 'var(--kt-navy-900)',
+        position: 'relative',
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
         fontFamily: 'var(--kt-font-sans)',
-        background: 'var(--kt-bg)',
       }}
     >
-      {/* ── LEFT BRAND PANEL ─────────────────────────────────────────── */}
+      <BgMark />
+
+      {/* ── Top bar ────────────────────────────────────────────────── */}
       <div
         style={{
-          width: '42%',
-          minWidth: 360,
-          flexShrink: 0,
-          background: 'var(--kt-navy-900)',
+          position: 'relative',
+          zIndex: 10,
           display: 'flex',
-          flexDirection: 'column',
-          padding: '40px 48px',
-          position: 'sticky',
-          top: 0,
-          height: '100vh',
-          overflowY: 'auto',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: '22px 52px',
         }}
       >
-        {/* Logo */}
         <button
           onClick={() => navigate('/site')}
           style={{
@@ -79,20 +97,18 @@ export const WorkerSignupPage: React.FC = () => {
             border: 'none',
             cursor: 'pointer',
             padding: 0,
-            alignSelf: 'flex-start',
           }}
         >
           <div
             style={{
               width: 34,
               height: 34,
-              borderRadius: 'var(--kt-radius-md)',
+              borderRadius: 8,
               background: 'var(--kt-accent)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               color: 'white',
-              flexShrink: 0,
             }}
           >
             <TreeIcon />
@@ -102,40 +118,80 @@ export const WorkerSignupPage: React.FC = () => {
               fontSize: 'var(--kt-text-xl)',
               fontWeight: 'var(--kt-weight-bold)',
               color: 'var(--kt-sand-300)',
+              letterSpacing: '-0.3px',
             }}
           >
             krewtree
           </span>
         </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span style={{ fontSize: 'var(--kt-text-sm)', color: 'rgba(229,218,195,0.45)' }}>
+            Already have an account?
+          </span>
+          <button
+            onClick={() => navigate('/site/login')}
+            style={{
+              background: 'rgba(229,218,195,0.1)',
+              color: 'var(--kt-sand-300)',
+              border: '1px solid rgba(229,218,195,0.2)',
+              borderRadius: 'var(--kt-radius-full)',
+              padding: '7px 18px',
+              fontSize: 'var(--kt-text-sm)',
+              fontWeight: 'var(--kt-weight-medium)',
+              cursor: 'pointer',
+              fontFamily: 'var(--kt-font-sans)',
+              transition: 'all 0.15s ease',
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.background = 'rgba(229,218,195,0.16)'
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.background = 'rgba(229,218,195,0.1)'
+            }}
+          >
+            Sign in
+          </button>
+        </div>
+      </div>
 
-        {/* Center content */}
+      {/* ── Main content ───────────────────────────────────────────── */}
+      <div
+        style={{
+          position: 'relative',
+          zIndex: 1,
+          flex: 1,
+          display: 'flex',
+          alignItems: 'flex-start',
+          padding: '48px 52px 60px',
+          gap: 72,
+        }}
+      >
+        {/* Left — brand text (sticky) */}
         <div
           style={{
             flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            paddingTop: 60,
+            minWidth: 0,
+            position: 'sticky',
+            top: 48,
           }}
         >
           <div
             style={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: 8,
+              gap: 6,
               background: 'rgba(109,117,49,0.25)',
               border: '1px solid rgba(109,117,49,0.4)',
               borderRadius: 'var(--kt-radius-full)',
-              padding: '5px 12px',
-              marginBottom: 20,
-              alignSelf: 'flex-start',
+              padding: '4px 12px',
+              marginBottom: 18,
             }}
           >
-            <span style={{ fontSize: 14 }}>👷</span>
+            <span style={{ fontSize: 13 }}>👷</span>
             <span
               style={{
-                fontSize: 'var(--kt-text-xs)',
-                fontWeight: 'var(--kt-weight-semibold)',
+                fontSize: 11,
+                fontWeight: 700,
                 color: 'var(--kt-sand-300)',
                 textTransform: 'uppercase',
                 letterSpacing: '0.06em',
@@ -144,44 +200,43 @@ export const WorkerSignupPage: React.FC = () => {
               Worker Account
             </span>
           </div>
-
-          <h2
+          <h1
             style={{
-              fontSize: 'clamp(26px, 2.8vw, 40px)',
+              fontSize: 'clamp(28px, 3vw, 44px)',
               fontWeight: 'var(--kt-weight-bold)',
               color: 'var(--kt-sand-300)',
-              lineHeight: 1.1,
+              lineHeight: 1.05,
               marginBottom: 16,
-              letterSpacing: '-0.5px',
+              letterSpacing: '-0.8px',
             }}
           >
             Find work faster.
-          </h2>
+          </h1>
           <p
             style={{
               fontSize: 'var(--kt-text-md)',
-              color: 'rgba(229,218,195,0.5)',
+              color: 'rgba(229,218,195,0.45)',
               lineHeight: 1.7,
               marginBottom: 44,
               maxWidth: 340,
             }}
           >
-            Create a free profile and get connected to thousands of employers across every industry.
+            Create a free profile and get connected to employers across every industry.
           </p>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {BENEFITS.map(({ icon, label }) => (
-              <div key={label} style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+              <div key={label} style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
                 <div
                   style={{
                     width: 36,
                     height: 36,
-                    borderRadius: 'var(--kt-radius-md)',
+                    borderRadius: 10,
                     background: 'rgba(229,218,195,0.07)',
+                    border: '1px solid rgba(229,218,195,0.1)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: 16,
+                    fontSize: 15,
                     flexShrink: 0,
                     marginTop: 1,
                   }}
@@ -191,9 +246,9 @@ export const WorkerSignupPage: React.FC = () => {
                 <span
                   style={{
                     fontSize: 'var(--kt-text-sm)',
-                    color: 'rgba(229,218,195,0.55)',
-                    lineHeight: 1.5,
-                    paddingTop: 8,
+                    color: 'rgba(229,218,195,0.5)',
+                    lineHeight: 1.55,
+                    paddingTop: 7,
                   }}
                 >
                   {label}
@@ -202,95 +257,74 @@ export const WorkerSignupPage: React.FC = () => {
             ))}
           </div>
 
-          {/* Social proof */}
+          {/* Social proof tile */}
           <div
             style={{
-              marginTop: 44,
+              marginTop: 40,
+              display: 'inline-flex',
+              flexDirection: 'column',
               padding: '16px 20px',
               background: 'rgba(229,218,195,0.05)',
-              borderRadius: 'var(--kt-radius-lg)',
               border: '1px solid rgba(229,218,195,0.1)',
+              borderRadius: 12,
             }}
           >
-            <div
+            <span
               style={{
                 fontSize: 'var(--kt-text-2xl)',
                 fontWeight: 'var(--kt-weight-bold)',
                 color: 'var(--kt-sand-300)',
+                lineHeight: 1,
               }}
             >
               54,000+
-            </div>
-            <div
+            </span>
+            <span
               style={{
-                fontSize: 'var(--kt-text-xs)',
-                color: 'rgba(229,218,195,0.4)',
-                marginTop: 2,
+                fontSize: 11,
+                color: 'rgba(229,218,195,0.35)',
+                marginTop: 4,
+                letterSpacing: '0.02em',
               }}
             >
               workers already on krewtree
-            </div>
+            </span>
           </div>
         </div>
 
-        {/* Footer */}
-        <p style={{ fontSize: 'var(--kt-text-xs)', color: 'rgba(229,218,195,0.2)', marginTop: 40 }}>
-          A Regulix Partner Platform · © 2026 krewtree
-        </p>
-      </div>
-
-      {/* ── RIGHT FORM PANEL ─────────────────────────────────────────── */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
-        {/* Top bar */}
+        {/* Right — white card */}
         <div
           style={{
-            display: 'flex',
-            justifyContent: 'flex-end',
-            alignItems: 'center',
-            padding: '20px 48px',
-            gap: 12,
-            borderBottom: '1px solid var(--kt-border)',
+            background: 'white',
+            borderRadius: 20,
+            padding: '40px 44px 48px',
+            width: 480,
+            flexShrink: 0,
+            boxShadow: '0 24px 64px rgba(0,0,0,0.45), 0 2px 8px rgba(0,0,0,0.2)',
           }}
         >
-          <span style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text-muted)' }}>
-            Already have an account?
-          </span>
-          <Button variant="outline" size="sm" onClick={() => navigate('/site/login')}>
-            Sign in
-          </Button>
-        </div>
-
-        {/* Form area */}
-        <div
-          style={{
-            padding: '48px 48px 64px',
-            maxWidth: 580,
-            width: '100%',
-            margin: '0 auto',
-          }}
-        >
-          <div style={{ marginBottom: 8 }}>
+          <div style={{ marginBottom: 6 }}>
             <Badge variant="accent" size="sm">
               Worker Profile
             </Badge>
           </div>
-          <h1
+          <h2
             style={{
-              fontSize: 'var(--kt-text-3xl)',
+              fontSize: 'var(--kt-text-2xl)',
               fontWeight: 'var(--kt-weight-bold)',
               color: 'var(--kt-text)',
-              marginBottom: 6,
+              marginBottom: 4,
               letterSpacing: '-0.3px',
-              marginTop: 12,
+              marginTop: 10,
             }}
           >
             Create your account
-          </h1>
+          </h2>
           <p
             style={{
-              fontSize: 'var(--kt-text-md)',
+              fontSize: 'var(--kt-text-sm)',
               color: 'var(--kt-text-muted)',
-              marginBottom: 36,
+              marginBottom: 28,
             }}
           >
             Free forever. No credit card required.
@@ -298,10 +332,9 @@ export const WorkerSignupPage: React.FC = () => {
 
           <form
             onSubmit={handleSubmit}
-            style={{ display: 'flex', flexDirection: 'column', gap: 22 }}
+            style={{ display: 'flex', flexDirection: 'column', gap: 18 }}
           >
-            {/* Name + Location row */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
               <Input
                 label="Full name"
                 type="text"
@@ -329,8 +362,7 @@ export const WorkerSignupPage: React.FC = () => {
               required
             />
 
-            {/* Password row */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
               <Input
                 label="Password"
                 type="password"
@@ -356,7 +388,7 @@ export const WorkerSignupPage: React.FC = () => {
                   fontSize: 'var(--kt-text-sm)',
                   fontWeight: 'var(--kt-weight-medium)',
                   color: 'var(--kt-text)',
-                  marginBottom: 10,
+                  marginBottom: 8,
                 }}
               >
                 Industries you work in{' '}
@@ -364,7 +396,7 @@ export const WorkerSignupPage: React.FC = () => {
                   (select all that apply)
                 </span>
               </p>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
                 {industries.map((ind) => {
                   const active = selectedIndustries.includes(ind.slug)
                   return (
@@ -375,20 +407,20 @@ export const WorkerSignupPage: React.FC = () => {
                       style={{
                         display: 'inline-flex',
                         alignItems: 'center',
-                        gap: 6,
-                        padding: '6px 14px',
+                        gap: 5,
+                        padding: '5px 12px',
                         borderRadius: 'var(--kt-radius-full)',
                         border: `1.5px solid ${active ? 'var(--kt-accent)' : 'var(--kt-border)'}`,
                         background: active ? 'var(--kt-accent)' : 'transparent',
                         color: active ? 'white' : 'var(--kt-text)',
                         cursor: 'pointer',
-                        fontSize: 'var(--kt-text-sm)',
+                        fontSize: 13,
                         fontFamily: 'var(--kt-font-sans)',
-                        fontWeight: active ? 'var(--kt-weight-medium)' : 'var(--kt-weight-normal)',
+                        fontWeight: active ? 500 : 400,
                         transition: 'all 0.15s ease',
                       }}
                     >
-                      <span style={{ fontSize: 14 }}>{ind.icon}</span>
+                      <span style={{ fontSize: 13 }}>{ind.icon}</span>
                       {ind.name}
                     </button>
                   )
@@ -396,16 +428,14 @@ export const WorkerSignupPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Divider */}
-            <div style={{ height: 1, background: 'var(--kt-border)', margin: '4px 0' }} />
+            <div style={{ height: 1, background: 'var(--kt-border)' }} />
 
-            {/* Checkboxes */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <Checkbox
                 checked={regulixOptIn}
                 onChange={(e) => setRegulixOptIn(e.target.checked)}
                 label="Start my Regulix verification to become hire-ready"
-                helperText="Complete onboarding paperwork once and use it everywhere. Takes ~10 minutes."
+                helperText="Takes ~10 min. Complete once, use everywhere."
               />
               <Checkbox
                 checked={termsAgreed}
@@ -415,7 +445,6 @@ export const WorkerSignupPage: React.FC = () => {
               />
             </div>
 
-            {/* Submit */}
             <div style={{ marginTop: 4 }}>
               <Button type="submit" variant="accent" size="lg" fullWidth disabled={!termsAgreed}>
                 Create free account →
@@ -449,6 +478,19 @@ export const WorkerSignupPage: React.FC = () => {
           </form>
         </div>
       </div>
+
+      <p
+        style={{
+          position: 'relative',
+          zIndex: 1,
+          textAlign: 'center',
+          padding: '0 0 20px',
+          fontSize: 11,
+          color: 'rgba(229,218,195,0.15)',
+        }}
+      >
+        A Regulix Partner Platform · © 2026 krewtree
+      </p>
     </div>
   )
 }
