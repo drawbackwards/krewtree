@@ -3,3 +3,7 @@ dist/
 .DS_Store
 *.local
 .vite/
+src/.DS_Store
+
+# Claude Code — local permissions cache (machine-specific, not for version control)
+.claude/settings.local.json
