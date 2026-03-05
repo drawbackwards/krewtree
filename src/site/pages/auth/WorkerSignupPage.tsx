@@ -2,13 +2,7 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button, Input, Checkbox, Badge } from '../../../components'
 import { industries } from '../../data/mock'
-
-const TreeIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 32 32" fill="currentColor">
-    <path d="M16 3L4 17h8l-3 12h14l-3-12h8z" opacity=".9" />
-    <rect x="14" y="24" width="4" height="5" rx="1" opacity=".6" />
-  </svg>
-)
+import { KrewtreeLogo } from '../../components/Logo'
 
 const BgMark = () => (
   <svg
@@ -19,7 +13,7 @@ const BgMark = () => (
     aria-hidden="true"
     style={{
       position: 'absolute',
-      right: '-60px',
+      left: '-160px',
       top: '50%',
       transform: 'translateY(-50%)',
       pointerEvents: 'none',
@@ -89,40 +83,9 @@ export const WorkerSignupPage: React.FC = () => {
       >
         <button
           onClick={() => navigate('/site')}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 10,
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            padding: 0,
-          }}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
         >
-          <div
-            style={{
-              width: 34,
-              height: 34,
-              borderRadius: 8,
-              background: 'var(--kt-accent)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-            }}
-          >
-            <TreeIcon />
-          </div>
-          <span
-            style={{
-              fontSize: 'var(--kt-text-xl)',
-              fontWeight: 'var(--kt-weight-bold)',
-              color: 'var(--kt-sand-300)',
-              letterSpacing: '-0.3px',
-            }}
-          >
-            krewtree
-          </span>
+          <KrewtreeLogo height={34} onDark />
         </button>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <span style={{ fontSize: 'var(--kt-text-sm)', color: 'rgba(229,218,195,0.45)' }}>
@@ -161,321 +124,330 @@ export const WorkerSignupPage: React.FC = () => {
           zIndex: 1,
           flex: 1,
           display: 'flex',
-          alignItems: 'flex-start',
-          padding: '48px 52px 60px',
-          gap: 72,
+          justifyContent: 'center',
+          padding: '48px 24px 60px',
         }}
       >
-        {/* Left — brand text (sticky) */}
         <div
           style={{
-            flex: 1,
-            minWidth: 0,
-            position: 'sticky',
-            top: 48,
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: 56,
+            width: '100%',
+            maxWidth: 1060,
           }}
         >
+          {/* Left — brand text (sticky) */}
           <div
             style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              background: 'rgba(109,117,49,0.25)',
-              border: '1px solid rgba(109,117,49,0.4)',
-              borderRadius: 'var(--kt-radius-full)',
-              padding: '4px 12px',
-              marginBottom: 18,
+              flex: 1,
+              minWidth: 0,
+              position: 'sticky',
+              top: 48,
             }}
           >
-            <span style={{ fontSize: 13 }}>👷</span>
-            <span
+            <div
               style={{
-                fontSize: 11,
-                fontWeight: 700,
-                color: 'var(--kt-sand-300)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.06em',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                background: 'rgba(109,117,49,0.25)',
+                border: '1px solid rgba(109,117,49,0.4)',
+                borderRadius: 'var(--kt-radius-full)',
+                padding: '4px 12px',
+                marginBottom: 18,
               }}
             >
-              Worker Account
-            </span>
-          </div>
-          <h1
-            style={{
-              fontSize: 'clamp(28px, 3vw, 44px)',
-              fontWeight: 'var(--kt-weight-bold)',
-              color: 'var(--kt-sand-300)',
-              lineHeight: 1.05,
-              marginBottom: 16,
-              letterSpacing: '-0.8px',
-            }}
-          >
-            Find work faster.
-          </h1>
-          <p
-            style={{
-              fontSize: 'var(--kt-text-md)',
-              color: 'rgba(229,218,195,0.45)',
-              lineHeight: 1.7,
-              marginBottom: 44,
-              maxWidth: 340,
-            }}
-          >
-            Create a free profile and get connected to employers across every industry.
-          </p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {BENEFITS.map(({ icon, label }) => (
-              <div key={label} style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-                <div
-                  style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 10,
-                    background: 'rgba(229,218,195,0.07)',
-                    border: '1px solid rgba(229,218,195,0.1)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 15,
-                    flexShrink: 0,
-                    marginTop: 1,
-                  }}
-                >
-                  {icon}
+              <span style={{ fontSize: 13 }}>👷</span>
+              <span
+                style={{
+                  fontSize: 11,
+                  fontWeight: 700,
+                  color: 'var(--kt-sand-300)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.06em',
+                }}
+              >
+                Worker Account
+              </span>
+            </div>
+            <h1
+              style={{
+                fontSize: 'clamp(28px, 3vw, 44px)',
+                fontWeight: 'var(--kt-weight-bold)',
+                color: 'var(--kt-sand-300)',
+                lineHeight: 1.05,
+                marginBottom: 16,
+                letterSpacing: '-0.8px',
+              }}
+            >
+              Find work faster.
+            </h1>
+            <p
+              style={{
+                fontSize: 'var(--kt-text-md)',
+                color: 'rgba(229,218,195,0.45)',
+                lineHeight: 1.7,
+                marginBottom: 44,
+                maxWidth: 340,
+              }}
+            >
+              Create a free profile and get connected to employers across every industry.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {BENEFITS.map(({ icon, label }) => (
+                <div key={label} style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                  <div
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: 10,
+                      background: 'rgba(229,218,195,0.07)',
+                      border: '1px solid rgba(229,218,195,0.1)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: 15,
+                      flexShrink: 0,
+                      marginTop: 1,
+                    }}
+                  >
+                    {icon}
+                  </div>
+                  <span
+                    style={{
+                      fontSize: 'var(--kt-text-sm)',
+                      color: 'rgba(229,218,195,0.5)',
+                      lineHeight: 1.55,
+                      paddingTop: 7,
+                    }}
+                  >
+                    {label}
+                  </span>
                 </div>
-                <span
-                  style={{
-                    fontSize: 'var(--kt-text-sm)',
-                    color: 'rgba(229,218,195,0.5)',
-                    lineHeight: 1.55,
-                    paddingTop: 7,
-                  }}
-                >
-                  {label}
-                </span>
-              </div>
-            ))}
+              ))}
+            </div>
+
+            {/* Social proof tile */}
+            <div
+              style={{
+                marginTop: 40,
+                display: 'inline-flex',
+                flexDirection: 'column',
+                padding: '16px 20px',
+                background: 'rgba(229,218,195,0.05)',
+                border: '1px solid rgba(229,218,195,0.1)',
+                borderRadius: 12,
+              }}
+            >
+              <span
+                style={{
+                  fontSize: 'var(--kt-text-2xl)',
+                  fontWeight: 'var(--kt-weight-bold)',
+                  color: 'var(--kt-sand-300)',
+                  lineHeight: 1,
+                }}
+              >
+                54,000+
+              </span>
+              <span
+                style={{
+                  fontSize: 11,
+                  color: 'rgba(229,218,195,0.35)',
+                  marginTop: 4,
+                  letterSpacing: '0.02em',
+                }}
+              >
+                workers already on krewtree
+              </span>
+            </div>
           </div>
 
-          {/* Social proof tile */}
+          {/* Right — white card */}
           <div
             style={{
-              marginTop: 40,
-              display: 'inline-flex',
-              flexDirection: 'column',
-              padding: '16px 20px',
-              background: 'rgba(229,218,195,0.05)',
-              border: '1px solid rgba(229,218,195,0.1)',
-              borderRadius: 12,
+              background: 'white',
+              borderRadius: 20,
+              padding: '40px 44px 48px',
+              width: 480,
+              flexShrink: 0,
+              boxShadow: '0 24px 64px rgba(0,0,0,0.45), 0 2px 8px rgba(0,0,0,0.2)',
             }}
           >
-            <span
+            <div style={{ marginBottom: 6 }}>
+              <Badge variant="accent" size="sm">
+                Worker Profile
+              </Badge>
+            </div>
+            <h2
               style={{
                 fontSize: 'var(--kt-text-2xl)',
                 fontWeight: 'var(--kt-weight-bold)',
-                color: 'var(--kt-sand-300)',
-                lineHeight: 1,
+                color: 'var(--kt-text)',
+                marginBottom: 4,
+                letterSpacing: '-0.3px',
+                marginTop: 10,
               }}
             >
-              54,000+
-            </span>
-            <span
-              style={{
-                fontSize: 11,
-                color: 'rgba(229,218,195,0.35)',
-                marginTop: 4,
-                letterSpacing: '0.02em',
-              }}
-            >
-              workers already on krewtree
-            </span>
-          </div>
-        </div>
-
-        {/* Right — white card */}
-        <div
-          style={{
-            background: 'white',
-            borderRadius: 20,
-            padding: '40px 44px 48px',
-            width: 480,
-            flexShrink: 0,
-            boxShadow: '0 24px 64px rgba(0,0,0,0.45), 0 2px 8px rgba(0,0,0,0.2)',
-          }}
-        >
-          <div style={{ marginBottom: 6 }}>
-            <Badge variant="accent" size="sm">
-              Worker Profile
-            </Badge>
-          </div>
-          <h2
-            style={{
-              fontSize: 'var(--kt-text-2xl)',
-              fontWeight: 'var(--kt-weight-bold)',
-              color: 'var(--kt-text)',
-              marginBottom: 4,
-              letterSpacing: '-0.3px',
-              marginTop: 10,
-            }}
-          >
-            Create your account
-          </h2>
-          <p
-            style={{
-              fontSize: 'var(--kt-text-sm)',
-              color: 'var(--kt-text-muted)',
-              marginBottom: 28,
-            }}
-          >
-            Free forever. No credit card required.
-          </p>
-
-          <form
-            onSubmit={handleSubmit}
-            style={{ display: 'flex', flexDirection: 'column', gap: 18 }}
-          >
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-              <Input
-                label="Full name"
-                type="text"
-                placeholder="Marcus Torres"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-              />
-              <Input
-                label="City, State"
-                type="text"
-                placeholder="Phoenix, AZ"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                required
-              />
-            </div>
-
-            <Input
-              label="Email address"
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-              <Input
-                label="Password"
-                type="password"
-                placeholder="Min. 8 characters"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-              <Input
-                label="Confirm password"
-                type="password"
-                placeholder="••••••••"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-              />
-            </div>
-
-            {/* Industry chips */}
-            <div>
-              <p
-                style={{
-                  fontSize: 'var(--kt-text-sm)',
-                  fontWeight: 'var(--kt-weight-medium)',
-                  color: 'var(--kt-text)',
-                  marginBottom: 8,
-                }}
-              >
-                Industries you work in{' '}
-                <span style={{ color: 'var(--kt-text-muted)', fontWeight: 400 }}>
-                  (select all that apply)
-                </span>
-              </p>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
-                {industries.map((ind) => {
-                  const active = selectedIndustries.includes(ind.slug)
-                  return (
-                    <button
-                      key={ind.id}
-                      type="button"
-                      onClick={() => toggleIndustry(ind.slug)}
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 5,
-                        padding: '5px 12px',
-                        borderRadius: 'var(--kt-radius-full)',
-                        border: `1.5px solid ${active ? 'var(--kt-accent)' : 'var(--kt-border)'}`,
-                        background: active ? 'var(--kt-accent)' : 'transparent',
-                        color: active ? 'white' : 'var(--kt-text)',
-                        cursor: 'pointer',
-                        fontSize: 13,
-                        fontFamily: 'var(--kt-font-sans)',
-                        fontWeight: active ? 500 : 400,
-                        transition: 'all 0.15s ease',
-                      }}
-                    >
-                      <span style={{ fontSize: 13 }}>{ind.icon}</span>
-                      {ind.name}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-
-            <div style={{ height: 1, background: 'var(--kt-border)' }} />
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <Checkbox
-                checked={regulixOptIn}
-                onChange={(e) => setRegulixOptIn(e.target.checked)}
-                label="Start my Regulix verification to become hire-ready"
-                helperText="Takes ~10 min. Complete once, use everywhere."
-              />
-              <Checkbox
-                checked={termsAgreed}
-                onChange={(e) => setTermsAgreed(e.target.checked)}
-                label="I agree to the Terms of Service and Privacy Policy"
-                required
-              />
-            </div>
-
-            <div style={{ marginTop: 4 }}>
-              <Button type="submit" variant="accent" size="lg" fullWidth disabled={!termsAgreed}>
-                Create free account →
-              </Button>
-            </div>
-
+              Create your account
+            </h2>
             <p
               style={{
-                textAlign: 'center',
                 fontSize: 'var(--kt-text-sm)',
                 color: 'var(--kt-text-muted)',
+                marginBottom: 28,
               }}
             >
-              Wrong path?{' '}
-              <button
-                type="button"
-                onClick={() => navigate('/site/signup')}
+              Free forever. No credit card required.
+            </p>
+
+            <form
+              onSubmit={handleSubmit}
+              style={{ display: 'flex', flexDirection: 'column', gap: 18 }}
+            >
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                <Input
+                  label="Full name"
+                  type="text"
+                  placeholder="Marcus Torres"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                />
+                <Input
+                  label="City, State"
+                  type="text"
+                  placeholder="Phoenix, AZ"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  required
+                />
+              </div>
+
+              <Input
+                label="Email address"
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                <Input
+                  label="Password"
+                  type="password"
+                  placeholder="Min. 8 characters"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+                <Input
+                  label="Confirm password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                />
+              </div>
+
+              {/* Industry chips */}
+              <div>
+                <p
+                  style={{
+                    fontSize: 'var(--kt-text-sm)',
+                    fontWeight: 'var(--kt-weight-medium)',
+                    color: 'var(--kt-text)',
+                    marginBottom: 8,
+                  }}
+                >
+                  Industries you work in{' '}
+                  <span style={{ color: 'var(--kt-text-muted)', fontWeight: 400 }}>
+                    (select all that apply)
+                  </span>
+                </p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
+                  {industries.map((ind) => {
+                    const active = selectedIndustries.includes(ind.slug)
+                    return (
+                      <button
+                        key={ind.id}
+                        type="button"
+                        onClick={() => toggleIndustry(ind.slug)}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 5,
+                          padding: '5px 12px',
+                          borderRadius: 'var(--kt-radius-full)',
+                          border: `1.5px solid ${active ? 'var(--kt-accent)' : 'var(--kt-border)'}`,
+                          background: active ? 'var(--kt-accent)' : 'transparent',
+                          color: active ? 'white' : 'var(--kt-text)',
+                          cursor: 'pointer',
+                          fontSize: 13,
+                          fontFamily: 'var(--kt-font-sans)',
+                          fontWeight: active ? 500 : 400,
+                          transition: 'all 0.15s ease',
+                        }}
+                      >
+                        <span style={{ fontSize: 13 }}>{ind.icon}</span>
+                        {ind.name}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              <div style={{ height: 1, background: 'var(--kt-border)' }} />
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <Checkbox
+                  checked={regulixOptIn}
+                  onChange={(e) => setRegulixOptIn(e.target.checked)}
+                  label="Start my Regulix verification to become hire-ready"
+                  helperText="Takes ~10 min. Complete once, use everywhere."
+                />
+                <Checkbox
+                  checked={termsAgreed}
+                  onChange={(e) => setTermsAgreed(e.target.checked)}
+                  label="I agree to the Terms of Service and Privacy Policy"
+                  required
+                />
+              </div>
+
+              <div style={{ marginTop: 4 }}>
+                <Button type="submit" variant="accent" size="lg" fullWidth disabled={!termsAgreed}>
+                  Create free account →
+                </Button>
+              </div>
+
+              <p
                 style={{
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  color: 'var(--kt-accent)',
-                  fontFamily: 'var(--kt-font-sans)',
-                  fontSize: 'inherit',
-                  padding: 0,
+                  textAlign: 'center',
+                  fontSize: 'var(--kt-text-sm)',
+                  color: 'var(--kt-text-muted)',
                 }}
               >
-                Go back and choose your path
-              </button>
-            </p>
-          </form>
+                Wrong path?{' '}
+                <button
+                  type="button"
+                  onClick={() => navigate('/site/signup')}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: 'var(--kt-accent)',
+                    fontFamily: 'var(--kt-font-sans)',
+                    fontSize: 'inherit',
+                    padding: 0,
+                  }}
+                >
+                  Go back and choose your path
+                </button>
+              </p>
+            </form>
+          </div>
         </div>
       </div>
 

@@ -1,12 +1,6 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
-
-const TreeIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 32 32" fill="currentColor">
-    <path d="M16 3L4 17h8l-3 12h14l-3-12h8z" opacity=".9" />
-    <rect x="14" y="24" width="4" height="5" rx="1" opacity=".6" />
-  </svg>
-)
+import { KrewtreeLogo } from '../../components/Logo'
 
 const BgMark = () => (
   <svg
@@ -17,9 +11,9 @@ const BgMark = () => (
     aria-hidden="true"
     style={{
       position: 'absolute',
-      left: '50%',
+      left: '-160px',
       top: '50%',
-      transform: 'translate(-50%, -50%)',
+      transform: 'translateY(-50%)',
       pointerEvents: 'none',
       userSelect: 'none',
     }}
@@ -60,40 +54,9 @@ export const SignupRolePage: React.FC = () => {
         {/* Logo */}
         <button
           onClick={() => navigate('/site')}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 10,
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            padding: 0,
-          }}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
         >
-          <div
-            style={{
-              width: 34,
-              height: 34,
-              borderRadius: 8,
-              background: 'var(--kt-accent)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-            }}
-          >
-            <TreeIcon />
-          </div>
-          <span
-            style={{
-              fontSize: 'var(--kt-text-xl)',
-              fontWeight: 'var(--kt-weight-bold)',
-              color: 'var(--kt-sand-300)',
-              letterSpacing: '-0.3px',
-            }}
-          >
-            krewtree
-          </span>
+          <KrewtreeLogo height={34} onDark />
         </button>
 
         {/* Sign in */}

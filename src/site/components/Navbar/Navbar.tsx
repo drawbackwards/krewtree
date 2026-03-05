@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { NotificationDrawer } from '../NotificationDrawer/NotificationDrawer'
 import type { Notification } from '../../types'
 import { notifications as allNotifs } from '../../data/mock'
+import { KrewtreeLogo } from '../Logo'
 import styles from './Navbar.module.css'
 
 export type Persona = 'worker' | 'company'
@@ -25,13 +26,6 @@ const BellIcon = () => (
   >
     <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
     <path d="M13.73 21a2 2 0 01-3.46 0" />
-  </svg>
-)
-
-const TreeIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 32 32" fill="currentColor">
-    <path d="M16 3L4 17h8l-3 12h14l-3-12h8z" opacity=".9" />
-    <rect x="14" y="24" width="4" height="5" rx="1" opacity=".6" />
   </svg>
 )
 
@@ -74,10 +68,7 @@ export const Navbar: React.FC<NavbarProps> = ({ persona, onPersonaChange }) => {
       <div className={styles.inner}>
         {/* Logo */}
         <Link to="/site" className={styles.logo}>
-          <div className={styles.logoMark}>
-            <TreeIcon />
-          </div>
-          <span className={styles.logoText}>krewtree</span>
+          <KrewtreeLogo height={30} onDark={false} />
         </Link>
 
         {/* Links */}
