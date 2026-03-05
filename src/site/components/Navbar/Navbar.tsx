@@ -156,6 +156,37 @@ export const Navbar: React.FC<NavbarProps> = ({ persona, onPersonaChange }) => {
 
         {/* Right */}
         <div className={styles.right}>
+          {/* Auth actions */}
+          <Link
+            to="/site/login"
+            className={[styles.link, isActive('/site/login')].filter(Boolean).join(' ')}
+          >
+            Log in
+          </Link>
+          <button
+            onClick={() => navigate('/site/signup')}
+            style={{
+              background: 'var(--kt-navy-900)',
+              color: 'white',
+              border: 'none',
+              borderRadius: 'var(--kt-radius-full)',
+              padding: '6px 16px',
+              fontSize: 'var(--kt-text-sm)',
+              fontWeight: 'var(--kt-weight-semibold)',
+              cursor: 'pointer',
+              fontFamily: 'var(--kt-font-sans)',
+              transition: 'opacity 0.15s ease',
+              whiteSpace: 'nowrap',
+            }}
+            onMouseOver={(e) => (e.currentTarget.style.opacity = '0.8')}
+            onMouseOut={(e) => (e.currentTarget.style.opacity = '1')}
+          >
+            Sign up
+          </button>
+
+          {/* Divider */}
+          <div style={{ width: 1, height: 20, background: 'var(--kt-border)', flexShrink: 0 }} />
+
           {persona === 'company' && (
             <button className={styles.postJobBtn} onClick={() => navigate('/site/post-job')}>
               + Post a Job

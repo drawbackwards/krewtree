@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, Outlet } from 'react-router-dom'
 import type { Persona } from './components/Navbar/Navbar'
 import { Navbar } from './components/Navbar/Navbar'
 import {
@@ -15,14 +15,35 @@ import {
   MessagesPage,
   ReferralPage,
 } from './pages'
+import { LoginPage } from './pages/auth/LoginPage'
+import { SignupRolePage } from './pages/auth/SignupRolePage'
+import { WorkerSignupPage } from './pages/auth/WorkerSignupPage'
+import { CompanySignupPage } from './pages/auth/CompanySignupPage'
+
+// ── Layout wrapper for pages that use the full Navbar ─────────────────────────
+const AppLayout: React.FC<{ persona: Persona; onPersonaChange: (p: Persona) => void }> = ({
+  persona,
+  onPersonaChange,
+}) => (
+  <>
+    <Navbar persona={persona} onPersonaChange={onPersonaChange} />
+    <Outlet />
+  </>
+)
 
 export const SiteRouter: React.FC = () => {
   const [persona, setPersona] = useState<Persona>('worker')
 
   return (
-    <>
-      <Navbar persona={persona} onPersonaChange={setPersona} />
-      <Routes>
+    <Routes>
+      {/* ── Auth routes — no Navbar ──────────────────────────────────── */}
+      <Route path="/site/login" element={<LoginPage />} />
+      <Route path="/site/signup" element={<SignupRolePage />} />
+      <Route path="/site/signup/worker" element={<WorkerSignupPage />} />
+      <Route path="/site/signup/company" element={<CompanySignupPage />} />
+
+      {/* ── App routes — full Navbar via AppLayout ───────────────────── */}
+      <Route element={<AppLayout persona={persona} onPersonaChange={setPersona} />}>
         <Route path="/site" element={<LandingPage />} />
         <Route path="/site/jobs" element={<JobsPage />} />
         <Route path="/site/jobs/:id" element={<JobDetailPage />} />
@@ -36,7 +57,7 @@ export const SiteRouter: React.FC = () => {
         <Route path="/site/referrals" element={<ReferralPage />} />
         {/* Catch-all redirect */}
         <Route path="*" element={<Navigate to="/site" replace />} />
-      </Routes>
-    </>
+      </Route>
+    </Routes>
   )
 }
