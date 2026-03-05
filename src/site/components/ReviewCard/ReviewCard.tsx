@@ -1,5 +1,5 @@
 import React from 'react'
-import { CompanyReview } from '../../data/mock'
+import type { CompanyReview } from '../../data/mock'
 import styles from './ReviewCard.module.css'
 
 interface ReviewCardProps {
@@ -9,7 +9,7 @@ interface ReviewCardProps {
 function Stars({ rating }: { rating: number }) {
   return (
     <div className={styles.starRow} aria-label={`${rating} out of 5 stars`}>
-      {[1, 2, 3, 4, 5].map(i => (
+      {[1, 2, 3, 4, 5].map((i) => (
         <span key={i} className={[styles.star, i <= rating ? styles.filled : ''].join(' ')}>
           ★
         </span>
@@ -35,9 +35,7 @@ export const ReviewCard: React.FC<ReviewCardProps> = ({ review }) => {
           <div className={styles.reviewerInfo}>
             <div className={styles.reviewerName}>
               {review.workerName}
-              {review.isVerified && (
-                <span className={styles.verifiedBadge}>✓ Verified Worker</span>
-              )}
+              {review.isVerified && <span className={styles.verifiedBadge}>✓ Verified Worker</span>}
             </div>
             <div className={styles.reviewDate}>{monthsLabel(review.datedMonthsAgo)}</div>
           </div>
@@ -61,12 +59,9 @@ export const ReviewCard: React.FC<ReviewCardProps> = ({ review }) => {
 
       <div className={styles.footer}>
         <span
-          className={[
-            styles.recommendBadge,
-            review.recommend ? styles.yes : styles.no,
-          ].join(' ')}
+          className={[styles.recommendBadge, review.recommend ? styles.yes : styles.no].join(' ')}
         >
-          {review.recommend ? '✓ Recommends' : '✗ Doesn\'t recommend'}
+          {review.recommend ? '✓ Recommends' : "✗ Doesn't recommend"}
         </span>
         <span>this employer</span>
       </div>

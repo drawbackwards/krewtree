@@ -1,5 +1,5 @@
 import React from 'react'
-import { JobAnalytics } from '../../data/mock'
+import type { JobAnalytics } from '../../data/mock'
 import styles from './AnalyticsPanel.module.css'
 
 interface AnalyticsPanelProps {
@@ -54,8 +54,10 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({ analytics }) => 
         </div>
         {/* Day labels */}
         <div style={{ display: 'flex', gap: 'var(--kt-space-2)' }}>
-          {DAYS.map(d => (
-            <div key={d} className={styles.barDay} style={{ flex: 1, textAlign: 'center' }}>{d}</div>
+          {DAYS.map((d) => (
+            <div key={d} className={styles.barDay} style={{ flex: 1, textAlign: 'center' }}>
+              {d}
+            </div>
           ))}
         </div>
         <div className={styles.chartLegend}>

@@ -1,7 +1,14 @@
 import React from 'react'
 import styles from './Button.module.css'
 
-export type ButtonVariant = 'primary' | 'secondary' | 'accent' | 'outline' | 'ghost' | 'danger' | 'link'
+export type ButtonVariant =
+  | 'primary'
+  | 'secondary'
+  | 'accent'
+  | 'outline'
+  | 'ghost'
+  | 'danger'
+  | 'link'
 export type ButtonSize = 'sm' | 'md' | 'lg' | 'xl'
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -29,7 +36,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       className,
       children,
       disabled,
-      as: Tag = 'button',
+      as: _as = 'button',
       ...props
     },
     ref
@@ -47,12 +54,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       .join(' ')
 
     return (
-      <button
-        ref={ref}
-        className={cls}
-        disabled={disabled || loading}
-        {...props}
-      >
+      <button ref={ref} className={cls} disabled={disabled || loading} {...props}>
         {loading && <span className={styles.spinner} aria-hidden="true" />}
         {!loading && leftIcon && <span aria-hidden="true">{leftIcon}</span>}
         {children}

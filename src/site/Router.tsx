@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
-import { Navbar, Persona } from './components/Navbar/Navbar'
+import type { Persona } from './components/Navbar/Navbar'
+import { Navbar } from './components/Navbar/Navbar'
 import {
   LandingPage,
   JobsPage,

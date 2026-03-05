@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { KanbanApplicant, KanbanStage } from '../../data/mock'
+import type { KanbanApplicant, KanbanStage } from '../../data/mock'
 import styles from './KanbanBoard.module.css'
 
 interface KanbanBoardProps {
@@ -23,10 +23,10 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ initialApplicants }) =
   const [dragOverStage, setDragOverStage] = useState<KanbanStage | null>(null)
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null)
   const [noteValues, setNoteValues] = useState<Record<string, string>>(
-    Object.fromEntries(initialApplicants.map(a => [a.id, a.notes]))
+    Object.fromEntries(initialApplicants.map((a) => [a.id, a.notes]))
   )
 
-  const byStage = (stage: KanbanStage) => applicants.filter(a => a.stage === stage)
+  const byStage = (stage: KanbanStage) => applicants.filter((a) => a.stage === stage)
 
   const handleDragStart = (e: React.DragEvent, id: string) => {
     e.dataTransfer.effectAllowed = 'move'
@@ -42,9 +42,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ initialApplicants }) =
   const handleDrop = (e: React.DragEvent, stage: KanbanStage) => {
     e.preventDefault()
     if (!draggingId) return
-    setApplicants(prev =>
-      prev.map(a => (a.id === draggingId ? { ...a, stage } : a))
-    )
+    setApplicants((prev) => prev.map((a) => (a.id === draggingId ? { ...a, stage } : a)))
     setDraggingId(null)
     setDragOverStage(null)
   }
@@ -55,12 +53,12 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ initialApplicants }) =
   }
 
   const moveToStage = (id: string, stage: KanbanStage) => {
-    setApplicants(prev => prev.map(a => (a.id === id ? { ...a, stage } : a)))
+    setApplicants((prev) => prev.map((a) => (a.id === id ? { ...a, stage } : a)))
   }
 
   const saveNote = (id: string) => {
-    setApplicants(prev =>
-      prev.map(a => (a.id === id ? { ...a, notes: noteValues[id] ?? '' } : a))
+    setApplicants((prev) =>
+      prev.map((a) => (a.id === id ? { ...a, notes: noteValues[id] ?? '' } : a))
     )
     setEditingNoteId(null)
   }
@@ -77,27 +75,23 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ initialApplicants }) =
             </div>
 
             <div
-              className={[
-                styles.dropZone,
-                dragOverStage === stage ? styles.dragOver : '',
-              ].filter(Boolean).join(' ')}
-              onDragOver={e => handleDragOver(e, stage)}
-              onDrop={e => handleDrop(e, stage)}
+              className={[styles.dropZone, dragOverStage === stage ? styles.dragOver : '']
+                .filter(Boolean)
+                .join(' ')}
+              onDragOver={(e) => handleDragOver(e, stage)}
+              onDrop={(e) => handleDrop(e, stage)}
               onDragLeave={() => setDragOverStage(null)}
             >
-              {cards.length === 0 && (
-                <div className={styles.emptyDrop}>Drop here</div>
-              )}
+              {cards.length === 0 && <div className={styles.emptyDrop}>Drop here</div>}
 
-              {cards.map(applicant => (
+              {cards.map((applicant) => (
                 <div
                   key={applicant.id}
-                  className={[
-                    styles.card,
-                    draggingId === applicant.id ? styles.dragging : '',
-                  ].filter(Boolean).join(' ')}
+                  className={[styles.card, draggingId === applicant.id ? styles.dragging : '']
+                    .filter(Boolean)
+                    .join(' ')}
                   draggable
-                  onDragStart={e => handleDragStart(e, applicant.id)}
+                  onDragStart={(e) => handleDragStart(e, applicant.id)}
                   onDragEnd={handleDragEnd}
                 >
                   <div className={styles.jobTag}>{applicant.jobTitle}</div>
@@ -111,9 +105,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ initialApplicants }) =
                       <span className={styles.regulixChip}>✓ Regulix</span>
                     )}
                     {applicant.performanceScore && (
-                      <span className={styles.scoreChip}>
-                        ★ {applicant.performanceScore}
-                      </span>
+                      <span className={styles.scoreChip}>★ {applicant.performanceScore}</span>
                     )}
                   </div>
 
@@ -122,8 +114,8 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ initialApplicants }) =
                     <textarea
                       className={styles.noteInput}
                       value={noteValues[applicant.id] ?? ''}
-                      onChange={e =>
-                        setNoteValues(prev => ({ ...prev, [applicant.id]: e.target.value }))
+                      onChange={(e) =>
+                        setNoteValues((prev) => ({ ...prev, [applicant.id]: e.target.value }))
                       }
                       onBlur={() => saveNote(applicant.id)}
                       autoFocus
@@ -135,7 +127,9 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ initialApplicants }) =
                       onClick={() => setEditingNoteId(applicant.id)}
                       style={{
                         fontSize: '10px',
-                        color: noteValues[applicant.id] ? 'var(--kt-text-muted)' : 'var(--kt-text-placeholder)',
+                        color: noteValues[applicant.id]
+                          ? 'var(--kt-text-muted)'
+                          : 'var(--kt-text-placeholder)',
                         marginTop: 'var(--kt-space-1)',
                         cursor: 'text',
                         fontStyle: noteValues[applicant.id] ? 'normal' : 'italic',

@@ -50,7 +50,7 @@ export const Tabs: React.FC<TabsProps> = ({
   )
 }
 
-export interface TabListProps extends React.HTMLAttributes<HTMLDivElement> {}
+export type TabListProps = React.HTMLAttributes<HTMLDivElement>
 
 export const TabList: React.FC<TabListProps> = ({ className, children, ...props }) => {
   const { variant } = useTabsContext()

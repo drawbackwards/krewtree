@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Modal } from '../../../components'
-import { Job, currentWorker } from '../../data/mock'
+import type { Job } from '../../data/mock'
+import { currentWorker } from '../../data/mock'
 import styles from './QuickApplyModal.module.css'
 
 interface QuickApplyModalProps {
@@ -40,7 +41,12 @@ export const QuickApplyModal: React.FC<QuickApplyModalProps> = ({
 
   if (!job) return null
 
-  const companyInitials = job.company.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+  const companyInitials = job.company.name
+    .split(' ')
+    .map((w) => w[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase()
 
   return (
     <Modal
@@ -118,9 +124,8 @@ export const QuickApplyModal: React.FC<QuickApplyModalProps> = ({
           <div className={styles.successIcon}>🎉</div>
           <div className={styles.successTitle}>Application Sent!</div>
           <p className={styles.successBody}>
-            Your application for <strong>{job.title}</strong> at{' '}
-            <strong>{job.company.name}</strong> has been submitted. You'll be notified
-            when they view your profile.
+            Your application for <strong>{job.title}</strong> at <strong>{job.company.name}</strong>{' '}
+            has been submitted. You'll be notified when they view your profile.
           </p>
         </div>
       ) : (
@@ -151,11 +156,12 @@ export const QuickApplyModal: React.FC<QuickApplyModalProps> = ({
           {/* Cover Note */}
           <div className={styles.coverNote}>
             <label className={styles.coverLabel}>
-              Cover Note <span style={{ color: 'var(--kt-text-muted)', fontWeight: 400 }}>(optional)</span>
+              Cover Note{' '}
+              <span style={{ color: 'var(--kt-text-muted)', fontWeight: 400 }}>(optional)</span>
             </label>
             <textarea
               value={coverNote}
-              onChange={e => setCoverNote(e.target.value)}
+              onChange={(e) => setCoverNote(e.target.value)}
               placeholder="Add a short note to stand out (e.g. why you're a great fit, availability, questions)"
               rows={4}
               style={{
@@ -172,8 +178,12 @@ export const QuickApplyModal: React.FC<QuickApplyModalProps> = ({
                 lineHeight: 'var(--kt-leading-normal)',
                 outline: 'none',
               }}
-              onFocus={e => { e.target.style.borderColor = 'var(--kt-primary)' }}
-              onBlur={e => { e.target.style.borderColor = 'var(--kt-border)' }}
+              onFocus={(e) => {
+                e.target.style.borderColor = 'var(--kt-primary)'
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = 'var(--kt-border)'
+              }}
             />
             <div className={styles.tip}>
               Your full profile, work history, and Regulix verification are included automatically.

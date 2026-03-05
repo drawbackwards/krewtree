@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { Notification } from '../../data/mock'
+import type { Notification } from '../../data/mock'
 import styles from './NotificationDrawer.module.css'
 
 interface NotificationDrawerProps {
@@ -28,7 +28,7 @@ export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({
   onMarkAllRead,
   onNotificationClick,
 }) => {
-  const hasUnread = notifications.some(n => !n.isRead)
+  const hasUnread = notifications.some((n) => !n.isRead)
 
   return (
     <div className={styles.drawer} role="dialog" aria-label="Notifications">
@@ -45,7 +45,7 @@ export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({
         {notifications.length === 0 ? (
           <div className={styles.empty}>No notifications yet</div>
         ) : (
-          notifications.map(n => (
+          notifications.map((n) => (
             <Link
               key={n.id}
               to={n.link}
