@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Button } from '../../components'
 import { JobCard } from '../components/JobCard/JobCard'
-import type { SavedJob } from '../data/mock'
+import type { SavedJob } from '../types'
 import { savedJobs as initialSavedJobs } from '../data/mock'
 
 export const SavedJobsPage: React.FC = () => {

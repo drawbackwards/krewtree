@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import type { Notification } from '../../data/mock'
+import type { Notification } from '../../types'
 import styles from './NotificationDrawer.module.css'
 
 interface NotificationDrawerProps {

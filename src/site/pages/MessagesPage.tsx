@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
-import type { Conversation, Message } from '../data/mock'
+import type { Conversation, Message } from '../types'
 import { conversations as initialConvs } from '../data/mock'
 
 export const MessagesPage: React.FC = () => {

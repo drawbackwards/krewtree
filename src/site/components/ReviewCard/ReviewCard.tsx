@@ -1,5 +1,5 @@
 import React from 'react'
-import type { CompanyReview } from '../../data/mock'
+import type { CompanyReview } from '../../types'
 import styles from './ReviewCard.module.css'
 
 interface ReviewCardProps {

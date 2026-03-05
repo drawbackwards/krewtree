@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Badge } from '../../components'
 import type { BadgeVariant } from '../../components/Badge/Badge'
-import type { Referral } from '../data/mock'
+import type { Referral } from '../types'
 import { referrals as initialReferrals } from '../data/mock'
 
 const statusColor: Record<string, BadgeVariant> = {

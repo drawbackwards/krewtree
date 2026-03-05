@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { NotificationDrawer } from '../NotificationDrawer/NotificationDrawer'
-import type { Notification } from '../../data/mock'
+import type { Notification } from '../../types'
 import { notifications as allNotifs } from '../../data/mock'
 import styles from './Navbar.module.css'
 

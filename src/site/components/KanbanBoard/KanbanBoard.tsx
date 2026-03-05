@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import type { KanbanApplicant, KanbanStage } from '../../data/mock'
+import type { KanbanApplicant, KanbanStage } from '../../types'
 import styles from './KanbanBoard.module.css'
 
 interface KanbanBoardProps {

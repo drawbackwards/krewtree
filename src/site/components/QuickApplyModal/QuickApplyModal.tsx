@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Modal } from '../../../components'
-import type { Job } from '../../data/mock'
+import type { Job } from '../../types'
 import { currentWorker } from '../../data/mock'
 import styles from './QuickApplyModal.module.css'
 

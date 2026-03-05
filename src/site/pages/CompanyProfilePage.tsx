@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom'
 import { Button, Divider } from '../../components'
 import { JobCard } from '../components/JobCard/JobCard'
 import { ReviewCard } from '../components/ReviewCard/ReviewCard'
-import type { CompanyReview } from '../data/mock'
+import type { CompanyReview } from '../types'
 import { companies, jobs, companyDetails, companyReviews } from '../data/mock'
 
 const StarIcon = ({ filled }: { filled: boolean }) => (

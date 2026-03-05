@@ -1,5 +1,5 @@
 import React from 'react'
-import type { JobAnalytics } from '../../data/mock'
+import type { JobAnalytics } from '../../types'
 import styles from './AnalyticsPanel.module.css'
 
 interface AnalyticsPanelProps {

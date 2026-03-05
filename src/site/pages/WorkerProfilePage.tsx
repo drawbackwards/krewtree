@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { Badge, Button, Divider, Progress } from '../../components'
 import { RegulixBadge } from '../components/RegulixBadge/RegulixBadge'
-import type { SkillEndorsement } from '../data/mock'
+import type { SkillEndorsement } from '../types'
 import { workers, skillEndorsements, resumeDocuments, portfolioItems } from '../data/mock'
 
 const MapPinIcon = () => (

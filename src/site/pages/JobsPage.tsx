@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { Input, Badge } from '../../components'
 import { JobCard } from '../components/JobCard/JobCard'
 import { QuickApplyModal } from '../components/QuickApplyModal/QuickApplyModal'
-import type { SavedSearch, Job } from '../data/mock'
+import type { SavedSearch, Job } from '../types'
 import {
   jobs,
   industries,
@@ -104,16 +104,25 @@ const CheckFilter = ({
 
 export const JobsPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams()
-  const [searchQ, setSearchQ] = useState(searchParams.get('q') ?? '')
-  const [selectedIndustries, setSelectedIndustries] = useState<string[]>(
-    searchParams.get('industry') ? [searchParams.get('industry')!] : []
+
+  // ---- All filter state derived from URL params ----
+  const searchQ = searchParams.get('q') ?? ''
+  // Memoized so the array reference is stable across renders (prevents useMemo churning)
+  const selectedIndustries = useMemo(
+    () => searchParams.get('industry')?.split(',').filter(Boolean) ?? [],
+    [searchParams]
   )
-  const [selectedTypes, setSelectedTypes] = useState<string[]>([])
-  const [regulixOnly, setRegulixOnly] = useState(false)
-  const [sponsoredOnly, setSponsoredOnly] = useState(false)
-  const [payRangeIdx, setPayRangeIdx] = useState(0)
-  const [sortBy, setSortBy] = useState<'recent' | 'pay' | 'applicants'>('recent')
-  const [page, setPage] = useState(1)
+  const selectedTypes = useMemo(
+    () => searchParams.get('type')?.split(',').filter(Boolean) ?? [],
+    [searchParams]
+  )
+  const payRangeIdx = Number(searchParams.get('pay') ?? '0')
+  const regulixOnly = searchParams.get('regulix') === '1'
+  const sponsoredOnly = searchParams.get('sponsored') === '1'
+  const sortBy = (searchParams.get('sort') ?? 'recent') as 'recent' | 'pay' | 'applicants'
+  const page = Number(searchParams.get('page') ?? '1')
+
+  // ---- Local UI state (not URL-syncable) ----
   const [locationView, setLocationView] = useState(false)
   const [quickApplyJob, setQuickApplyJob] = useState<Job | null>(null)
 
@@ -123,8 +132,38 @@ export const JobsPage: React.FC = () => {
   const [saveLabel, setSaveLabel] = useState('')
   const [saveAlerts, setSaveAlerts] = useState(true)
 
+  // ---- Helpers ----
   const toggleSet = (set: string[], val: string) =>
     set.includes(val) ? set.filter((v) => v !== val) : [...set, val]
+
+  /** Merge a patch into current URL params; always resets page to 1. */
+  const updateFilters = (patch: Record<string, string | null>) => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev)
+        Object.entries(patch).forEach(([k, v]) => {
+          if (v === null || v === '') next.delete(k)
+          else next.set(k, v)
+        })
+        next.delete('page')
+        return next
+      },
+      { replace: true }
+    )
+  }
+
+  /** Navigate pages without resetting other params. */
+  const goToPage = (p: number) => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev)
+        if (p <= 1) next.delete('page')
+        else next.set('page', String(p))
+        return next
+      },
+      { replace: true }
+    )
+  }
 
   const filtered = useMemo(() => {
     let list = [...jobs]
@@ -158,9 +197,7 @@ export const JobsPage: React.FC = () => {
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   const handleSearch = () => {
-    setPage(1)
-    if (searchQ) setSearchParams({ q: searchQ })
-    else setSearchParams({})
+    updateFilters({ q: searchQ || null })
   }
 
   const handleSaveSearch = () => {
@@ -183,19 +220,28 @@ export const JobsPage: React.FC = () => {
   }
 
   const handleLoadSearch = (s: SavedSearch) => {
-    setSearchQ(s.query)
-    setSelectedIndustries(s.industrySlug ? [s.industrySlug] : [])
-    setSelectedTypes(s.types)
-    setPayRangeIdx(s.payRangeIdx)
-    setRegulixOnly(s.regulixOnly)
-    setPage(1)
+    const params: Record<string, string | null> = {
+      q: s.query || null,
+      industry: s.industrySlug ?? null,
+      type: s.types.length ? s.types.join(',') : null,
+      pay: s.payRangeIdx > 0 ? String(s.payRangeIdx) : null,
+      regulix: s.regulixOnly ? '1' : null,
+    }
+    setSearchParams(
+      () => {
+        const next = new URLSearchParams()
+        Object.entries(params).forEach(([k, v]) => {
+          if (v) next.set(k, v)
+        })
+        return next
+      },
+      { replace: true }
+    )
   }
 
   const handleDeleteSearch = (id: string) => {
     setMySearches((prev) => prev.filter((s) => s.id !== id))
   }
-
-  const handleFilterChange = () => setPage(1)
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--kt-bg)' }}>
@@ -231,7 +277,7 @@ export const JobsPage: React.FC = () => {
             <button
               onClick={() => {
                 setLocationView((v) => !v)
-                setPage(1)
+                goToPage(1)
               }}
               style={{
                 padding: '8px 16px',
@@ -257,10 +303,7 @@ export const JobsPage: React.FC = () => {
               <Input
                 placeholder="Job title, skill, or keyword..."
                 value={searchQ}
-                onChange={(e) => {
-                  setSearchQ(e.target.value)
-                  handleFilterChange()
-                }}
+                onChange={(e) => updateFilters({ q: e.target.value || null })}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                 style={{ background: 'white' }}
                 leadingIcon={
@@ -533,14 +576,7 @@ export const JobsPage: React.FC = () => {
                   sponsoredOnly ||
                   payRangeIdx > 0) && (
                   <button
-                    onClick={() => {
-                      setSelectedIndustries([])
-                      setSelectedTypes([])
-                      setRegulixOnly(false)
-                      setSponsoredOnly(false)
-                      setPayRangeIdx(0)
-                      handleFilterChange()
-                    }}
+                    onClick={() => setSearchParams({}, { replace: true })}
                     style={{
                       fontSize: 'var(--kt-text-xs)',
                       color: 'var(--kt-accent)',
@@ -563,8 +599,8 @@ export const JobsPage: React.FC = () => {
                     count={ind.jobCount}
                     checked={selectedIndustries.includes(ind.slug)}
                     onChange={() => {
-                      setSelectedIndustries((prev) => toggleSet(prev, ind.slug))
-                      handleFilterChange()
+                      const next = toggleSet(selectedIndustries, ind.slug)
+                      updateFilters({ industry: next.join(',') || null })
                     }}
                   />
                 ))}
@@ -579,8 +615,8 @@ export const JobsPage: React.FC = () => {
                     label={t}
                     checked={selectedTypes.includes(t)}
                     onChange={() => {
-                      setSelectedTypes((prev) => toggleSet(prev, t))
-                      handleFilterChange()
+                      const next = toggleSet(selectedTypes, t)
+                      updateFilters({ type: next.join(',') || null })
                     }}
                   />
                 ))}
@@ -626,8 +662,7 @@ export const JobsPage: React.FC = () => {
                       type="radio"
                       checked={payRangeIdx === i}
                       onChange={() => {
-                        setPayRangeIdx(i)
-                        handleFilterChange()
+                        updateFilters({ pay: i === 0 ? null : String(i) })
                       }}
                       style={{ display: 'none' }}
                     />
@@ -644,18 +679,12 @@ export const JobsPage: React.FC = () => {
                 <CheckFilter
                   label="Regulix Ready Applicants"
                   checked={regulixOnly}
-                  onChange={(v) => {
-                    setRegulixOnly(v)
-                    handleFilterChange()
-                  }}
+                  onChange={(v) => updateFilters({ regulix: v ? '1' : null })}
                 />
                 <CheckFilter
                   label="Featured / Sponsored"
                   checked={sponsoredOnly}
-                  onChange={(v) => {
-                    setSponsoredOnly(v)
-                    handleFilterChange()
-                  }}
+                  onChange={(v) => updateFilters({ sponsored: v ? '1' : null })}
                 />
               </FilterSection>
             </div>
@@ -689,8 +718,7 @@ export const JobsPage: React.FC = () => {
                     key={region.id}
                     onClick={() => {
                       setLocationView(false)
-                      setSearchQ(region.city)
-                      setPage(1)
+                      updateFilters({ q: region.city })
                     }}
                     style={{
                       padding: '20px',
@@ -800,10 +828,7 @@ export const JobsPage: React.FC = () => {
                   {(['recent', 'pay', 'applicants'] as const).map((s) => (
                     <button
                       key={s}
-                      onClick={() => {
-                        setSortBy(s)
-                        setPage(1)
-                      }}
+                      onClick={() => updateFilters({ sort: s === 'recent' ? null : s })}
                       style={{
                         padding: '5px 12px',
                         borderRadius: 'var(--kt-radius-full)',
@@ -903,7 +928,7 @@ export const JobsPage: React.FC = () => {
                       }}
                     >
                       <button
-                        onClick={() => setPage((p) => Math.max(1, p - 1))}
+                        onClick={() => goToPage(Math.max(1, page - 1))}
                         disabled={page === 1}
                         style={{
                           padding: '6px 14px',
@@ -921,7 +946,7 @@ export const JobsPage: React.FC = () => {
                       {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
                         <button
                           key={n}
-                          onClick={() => setPage(n)}
+                          onClick={() => goToPage(n)}
                           style={{
                             width: 36,
                             height: 36,
@@ -940,7 +965,7 @@ export const JobsPage: React.FC = () => {
                         </button>
                       ))}
                       <button
-                        onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                        onClick={() => goToPage(Math.min(totalPages, page + 1))}
                         disabled={page === totalPages}
                         style={{
                           padding: '6px 14px',
