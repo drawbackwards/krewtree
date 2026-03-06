@@ -246,7 +246,7 @@ All components share:
 | `StatCard` | Dashboard stat tile (num + label + trend) |
 | `AnalyticsPanel` | Chart/analytics display for company dashboard |
 | `KanbanBoard` | Application pipeline (Applied → Reviewed → Interview → Hired) |
-| `QuickApplyModal` | 1-click apply modal for workers |
+| `QuickApplyModal` | 1-click apply modal; optional $9.99 boost add-on (checkbox, reflected in submit label + success state) |
 | `ReviewCard` | Employer/worker review display |
 | `NotificationDrawer` | Slide-in notification panel |
 
@@ -381,6 +381,11 @@ Each subdomain shows industry-scoped jobs by default. "Browse by Industry" is in
 - RegulixBadge, JobCard, WorkerCard, StatCard, KanbanBoard, etc.
 - ESLint + Prettier + husky + lint-staged
 - Top-level error boundary
+- Boost feature (all UI/mock, no real payment):
+  - Worker dashboard: 🚀 Boost button per application → modal with $9.99 fee, Apple Pay / Zelle picker, success state
+  - QuickApplyModal: optional boost add-on checkbox ($9.99, updates submit label + success message)
+  - Company dashboard: 🚀 Boost per job → modal with 7/14/30-day duration tiers ($35/$65/$120), Visa ****1234 on file, success state
+  - PostJobPage: rich sponsored listing section — $38/application, stop mode (pause or application limit), Urgently Hiring label + preview
 
 ### ❌ Not Yet Built
 - Real authentication (AuthContext, ProtectedRoute, JWT/session)

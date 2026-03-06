@@ -185,7 +185,7 @@ Located in `src/site/components/`.
 | `StatCard`           | Dashboard KPI tile (value + label + trend direction)                                                                                                               |
 | `AnalyticsPanel`     | Bar/line chart display for company dashboard                                                                                                                       |
 | `KanbanBoard`        | Applicant pipeline: Applied → Reviewed → Interview → Hired                                                                                                         |
-| `QuickApplyModal`    | 1-click apply for Regulix Ready workers; full form otherwise                                                                                                       |
+| `QuickApplyModal`    | 1-click apply for Regulix Ready workers; optional $9.99 boost add-on (checkbox, updates submit label + success state)                                              |
 | `ReviewCard`         | Employer or worker review with star rating                                                                                                                         |
 | `NotificationDrawer` | Slide-in notification panel with mark-all-read                                                                                                                     |
 
@@ -240,6 +240,11 @@ The auth UI is built (4 pages) but there is no real authentication logic. What n
 - Full mock data layer
 - ESLint + Prettier + husky + lint-staged
 - Vercel deployment config
+- Boost monetization UI (all mock, no real payment):
+  - Worker dashboard: per-application boost modal ($9.99, Apple Pay / Zelle)
+  - QuickApplyModal: boost opt-in checkbox ($9.99 add-on at submit)
+  - Company dashboard: job boost modal (7 / 14 / 30-day tiers, $35 / $65 / $120)
+  - PostJobPage: rich sponsored listing — $38/application, stop-mode radios, Urgently Hiring label
 
 ### 🔜 Next priorities
 
