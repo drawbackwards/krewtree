@@ -1,27 +1,6 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
-import { KrewtreeLogo } from '../../components/Logo'
-
-const BgMark = () => (
-  <svg
-    width="700"
-    height="700"
-    viewBox="0 0 32 32"
-    fill="rgba(229,218,195,0.05)"
-    aria-hidden="true"
-    style={{
-      position: 'absolute',
-      left: '-160px',
-      top: '50%',
-      transform: 'translateY(-50%)',
-      pointerEvents: 'none',
-      userSelect: 'none',
-    }}
-  >
-    <path d="M16 3L4 17h8l-3 12h14l-3-12h8z" />
-    <rect x="14" y="24" width="4" height="5" rx="1" />
-  </svg>
-)
+import { KrewtreeLogo, KrewtreeBgMark } from '../../components/Logo'
 
 export const SignupRolePage: React.FC = () => {
   const navigate = useNavigate()
@@ -38,7 +17,7 @@ export const SignupRolePage: React.FC = () => {
         fontFamily: 'var(--kt-font-sans)',
       }}
     >
-      <BgMark />
+      <KrewtreeBgMark />
 
       {/* ── Top bar ────────────────────────────────────────────────── */}
       <div
