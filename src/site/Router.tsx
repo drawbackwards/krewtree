@@ -15,6 +15,7 @@ import {
   MessagesPage,
   ReferralPage,
 } from './pages'
+import { ColorLandingPage } from './pages/ColorLandingPage'
 import { LoginPage } from './pages/auth/LoginPage'
 import { SignupRolePage } from './pages/auth/SignupRolePage'
 import { WorkerSignupPage } from './pages/auth/WorkerSignupPage'
@@ -45,6 +46,7 @@ export const SiteRouter: React.FC = () => {
       {/* ── App routes — full Navbar via AppLayout ───────────────────── */}
       <Route element={<AppLayout persona={persona} onPersonaChange={setPersona} />}>
         <Route path="/site" element={<LandingPage />} />
+        <Route path="/site/color" element={<ColorLandingPage />} />
         <Route path="/site/jobs" element={<JobsPage />} />
         <Route path="/site/jobs/:id" element={<JobDetailPage />} />
         <Route path="/site/dashboard/worker" element={<WorkerDashboard />} />
