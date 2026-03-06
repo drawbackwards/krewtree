@@ -1,10 +1,8 @@
 import React from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { KrewtreeLogo, KrewtreeBgMark } from '../../components/Logo'
 
 export const SignupRolePage: React.FC = () => {
-  const navigate = useNavigate()
-
   return (
     <div
       style={{
@@ -31,20 +29,21 @@ export const SignupRolePage: React.FC = () => {
         }}
       >
         {/* Logo */}
-        <button
-          onClick={() => navigate('/site')}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+        <Link
+          to="/site"
+          style={{ display: 'inline-flex', lineHeight: 0 }}
+          aria-label="krewtree home"
         >
           <KrewtreeLogo height={34} onDark />
-        </button>
+        </Link>
 
         {/* Sign in */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <span style={{ fontSize: 'var(--kt-text-sm)', color: 'rgba(229,218,195,0.45)' }}>
             Already have an account?
           </span>
-          <button
-            onClick={() => navigate('/site/login')}
+          <Link
+            to="/site/login"
             style={{
               background: 'rgba(229,218,195,0.1)',
               color: 'var(--kt-sand-300)',
@@ -53,8 +52,7 @@ export const SignupRolePage: React.FC = () => {
               padding: '7px 18px',
               fontSize: 'var(--kt-text-sm)',
               fontWeight: 'var(--kt-weight-medium)',
-              cursor: 'pointer',
-              fontFamily: 'var(--kt-font-sans)',
+              textDecoration: 'none',
               transition: 'all 0.15s ease',
             }}
             onMouseOver={(e) => {
@@ -65,7 +63,7 @@ export const SignupRolePage: React.FC = () => {
             }}
           >
             Sign in
-          </button>
+          </Link>
         </div>
       </div>
 
@@ -120,8 +118,8 @@ export const SignupRolePage: React.FC = () => {
           }}
         >
           {/* Worker track */}
-          <button
-            onClick={() => navigate('/site/signup/worker')}
+          <Link
+            to="/site/signup/worker"
             style={{
               background: 'rgba(255,255,255,0.06)',
               border: '1px solid rgba(229,218,195,0.14)',
@@ -134,6 +132,7 @@ export const SignupRolePage: React.FC = () => {
               display: 'flex',
               flexDirection: 'column',
               gap: 14,
+              textDecoration: 'none',
             }}
             onMouseOver={(e) => {
               e.currentTarget.style.transform = 'translateY(-3px)'
@@ -233,11 +232,11 @@ export const SignupRolePage: React.FC = () => {
             >
               Create worker account →
             </span>
-          </button>
+          </Link>
 
           {/* Company track */}
-          <button
-            onClick={() => navigate('/site/signup/company')}
+          <Link
+            to="/site/signup/company"
             style={{
               background: 'var(--kt-sand-50)',
               border: '1px solid var(--kt-sand-200)',
@@ -347,7 +346,7 @@ export const SignupRolePage: React.FC = () => {
             >
               Create company account →
             </span>
-          </button>
+          </Link>
         </div>
 
         {/* Bottom nudge */}
@@ -359,21 +358,16 @@ export const SignupRolePage: React.FC = () => {
           }}
         >
           Already have an account?{' '}
-          <button
-            onClick={() => navigate('/site/login')}
+          <Link
+            to="/site/login"
             style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
               color: 'var(--kt-sand-300)',
               fontWeight: 'var(--kt-weight-semibold)',
-              fontFamily: 'var(--kt-font-sans)',
-              fontSize: 'inherit',
-              padding: 0,
+              textDecoration: 'none',
             }}
           >
             Sign in →
-          </button>
+          </Link>
         </p>
       </div>
 

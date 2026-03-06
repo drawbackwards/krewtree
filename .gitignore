@@ -5,5 +5,10 @@ dist/
 .vite/
 src/.DS_Store
 
+# Environment variables — never commit secrets
+.env
+.env.*
+!.env.example
+
 # Claude Code — local permissions cache (machine-specific, not for version control)
 .claude/settings.local.json

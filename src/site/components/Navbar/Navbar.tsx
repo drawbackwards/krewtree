@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { NotificationDrawer } from '../NotificationDrawer/NotificationDrawer'
 import type { Notification } from '../../types'
 import { notifications as allNotifs } from '../../data/mock'
@@ -31,7 +31,6 @@ const BellIcon = () => (
 
 export const Navbar: React.FC<NavbarProps> = ({ persona, onPersonaChange }) => {
   const location = useLocation()
-  const navigate = useNavigate()
   const isActive = (path: string) => (location.pathname.startsWith(path) ? styles.active : '')
 
   const [notifOpen, setNotifOpen] = useState(false)
@@ -154,18 +153,16 @@ export const Navbar: React.FC<NavbarProps> = ({ persona, onPersonaChange }) => {
           >
             Log in
           </Link>
-          <button
-            onClick={() => navigate('/site/signup')}
+          <Link
+            to="/site/signup"
             style={{
               background: 'var(--kt-navy-900)',
               color: 'white',
-              border: 'none',
               borderRadius: 'var(--kt-radius-full)',
               padding: '6px 16px',
               fontSize: 'var(--kt-text-sm)',
               fontWeight: 'var(--kt-weight-semibold)',
-              cursor: 'pointer',
-              fontFamily: 'var(--kt-font-sans)',
+              textDecoration: 'none',
               transition: 'opacity 0.15s ease',
               whiteSpace: 'nowrap',
             }}
@@ -173,15 +170,15 @@ export const Navbar: React.FC<NavbarProps> = ({ persona, onPersonaChange }) => {
             onMouseOut={(e) => (e.currentTarget.style.opacity = '1')}
           >
             Sign up
-          </button>
+          </Link>
 
           {/* Divider */}
           <div style={{ width: 1, height: 20, background: 'var(--kt-border)', flexShrink: 0 }} />
 
           {persona === 'company' && (
-            <button className={styles.postJobBtn} onClick={() => navigate('/site/post-job')}>
+            <Link to="/site/post-job" className={styles.postJobBtn}>
               + Post a Job
-            </button>
+            </Link>
           )}
 
           {/* Notification Bell */}

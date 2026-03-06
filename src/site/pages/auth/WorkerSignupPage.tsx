@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Button, Input, Checkbox, Badge } from '../../../components'
 import { industries } from '../../data/mock'
 import { KrewtreeLogo, KrewtreeBgMark } from '../../components/Logo'
@@ -22,6 +22,8 @@ export const WorkerSignupPage: React.FC = () => {
   const [selectedIndustries, setSelectedIndustries] = useState<string[]>([])
   const [regulixOptIn, setRegulixOptIn] = useState(false)
   const [termsAgreed, setTermsAgreed] = useState(false)
+  const [passwordError, setPasswordError] = useState('')
+  const [confirmPasswordError, setConfirmPasswordError] = useState('')
 
   const toggleIndustry = (slug: string) => {
     setSelectedIndustries((prev) =>
@@ -31,7 +33,26 @@ export const WorkerSignupPage: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!termsAgreed) return
+    let valid = true
+
+    if (password.length < 8) {
+      setPasswordError('Password must be at least 8 characters')
+      valid = false
+    } else {
+      setPasswordError('')
+    }
+
+    if (password !== confirmPassword) {
+      setConfirmPasswordError('Passwords do not match')
+      valid = false
+    } else {
+      setConfirmPasswordError('')
+    }
+
+    if (!termsAgreed || !valid) return
+
+    setPassword('')
+    setConfirmPassword('')
     navigate('/site/dashboard/worker')
   }
 
@@ -60,18 +81,19 @@ export const WorkerSignupPage: React.FC = () => {
           padding: '22px 52px',
         }}
       >
-        <button
-          onClick={() => navigate('/site')}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+        <Link
+          to="/site"
+          style={{ display: 'inline-flex', lineHeight: 0 }}
+          aria-label="krewtree home"
         >
           <KrewtreeLogo height={34} onDark />
-        </button>
+        </Link>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <span style={{ fontSize: 'var(--kt-text-sm)', color: 'rgba(229,218,195,0.45)' }}>
             Already have an account?
           </span>
-          <button
-            onClick={() => navigate('/site/login')}
+          <Link
+            to="/site/login"
             style={{
               background: 'rgba(229,218,195,0.1)',
               color: 'var(--kt-sand-300)',
@@ -80,8 +102,7 @@ export const WorkerSignupPage: React.FC = () => {
               padding: '7px 18px',
               fontSize: 'var(--kt-text-sm)',
               fontWeight: 'var(--kt-weight-medium)',
-              cursor: 'pointer',
-              fontFamily: 'var(--kt-font-sans)',
+              textDecoration: 'none',
               transition: 'all 0.15s ease',
             }}
             onMouseOver={(e) => {
@@ -92,7 +113,7 @@ export const WorkerSignupPage: React.FC = () => {
             }}
           >
             Sign in
-          </button>
+          </Link>
         </div>
       </div>
 
@@ -318,7 +339,11 @@ export const WorkerSignupPage: React.FC = () => {
                   type="password"
                   placeholder="Min. 8 characters"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value)
+                    setPasswordError('')
+                  }}
+                  error={passwordError}
                   required
                 />
                 <Input
@@ -326,7 +351,11 @@ export const WorkerSignupPage: React.FC = () => {
                   type="password"
                   placeholder="••••••••"
                   value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  onChange={(e) => {
+                    setConfirmPassword(e.target.value)
+                    setConfirmPasswordError('')
+                  }}
+                  error={confirmPasswordError}
                   required
                 />
               </div>

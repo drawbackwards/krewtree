@@ -5,7 +5,8 @@ import { resolve } from 'path'
 export default defineConfig({
   plugins: [react()],
   server: {
-    host: true,
+    // Use EXPOSE_HOST=true to allow network access (e.g. for testing on device)
+    host: process.env.EXPOSE_HOST === 'true' ? true : 'localhost',
     port: 5173,
   },
   resolve: {
