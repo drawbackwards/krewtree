@@ -26,13 +26,14 @@ krewtree is a **job board platform for hourly / blue-collar workers and the comp
 | Styling | CSS Modules + CSS Custom Properties (`--kt-*` tokens) |
 | Tailwind | ❌ None — never add |
 | Testing | ❌ Not yet set up |
-| Linting | ❌ Not yet set up |
+| Linting | ✅ ESLint 9 + typescript-eslint + react-hooks + react-refresh + react + prettier |
 | Deployment | Vercel (vercel.json configured) |
-| Dev server | `npm run dev` → http://localhost:5173 (also on network IP for Claude Preview) |
+| Dev server | `npm run dev` → http://localhost:5173 |
 
 **Key config files:**
-- `vite.config.ts` — `host: true, port: 5173`, `@` alias → `./src`
+- `vite.config.ts` — defaults to `host: localhost`; set `EXPOSE_HOST=true` to expose on network. Port 5173. `@` alias → `./src`
 - `tsconfig.json` — `strict: true`, `noUnusedLocals`, `noUnusedParameters`
+- `eslint.config.js` — ESLint flat config with 4 plugins; husky + lint-staged run on commit
 - `vercel.json` — SPA rewrites + redirect `/` → `/site`
 - `.claude/launch.json` — Claude Code preview server config
 
@@ -86,15 +87,16 @@ krewtree is a **job board platform for hourly / blue-collar workers and the comp
 ```
 src/
 ├── App.tsx                    — component library showcase/demo page
-├── main.tsx                   — entry, wraps in BrowserRouter + ToastProvider
+├── main.tsx                   — entry; wraps in ErrorBoundary > BrowserRouter > ToastProvider
 ├── vite-env.d.ts              — CSS module type declarations
 ├── styles/
 │   ├── tokens.css             — full CSS custom property token system (light + dark)
 │   └── global.css             — reset + body styles
 ├── tokens/
 │   └── colors.ts              — TS color primitives + light/dark semantic maps
-├── components/                — reusable UI component library (21 components)
+├── components/                — reusable UI component library (21 components + ErrorBoundary)
 │   ├── index.ts               — barrel export
+│   ├── ErrorBoundary/         — top-level React error boundary (class component)
 │   ├── Alert/                 ├── Avatar/       ├── Badge/
 │   ├── Button/                ├── Card/         ├── Checkbox/
 │   ├── Divider/               ├── Input/        ├── Label/
@@ -103,17 +105,25 @@ src/
 │   ├── Tabs/                  ├── Textarea/     ├── Toast/
 │   └── Tooltip/
 └── site/                      — the krewtree site/app
-    ├── Router.tsx             — all site routes + Navbar wrapper
+    ├── Router.tsx             — all site routes + Navbar wrapper (AppLayout)
     ├── data/
-    │   └── mock.ts            — all mock data (1018 lines) — types + data
+    │   └── mock.ts            — all mock data (56KB) — types + data; replace with real API
+    ├── types/
+    │   └── index.ts           — shared TypeScript types
     ├── components/            — site-specific components
     │   ├── index.ts
+    │   ├── Logo.tsx           — KrewtreeLogo + KrewtreeBgMark (official brand SVG paths)
     │   ├── AnalyticsPanel/    ├── JobCard/       ├── KanbanBoard/
     │   ├── Navbar/            ├── NotificationDrawer/
     │   ├── QuickApplyModal/   ├── RegulixBadge/  ├── ReviewCard/
     │   ├── StatCard/          └── WorkerCard/
     └── pages/
         ├── index.ts
+        ├── auth/
+        │   ├── LoginPage.tsx          — sign-in form (email + password, worker/company toggle)
+        │   ├── SignupRolePage.tsx     — role picker (worker vs company path cards)
+        │   ├── WorkerSignupPage.tsx   — worker registration form
+        │   └── CompanySignupPage.tsx  — company registration form
         ├── LandingPage.tsx        — home / path chooser
         ├── JobsPage.tsx           — job search & filtering
         ├── JobDetailPage.tsx      — individual job view + apply
@@ -133,22 +143,28 @@ src/
 
 All site routes are prefixed `/site`. Root `/` redirects to `/site` via vercel.json.
 
-| Route | Component | Persona |
-|-------|-----------|---------|
-| `/site` | `LandingPage` | Both |
-| `/site?layout=e` | `LandingPage` (E·Color hero) | Both |
-| `/site/jobs` | `JobsPage` | Worker |
-| `/site/jobs/:id` | `JobDetailPage` | Worker |
-| `/site/dashboard/worker` | `WorkerDashboard` | Worker |
-| `/site/dashboard/company` | `CompanyDashboard` | Company |
-| `/site/profile/:id` | `WorkerProfilePage` | Both |
-| `/site/post-job` | `PostJobPage` | Company |
-| `/site/company/:id` | `CompanyProfilePage` | Both |
-| `/site/saved-jobs` | `SavedJobsPage` | Worker |
-| `/site/messages` | `MessagesPage` | Both |
-| `/site/referrals` | `ReferralPage` | Both |
+| Route | Component | Notes |
+|-------|-----------|-------|
+| `/site/login` | `LoginPage` | No Navbar |
+| `/site/signup` | `SignupRolePage` | No Navbar — role picker |
+| `/site/signup/worker` | `WorkerSignupPage` | No Navbar |
+| `/site/signup/company` | `CompanySignupPage` | No Navbar |
+| `/site` | `LandingPage` | Navbar |
+| `/site?layout=e` | `LandingPage` (E·Color hero) | Navbar |
+| `/site/jobs` | `JobsPage` | Navbar |
+| `/site/jobs/:id` | `JobDetailPage` | Navbar |
+| `/site/dashboard/worker` | `WorkerDashboard` | Navbar — ⚠️ no auth guard yet |
+| `/site/dashboard/company` | `CompanyDashboard` | Navbar — ⚠️ no auth guard yet |
+| `/site/profile/:id` | `WorkerProfilePage` | Navbar |
+| `/site/post-job` | `PostJobPage` | Navbar |
+| `/site/company/:id` | `CompanyProfilePage` | Navbar |
+| `/site/saved-jobs` | `SavedJobsPage` | Navbar |
+| `/site/messages` | `MessagesPage` | Navbar |
+| `/site/referrals` | `ReferralPage` | Navbar |
 
-**Navbar persona switcher:** `Persona = 'worker' | 'company'` — state lives in `Router.tsx`.
+**Auth note:** Auth pages exist as UI but have no real authentication. All routes are currently open. A `ProtectedRoute` wrapper + `AuthContext` need to be added before launch.
+
+**Navbar persona switcher:** `Persona = 'worker' | 'company'` — dev-only state in `Router.tsx`. Will be replaced by real auth state.
 
 ---
 
@@ -187,7 +203,7 @@ Worker {
 
 ## 7. Component Library (src/components)
 
-All 21 components share:
+All components share:
 - TypeScript props interfaces
 - CSS module styling using `--kt-*` tokens
 - Accessible (aria attributes, focus-visible)
@@ -195,6 +211,7 @@ All 21 components share:
 
 | Component | Key Variants/Notes |
 |-----------|-------------------|
+| `ErrorBoundary` | Class component; wraps entire app; shows reload UI on crash |
 | `Button` | 7 variants: primary, secondary, accent, outline, ghost, danger, link |
 | `Badge` | 8 variants: default, primary, secondary, accent, success, warning, danger, info |
 | `Input` | size sm/md/lg, error state, leading/trailing icon |
@@ -221,6 +238,7 @@ All 21 components share:
 
 | Component | Purpose |
 |-----------|---------|
+| `Logo` (`KrewtreeLogo`, `KrewtreeBgMark`) | Official brand SVG. `onDark` prop switches colors. Used in Navbar + all auth pages |
 | `Navbar` | Top nav with persona switcher (worker/company), links, notification bell |
 | `RegulixBadge` | Regulix partner badge with pulse animation, sizes sm/md/lg, onDark variant |
 | `JobCard` | Job listing card with company, pay, skills, Regulix Ready badge |
@@ -346,7 +364,7 @@ Each subdomain shows industry-scoped jobs by default. "Browse by Industry" is in
 
 ### ✅ Built (UI/prototype level)
 - Full design token system (light + dark)
-- 21 reusable components
+- 21 reusable UI components + ErrorBoundary
 - Landing page (2 hero variants)
 - Jobs listing page
 - Job detail page
@@ -359,19 +377,20 @@ Each subdomain shows industry-scoped jobs by default. "Browse by Industry" is in
 - Messages page
 - Referral page
 - Navbar with persona switcher
+- Auth pages UI: Login, Signup role picker, Worker signup, Company signup
 - RegulixBadge, JobCard, WorkerCard, StatCard, KanbanBoard, etc.
+- ESLint + Prettier + husky + lint-staged
+- Top-level error boundary
 
 ### ❌ Not Yet Built
+- Real authentication (AuthContext, ProtectedRoute, JWT/session)
 - Browse Workers page (`/site/workers`)
-- Auth (login / signup flows)
 - Real API / backend integration
 - Industry subdomain routing logic
 - Search/filter state management (URL-driven)
 - Dark mode UI toggle (tokens exist, no toggle)
 - Mobile responsive layouts
-- ESLint / Prettier config
-- Unit tests
-- Error boundaries
+- Unit / integration tests
 - Loading / skeleton states
 - SEO / per-page `<title>` and meta tags
 - Analytics integration
@@ -381,11 +400,12 @@ Each subdomain shows industry-scoped jobs by default. "Browse by Industry" is in
 ## 13. Dev Commands
 
 ```bash
-npm run dev        # start dev server → http://localhost:5173
-npm run build      # tsc + vite build
-npm run preview    # preview production build
-npx tsc --noEmit   # type-check only (no output)
+npm run dev          # start dev server → http://localhost:5173
+EXPOSE_HOST=true npm run dev  # expose on local network (for device testing)
+npm run build        # tsc + vite build
+npm run preview      # preview production build
+npm run lint         # run ESLint
+npm run lint:fix     # run ESLint with auto-fix
+npm run format       # run Prettier on all src files
+npx tsc --noEmit     # type-check only (no output)
 ```
-
-**Claude Preview:** Navigates to `http://192.168.0.4:5173/site` (network IP, not localhost).
-Dev server must have `host: true` in vite.config.ts (already set).
