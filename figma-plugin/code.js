@@ -27,7 +27,6 @@ const T = {
 async function loadFonts() {
   await figma.loadFontAsync({ family: 'Inter', style: 'Regular' })
   await figma.loadFontAsync({ family: 'Inter', style: 'Medium' })
-  await figma.loadFontAsync({ family: 'Inter', style: 'SemiBold' })
   await figma.loadFontAsync({ family: 'Inter', style: 'Bold' })
 }
 
@@ -426,4 +425,4 @@ async function main() {
   figma.closePlugin('✅ 19 krewtree component sets created on "🌿 krewtree components" page.')
 }
 
-main().catch(err => figma.closePlugin('❌ Error: ' + err.message))
+main().catch(err => figma.closePlugin('❌ ' + (err instanceof Error ? err.message : String(err))))
