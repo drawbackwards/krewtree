@@ -39,7 +39,7 @@ function makeVariant(variantName, fill, w, h, textColor, cornerRadius) {
   c.resize(w, h)
   c.name = variantName
   c.fills = [{ type: 'SOLID', color: fill }]
-  c.cornerRadius = cornerRadius ?? 6
+  c.cornerRadius = cornerRadius != null ? cornerRadius : 6
 
   // Display label: first variant's value  e.g. "Primary" from "Variant=Primary, Size=md"
   const displayLabel = variantName.split(', ')[0].split('=').pop() || variantName
