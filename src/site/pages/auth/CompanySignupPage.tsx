@@ -67,7 +67,7 @@ export const CompanySignupPage: React.FC = () => {
     <div
       style={{
         minHeight: '100vh',
-        background: 'var(--kt-navy-900)',
+        background: 'var(--kt-olive-700)',
         position: 'relative',
         overflow: 'hidden',
         display: 'flex',

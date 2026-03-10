@@ -166,8 +166,8 @@ const HeroDefault = () => {
         <button
           onClick={() => navigate('/site/signup/company')}
           style={{
-            background: 'var(--kt-sand-50)',
-            border: '1px solid var(--kt-sand-200)',
+            background: 'var(--kt-olive-700)',
+            border: '1px solid rgba(255,255,255,0.15)',
             borderRadius: 'var(--kt-radius-xl)',
             padding: '48px 44px',
             textAlign: 'left',
@@ -180,7 +180,7 @@ const HeroDefault = () => {
           }}
           onMouseOver={(e) => {
             e.currentTarget.style.transform = 'translateY(-4px)'
-            e.currentTarget.style.boxShadow = '0 20px 40px rgba(10,35,45,0.1)'
+            e.currentTarget.style.boxShadow = '0 20px 40px rgba(109,117,49,0.35)'
           }}
           onMouseOut={(e) => {
             e.currentTarget.style.transform = 'none'
@@ -189,14 +189,23 @@ const HeroDefault = () => {
         >
           <div style={{ fontSize: 44 }}>🏢</div>
           <div>
-            <Badge variant="primary" size="sm" style={{ marginBottom: 14 }}>
+            <Badge
+              variant="secondary"
+              size="sm"
+              style={{
+                marginBottom: 14,
+                background: 'rgba(255,255,255,0.18)',
+                color: 'white',
+                border: 'none',
+              }}
+            >
               For Companies
             </Badge>
             <h2
               style={{
                 fontSize: 'var(--kt-text-4xl)',
                 fontWeight: 'var(--kt-weight-bold)',
-                color: 'var(--kt-navy-900)',
+                color: 'white',
                 lineHeight: 1.0,
                 marginBottom: 14,
                 letterSpacing: '-0.5px',
@@ -209,7 +218,7 @@ const HeroDefault = () => {
             <p
               style={{
                 fontSize: 'var(--kt-text-md)',
-                color: 'var(--kt-text-muted)',
+                color: 'rgba(255,255,255,0.65)',
                 lineHeight: 1.6,
                 maxWidth: 340,
               }}
@@ -240,10 +249,10 @@ const HeroDefault = () => {
                   alignItems: 'center',
                   gap: 10,
                   fontSize: 'var(--kt-text-sm)',
-                  color: 'var(--kt-text-muted)',
+                  color: 'rgba(255,255,255,0.65)',
                 }}
               >
-                <span style={{ color: 'var(--kt-olive-700)', fontWeight: 700 }}>✓</span> {item}
+                <span style={{ color: 'rgba(255,255,255,0.9)', fontWeight: 700 }}>✓</span> {item}
               </li>
             ))}
           </ul>
@@ -253,8 +262,8 @@ const HeroDefault = () => {
               display: 'inline-flex',
               alignItems: 'center',
               gap: 8,
-              background: 'var(--kt-navy-900)',
-              color: 'white',
+              background: 'white',
+              color: 'var(--kt-olive-700)',
               padding: '12px 24px',
               borderRadius: 'var(--kt-radius-lg)',
               fontWeight: 'var(--kt-weight-semibold)',
