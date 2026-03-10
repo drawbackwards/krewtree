@@ -399,7 +399,7 @@ async function main() {
 
   const page = figma.createPage()
   page.name = '🌿 krewtree components'
-  figma.currentPage = page
+  await figma.setCurrentPageAsync(page)
 
   buildButton(page)
   buildBadge(page)
