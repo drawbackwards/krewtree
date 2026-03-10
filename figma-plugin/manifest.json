@@ -1,8 +1,12 @@
 {
-  "name": "krewtree component builder",
+  "name": "krewtree tools",
   "id": "krewtree-component-builder-001",
   "api": "1.0.0",
   "main": "code.js",
   "editorType": ["figma"],
-  "documentAccess": "dynamic-page"
+  "documentAccess": "dynamic-page",
+  "menu": [
+    { "name": "Build Component Library", "command": "buildComponents" },
+    { "name": "Build Site Pages", "command": "buildSite" }
+  ]
 }
