@@ -43,17 +43,19 @@ function makeVariant(variantName, fill, w, h, textColor, cornerRadius) {
   // Display label: first variant's value  e.g. "Primary" from "Variant=Primary, Size=md"
   const displayLabel = variantName.split(', ')[0].split('=').pop() || variantName
 
-  const t = figma.createText()
-  t.fontName = { family: 'Inter', style: 'Medium' }
-  t.characters = displayLabel
-  t.fontSize = Math.min(13, Math.max(9, Math.floor(h * 0.30)))
-  t.fills = [{ type: 'SOLID', color: textColor || T.white }]
-  t.resize(w - 8, h)
-  t.x = 4
-  t.y = 0
-  t.textAlignHorizontal = 'CENTER'
-  t.textAlignVertical = 'CENTER'
-  c.appendChild(t)
+  if (w >= 24 && h >= 16) {
+    const t = figma.createText()
+    t.fontName = { family: 'Inter', style: 'Medium' }
+    t.characters = displayLabel
+    t.fontSize = Math.min(13, Math.max(9, Math.floor(h * 0.30)))
+    t.fills = [{ type: 'SOLID', color: textColor || T.white }]
+    t.resize(w - 8, h)
+    t.x = 4
+    t.y = 0
+    t.textAlignHorizontal = 'CENTER'
+    t.textAlignVertical = 'CENTER'
+    c.appendChild(t)
+  }
   return c
 }
 
