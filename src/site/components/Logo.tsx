@@ -56,16 +56,19 @@ export interface KrewtreeLogoProps {
   height?: number
   /** @default true */
   onDark?: boolean
+  /** Override the olive accent color (e.g. 'white' when on an olive background). @default '#6d7531' */
+  accentColor?: string
   style?: React.CSSProperties
 }
 
 export const KrewtreeLogo: React.FC<KrewtreeLogoProps> = ({
   height = 34,
   onDark = true,
+  accentColor,
   style,
 }) => {
   const sand = onDark ? '#e5dac3' : '#0a232d'
-  const olive = '#6d7531'
+  const olive = accentColor ?? '#6d7531'
   const width = Math.round(height * (1006.19 / 242))
 
   return (

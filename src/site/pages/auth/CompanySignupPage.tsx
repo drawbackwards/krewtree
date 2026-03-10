@@ -93,7 +93,7 @@ export const CompanySignupPage: React.FC = () => {
           style={{ display: 'inline-flex', lineHeight: 0 }}
           aria-label="krewtree home"
         >
-          <KrewtreeLogo height={34} onDark />
+          <KrewtreeLogo height={34} onDark accentColor="white" />
         </Link>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <span style={{ fontSize: 'var(--kt-text-sm)', color: 'rgba(229,218,195,0.45)' }}>
