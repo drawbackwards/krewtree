@@ -84,7 +84,12 @@ const HeroDefault = () => {
             e.currentTarget.style.boxShadow = 'none'
           }}
         >
-          <div style={{ fontSize: 44 }}>👷</div>
+          <img
+            src="/icon-worker.png"
+            alt=""
+            aria-hidden="true"
+            style={{ width: 80, height: 80, objectFit: 'contain' }}
+          />
           <div>
             <Badge variant="accent" size="sm" style={{ marginBottom: 14 }}>
               For Workers
@@ -187,7 +192,12 @@ const HeroDefault = () => {
             e.currentTarget.style.boxShadow = 'none'
           }}
         >
-          <div style={{ fontSize: 44 }}>🏢</div>
+          <img
+            src="/icon-company.png"
+            alt=""
+            aria-hidden="true"
+            style={{ width: 80, height: 80, objectFit: 'contain' }}
+          />
           <div>
             <Badge
               variant="secondary"
