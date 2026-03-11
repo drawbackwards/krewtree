@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Button, Input } from '../../../components'
 import { KrewtreeLogo, KrewtreeBgMark } from '../../components/Logo'
+import { useAuth } from '../../context/AuthContext'
 
 type UserType = 'worker' | 'company'
 
@@ -11,6 +12,7 @@ type UserType = 'worker' | 'company'
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate()
+  const { login } = useAuth()
   const [userType, setUserType] = useState<UserType>('worker')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -18,6 +20,7 @@ export const LoginPage: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setPassword('')
+    login(userType)
     navigate(userType === 'worker' ? '/site/dashboard/worker' : '/site/dashboard/company')
   }
 

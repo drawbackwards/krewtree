@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Button, Input, Checkbox, Badge } from '../../../components'
 import { industries } from '../../data/mock'
 import { KrewtreeLogo, KrewtreeBgMark } from '../../components/Logo'
+import { useAuth } from '../../context/AuthContext'
 
 const BENEFITS = [
   { icon: '💼', label: 'Browse 12,400+ jobs across 8 industries' },
@@ -13,6 +14,7 @@ const BENEFITS = [
 
 export const WorkerSignupPage: React.FC = () => {
   const navigate = useNavigate()
+  const { login } = useAuth()
 
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -53,6 +55,7 @@ export const WorkerSignupPage: React.FC = () => {
 
     setPassword('')
     setConfirmPassword('')
+    login('worker')
     navigate('/site/dashboard/worker')
   }
 

@@ -1,18 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { NotificationDrawer } from '../NotificationDrawer/NotificationDrawer'
 import type { Notification } from '../../types'
 import { notifications as allNotifs } from '../../data/mock'
 import { KrewtreeLogo } from '../Logo'
+import { useAuth } from '../../context/AuthContext'
 import styles from './Navbar.module.css'
 
+// Keep Persona export so existing imports don't break
 export type Persona = 'worker' | 'company'
-
-interface NavbarProps {
-  persona: Persona
-  onPersonaChange: (p: Persona) => void
-  notificationCount?: number
-}
 
 const BellIcon = () => (
   <svg
@@ -29,8 +25,10 @@ const BellIcon = () => (
   </svg>
 )
 
-export const Navbar: React.FC<NavbarProps> = ({ persona, onPersonaChange }) => {
+export const Navbar: React.FC = () => {
+  const { isLoggedIn, persona, logout } = useAuth()
   const location = useLocation()
+  const navigate = useNavigate()
   const isActive = (path: string) => (location.pathname.startsWith(path) ? styles.active : '')
 
   const [notifOpen, setNotifOpen] = useState(false)
@@ -59,6 +57,11 @@ export const Navbar: React.FC<NavbarProps> = ({ persona, onPersonaChange }) => {
     setNotifOpen(false)
   }
 
+  const handleLogout = () => {
+    logout()
+    navigate('/site')
+  }
+
   const dashPath = persona === 'worker' ? '/site/dashboard/worker' : '/site/dashboard/company'
   const userInitials = persona === 'worker' ? 'MT' : 'AB'
 
@@ -70,148 +73,153 @@ export const Navbar: React.FC<NavbarProps> = ({ persona, onPersonaChange }) => {
           <KrewtreeLogo height={30} onDark={false} />
         </Link>
 
-        {/* Links */}
-        <div className={styles.links}>
-          <Link
-            to="/site/jobs"
-            className={[styles.link, isActive('/site/jobs')].filter(Boolean).join(' ')}
-          >
-            Find Jobs
-          </Link>
-          <Link
-            to={dashPath}
-            className={[styles.link, isActive('/site/dashboard')].filter(Boolean).join(' ')}
-          >
-            Dashboard
-          </Link>
-          {persona === 'worker' && (
-            <>
-              <Link
-                to="/site/profile/w1"
-                className={[styles.link, isActive('/site/profile')].filter(Boolean).join(' ')}
-              >
-                My Profile
-              </Link>
-              <Link
-                to="/site/saved-jobs"
-                className={[styles.link, isActive('/site/saved-jobs')].filter(Boolean).join(' ')}
-              >
-                Saved Jobs
-              </Link>
-              <Link
-                to="/site/messages"
-                className={[styles.link, isActive('/site/messages')].filter(Boolean).join(' ')}
-              >
-                Messages
-              </Link>
-            </>
-          )}
-          {persona === 'company' && (
-            <>
-              <Link
-                to="/site/post-job"
-                className={[styles.link, isActive('/site/post-job')].filter(Boolean).join(' ')}
-              >
-                Post a Job
-              </Link>
-              <Link
-                to="/site/messages"
-                className={[styles.link, isActive('/site/messages')].filter(Boolean).join(' ')}
-              >
-                Messages
-              </Link>
-            </>
-          )}
-        </div>
-
-        {/* Persona Switcher */}
-        <div className={styles.personaSwitcher} role="group" aria-label="Switch persona">
-          <button
-            className={[styles.personaBtn, persona === 'worker' ? styles.personaActive : '']
-              .filter(Boolean)
-              .join(' ')}
-            onClick={() => onPersonaChange('worker')}
-          >
-            Worker
-          </button>
-          <button
-            className={[styles.personaBtn, persona === 'company' ? styles.personaActive : '']
-              .filter(Boolean)
-              .join(' ')}
-            onClick={() => onPersonaChange('company')}
-          >
-            Company
-          </button>
-        </div>
-
-        {/* Right */}
-        <div className={styles.right}>
-          {/* Auth actions */}
-          <Link
-            to="/site/login"
-            className={[styles.link, isActive('/site/login')].filter(Boolean).join(' ')}
-          >
-            Log in
-          </Link>
-          <Link
-            to="/site/signup"
-            style={{
-              background: 'var(--kt-navy-900)',
-              color: 'white',
-              borderRadius: 'var(--kt-radius-full)',
-              padding: '6px 16px',
-              fontSize: 'var(--kt-text-sm)',
-              fontWeight: 'var(--kt-weight-semibold)',
-              textDecoration: 'none',
-              transition: 'opacity 0.15s ease',
-              whiteSpace: 'nowrap',
-            }}
-            onMouseOver={(e) => (e.currentTarget.style.opacity = '0.8')}
-            onMouseOut={(e) => (e.currentTarget.style.opacity = '1')}
-          >
-            Sign up
-          </Link>
-
-          {/* Divider */}
-          <div style={{ width: 1, height: 20, background: 'var(--kt-border)', flexShrink: 0 }} />
-
-          {persona === 'company' && (
-            <Link to="/site/post-job" className={styles.postJobBtn}>
-              + Post a Job
-            </Link>
-          )}
-
-          {/* Notification Bell */}
-          <div ref={notifRef} style={{ position: 'relative' }}>
-            <button
-              className={[styles.notifBtn, notifOpen ? styles.notifBtnActive : '']
-                .filter(Boolean)
-                .join(' ')}
-              aria-label={`${unreadCount} notifications`}
-              onClick={() => setNotifOpen((o) => !o)}
+        {/* Nav links — only shown when logged in */}
+        {isLoggedIn && (
+          <div className={styles.links}>
+            <Link
+              to="/site/jobs"
+              className={[styles.link, isActive('/site/jobs')].filter(Boolean).join(' ')}
             >
-              <BellIcon />
-              {unreadCount > 0 && (
-                <span className={styles.notifBadge} aria-hidden="true">
-                  {unreadCount > 9 ? '9+' : unreadCount}
-                </span>
-              )}
-            </button>
-            {notifOpen && (
-              <NotificationDrawer
-                notifications={notifs}
-                onMarkAllRead={handleMarkAllRead}
-                onNotificationClick={handleNotifClick}
-              />
+              Find Jobs
+            </Link>
+            <Link
+              to={dashPath}
+              className={[styles.link, isActive('/site/dashboard')].filter(Boolean).join(' ')}
+            >
+              Dashboard
+            </Link>
+            {persona === 'worker' && (
+              <>
+                <Link
+                  to="/site/profile/w1"
+                  className={[styles.link, isActive('/site/profile')].filter(Boolean).join(' ')}
+                >
+                  My Profile
+                </Link>
+                <Link
+                  to="/site/saved-jobs"
+                  className={[styles.link, isActive('/site/saved-jobs')].filter(Boolean).join(' ')}
+                >
+                  Saved Jobs
+                </Link>
+                <Link
+                  to="/site/messages"
+                  className={[styles.link, isActive('/site/messages')].filter(Boolean).join(' ')}
+                >
+                  Messages
+                </Link>
+              </>
+            )}
+            {persona === 'company' && (
+              <>
+                <Link
+                  to="/site/post-job"
+                  className={[styles.link, isActive('/site/post-job')].filter(Boolean).join(' ')}
+                >
+                  Post a Job
+                </Link>
+                <Link
+                  to="/site/messages"
+                  className={[styles.link, isActive('/site/messages')].filter(Boolean).join(' ')}
+                >
+                  Messages
+                </Link>
+              </>
             )}
           </div>
+        )}
 
-          <div
-            className={styles.avatar}
-            title={persona === 'worker' ? 'Marcus T.' : 'Apex Builders'}
-          >
-            {userInitials}
-          </div>
+        {/* Right side */}
+        <div className={styles.right}>
+          {!isLoggedIn ? (
+            /* ── Logged out: show auth buttons only ── */
+            <>
+              <Link
+                to="/site/login"
+                className={[styles.link, isActive('/site/login')].filter(Boolean).join(' ')}
+              >
+                Log in
+              </Link>
+              <Link
+                to="/site/signup"
+                style={{
+                  background: 'var(--kt-navy-900)',
+                  color: 'white',
+                  borderRadius: 'var(--kt-radius-full)',
+                  padding: '6px 16px',
+                  fontSize: 'var(--kt-text-sm)',
+                  fontWeight: 'var(--kt-weight-semibold)',
+                  textDecoration: 'none',
+                  transition: 'opacity 0.15s ease',
+                  whiteSpace: 'nowrap',
+                }}
+                onMouseOver={(e) => (e.currentTarget.style.opacity = '0.8')}
+                onMouseOut={(e) => (e.currentTarget.style.opacity = '1')}
+              >
+                Sign up
+              </Link>
+            </>
+          ) : (
+            /* ── Logged in: show bell, avatar, logout ── */
+            <>
+              {persona === 'company' && (
+                <Link to="/site/post-job" className={styles.postJobBtn}>
+                  + Post a Job
+                </Link>
+              )}
+
+              <div
+                style={{ width: 1, height: 20, background: 'var(--kt-border)', flexShrink: 0 }}
+              />
+
+              {/* Notification Bell */}
+              <div ref={notifRef} style={{ position: 'relative' }}>
+                <button
+                  className={[styles.notifBtn, notifOpen ? styles.notifBtnActive : '']
+                    .filter(Boolean)
+                    .join(' ')}
+                  aria-label={`${unreadCount} notifications`}
+                  onClick={() => setNotifOpen((o) => !o)}
+                >
+                  <BellIcon />
+                  {unreadCount > 0 && (
+                    <span className={styles.notifBadge} aria-hidden="true">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                </button>
+                {notifOpen && (
+                  <NotificationDrawer
+                    notifications={notifs}
+                    onMarkAllRead={handleMarkAllRead}
+                    onNotificationClick={handleNotifClick}
+                  />
+                )}
+              </div>
+
+              <div
+                className={styles.avatar}
+                title={persona === 'worker' ? 'Marcus T.' : 'Apex Builders'}
+              >
+                {userInitials}
+              </div>
+
+              <button
+                onClick={handleLogout}
+                className={styles.link}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontFamily: 'var(--kt-font-sans)',
+                  fontSize: 'var(--kt-text-sm)',
+                  padding: 0,
+                }}
+              >
+                Log out
+              </button>
+            </>
+          )}
         </div>
       </div>
     </nav>

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Button, Input, Select, Checkbox, Badge, Radio } from '../../../components'
 import { industries } from '../../data/mock'
 import { KrewtreeLogo, KrewtreeBgMark } from '../../components/Logo'
+import { useAuth } from '../../context/AuthContext'
 
 const BENEFITS = [
   { icon: '📋', label: 'Post unlimited jobs — 14-day free trial, no credit card' },
@@ -20,6 +21,7 @@ const COMPANY_SIZES = [
 
 export const CompanySignupPage: React.FC = () => {
   const navigate = useNavigate()
+  const { login } = useAuth()
 
   const [companyName, setCompanyName] = useState('')
   const [contactName, setContactName] = useState('')
@@ -60,6 +62,7 @@ export const CompanySignupPage: React.FC = () => {
 
     setPassword('')
     setConfirmPassword('')
+    login('company')
     navigate('/site/dashboard/company')
   }
 

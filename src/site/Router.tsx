@@ -1,15 +1,5 @@
-import React, { useState, useEffect } from 'react'
+import React, { useEffect } from 'react'
 import { Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom'
-
-// Scrolls to the top of the page on every navigation
-const ScrollToTop: React.FC = () => {
-  const { pathname } = useLocation()
-  useEffect(() => {
-    window.scrollTo(0, 0)
-  }, [pathname])
-  return null
-}
-import type { Persona } from './components/Navbar/Navbar'
 import { Navbar } from './components/Navbar/Navbar'
 import {
   LandingPage,
@@ -30,48 +20,50 @@ import { SignupRolePage } from './pages/auth/SignupRolePage'
 import { WorkerSignupPage } from './pages/auth/WorkerSignupPage'
 import { CompanySignupPage } from './pages/auth/CompanySignupPage'
 
-// ── Layout wrapper for pages that use the full Navbar ─────────────────────────
-const AppLayout: React.FC<{ persona: Persona; onPersonaChange: (p: Persona) => void }> = ({
-  persona,
-  onPersonaChange,
-}) => (
+// Scrolls to the top of the page on every navigation
+const ScrollToTop: React.FC = () => {
+  const { pathname } = useLocation()
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [pathname])
+  return null
+}
+
+// Layout wrapper — Navbar reads auth/persona from context directly
+const AppLayout: React.FC = () => (
   <>
-    <Navbar persona={persona} onPersonaChange={onPersonaChange} />
+    <Navbar />
     <Outlet />
   </>
 )
 
-export const SiteRouter: React.FC = () => {
-  const [persona, setPersona] = useState<Persona>('worker')
+export const SiteRouter: React.FC = () => (
+  <>
+    <ScrollToTop />
+    <Routes>
+      {/* ── Auth routes — no Navbar ──────────────────────────────────── */}
+      <Route path="/site/login" element={<LoginPage />} />
+      <Route path="/site/signup" element={<SignupRolePage />} />
+      <Route path="/site/signup/worker" element={<WorkerSignupPage />} />
+      <Route path="/site/signup/company" element={<CompanySignupPage />} />
 
-  return (
-    <>
-      <ScrollToTop />
-      <Routes>
-        {/* ── Auth routes — no Navbar ──────────────────────────────────── */}
-        <Route path="/site/login" element={<LoginPage />} />
-        <Route path="/site/signup" element={<SignupRolePage />} />
-        <Route path="/site/signup/worker" element={<WorkerSignupPage />} />
-        <Route path="/site/signup/company" element={<CompanySignupPage />} />
-
-        {/* ── App routes — full Navbar via AppLayout ───────────────────── */}
-        <Route element={<AppLayout persona={persona} onPersonaChange={setPersona} />}>
-          <Route path="/site" element={<LandingPage />} />
-          <Route path="/site/color" element={<ColorLandingPage />} />
-          <Route path="/site/jobs" element={<JobsPage />} />
-          <Route path="/site/jobs/:id" element={<JobDetailPage />} />
-          <Route path="/site/dashboard/worker" element={<WorkerDashboard />} />
-          <Route path="/site/dashboard/company" element={<CompanyDashboard />} />
-          <Route path="/site/profile/:id" element={<WorkerProfilePage />} />
-          <Route path="/site/post-job" element={<PostJobPage />} />
-          <Route path="/site/company/:id" element={<CompanyProfilePage />} />
-          <Route path="/site/saved-jobs" element={<SavedJobsPage />} />
-          <Route path="/site/messages" element={<MessagesPage />} />
-          <Route path="/site/referrals" element={<ReferralPage />} />
-          {/* Catch-all redirect */}
-          <Route path="*" element={<Navigate to="/site" replace />} />
-        </Route>
-      </Routes>
-    </>
-  )
-}
+      {/* ── App routes — full Navbar via AppLayout ───────────────────── */}
+      <Route element={<AppLayout />}>
+        <Route path="/site" element={<LandingPage />} />
+        <Route path="/site/color" element={<ColorLandingPage />} />
+        <Route path="/site/jobs" element={<JobsPage />} />
+        <Route path="/site/jobs/:id" element={<JobDetailPage />} />
+        <Route path="/site/dashboard/worker" element={<WorkerDashboard />} />
+        <Route path="/site/dashboard/company" element={<CompanyDashboard />} />
+        <Route path="/site/profile/:id" element={<WorkerProfilePage />} />
+        <Route path="/site/post-job" element={<PostJobPage />} />
+        <Route path="/site/company/:id" element={<CompanyProfilePage />} />
+        <Route path="/site/saved-jobs" element={<SavedJobsPage />} />
+        <Route path="/site/messages" element={<MessagesPage />} />
+        <Route path="/site/referrals" element={<ReferralPage />} />
+        {/* Catch-all redirect */}
+        <Route path="*" element={<Navigate to="/site" replace />} />
+      </Route>
+    </Routes>
+  </>
+)

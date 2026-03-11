@@ -2,6 +2,7 @@ import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Badge } from '../../components'
 import { RegulixBadge } from '../components'
+import { useAuth } from '../context/AuthContext'
 import {
   FeaturedJobsSection,
   HowItWorksSection,
@@ -16,6 +17,7 @@ import {
 // ═════════════════════════════════════════════════════════════════════════════
 const HeroDefault = () => {
   const navigate = useNavigate()
+  const { setPersona } = useAuth()
   return (
     <section style={{ background: 'var(--kt-bg)', borderBottom: '1px solid var(--kt-border)' }}>
       {/* Centered header */}
@@ -61,7 +63,10 @@ const HeroDefault = () => {
       >
         {/* Worker track */}
         <button
-          onClick={() => navigate('/site/signup/worker')}
+          onClick={() => {
+            setPersona('worker')
+            navigate('/site/signup/worker')
+          }}
           style={{
             background: 'var(--kt-navy-900)',
             border: '1px solid rgba(229,218,195,0.1)',
@@ -169,7 +174,10 @@ const HeroDefault = () => {
 
         {/* Company track */}
         <button
-          onClick={() => navigate('/site/signup/company')}
+          onClick={() => {
+            setPersona('company')
+            navigate('/site/signup/company')
+          }}
           style={{
             background: 'var(--kt-olive-700)',
             border: '1px solid rgba(255,255,255,0.15)',
