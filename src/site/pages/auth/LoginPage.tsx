@@ -1,42 +1,97 @@
 import React, { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Button, Input } from '../../../components'
 import { KrewtreeLogo, KrewtreeBgMark } from '../../components/Logo'
 import { useAuth } from '../../context/AuthContext'
 
 type UserType = 'worker' | 'company'
 
-// ── Watermark ─────────────────────────────────────────────────────────────
+// ── SVG stat icons ─────────────────────────────────────────────────────────────
+const StatIcon = ({ icon }: { icon: string }) => {
+  const p = {
+    viewBox: '0 0 24 24',
+    fill: 'none' as const,
+    stroke: 'currentColor',
+    strokeWidth: 1.75,
+    strokeLinecap: 'round' as const,
+    strokeLinejoin: 'round' as const,
+    width: 17,
+    height: 17,
+  }
+  switch (icon) {
+    case 'hardhat':
+      return (
+        <svg {...p}>
+          <path d="M2 20h20" />
+          <path d="M6 20v-5a6 6 0 0112 0v5" />
+          <path d="M2 15h20" />
+          <path d="M12 3v4M9.5 5.5l2.5 1.5 2.5-1.5" />
+        </svg>
+      )
+    case 'building':
+      return (
+        <svg {...p}>
+          <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
+          <path d="M3 6h18" />
+          <path d="M16 10a4 4 0 01-8 0" />
+        </svg>
+      )
+    case 'zap':
+      return (
+        <svg {...p}>
+          <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+        </svg>
+      )
+    default:
+      return null
+  }
+}
 
-// ── Page ───────────────────────────────────────────────────────────────────
-
+// ── Page ───────────────────────────────────────────────────────────────────────
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate()
   const { login } = useAuth()
-  const [userType, setUserType] = useState<UserType>('worker')
+  const [searchParams] = useSearchParams()
+  const [userType, setUserType] = useState<UserType>(
+    searchParams.get('type') === 'company' ? 'company' : 'worker'
+  )
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+
+  const isCompany = userType === 'company'
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setPassword('')
     login(userType)
-    navigate(userType === 'worker' ? '/site/dashboard/worker' : '/site/dashboard/company')
+    navigate(isCompany ? '/site/dashboard/company' : '/site/dashboard/worker')
   }
+
+  const STATS = isCompany
+    ? [
+        { icon: 'building', label: '620+ verified companies hiring on krewtree' },
+        { icon: 'hardhat', label: '54,000+ active workers ready to hire' },
+        { icon: 'zap', label: 'Same-day hiring with Regulix Ready workers' },
+      ]
+    : [
+        { icon: 'hardhat', label: '54,000+ active workers across 8 industries' },
+        { icon: 'building', label: '620+ verified companies actively hiring' },
+        { icon: 'zap', label: 'Same-day hiring with Regulix' },
+      ]
 
   return (
     <div
       style={{
         minHeight: '100vh',
-        background: 'var(--kt-navy-900)',
+        background: isCompany ? 'var(--kt-olive-700)' : 'var(--kt-navy-900)',
         position: 'relative',
         overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',
         fontFamily: 'var(--kt-font-sans)',
+        transition: 'background 0.25s ease',
       }}
     >
-      {/* Background tree mark */}
       <KrewtreeBgMark />
 
       {/* ── Top bar ────────────────────────────────────────────────── */}
@@ -55,10 +110,10 @@ export const LoginPage: React.FC = () => {
           style={{ display: 'inline-flex', lineHeight: 0 }}
           aria-label="krewtree home"
         >
-          <KrewtreeLogo height={34} onDark />
+          <KrewtreeLogo height={34} onDark accentColor={isCompany ? 'white' : undefined} />
         </Link>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={{ fontSize: 'var(--kt-text-sm)', color: 'rgba(229,218,195,0.45)' }}>
+          <span style={{ fontSize: 'var(--kt-text-sm)', color: 'rgba(255,255,255,0.7)' }}>
             New to krewtree?
           </span>
           <Link
@@ -126,38 +181,43 @@ export const LoginPage: React.FC = () => {
             <p
               style={{
                 fontSize: 'var(--kt-text-lg)',
-                color: 'rgba(229,218,195,0.45)',
+                color: 'rgba(255,255,255,0.85)',
                 lineHeight: 1.7,
                 marginBottom: 52,
                 maxWidth: 380,
               }}
             >
-              Your next job — or your next great hire — is one sign-in away.
+              {isCompany
+                ? 'Your next great hire is one sign-in away.'
+                : 'Your next job is one sign-in away.'}
             </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              {[
-                { icon: '👷', label: '54,000+ active workers' },
-                { icon: '🏢', label: '620+ verified companies hiring' },
-                { icon: '⚡', label: 'Same-day hiring with Regulix' },
-              ].map(({ icon, label }) => (
-                <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {STATS.map(({ icon, label }) => (
+                <div key={label} style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
                   <div
                     style={{
-                      width: 38,
-                      height: 38,
+                      width: 36,
+                      height: 36,
                       borderRadius: 10,
-                      background: 'rgba(229,218,195,0.07)',
-                      border: '1px solid rgba(229,218,195,0.1)',
+                      background: 'rgba(255,255,255,0.1)',
+                      border: '1px solid rgba(255,255,255,0.15)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      fontSize: 17,
                       flexShrink: 0,
+                      color: 'rgba(229,218,195,0.8)',
                     }}
                   >
-                    {icon}
+                    <StatIcon icon={icon} />
                   </div>
-                  <span style={{ fontSize: 'var(--kt-text-sm)', color: 'rgba(229,218,195,0.5)' }}>
+                  <span
+                    style={{
+                      fontSize: 'var(--kt-text-sm)',
+                      color: 'white',
+                      lineHeight: 1.55,
+                      paddingTop: 7,
+                    }}
+                  >
                     {label}
                   </span>
                 </div>
@@ -176,6 +236,19 @@ export const LoginPage: React.FC = () => {
               boxShadow: '0 24px 64px rgba(0,0,0,0.45), 0 2px 8px rgba(0,0,0,0.2)',
             }}
           >
+            <span
+              style={{
+                display: 'block',
+                fontSize: 11,
+                fontWeight: 700,
+                color: '#8B9A3E',
+                textTransform: 'uppercase',
+                letterSpacing: '0.08em',
+                marginBottom: 14,
+              }}
+            >
+              {isCompany ? 'Company Account' : 'Worker Account'}
+            </span>
             <h2
               style={{
                 fontSize: 'var(--kt-text-2xl)',
@@ -228,7 +301,7 @@ export const LoginPage: React.FC = () => {
                     boxShadow: userType === type ? '0 1px 3px rgba(0,0,0,0.12)' : 'none',
                   }}
                 >
-                  {type === 'worker' ? '👷 Worker' : '🏢 Company'}
+                  {type === 'worker' ? 'Worker' : 'Company'}
                 </button>
               ))}
             </div>

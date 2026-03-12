@@ -62,7 +62,9 @@
   font-weight: var(--kt-weight-medium);
   color: var(--kt-text-muted);
   text-decoration: none;
-  transition: color var(--kt-duration-fast), background-color var(--kt-duration-fast);
+  transition:
+    color var(--kt-duration-fast),
+    background-color var(--kt-duration-fast);
   border: none;
   background: none;
   cursor: pointer;
@@ -114,6 +116,7 @@
   align-items: center;
   gap: var(--kt-space-3);
   flex-shrink: 0;
+  margin-left: auto;
 }
 
 .notifBtn {
@@ -127,9 +130,14 @@
   display: flex;
   align-items: center;
   position: relative;
-  transition: color var(--kt-duration-fast), background-color var(--kt-duration-fast);
+  transition:
+    color var(--kt-duration-fast),
+    background-color var(--kt-duration-fast);
 }
-.notifBtn:hover { color: var(--kt-text); background-color: var(--kt-grey-100); }
+.notifBtn:hover {
+  color: var(--kt-text);
+  background-color: var(--kt-grey-100);
+}
 
 .notifDot {
   position: absolute;
@@ -182,7 +190,9 @@
   border: 2px solid transparent;
   transition: border-color var(--kt-duration-fast);
 }
-.avatar:hover { border-color: var(--kt-border-strong); }
+.avatar:hover {
+  border-color: var(--kt-border-strong);
+}
 
 .postJobBtn {
   background-color: var(--kt-accent);
@@ -197,4 +207,6 @@
   transition: background-color var(--kt-duration-fast);
   white-space: nowrap;
 }
-.postJobBtn:hover { background-color: var(--kt-accent-hover); }
+.postJobBtn:hover {
+  background-color: var(--kt-accent-hover);
+}

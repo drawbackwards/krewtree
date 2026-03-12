@@ -52,6 +52,10 @@ krewtree is a **job board platform for hourly / blue-collar workers and the comp
 | Silver | `#C7C7C7` | `var(--kt-grey-300)` | — |
 | Ink | `#161616` | `var(--kt-grey-900)` | — |
 
+**Other values used in auth pages:**
+- `#103949` — light navy-teal used for "For Workers" badge on LandingPage worker card
+- `#8B9A3E` — lighter olive used for "COMPANY ACCOUNT" / "WORKER ACCOUNT" label text on white cards
+
 ### CSS Token System
 - File: `src/styles/tokens.css`
 - TypeScript primitives: `src/tokens/colors.ts`
@@ -79,6 +83,9 @@ krewtree is a **job board platform for hourly / blue-collar workers and the comp
 - **No Tailwind** — never add it
 - CSS modules for component scoping, inline styles for page-level layouts
 - Dark mode supported via token system but no UI toggle yet on site
+- Brand name is always lowercase: **krewtree**
+- All SVG icons are inline React components — no icon library
+- WCAG AA contrast must be maintained: on olive `#6D7531` backgrounds, only white passes AA for normal text
 
 ---
 
@@ -97,15 +104,17 @@ src/
 ├── components/                — reusable UI component library (21 components + ErrorBoundary)
 │   ├── index.ts               — barrel export
 │   ├── ErrorBoundary/         — top-level React error boundary (class component)
-│   ├── Alert/                 ├── Avatar/       ├── Badge/
-│   ├── Button/                ├── Card/         ├── Checkbox/
-│   ├── Divider/               ├── Input/        ├── Label/
-│   ├── Modal/                 ├── Progress/     ├── Radio/
-│   ├── Select/                ├── Spinner/      ├── Switch/
-│   ├── Tabs/                  ├── Textarea/     ├── Toast/
+│   ├── Alert/    ├── Avatar/       ├── Badge/
+│   ├── Button/   ├── Card/         ├── Checkbox/
+│   ├── Divider/  ├── Input/        ├── Label/
+│   ├── Modal/    ├── Progress/     ├── Radio/
+│   ├── Select/   ├── Spinner/      ├── Switch/
+│   ├── Tabs/     ├── Textarea/     ├── Toast/
 │   └── Tooltip/
 └── site/                      — the krewtree site/app
     ├── Router.tsx             — all site routes + Navbar wrapper (AppLayout)
+    ├── context/
+    │   └── AuthContext.tsx    — AuthContext with login/logout, persona state (worker | company)
     ├── data/
     │   └── mock.ts            — all mock data (56KB) — types + data; replace with real API
     ├── types/
@@ -120,10 +129,13 @@ src/
     └── pages/
         ├── index.ts
         ├── auth/
-        │   ├── LoginPage.tsx          — sign-in form (email + password, worker/company toggle)
+        │   ├── LoginPage.tsx          — sign-in page (color-coded by user type)
         │   ├── SignupRolePage.tsx     — role picker (worker vs company path cards)
         │   ├── WorkerSignupPage.tsx   — worker registration form
         │   └── CompanySignupPage.tsx  — company registration form
+        ├── landing/
+        │   ├── sections.tsx          — landing page section components (IndustriesSection, RegulixBannerSection, etc.)
+        │   └── RegulixBanner.module.css — CSS module for Regulix two-card grid (subgrid + mobile stacking)
         ├── LandingPage.tsx        — home / path chooser
         ├── JobsPage.tsx           — job search & filtering
         ├── JobDetailPage.tsx      — individual job view + apply
@@ -145,7 +157,8 @@ All site routes are prefixed `/site`. Root `/` redirects to `/site` via vercel.j
 
 | Route | Component | Notes |
 |-------|-----------|-------|
-| `/site/login` | `LoginPage` | No Navbar |
+| `/site/login` | `LoginPage` | No Navbar — defaults to worker (navy) view |
+| `/site/login?type=company` | `LoginPage` | No Navbar — opens directly to company (olive) view |
 | `/site/signup` | `SignupRolePage` | No Navbar — role picker |
 | `/site/signup/worker` | `WorkerSignupPage` | No Navbar |
 | `/site/signup/company` | `CompanySignupPage` | No Navbar |
@@ -162,13 +175,66 @@ All site routes are prefixed `/site`. Root `/` redirects to `/site` via vercel.j
 | `/site/messages` | `MessagesPage` | Navbar |
 | `/site/referrals` | `ReferralPage` | Navbar |
 
-**Auth note:** Auth pages exist as UI but have no real authentication. All routes are currently open. A `ProtectedRoute` wrapper + `AuthContext` need to be added before launch.
+**Auth note:** Auth pages exist as UI but have no real authentication. All routes are currently open. A `ProtectedRoute` wrapper + real backend integration need to be added before launch.
 
 **Navbar persona switcher:** `Persona = 'worker' | 'company'` — dev-only state in `Router.tsx`. Will be replaced by real auth state.
 
 ---
 
-## 6. Data Models (from mock.ts)
+## 6. Auth Pages — Design System
+
+The 4 auth pages form a cohesive visual system. Key patterns:
+
+### Color coding by user type
+| Context | Background | Logo |
+|---------|-----------|------|
+| Worker (login/signup) | `var(--kt-navy-900)` `#0A232D` | `onDark` (default olive accent) |
+| Company (login/signup) | `var(--kt-olive-700)` `#6D7531` | `onDark` + `accentColor="white"` |
+
+### Layout pattern (all 4 pages)
+- Full-viewport background (navy or olive)
+- `KrewtreeBgMark` watermark behind content
+- Top bar: `KrewtreeLogo` left, secondary nav link right
+- Two-column main: brand/marketing content left (sticky), white card form right
+- Footer: "A Regulix Partner Platform · © 2026 krewtree" faint text
+
+### White card conventions
+- `background: white`, `borderRadius: 20`, `boxShadow: '0 24px 64px rgba(0,0,0,0.45)'`
+- Account type label: plain text `#8B9A3E` (lighter olive), 11px, 700 weight, uppercase, `letterSpacing: '0.08em'`
+- Heading: `var(--kt-text)`, 2xl, bold
+- Subtext: `var(--kt-text-muted)`
+
+### LoginPage — dynamic behavior
+- `useSearchParams` reads `?type=company` on mount → pre-selects company tab + olive background
+- CompanySignupPage "Sign in" link → `/site/login?type=company`
+- Background transition: `transition: 'background 0.25s ease'` when toggling tabs
+- Left panel content (heading, stats) switches based on selected tab
+
+### Inline SVG icons
+All icon-like UI uses inline React SVG components — no icon library. Pattern:
+```tsx
+const MyIcon = ({ icon }: { icon: string }) => {
+  const p = {
+    viewBox: '0 0 24 24', fill: 'none' as const,
+    stroke: 'currentColor', strokeWidth: 1.75,
+    strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const,
+    width: N, height: N,
+  }
+  switch (icon) { ... }
+}
+```
+Icons in use: `hardhat`, `building`, `zap` (LoginPage `StatIcon`); `clipboard`, `users`, `zap`, `inbox` (CompanySignupPage `BenefitIcon`); `construction`, `healthcare`, `hospitality`, `retail`, `transportation`, `manufacturing`, `landscaping`, `security` (LandingPage `IndustryIcon`).
+
+### WCAG AA contrast on olive backgrounds
+Olive `#6D7531` has luminance ≈ 0.162. Contrast ratios:
+- White → **4.95:1** ✅ passes AA normal text
+- `rgba(255,255,255,0.85)` → ~4.2:1 ✅ passes AA large/bold text; use for subtitles
+- `rgba(255,255,255,0.75)` → ~3.7:1 ✅ passes AA large/bold; use for captions
+- `rgba(229,218,195,0.5)` → ~1.94:1 ❌ fails — do not use for text
+
+---
+
+## 7. Data Models (from mock.ts)
 
 ```typescript
 Industry { id, name, slug, icon, jobCount, color }
@@ -201,7 +267,7 @@ Worker {
 
 ---
 
-## 7. Component Library (src/components)
+## 8. Component Library (src/components)
 
 All components share:
 - TypeScript props interfaces
@@ -212,7 +278,7 @@ All components share:
 | Component | Key Variants/Notes |
 |-----------|-------------------|
 | `ErrorBoundary` | Class component; wraps entire app; shows reload UI on crash |
-| `Button` | 7 variants: primary, secondary, accent, outline, ghost, danger, link |
+| `Button` | 7 variants: primary, secondary, accent, outline, ghost, danger, link. Supports `as="a"` to render as `<a>` with `href`, `target`, `rel` |
 | `Badge` | 8 variants: default, primary, secondary, accent, success, warning, danger, info |
 | `Input` | size sm/md/lg, error state, leading/trailing icon |
 | `Textarea` | resize control, character count |
@@ -234,14 +300,14 @@ All components share:
 
 ---
 
-## 8. Site-Specific Components (src/site/components)
+## 9. Site-Specific Components (src/site/components)
 
 | Component | Purpose |
 |-----------|---------|
-| `Logo` (`KrewtreeLogo`, `KrewtreeBgMark`) | Official brand SVG. `onDark` prop switches colors. Used in Navbar + all auth pages |
-| `Navbar` | Top nav with persona switcher (worker/company), links, notification bell |
+| `Logo` (`KrewtreeLogo`, `KrewtreeBgMark`) | Official brand SVG. `onDark` prop switches colors. `accentColor` prop overrides accent (use `"white"` on olive bg). Used in Navbar + all auth pages |
+| `Navbar` | Top nav with persona switcher (worker/company), links, notification bell. Auth buttons (`Log in`, `Sign up`) are pushed to far right via `margin-left: auto` on `.right` wrapper |
 | `RegulixBadge` | Regulix partner badge with pulse animation, sizes sm/md/lg, onDark variant |
-| `JobCard` | Job listing card with company, pay, skills, Regulix Ready badge |
+| `JobCard` | Job listing card with company, pay, skills, Regulix Ready badge. Sponsored banner transitions from olive → `--kt-navy-500` on hover |
 | `WorkerCard` | Worker profile card with performance score, Regulix Ready status |
 | `StatCard` | Dashboard stat tile (num + label + trend) |
 | `AnalyticsPanel` | Chart/analytics display for company dashboard |
@@ -252,9 +318,10 @@ All components share:
 
 ---
 
-## 9. LandingPage — Current State
+## 10. LandingPage — Current State
 
 **File:** `src/site/pages/LandingPage.tsx`
+**Sections file:** `src/site/pages/landing/sections.tsx`
 
 **Active layouts (toggled via `?layout=` query param):**
 - `default` — D Track + B Center merged: "What brings you to krewtree?" → two path cards (worker/company) → stats
@@ -267,18 +334,29 @@ All components share:
 2. Featured Jobs
 3. How krewtree Works (horizontal timeline — 01 → 02 → 03)
 4. Browse by Industry
-5. CTA
-6. Footer
+5. Regulix Banner
+6. CTA
+7. Footer
 
-**Key design decisions logged:**
+**Worker path card (on hero):**
+- "For Workers" badge: `background: '#103949'` (light navy-teal), `color: 'rgba(229,218,195,0.85)'`, `border: 'none'`
+- "Browse Jobs →" button: `background: 'white'`, `color: 'var(--kt-navy-900)'`
+
+**IndustriesSection:**
+- Grid layout: `display: grid; gridTemplateColumns: repeat(4, 1fr); maxWidth: 760; margin: 0 auto`
+- Exactly 4 columns locked — no scroll, no stretch at wide screens
+- Cards: no border/stroke, vertically aligned (icon top, label centered below), `padding: '24px 16px'`
+- Icons: `IndustryIcon` SVG component with `slug` prop, colored with `ind.color`
+- 8 industries: construction, healthcare, hospitality, retail, transportation, manufacturing, landscaping, security
+
+**Key design decisions:**
 - No gradients anywhere
-- Industries section placed lower (subdomain-first strategy means main site doesn't lead with industry browsing)
-- Workers/Companies feature cards removed (covered by hero path cards)
-- "Krewtree" → "krewtree" everywhere (lowercase brand name)
+- Industries section placed lower (subdomain-first strategy)
+- WorkersCompaniesSection removed (covered by hero path cards)
 
 ---
 
-## 10. Master User Flow
+## 11. Master User Flow
 
 ```
                          ┌─────────────────────────────┐
@@ -293,50 +371,33 @@ All components share:
     ┌──────────▼──────────┐                  ┌──────────▼──────────┐
     │   Browse Jobs        │                  │   Post a Job         │
     │   /site/jobs         │                  │   /site/post-job     │
-    │   (search, filter    │                  │   (title, pay,       │
-    │    by industry,      │                  │    requirements,     │
-    │    location, pay)    │                  │    industry)         │
     └──────────┬──────────┘                  └──────────┬──────────┘
                │                                         │
     ┌──────────▼──────────┐                  ┌──────────▼──────────┐
     │   Job Detail         │                  │   Company Dashboard  │
     │   /site/jobs/:id     │                  │   /site/dashboard/   │
-    │   (full listing,     │                  │   company            │
-    │    requirements,     │                  │   (analytics,        │
-    │    quick apply)      │                  │    kanban pipeline,  │
-    └──────────┬──────────┘                  │    worker search)    │
+    └──────────┬──────────┘                  │   company            │
                │                             └──────────┬──────────┘
     ┌──────────▼──────────┐                             │
     │   QuickApplyModal    │                  ┌──────────▼──────────┐
     │   (1-click if        │                  │   Browse Workers     │
-    │    Regulix Ready,    │                  │   (not yet built)    │
-    │    else full form)   │                  │   /site/workers      │
-    └──────────┬──────────┘                  └──────────┬──────────┘
-               │                                         │
-    ┌──────────▼──────────┐                  ┌──────────▼──────────┐
-    │   Worker Dashboard   │                  │   Messages           │
-    │   /site/dashboard/   │◄────────────────►│   /site/messages     │
-    │   worker             │    (both use)    │   (worker ↔ company  │
-    │   (applications,     │                  │    thread view)      │
-    │    saved, activity,  │                  └─────────────────────┘
-    │    profile %)        │
+    │    Regulix Ready)    │                  │   (not yet built)    │
+    └──────────┬──────────┘                  └─────────────────────┘
+               │
+    ┌──────────▼──────────┐
+    │   Worker Dashboard   │◄────────► Messages /site/messages
+    │   /site/dashboard/   │
+    │   worker             │
     └──────────┬──────────┘
                │
     ┌──────────▼──────────┐
     │   Worker Profile     │
     │   /site/profile/:id  │
-    │   (skills, history,  │
-    │    Regulix Ready,    │
-    │    perf. score,      │
-    │    reviews)          │
     └──────────┬──────────┘
                │
     ┌──────────▼──────────┐
-    │   Regulix Integration│
-    │   (external)         │
-    │   Connect account →  │
-    │   verified history + │
-    │   Regulix Ready badge│
+    │   Regulix (external) │
+    │   → Regulix Ready    │
     └─────────────────────┘
 ```
 
@@ -346,13 +407,12 @@ krewtree.com/site          → main site (industry agnostic, path chooser hero)
 construction.krewtree.com  → construction-specific landing, same account
 trucking.krewtree.com      → trucking-specific landing
 healthcare.krewtree.com    → healthcare-specific landing
-... (one per industry)
 ```
-Each subdomain shows industry-scoped jobs by default. "Browse by Industry" is intentionally moved lower on the main site since subdomains handle discovery.
+Each subdomain shows industry-scoped jobs by default. "Browse by Industry" is intentionally placed lower on the main site since subdomains handle discovery.
 
 ---
 
-## 11. Figma Reference
+## 12. Figma Reference
 
 - **File key:** `AdcUtHlOEMY5qMncpShGAJ`
 - **Brand slide node:** `2075:386` (slide 04 — brand colors)
@@ -360,37 +420,36 @@ Each subdomain shows industry-scoped jobs by default. "Browse by Industry" is in
 
 ---
 
-## 12. What's Built vs. What's Missing
+## 13. What's Built vs. What's Missing
 
 ### ✅ Built (UI/prototype level)
 - Full design token system (light + dark)
 - 21 reusable UI components + ErrorBoundary
 - Landing page (2 hero variants)
-- Jobs listing page
-- Job detail page
-- Worker dashboard
-- Worker profile page
-- Company dashboard
-- Company profile page
-- Post job page
-- Saved jobs page
-- Messages page
-- Referral page
-- Navbar with persona switcher
-- Auth pages UI: Login, Signup role picker, Worker signup, Company signup
+- Jobs listing + job detail pages
+- Worker dashboard + worker profile page
+- Company dashboard + company profile page
+- Post job page, saved jobs, messages, referrals
+- Navbar with persona switcher (auth buttons at far right)
+- Auth pages — complete visual system:
+  - `LoginPage` — color-coded by user type (navy/olive), reads `?type=company`, smooth background transition, SVG stat icons, no emoji
+  - `SignupRolePage` — role picker
+  - `WorkerSignupPage` — worker registration form
+  - `CompanySignupPage` — company registration, olive background, SVG benefit icons, full WCAG AA contrast, sign-in link routes to `/site/login?type=company`
+- `AuthContext` — `useAuth()` hook with `login(type)` / `logout()`, persona state
 - RegulixBadge, JobCard, WorkerCard, StatCard, KanbanBoard, etc.
 - ESLint + Prettier + husky + lint-staged
 - Top-level error boundary
-- Boost feature (all UI/mock, no real payment):
-  - Worker dashboard: 🚀 Boost button per application → modal with $9.99 fee, Apple Pay / Zelle picker, success state
-  - QuickApplyModal: optional boost add-on checkbox ($9.99, updates submit label + success message)
-  - Company dashboard: 🚀 Boost per job → modal with 7/14/30-day duration tiers ($35/$65/$120), Visa ****1234 on file, success state
-  - PostJobPage: rich sponsored listing section — $38/application, stop mode (pause or application limit), Urgently Hiring label + preview
+- Boost monetization UI (all mock, no real payment):
+  - Worker dashboard: 🚀 Boost button → modal ($9.99, Apple Pay / Zelle)
+  - QuickApplyModal: boost checkbox ($9.99 add-on, updates submit label)
+  - Company dashboard: 🚀 Boost per job → 7/14/30-day tiers ($35/$65/$120), Visa on file
+  - PostJobPage: sponsored listing — $38/application, stop-mode radios, Urgently Hiring label
 
 ### ❌ Not Yet Built
-- Real authentication (AuthContext, ProtectedRoute, JWT/session)
+- Real authentication (ProtectedRoute, JWT/session, API calls)
 - Browse Workers page (`/site/workers`)
-- Real API / backend integration
+- Real API / backend integration (replace mock.ts)
 - Industry subdomain routing logic
 - Search/filter state management (URL-driven)
 - Dark mode UI toggle (tokens exist, no toggle)
@@ -402,7 +461,7 @@ Each subdomain shows industry-scoped jobs by default. "Browse by Industry" is in
 
 ---
 
-## 13. Dev Commands
+## 14. Dev Commands
 
 ```bash
 npm run dev          # start dev server → http://localhost:5173

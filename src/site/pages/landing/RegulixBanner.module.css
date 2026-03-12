@@ -1,0 +1,34 @@
+/* Two-card grid with subgrid row alignment */
+.cardsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 16px;
+  row-gap: 14px;
+  max-width: 780px;
+  margin: 0 auto;
+}
+
+.card {
+  padding: 44px 48px;
+  border-radius: var(--kt-radius-xl);
+  background: rgba(255, 255, 255, 0.06);
+  display: grid;
+  grid-template-rows: subgrid;
+  grid-row: span 4;
+}
+
+/* Stack on small screens — subgrid not needed when single-column */
+@media (max-width: 640px) {
+  .cardsGrid {
+    grid-template-columns: 1fr;
+    row-gap: 16px;
+  }
+
+  .card {
+    grid-template-rows: auto;
+    grid-row: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+}

@@ -1,27 +1,21 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { KrewtreeLogo, KrewtreeBgMark } from '../../components/Logo'
+import { KrewtreeLogo } from '../../components/Logo'
 
 export const SignupRolePage: React.FC = () => {
   return (
     <div
       style={{
         minHeight: '100vh',
-        background: 'var(--kt-navy-900)',
-        position: 'relative',
-        overflow: 'hidden',
+        background: 'var(--kt-bg)',
         display: 'flex',
         flexDirection: 'column',
         fontFamily: 'var(--kt-font-sans)',
       }}
     >
-      <KrewtreeBgMark />
-
       {/* ── Top bar ────────────────────────────────────────────────── */}
       <div
         style={{
-          position: 'relative',
-          zIndex: 10,
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
@@ -34,20 +28,20 @@ export const SignupRolePage: React.FC = () => {
           style={{ display: 'inline-flex', lineHeight: 0 }}
           aria-label="krewtree home"
         >
-          <KrewtreeLogo height={34} onDark />
+          <KrewtreeLogo height={34} onDark={false} />
         </Link>
 
         {/* Sign in */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={{ fontSize: 'var(--kt-text-sm)', color: 'rgba(229,218,195,0.45)' }}>
+          <span style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text-muted)' }}>
             Already have an account?
           </span>
           <Link
             to="/site/login"
             style={{
-              background: 'rgba(229,218,195,0.1)',
-              color: 'var(--kt-sand-300)',
-              border: '1px solid rgba(229,218,195,0.2)',
+              background: 'transparent',
+              color: 'var(--kt-text)',
+              border: '1px solid var(--kt-border)',
               borderRadius: 'var(--kt-radius-full)',
               padding: '7px 18px',
               fontSize: 'var(--kt-text-sm)',
@@ -56,10 +50,10 @@ export const SignupRolePage: React.FC = () => {
               transition: 'all 0.15s ease',
             }}
             onMouseOver={(e) => {
-              e.currentTarget.style.background = 'rgba(229,218,195,0.16)'
+              e.currentTarget.style.background = 'var(--kt-bg-subtle)'
             }}
             onMouseOut={(e) => {
-              e.currentTarget.style.background = 'rgba(229,218,195,0.1)'
+              e.currentTarget.style.background = 'transparent'
             }}
           >
             Sign in
@@ -70,8 +64,6 @@ export const SignupRolePage: React.FC = () => {
       {/* ── Main content ───────────────────────────────────────────── */}
       <div
         style={{
-          position: 'relative',
-          zIndex: 1,
           flex: 1,
           display: 'flex',
           flexDirection: 'column',
@@ -86,7 +78,7 @@ export const SignupRolePage: React.FC = () => {
             style={{
               fontSize: 'clamp(30px, 4vw, 52px)',
               fontWeight: 300,
-              color: 'var(--kt-sand-300)',
+              color: 'var(--kt-text)',
               letterSpacing: '-1.5px',
               lineHeight: 1.1,
               marginBottom: 14,
@@ -97,7 +89,7 @@ export const SignupRolePage: React.FC = () => {
           <p
             style={{
               fontSize: 'var(--kt-text-lg)',
-              color: 'rgba(229,218,195,0.45)',
+              color: 'var(--kt-text-muted)',
               maxWidth: 440,
               margin: '0 auto',
               lineHeight: 1.6,
@@ -121,49 +113,52 @@ export const SignupRolePage: React.FC = () => {
           <Link
             to="/site/signup/worker"
             style={{
-              background: 'rgba(255,255,255,0.06)',
-              border: '1px solid rgba(229,218,195,0.14)',
-              borderRadius: 16,
-              padding: '36px 32px',
+              background: 'var(--kt-navy-900)',
+              border: '1px solid rgba(229,218,195,0.1)',
+              borderRadius: 'var(--kt-radius-xl)',
+              padding: '48px 44px',
               textAlign: 'left',
               cursor: 'pointer',
               fontFamily: 'var(--kt-font-sans)',
-              transition: 'transform 0.2s ease, background 0.2s ease, border-color 0.2s ease',
+              transition: 'transform 0.2s ease, box-shadow 0.2s ease',
               display: 'flex',
               flexDirection: 'column',
-              gap: 14,
+              gap: 20,
               textDecoration: 'none',
             }}
             onMouseOver={(e) => {
-              e.currentTarget.style.transform = 'translateY(-3px)'
-              e.currentTarget.style.background = 'rgba(255,255,255,0.09)'
-              e.currentTarget.style.borderColor = 'rgba(229,218,195,0.25)'
+              e.currentTarget.style.transform = 'translateY(-4px)'
+              e.currentTarget.style.boxShadow = '0 20px 40px rgba(10,35,45,0.25)'
             }}
             onMouseOut={(e) => {
               e.currentTarget.style.transform = 'none'
-              e.currentTarget.style.background = 'rgba(255,255,255,0.06)'
-              e.currentTarget.style.borderColor = 'rgba(229,218,195,0.14)'
+              e.currentTarget.style.boxShadow = 'none'
             }}
           >
-            <div style={{ fontSize: 36 }}>👷</div>
+            <img
+              src="/icon-worker.png"
+              alt=""
+              aria-hidden="true"
+              style={{ width: 80, height: 80, objectFit: 'contain' }}
+            />
             <div>
               <div
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: 5,
-                  background: 'rgba(109,117,49,0.3)',
-                  border: '1px solid rgba(109,117,49,0.5)',
+                  background: '#103949',
+                  border: 'none',
                   borderRadius: 'var(--kt-radius-full)',
                   padding: '3px 10px',
-                  marginBottom: 10,
+                  marginBottom: 14,
                 }}
               >
                 <span
                   style={{
                     fontSize: 11,
                     fontWeight: 700,
-                    color: 'var(--kt-sand-300)',
+                    color: 'rgba(229,218,195,0.85)',
                     textTransform: 'uppercase',
                     letterSpacing: '0.06em',
                   }}
@@ -173,11 +168,11 @@ export const SignupRolePage: React.FC = () => {
               </div>
               <h2
                 style={{
-                  fontSize: 'var(--kt-text-3xl)',
+                  fontSize: 'var(--kt-text-4xl)',
                   fontWeight: 'var(--kt-weight-bold)',
                   color: 'var(--kt-sand-300)',
-                  lineHeight: 1.05,
-                  marginBottom: 10,
+                  lineHeight: 1.0,
+                  marginBottom: 14,
                   letterSpacing: '-0.5px',
                 }}
               >
@@ -187,15 +182,24 @@ export const SignupRolePage: React.FC = () => {
               </h2>
               <p
                 style={{
-                  fontSize: 'var(--kt-text-sm)',
-                  color: 'rgba(229,218,195,0.45)',
+                  fontSize: 'var(--kt-text-md)',
+                  color: 'rgba(229,218,195,0.5)',
                   lineHeight: 1.6,
                 }}
               >
                 Browse jobs, build a verified profile, and get hired faster with Regulix.
               </p>
             </div>
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+            <ul
+              style={{
+                listStyle: 'none',
+                padding: 0,
+                margin: 0,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 10,
+              }}
+            >
               {[
                 'Browse 12,400+ live jobs',
                 'One profile works everywhere',
@@ -206,10 +210,9 @@ export const SignupRolePage: React.FC = () => {
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 8,
+                    gap: 10,
                     fontSize: 'var(--kt-text-sm)',
-                    color: 'rgba(229,218,195,0.5)',
-                    marginBottom: 7,
+                    color: 'rgba(229,218,195,0.65)',
                   }}
                 >
                   <span style={{ color: 'var(--kt-accent)', fontWeight: 700, flexShrink: 0 }}>
@@ -222,12 +225,15 @@ export const SignupRolePage: React.FC = () => {
             <span
               style={{
                 alignSelf: 'flex-start',
-                background: 'var(--kt-accent)',
-                color: 'white',
-                padding: '9px 18px',
-                borderRadius: 8,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                background: 'white',
+                color: 'var(--kt-navy-900)',
+                padding: '12px 24px',
+                borderRadius: 'var(--kt-radius-lg)',
                 fontWeight: 'var(--kt-weight-semibold)',
-                fontSize: 'var(--kt-text-sm)',
+                fontSize: 'var(--kt-text-md)',
               }}
             >
               Create worker account →
@@ -238,46 +244,52 @@ export const SignupRolePage: React.FC = () => {
           <Link
             to="/site/signup/company"
             style={{
-              background: 'var(--kt-sand-50)',
-              border: '1px solid var(--kt-sand-200)',
-              borderRadius: 16,
-              padding: '36px 32px',
+              background: 'var(--kt-olive-700)',
+              border: '1px solid rgba(255,255,255,0.15)',
+              borderRadius: 'var(--kt-radius-xl)',
+              padding: '48px 44px',
               textAlign: 'left',
               cursor: 'pointer',
               fontFamily: 'var(--kt-font-sans)',
               transition: 'transform 0.2s ease, box-shadow 0.2s ease',
               display: 'flex',
               flexDirection: 'column',
-              gap: 14,
+              gap: 20,
+              textDecoration: 'none',
             }}
             onMouseOver={(e) => {
-              e.currentTarget.style.transform = 'translateY(-3px)'
-              e.currentTarget.style.boxShadow = '0 16px 40px rgba(0,0,0,0.2)'
+              e.currentTarget.style.transform = 'translateY(-4px)'
+              e.currentTarget.style.boxShadow = '0 20px 40px rgba(109,117,49,0.35)'
             }}
             onMouseOut={(e) => {
               e.currentTarget.style.transform = 'none'
               e.currentTarget.style.boxShadow = 'none'
             }}
           >
-            <div style={{ fontSize: 36 }}>🏢</div>
+            <img
+              src="/icon-company.png"
+              alt=""
+              aria-hidden="true"
+              style={{ width: 80, height: 80, objectFit: 'contain' }}
+            />
             <div>
               <div
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: 5,
-                  background: 'var(--kt-navy-900)',
-                  border: '1px solid rgba(10,35,45,0.2)',
+                  background: 'rgba(255,255,255,0.18)',
+                  border: 'none',
                   borderRadius: 'var(--kt-radius-full)',
                   padding: '3px 10px',
-                  marginBottom: 10,
+                  marginBottom: 14,
                 }}
               >
                 <span
                   style={{
                     fontSize: 11,
                     fontWeight: 700,
-                    color: 'var(--kt-sand-300)',
+                    color: 'white',
                     textTransform: 'uppercase',
                     letterSpacing: '0.06em',
                   }}
@@ -287,11 +299,11 @@ export const SignupRolePage: React.FC = () => {
               </div>
               <h2
                 style={{
-                  fontSize: 'var(--kt-text-3xl)',
+                  fontSize: 'var(--kt-text-4xl)',
                   fontWeight: 'var(--kt-weight-bold)',
-                  color: 'var(--kt-navy-900)',
-                  lineHeight: 1.05,
-                  marginBottom: 10,
+                  color: 'white',
+                  lineHeight: 1.0,
+                  marginBottom: 14,
                   letterSpacing: '-0.5px',
                 }}
               >
@@ -301,15 +313,24 @@ export const SignupRolePage: React.FC = () => {
               </h2>
               <p
                 style={{
-                  fontSize: 'var(--kt-text-sm)',
-                  color: 'var(--kt-text-muted)',
+                  fontSize: 'var(--kt-text-md)',
+                  color: 'rgba(255,255,255,0.65)',
                   lineHeight: 1.6,
                 }}
               >
                 Post jobs and find Regulix Ready workers who can start the day they're hired.
               </p>
             </div>
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+            <ul
+              style={{
+                listStyle: 'none',
+                padding: 0,
+                margin: 0,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 10,
+              }}
+            >
               {[
                 'Post jobs across every industry',
                 'Access 54,000+ verified workers',
@@ -320,13 +341,12 @@ export const SignupRolePage: React.FC = () => {
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 8,
+                    gap: 10,
                     fontSize: 'var(--kt-text-sm)',
-                    color: 'var(--kt-text-muted)',
-                    marginBottom: 7,
+                    color: 'rgba(255,255,255,0.65)',
                   }}
                 >
-                  <span style={{ color: 'var(--kt-olive-700)', fontWeight: 700, flexShrink: 0 }}>
+                  <span style={{ color: 'rgba(255,255,255,0.9)', fontWeight: 700, flexShrink: 0 }}>
                     ✓
                   </span>
                   {item}
@@ -336,12 +356,15 @@ export const SignupRolePage: React.FC = () => {
             <span
               style={{
                 alignSelf: 'flex-start',
-                background: 'var(--kt-navy-900)',
-                color: 'white',
-                padding: '9px 18px',
-                borderRadius: 8,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                background: 'white',
+                color: 'var(--kt-olive-700)',
+                padding: '12px 24px',
+                borderRadius: 'var(--kt-radius-lg)',
                 fontWeight: 'var(--kt-weight-semibold)',
-                fontSize: 'var(--kt-text-sm)',
+                fontSize: 'var(--kt-text-md)',
               }}
             >
               Create company account →
@@ -354,14 +377,14 @@ export const SignupRolePage: React.FC = () => {
           style={{
             marginTop: 36,
             fontSize: 'var(--kt-text-sm)',
-            color: 'rgba(229,218,195,0.35)',
+            color: 'var(--kt-text-muted)',
           }}
         >
           Already have an account?{' '}
           <Link
             to="/site/login"
             style={{
-              color: 'var(--kt-sand-300)',
+              color: 'var(--kt-text)',
               fontWeight: 'var(--kt-weight-semibold)',
               textDecoration: 'none',
             }}
@@ -374,12 +397,10 @@ export const SignupRolePage: React.FC = () => {
       {/* Bottom wordmark */}
       <p
         style={{
-          position: 'relative',
-          zIndex: 1,
           textAlign: 'center',
           padding: '0 0 20px',
           fontSize: 11,
-          color: 'rgba(229,218,195,0.15)',
+          color: 'var(--kt-text-muted)',
           letterSpacing: '0.02em',
         }}
       >

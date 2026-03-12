@@ -1,12 +1,12 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Badge } from '../../components'
-import { RegulixBadge } from '../components'
 import { useAuth } from '../context/AuthContext'
 import {
   FeaturedJobsSection,
   HowItWorksSection,
   IndustriesSection,
+  RegulixBannerSection,
   CTASection,
   FooterSection,
 } from './landing/sections'
@@ -22,9 +22,6 @@ const HeroDefault = () => {
     <section style={{ background: 'var(--kt-bg)', borderBottom: '1px solid var(--kt-border)' }}>
       {/* Centered header */}
       <div style={{ textAlign: 'center', padding: '80px var(--kt-space-6) 52px' }}>
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
-          <RegulixBadge size="sm" showTooltip={false} />
-        </div>
         <h1
           style={{
             fontSize: 'clamp(32px, 5vw, 58px)',
@@ -96,14 +93,23 @@ const HeroDefault = () => {
             style={{ width: 80, height: 80, objectFit: 'contain' }}
           />
           <div>
-            <Badge variant="accent" size="sm" style={{ marginBottom: 14 }}>
+            <Badge
+              variant="accent"
+              size="sm"
+              style={{
+                marginBottom: 14,
+                background: '#103949',
+                color: 'rgba(229,218,195,0.85)',
+                border: 'none',
+              }}
+            >
               For Workers
             </Badge>
             <h2
               style={{
                 fontSize: 'var(--kt-text-4xl)',
                 fontWeight: 'var(--kt-weight-bold)',
-                color: 'var(--kt-sand-300)',
+                color: 'white',
                 lineHeight: 1.0,
                 marginBottom: 14,
                 letterSpacing: '-0.5px',
@@ -116,7 +122,7 @@ const HeroDefault = () => {
             <p
               style={{
                 fontSize: 'var(--kt-text-md)',
-                color: 'rgba(229,218,195,0.5)',
+                color: 'rgba(255,255,255,0.65)',
                 lineHeight: 1.6,
                 maxWidth: 340,
               }}
@@ -147,10 +153,10 @@ const HeroDefault = () => {
                   alignItems: 'center',
                   gap: 10,
                   fontSize: 'var(--kt-text-sm)',
-                  color: 'rgba(229,218,195,0.65)',
+                  color: 'rgba(255,255,255,0.65)',
                 }}
               >
-                <span style={{ color: 'var(--kt-accent)', fontWeight: 700 }}>✓</span> {item}
+                <span style={{ color: 'rgba(255,255,255,0.9)', fontWeight: 700 }}>✓</span> {item}
               </li>
             ))}
           </ul>
@@ -160,12 +166,13 @@ const HeroDefault = () => {
               display: 'inline-flex',
               alignItems: 'center',
               gap: 8,
-              background: 'var(--kt-accent)',
-              color: 'white',
+              background: 'white',
+              color: 'var(--kt-navy-900)',
               padding: '12px 24px',
               borderRadius: 'var(--kt-radius-lg)',
               fontWeight: 'var(--kt-weight-semibold)',
               fontSize: 'var(--kt-text-md)',
+              marginTop: 'auto',
             }}
           >
             Browse Jobs →
@@ -286,6 +293,7 @@ const HeroDefault = () => {
               borderRadius: 'var(--kt-radius-lg)',
               fontWeight: 'var(--kt-weight-semibold)',
               fontSize: 'var(--kt-text-md)',
+              marginTop: 'auto',
             }}
           >
             Post a Job →
@@ -358,6 +366,7 @@ export const LandingPage: React.FC = () => {
       <FeaturedJobsSection />
       <HowItWorksSection />
       <IndustriesSection />
+      <RegulixBannerSection />
       <CTASection />
       <FooterSection />
     </div>

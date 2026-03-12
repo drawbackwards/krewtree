@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Button, Input, Checkbox, Badge } from '../../../components'
 import { industries } from '../../data/mock'
@@ -26,6 +26,18 @@ export const WorkerSignupPage: React.FC = () => {
   const [termsAgreed, setTermsAgreed] = useState(false)
   const [passwordError, setPasswordError] = useState('')
   const [confirmPasswordError, setConfirmPasswordError] = useState('')
+  const [industryOpen, setIndustryOpen] = useState(false)
+  const industryRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (industryRef.current && !industryRef.current.contains(e.target as Node)) {
+        setIndustryOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
 
   const toggleIndustry = (slug: string) => {
     setSelectedIndustries((prev) =>
@@ -363,8 +375,8 @@ export const WorkerSignupPage: React.FC = () => {
                 />
               </div>
 
-              {/* Industry chips */}
-              <div>
+              {/* Industry multiselect dropdown */}
+              <div ref={industryRef} style={{ position: 'relative' }}>
                 <p
                   style={{
                     fontSize: 'var(--kt-text-sm)',
@@ -378,36 +390,148 @@ export const WorkerSignupPage: React.FC = () => {
                     (select all that apply)
                   </span>
                 </p>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
-                  {industries.map((ind) => {
-                    const active = selectedIndustries.includes(ind.slug)
-                    return (
-                      <button
-                        key={ind.id}
-                        type="button"
-                        onClick={() => toggleIndustry(ind.slug)}
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: 5,
-                          padding: '5px 12px',
-                          borderRadius: 'var(--kt-radius-full)',
-                          border: `1.5px solid ${active ? 'var(--kt-accent)' : 'var(--kt-border)'}`,
-                          background: active ? 'var(--kt-accent)' : 'transparent',
-                          color: active ? 'white' : 'var(--kt-text)',
-                          cursor: 'pointer',
-                          fontSize: 13,
-                          fontFamily: 'var(--kt-font-sans)',
-                          fontWeight: active ? 500 : 400,
-                          transition: 'all 0.15s ease',
-                        }}
-                      >
-                        <span style={{ fontSize: 13 }}>{ind.icon}</span>
-                        {ind.name}
-                      </button>
-                    )
-                  })}
-                </div>
+                {/* Trigger */}
+                <button
+                  type="button"
+                  onClick={() => setIndustryOpen((o) => !o)}
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '10px 14px',
+                    border: `1.5px solid ${industryOpen ? 'var(--kt-accent)' : 'var(--kt-border)'}`,
+                    borderRadius: 'var(--kt-radius-lg)',
+                    background: 'white',
+                    cursor: 'pointer',
+                    fontFamily: 'var(--kt-font-sans)',
+                    fontSize: 'var(--kt-text-sm)',
+                    color: selectedIndustries.length ? 'var(--kt-text)' : 'var(--kt-text-muted)',
+                    textAlign: 'left',
+                    transition: 'border-color 0.15s',
+                    boxSizing: 'border-box',
+                  }}
+                >
+                  <span
+                    style={{
+                      flex: 1,
+                      minWidth: 0,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {selectedIndustries.length === 0
+                      ? 'Select industries…'
+                      : selectedIndustries.length === 1
+                        ? (industries.find((i) => i.slug === selectedIndustries[0])?.name ??
+                          '1 selected')
+                        : `${selectedIndustries.length} industries selected`}
+                  </span>
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 16 16"
+                    fill="none"
+                    style={{
+                      flexShrink: 0,
+                      marginLeft: 8,
+                      transform: industryOpen ? 'rotate(180deg)' : 'none',
+                      transition: 'transform 0.15s',
+                    }}
+                  >
+                    <path
+                      d="M4 6l4 4 4-4"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </button>
+
+                {/* Dropdown list */}
+                {industryOpen && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: 'calc(100% + 4px)',
+                      left: 0,
+                      right: 0,
+                      background: 'white',
+                      border: '1.5px solid var(--kt-border)',
+                      borderRadius: 'var(--kt-radius-lg)',
+                      boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                      zIndex: 50,
+                      overflow: 'hidden',
+                    }}
+                  >
+                    {industries.map((ind) => {
+                      const active = selectedIndustries.includes(ind.slug)
+                      return (
+                        <button
+                          key={ind.id}
+                          type="button"
+                          onClick={() => toggleIndustry(ind.slug)}
+                          style={{
+                            width: '100%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 10,
+                            padding: '10px 14px',
+                            background: active ? 'rgba(109,117,49,0.07)' : 'transparent',
+                            border: 'none',
+                            borderBottom: '1px solid var(--kt-border)',
+                            cursor: 'pointer',
+                            fontFamily: 'var(--kt-font-sans)',
+                            fontSize: 'var(--kt-text-sm)',
+                            color: 'var(--kt-text)',
+                            textAlign: 'left',
+                            transition: 'background 0.1s',
+                          }}
+                          onMouseOver={(e) => {
+                            if (!active) e.currentTarget.style.background = 'var(--kt-bg-subtle)'
+                          }}
+                          onMouseOut={(e) => {
+                            e.currentTarget.style.background = active
+                              ? 'rgba(109,117,49,0.07)'
+                              : 'transparent'
+                          }}
+                        >
+                          {/* Checkbox */}
+                          <span
+                            style={{
+                              width: 18,
+                              height: 18,
+                              borderRadius: 4,
+                              border: `2px solid ${active ? 'var(--kt-accent)' : 'var(--kt-border)'}`,
+                              background: active ? 'var(--kt-accent)' : 'transparent',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              flexShrink: 0,
+                              transition: 'all 0.15s',
+                            }}
+                          >
+                            {active && (
+                              <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                                <path
+                                  d="M1 4l3 3 5-6"
+                                  stroke="white"
+                                  strokeWidth="1.75"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                />
+                              </svg>
+                            )}
+                          </span>
+                          <span style={{ fontSize: 15, lineHeight: 1 }}>{ind.icon}</span>
+                          <span>{ind.name}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
 
               <div style={{ height: 1, background: 'var(--kt-border)' }} />
