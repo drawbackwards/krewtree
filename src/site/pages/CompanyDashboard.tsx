@@ -15,7 +15,7 @@ import {
   jobAnalytics,
 } from '../data/mock'
 
-const PlusIcon = () => (
+const _PlusIcon = () => (
   <svg
     width="15"
     height="15"
@@ -176,14 +176,14 @@ export const CompanyDashboard: React.FC = () => {
       <div
         style={{
           background: 'var(--kt-surface)',
-          padding: '28px var(--kt-space-6)',
           borderBottom: '1px solid var(--kt-border)',
         }}
       >
         <div
           style={{
-            maxWidth: 1200,
+            maxWidth: 1280,
             margin: '0 auto',
+            padding: '28px var(--kt-space-6)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -232,19 +232,12 @@ export const CompanyDashboard: React.FC = () => {
               </p>
             </div>
           </div>
-          <Link to="/site/post-job" style={{ textDecoration: 'none' }}>
-            <Button variant="accent" size="md">
-              <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <PlusIcon /> Post a Job
-              </span>
-            </Button>
-          </Link>
         </div>
       </div>
 
       <div
         style={{
-          maxWidth: 1200,
+          maxWidth: 1280,
           margin: '0 auto',
           padding: '28px var(--kt-space-6)',
           display: 'flex',

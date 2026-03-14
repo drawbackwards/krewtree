@@ -83,7 +83,7 @@ export const CompanySignupPage: React.FC = () => {
 
   const industryOptions = industries.map((ind) => ({
     value: ind.slug,
-    label: `${ind.icon} ${ind.name}`,
+    label: ind.name,
   }))
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -265,10 +265,7 @@ export const CompanySignupPage: React.FC = () => {
                 marginTop: 40,
                 display: 'inline-flex',
                 flexDirection: 'column',
-                padding: '16px 20px',
-                background: 'rgba(229,218,195,0.05)',
-                border: '1px solid rgba(229,218,195,0.1)',
-                borderRadius: 12,
+                padding: '16px 20px 16px 0',
               }}
             >
               <span

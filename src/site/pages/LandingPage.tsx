@@ -359,16 +359,14 @@ const HeroDefault = () => {
 // ═════════════════════════════════════════════════════════════════════════════
 // MAIN EXPORT
 // ═════════════════════════════════════════════════════════════════════════════
-export const LandingPage: React.FC = () => {
-  return (
-    <div style={{ minHeight: '100vh', background: 'var(--kt-bg)' }}>
-      <HeroDefault />
-      <FeaturedJobsSection />
-      <HowItWorksSection />
-      <IndustriesSection />
-      <RegulixBannerSection />
-      <CTASection />
-      <FooterSection />
-    </div>
-  )
-}
+export const LandingPage: React.FC = () => (
+  <div style={{ minHeight: '100vh', background: 'var(--kt-bg)' }}>
+    <HeroDefault />
+    <FeaturedJobsSection />
+    <HowItWorksSection />
+    <IndustriesSection />
+    <RegulixBannerSection />
+    <CTASection />
+    <FooterSection />
+  </div>
+)

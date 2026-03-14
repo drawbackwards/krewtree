@@ -1,5 +1,5 @@
 # krewtree — Project Context & Master Flow
-> Last updated: March 2026
+> Last updated: March 13, 2026 (session 4)
 > This file is the single source of truth for Claude context. Read this first after any memory reset.
 
 ---
@@ -36,6 +36,7 @@ krewtree is a **job board platform for hourly / blue-collar workers and the comp
 - `eslint.config.js` — ESLint flat config with 4 plugins; husky + lint-staged run on commit
 - `vercel.json` — SPA rewrites + redirect `/` → `/site`
 - `.claude/launch.json` — Claude Code preview server config
+- `docs/app-architecture.html` — static HTML architecture diagram showing all sections, pages, and content hierarchy
 
 ---
 
@@ -138,7 +139,7 @@ src/
         │   └── RegulixBanner.module.css — CSS module for Regulix two-card grid (subgrid + mobile stacking)
         ├── LandingPage.tsx        — home / path chooser
         ├── JobsPage.tsx           — job search & filtering
-        ├── JobDetailPage.tsx      — individual job view + apply
+        ├── JobDetailPage.tsx      — individual job view + apply; share modal; manage listing modal
         ├── WorkerDashboard.tsx    — worker's home (stats, apps, activity)
         ├── WorkerProfilePage.tsx  — public worker profile
         ├── CompanyDashboard.tsx   — company's home (analytics, kanban)
@@ -157,8 +158,8 @@ All site routes are prefixed `/site`. Root `/` redirects to `/site` via vercel.j
 
 | Route | Component | Notes |
 |-------|-----------|-------|
-| `/site/login` | `LoginPage` | No Navbar — defaults to worker (navy) view |
-| `/site/login?type=company` | `LoginPage` | No Navbar — opens directly to company (olive) view |
+| `/site/login` | `LoginPage` | No Navbar — neutral white/gray page, email + password only |
+| `/site/login?type=company` | `LoginPage` | No Navbar — same neutral page; `?type=company` routes mock demo to company dashboard silently |
 | `/site/signup` | `SignupRolePage` | No Navbar — role picker |
 | `/site/signup/worker` | `WorkerSignupPage` | No Navbar |
 | `/site/signup/company` | `CompanySignupPage` | No Navbar |
@@ -174,6 +175,9 @@ All site routes are prefixed `/site`. Root `/` redirects to `/site` via vercel.j
 | `/site/saved-jobs` | `SavedJobsPage` | Navbar |
 | `/site/messages` | `MessagesPage` | Navbar |
 | `/site/referrals` | `ReferralPage` | Navbar |
+| `/site/candidates` | *(not yet built)* | Navbar — company only; search & filter workers by profile info |
+| `/site/manage-jobs` | *(not yet built)* | Navbar — company only; table of all listings, bulk actions, per-listing stats |
+| `/site/pipeline` | *(not yet built)* | Navbar — company only; all interacted applicants and their hiring stage |
 
 **Auth note:** Auth pages exist as UI but have no real authentication. All routes are currently open. A `ProtectedRoute` wrapper + real backend integration need to be added before launch.
 
@@ -186,29 +190,45 @@ All site routes are prefixed `/site`. Root `/` redirects to `/site` via vercel.j
 The 4 auth pages form a cohesive visual system. Key patterns:
 
 ### Color coding by user type
+**LoginPage** is now **neutral** (white/gray) — it is NOT color-coded. The persona toggle was removed; the user's account type is determined by stored account data after login.
+
+Signup pages remain color-coded:
 | Context | Background | Logo |
 |---------|-----------|------|
-| Worker (login/signup) | `var(--kt-navy-900)` `#0A232D` | `onDark` (default olive accent) |
-| Company (login/signup) | `var(--kt-olive-700)` `#6D7531` | `onDark` + `accentColor="white"` |
+| Worker signup | `var(--kt-navy-900)` `#0A232D` | `onDark` (default olive accent) |
+| Company signup | `var(--kt-olive-700)` `#6D7531` | `onDark` + `accentColor="white"` |
 
-### Layout pattern (all 4 pages)
-- Full-viewport background (navy or olive)
-- `KrewtreeBgMark` watermark behind content
+### Layout pattern
+**LoginPage:**
+- Background: `var(--kt-grey-50)` (light gray) — no color coding
+- `KrewtreeBgMark` watermark inside main content area with `color: 'var(--kt-grey-900)', opacity: 0.045`; mark is nested inside the content `<div>` (not full-page) so it centers relative to content only, not the header
+- Top bar: no background/border, `zIndex: 10`, `padding: '22px 52px'`; `KrewtreeLogo height={34}` with `onDark={false}`
+- Main content: `zIndex: 1`, `overflow: hidden`; two-column layout (marketing left, white card right)
+- White card: `background: white`, `border: '1px solid var(--kt-border)'`, `boxShadow: 'var(--kt-shadow-md)'`, `borderRadius: 16`, `padding: '44px 48px'`, `width: 420`
+- Footer: "A Regulix Partner Platform · © 2026 krewtree" faint text
+- `?type=company` param is preserved for mock demo routing only — routes to company dashboard after login; not reflected in UI
+
+**Signup pages (WorkerSignupPage, CompanySignupPage):**
+- Full-viewport colored background (navy or olive)
+- `KrewtreeBgMark` watermark; mark uses `currentColor` fill so color is controlled by the parent's CSS `color` property
 - Top bar: `KrewtreeLogo` left, secondary nav link right
-- Two-column main: brand/marketing content left (sticky), white card form right
+- Two-column main: brand/marketing content left, white card form right
 - Footer: "A Regulix Partner Platform · © 2026 krewtree" faint text
 
-### White card conventions
+### White card conventions (signup pages)
 - `background: white`, `borderRadius: 20`, `boxShadow: '0 24px 64px rgba(0,0,0,0.45)'`
 - Account type label: plain text `#8B9A3E` (lighter olive), 11px, 700 weight, uppercase, `letterSpacing: '0.08em'`
 - Heading: `var(--kt-text)`, 2xl, bold
 - Subtext: `var(--kt-text-muted)`
 
-### LoginPage — dynamic behavior
-- `useSearchParams` reads `?type=company` on mount → pre-selects company tab + olive background
-- CompanySignupPage "Sign in" link → `/site/login?type=company`
-- Background transition: `transition: 'background 0.25s ease'` when toggling tabs
-- Left panel content (heading, stats) switches based on selected tab
+### KrewtreeBgMark — currentColor fill
+`KrewtreeBgMark` SVG paths use `fill="currentColor"`. The component sets a default `color: '#e5dac3'` (sand) in its style so dark auth pages are unchanged. Override via the `style` prop:
+```tsx
+// Login page (light gray bg):
+<KrewtreeBgMark style={{ color: 'var(--kt-grey-900)', opacity: 0.045 }} />
+
+// Dark auth pages (worker/company signup) use the sand default automatically
+```
 
 ### Inline SVG icons
 All icon-like UI uses inline React SVG components — no icon library. Pattern:
@@ -304,8 +324,8 @@ All components share:
 
 | Component | Purpose |
 |-----------|---------|
-| `Logo` (`KrewtreeLogo`, `KrewtreeBgMark`) | Official brand SVG. `onDark` prop switches colors. `accentColor` prop overrides accent (use `"white"` on olive bg). Used in Navbar + all auth pages |
-| `Navbar` | Top nav with persona switcher (worker/company), links, notification bell. Auth buttons (`Log in`, `Sign up`) are pushed to far right via `margin-left: auto` on `.right` wrapper |
+| `Logo` (`KrewtreeLogo`, `KrewtreeBgMark`) | Official brand SVG. `onDark` prop switches colors. `accentColor` prop overrides accent (use `"white"` on olive bg). `KrewtreeBgMark` uses `fill="currentColor"` — default color is sand `#e5dac3`; override via `style` prop (e.g. `style={{ color: 'var(--kt-grey-900)', opacity: 0.045 }}` on the light login page). Used in Navbar + all auth pages |
+| `Navbar` | Top nav. Auth buttons (`Log in`, `Sign up`) pushed to far right via `margin-left: auto` on `.right` wrapper. When logged in: persona-specific nav links + `+ Post a Job` button (company only) + notification bell + avatar dropdown. **Worker links:** Find Jobs, Dashboard, Resume, Saved Jobs, Messages. **Company links:** Dashboard, Candidates (`/site/candidates`), Manage Jobs (`/site/manage-jobs`), Pipeline (`/site/pipeline`), Messages. **Avatar dropdown:** name header (+ company name for company persona), Organization Settings (company only — Company Name, Industry, Team Members, Billing), Personal Settings (Name & Headline, Avatar, Location, Password, Photo, Notifications, Dark/Light Mode), Log Out |
 | `RegulixBadge` | Regulix partner badge with pulse animation, sizes sm/md/lg, onDark variant |
 | `JobCard` | Job listing card with company, pay, skills, Regulix Ready badge. Sponsored banner transitions from olive → `--kt-navy-500` on hover |
 | `WorkerCard` | Worker profile card with performance score, Regulix Ready status |
@@ -426,15 +446,19 @@ Each subdomain shows industry-scoped jobs by default. "Browse by Industry" is in
 - Full design token system (light + dark)
 - 21 reusable UI components + ErrorBoundary
 - Landing page (2 hero variants)
-- Jobs listing + job detail pages
+- Jobs listing + job detail pages:
+  - **Worker view:** Quick Apply / Save Job / Regulix upsell sidebar; pre-interview questions preview; Regulix Ready applicant banner
+  - **Company view:** Edit Job / Manage Listing / View Pipeline sidebar; Job Applicants card — two split boxes (Regulix Ready with R-mark icon + green tint, Standard with users icon + white), "View Candidates →" olive button, "Learn more about Regulix →" link to regulix.com
+  - **Share modal** (share icon in job header): 4 social circle buttons (LinkedIn `#0A66C2`, X `#000`, Facebook `#1877F2`, Email navy) + copy-link row with live URL + "Copy" → "✓ Copied!" feedback
+  - **Manage Listing modal** (company only, triggered from sidebar button): green-selected pill toggle — "Pause listing" tab (duration radios: 7 days auto-resume, 30 days auto-resume, Indefinitely; "Confirm Pause" CTA + centered Cancel link) and "Archive listing" tab (description copy, navy "Archive listing" CTA + centered Cancel link; archive preserves record, restoreable from dashboard)
 - Worker dashboard + worker profile page
 - Company dashboard + company profile page
 - Post job page, saved jobs, messages, referrals
 - Navbar with persona switcher (auth buttons at far right)
 - Auth pages — complete visual system:
-  - `LoginPage` — color-coded by user type (navy/olive), reads `?type=company`, smooth background transition, SVG stat icons, no emoji
+  - `LoginPage` — neutral white/gray page, email + password only, no persona toggle; `?type=company` silently routes mock demo; `KrewtreeBgMark` with dark gray/low-opacity for light bg
   - `SignupRolePage` — role picker
-  - `WorkerSignupPage` — worker registration form
+  - `WorkerSignupPage` — worker registration form, navy background
   - `CompanySignupPage` — company registration, olive background, SVG benefit icons, full WCAG AA contrast, sign-in link routes to `/site/login?type=company`
 - `AuthContext` — `useAuth()` hook with `login(type)` / `logout()`, persona state
 - RegulixBadge, JobCard, WorkerCard, StatCard, KanbanBoard, etc.
@@ -443,12 +467,14 @@ Each subdomain shows industry-scoped jobs by default. "Browse by Industry" is in
 - Boost monetization UI (all mock, no real payment):
   - Worker dashboard: 🚀 Boost button → modal ($9.99, Apple Pay / Zelle)
   - QuickApplyModal: boost checkbox ($9.99 add-on, updates submit label)
-  - Company dashboard: 🚀 Boost per job → 7/14/30-day tiers ($35/$65/$120), Visa on file
-  - PostJobPage: sponsored listing — $38/application, stop-mode radios, Urgently Hiring label
+  - Company dashboard: 🚀 Boost per job → 7/14/30-day tiers ($35/$65/$120), Visa on file; `maxWidth: 1280` throughout; padding on inner container (aligned with Navbar); "Post a Job" removed from dashboard header (lives in Navbar only)
+  - PostJobPage: sponsored listing toggle (Switch component, olive expanded state); `$38/application`, stop-mode radios, Urgently Hiring label; Regulix Preferred card — updated subtext ("Mark this job as preferring candidates with up-to-date Regulix accounts."), olive border/background when active, credential badges removed
 
 ### ❌ Not Yet Built
 - Real authentication (ProtectedRoute, JWT/session, API calls)
-- Browse Workers page (`/site/workers`)
+- **Candidates page** (`/site/candidates`) — search & filter workers by profile info (planned architecture defined)
+- **Manage Jobs page** (`/site/manage-jobs`) — listings table, bulk actions, per-listing stats (planned architecture defined)
+- **Pipeline page** (`/site/pipeline`) — all interacted applicants by hiring stage (planned architecture defined)
 - Real API / backend integration (replace mock.ts)
 - Industry subdomain routing logic
 - Search/filter state management (URL-driven)

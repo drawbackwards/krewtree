@@ -4,8 +4,6 @@ import { Button, Input } from '../../../components'
 import { KrewtreeLogo, KrewtreeBgMark } from '../../components/Logo'
 import { useAuth } from '../../context/AuthContext'
 
-type UserType = 'worker' | 'company'
-
 // ── SVG stat icons ─────────────────────────────────────────────────────────────
 const StatIcon = ({ icon }: { icon: string }) => {
   const p = {
@@ -47,53 +45,42 @@ const StatIcon = ({ icon }: { icon: string }) => {
   }
 }
 
+const STATS = [
+  { icon: 'hardhat', label: '54,000+ active workers across 8 industries' },
+  { icon: 'building', label: '620+ verified companies actively hiring' },
+  { icon: 'zap', label: 'Same-day hiring with Regulix Ready workers' },
+]
+
 // ── Page ───────────────────────────────────────────────────────────────────────
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate()
   const { login } = useAuth()
   const [searchParams] = useSearchParams()
-  const [userType, setUserType] = useState<UserType>(
-    searchParams.get('type') === 'company' ? 'company' : 'worker'
-  )
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
 
-  const isCompany = userType === 'company'
+  // For mock demo routing only — not shown in UI
+  const isCompanyDemo = searchParams.get('type') === 'company'
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setPassword('')
-    login(userType)
-    navigate(isCompany ? '/site/dashboard/company' : '/site/dashboard/worker')
+    login(isCompanyDemo ? 'company' : 'worker')
+    navigate(isCompanyDemo ? '/site/dashboard/company' : '/site/dashboard/worker')
   }
-
-  const STATS = isCompany
-    ? [
-        { icon: 'building', label: '620+ verified companies hiring on krewtree' },
-        { icon: 'hardhat', label: '54,000+ active workers ready to hire' },
-        { icon: 'zap', label: 'Same-day hiring with Regulix Ready workers' },
-      ]
-    : [
-        { icon: 'hardhat', label: '54,000+ active workers across 8 industries' },
-        { icon: 'building', label: '620+ verified companies actively hiring' },
-        { icon: 'zap', label: 'Same-day hiring with Regulix' },
-      ]
 
   return (
     <div
       style={{
         minHeight: '100vh',
-        background: isCompany ? 'var(--kt-olive-700)' : 'var(--kt-navy-900)',
+        background: 'var(--kt-grey-50)',
         position: 'relative',
         overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',
         fontFamily: 'var(--kt-font-sans)',
-        transition: 'background 0.25s ease',
       }}
     >
-      <KrewtreeBgMark />
-
       {/* ── Top bar ────────────────────────────────────────────────── */}
       <div
         style={{
@@ -110,33 +97,26 @@ export const LoginPage: React.FC = () => {
           style={{ display: 'inline-flex', lineHeight: 0 }}
           aria-label="krewtree home"
         >
-          <KrewtreeLogo height={34} onDark accentColor={isCompany ? 'white' : undefined} />
+          <KrewtreeLogo height={34} onDark={false} />
         </Link>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={{ fontSize: 'var(--kt-text-sm)', color: 'rgba(255,255,255,0.7)' }}>
+          <span style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text-muted)' }}>
             New to krewtree?
           </span>
           <Link
             to="/site/signup"
             style={{
-              background: 'rgba(229,218,195,0.1)',
-              color: 'var(--kt-sand-300)',
-              border: '1px solid rgba(229,218,195,0.2)',
+              background: 'var(--kt-navy-900)',
+              color: 'white',
               borderRadius: 'var(--kt-radius-full)',
               padding: '7px 18px',
               fontSize: 'var(--kt-text-sm)',
               fontWeight: 'var(--kt-weight-medium)',
               textDecoration: 'none',
-              transition: 'all 0.15s ease',
+              transition: 'opacity 0.15s ease',
             }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.background = 'rgba(229,218,195,0.16)'
-              e.currentTarget.style.borderColor = 'rgba(229,218,195,0.35)'
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.background = 'rgba(229,218,195,0.1)'
-              e.currentTarget.style.borderColor = 'rgba(229,218,195,0.2)'
-            }}
+            onMouseOver={(e) => (e.currentTarget.style.opacity = '0.85')}
+            onMouseOut={(e) => (e.currentTarget.style.opacity = '1')}
           >
             Create account
           </Link>
@@ -152,60 +132,60 @@ export const LoginPage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: '40px 24px 60px',
+          padding: '48px 24px 64px',
+          overflow: 'hidden',
         }}
       >
+        <KrewtreeBgMark style={{ color: 'var(--kt-grey-900)', opacity: 0.045 }} />
         <div
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: 56,
+            gap: 72,
             width: '100%',
-            maxWidth: 1020,
+            maxWidth: 960,
           }}
         >
           {/* Left — brand text */}
           <div style={{ flex: 1, minWidth: 0 }}>
             <h1
               style={{
-                fontSize: 'clamp(32px, 3.5vw, 52px)',
+                fontSize: 'clamp(28px, 3vw, 46px)',
                 fontWeight: 'var(--kt-weight-bold)',
-                color: 'var(--kt-sand-300)',
-                lineHeight: 1.05,
-                marginBottom: 18,
-                letterSpacing: '-1px',
+                color: 'var(--kt-grey-900)',
+                lineHeight: 1.1,
+                marginBottom: 16,
+                letterSpacing: '-0.8px',
               }}
             >
               Welcome back.
             </h1>
             <p
               style={{
-                fontSize: 'var(--kt-text-lg)',
-                color: 'rgba(255,255,255,0.85)',
+                fontSize: 'var(--kt-text-md)',
+                color: 'var(--kt-text-muted)',
                 lineHeight: 1.7,
-                marginBottom: 52,
-                maxWidth: 380,
+                marginBottom: 48,
+                maxWidth: 340,
               }}
             >
-              {isCompany
-                ? 'Your next great hire is one sign-in away.'
-                : 'Your next job is one sign-in away.'}
+              Your next opportunity is one sign-in away.
             </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               {STATS.map(({ icon, label }) => (
                 <div key={label} style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
                   <div
                     style={{
-                      width: 36,
-                      height: 36,
-                      borderRadius: 10,
-                      background: 'rgba(255,255,255,0.1)',
-                      border: '1px solid rgba(255,255,255,0.15)',
+                      width: 34,
+                      height: 34,
+                      borderRadius: 9,
+                      background: 'var(--kt-white)',
+                      border: '1px solid var(--kt-border)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       flexShrink: 0,
-                      color: 'rgba(229,218,195,0.8)',
+                      color: 'var(--kt-text-muted)',
                     }}
                   >
                     <StatIcon icon={icon} />
@@ -213,9 +193,9 @@ export const LoginPage: React.FC = () => {
                   <span
                     style={{
                       fontSize: 'var(--kt-text-sm)',
-                      color: 'white',
+                      color: 'var(--kt-text)',
                       lineHeight: 1.55,
-                      paddingTop: 7,
+                      paddingTop: 6,
                     }}
                   >
                     {label}
@@ -225,30 +205,18 @@ export const LoginPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Right — white card */}
+          {/* Right — form card */}
           <div
             style={{
-              background: 'white',
-              borderRadius: 20,
+              background: 'var(--kt-white)',
+              borderRadius: 16,
               padding: '44px 48px',
-              width: 440,
+              width: 420,
               flexShrink: 0,
-              boxShadow: '0 24px 64px rgba(0,0,0,0.45), 0 2px 8px rgba(0,0,0,0.2)',
+              border: '1px solid var(--kt-border)',
+              boxShadow: 'var(--kt-shadow-md)',
             }}
           >
-            <span
-              style={{
-                display: 'block',
-                fontSize: 11,
-                fontWeight: 700,
-                color: '#8B9A3E',
-                textTransform: 'uppercase',
-                letterSpacing: '0.08em',
-                marginBottom: 14,
-              }}
-            >
-              {isCompany ? 'Company Account' : 'Worker Account'}
-            </span>
             <h2
               style={{
                 fontSize: 'var(--kt-text-2xl)',
@@ -269,42 +237,6 @@ export const LoginPage: React.FC = () => {
             >
               Good to have you back.
             </p>
-
-            {/* Worker / Company toggle */}
-            <div
-              style={{
-                display: 'flex',
-                background: 'var(--kt-surface)',
-                borderRadius: 10,
-                padding: 3,
-                marginBottom: 24,
-                border: '1px solid var(--kt-border)',
-              }}
-            >
-              {(['worker', 'company'] as UserType[]).map((type) => (
-                <button
-                  key={type}
-                  type="button"
-                  onClick={() => setUserType(type)}
-                  style={{
-                    flex: 1,
-                    padding: '8px 0',
-                    borderRadius: 8,
-                    border: 'none',
-                    cursor: 'pointer',
-                    fontFamily: 'var(--kt-font-sans)',
-                    fontSize: 'var(--kt-text-sm)',
-                    fontWeight: 'var(--kt-weight-medium)',
-                    transition: 'all 0.15s ease',
-                    background: userType === type ? 'white' : 'transparent',
-                    color: userType === type ? 'var(--kt-text)' : 'var(--kt-text-muted)',
-                    boxShadow: userType === type ? '0 1px 3px rgba(0,0,0,0.12)' : 'none',
-                  }}
-                >
-                  {type === 'worker' ? 'Worker' : 'Company'}
-                </button>
-              ))}
-            </div>
 
             <form
               onSubmit={handleSubmit}
@@ -412,12 +344,10 @@ export const LoginPage: React.FC = () => {
       {/* Bottom wordmark */}
       <p
         style={{
-          position: 'relative',
-          zIndex: 1,
           textAlign: 'center',
-          padding: '0 0 20px',
+          padding: '0 0 24px',
           fontSize: 11,
-          color: 'rgba(229,218,195,0.18)',
+          color: 'var(--kt-grey-300)',
           letterSpacing: '0.02em',
         }}
       >

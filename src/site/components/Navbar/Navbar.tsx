@@ -25,6 +25,21 @@ const BellIcon = () => (
   </svg>
 )
 
+const ChevronDownIcon = () => (
+  <svg
+    width="12"
+    height="12"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <polyline points="6 9 12 15 18 9" />
+  </svg>
+)
+
 export const Navbar: React.FC = () => {
   const { isLoggedIn, persona, logout } = useAuth()
   const location = useLocation()
@@ -35,9 +50,12 @@ export const Navbar: React.FC = () => {
   const [notifs, setNotifs] = useState<Notification[]>(allNotifs)
   const notifRef = useRef<HTMLDivElement>(null)
 
+  const [avatarMenuOpen, setAvatarMenuOpen] = useState(false)
+  const avatarRef = useRef<HTMLDivElement>(null)
+
   const unreadCount = notifs.filter((n) => !n.isRead).length
 
-  // Close drawer on outside click
+  // Close notification drawer on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
@@ -47,6 +65,17 @@ export const Navbar: React.FC = () => {
     if (notifOpen) document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [notifOpen])
+
+  // Close avatar menu on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (avatarRef.current && !avatarRef.current.contains(e.target as Node)) {
+        setAvatarMenuOpen(false)
+      }
+    }
+    if (avatarMenuOpen) document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [avatarMenuOpen])
 
   const handleMarkAllRead = () => {
     setNotifs((prev) => prev.map((n) => ({ ...n, isRead: true })))
@@ -58,12 +87,13 @@ export const Navbar: React.FC = () => {
   }
 
   const handleLogout = () => {
+    setAvatarMenuOpen(false)
     logout()
     navigate('/site')
   }
 
-  const dashPath = persona === 'worker' ? '/site/dashboard/worker' : '/site/dashboard/company'
   const userInitials = persona === 'worker' ? 'MT' : 'AB'
+  const companyName = 'Apex Builders LLC'
 
   return (
     <nav className={styles.nav}>
@@ -76,20 +106,20 @@ export const Navbar: React.FC = () => {
         {/* Nav links — only shown when logged in */}
         {isLoggedIn && (
           <div className={styles.links}>
-            <Link
-              to="/site/jobs"
-              className={[styles.link, isActive('/site/jobs')].filter(Boolean).join(' ')}
-            >
-              Find Jobs
-            </Link>
-            <Link
-              to={dashPath}
-              className={[styles.link, isActive('/site/dashboard')].filter(Boolean).join(' ')}
-            >
-              Dashboard
-            </Link>
             {persona === 'worker' && (
               <>
+                <Link
+                  to="/site/jobs"
+                  className={[styles.link, isActive('/site/jobs')].filter(Boolean).join(' ')}
+                >
+                  Find Jobs
+                </Link>
+                <Link
+                  to="/site/dashboard/worker"
+                  className={[styles.link, isActive('/site/dashboard')].filter(Boolean).join(' ')}
+                >
+                  Dashboard
+                </Link>
                 <Link
                   to="/site/profile/w1"
                   className={[styles.link, isActive('/site/profile')].filter(Boolean).join(' ')}
@@ -113,10 +143,30 @@ export const Navbar: React.FC = () => {
             {persona === 'company' && (
               <>
                 <Link
-                  to="/site/post-job"
-                  className={[styles.link, isActive('/site/post-job')].filter(Boolean).join(' ')}
+                  to="/site/dashboard/company"
+                  className={[styles.link, isActive('/site/dashboard/company')]
+                    .filter(Boolean)
+                    .join(' ')}
                 >
-                  Post a Job
+                  Dashboard
+                </Link>
+                <Link
+                  to="/site/workers"
+                  className={[styles.link, isActive('/site/workers')].filter(Boolean).join(' ')}
+                >
+                  Candidates
+                </Link>
+                <Link
+                  to="/site/jobs"
+                  className={[styles.link, isActive('/site/jobs')].filter(Boolean).join(' ')}
+                >
+                  Manage Jobs
+                </Link>
+                <Link
+                  to="/site/pipeline"
+                  className={[styles.link, isActive('/site/pipeline')].filter(Boolean).join(' ')}
+                >
+                  Pipeline
                 </Link>
                 <Link
                   to="/site/messages"
@@ -160,7 +210,7 @@ export const Navbar: React.FC = () => {
               </Link>
             </>
           ) : (
-            /* ── Logged in: show bell, avatar, logout ── */
+            /* ── Logged in: post a job, bell, avatar dropdown ── */
             <>
               {persona === 'company' && (
                 <Link to="/site/post-job" className={styles.postJobBtn}>
@@ -197,27 +247,80 @@ export const Navbar: React.FC = () => {
                 )}
               </div>
 
-              <div
-                className={styles.avatar}
-                title={persona === 'worker' ? 'Marcus T.' : 'Apex Builders'}
-              >
-                {userInitials}
-              </div>
+              {/* Avatar + dropdown */}
+              <div ref={avatarRef} style={{ position: 'relative' }}>
+                <button
+                  className={[styles.avatarBtn, avatarMenuOpen ? styles.avatarBtnActive : '']
+                    .filter(Boolean)
+                    .join(' ')}
+                  onClick={() => setAvatarMenuOpen((o) => !o)}
+                  aria-label="Account menu"
+                  aria-expanded={avatarMenuOpen}
+                >
+                  <div
+                    className={styles.avatar}
+                    title={persona === 'worker' ? 'Marcus T.' : companyName}
+                  >
+                    {userInitials}
+                  </div>
+                  <ChevronDownIcon />
+                </button>
 
-              <button
-                onClick={handleLogout}
-                className={styles.link}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontFamily: 'var(--kt-font-sans)',
-                  fontSize: 'var(--kt-text-sm)',
-                  padding: 0,
-                }}
-              >
-                Log out
-              </button>
+                {avatarMenuOpen && (
+                  <div className={styles.avatarMenu} role="menu">
+                    {/* User identity header */}
+                    <div className={styles.menuHeader}>
+                      <span className={styles.menuHeaderName}>
+                        {persona === 'worker' ? 'Marcus T.' : 'Alex Brennan'}
+                      </span>
+                      {persona === 'company' && (
+                        <span className={styles.menuHeaderSub}>{companyName}</span>
+                      )}
+                    </div>
+
+                    <div className={styles.menuDivider} />
+
+                    {/* Company settings */}
+                    {persona === 'company' && (
+                      <>
+                        <div className={styles.menuSection}>
+                          <button
+                            className={styles.menuItem}
+                            role="menuitem"
+                            onClick={() => setAvatarMenuOpen(false)}
+                          >
+                            Organization Settings
+                          </button>
+                        </div>
+                      </>
+                    )}
+
+                    {/* Personal */}
+                    <div className={styles.menuSection}>
+                      <button
+                        className={styles.menuItem}
+                        role="menuitem"
+                        onClick={() => setAvatarMenuOpen(false)}
+                      >
+                        Personal Settings
+                      </button>
+                    </div>
+
+                    <div className={styles.menuDivider} />
+
+                    {/* Log out */}
+                    <div className={styles.menuSection}>
+                      <button
+                        className={[styles.menuItem, styles.menuItemDanger].join(' ')}
+                        role="menuitem"
+                        onClick={handleLogout}
+                      >
+                        Log Out
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </>
           )}
         </div>

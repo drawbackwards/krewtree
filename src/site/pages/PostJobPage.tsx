@@ -4,6 +4,137 @@ import { Input, Textarea, Select, Button, Badge, Alert, Switch, Divider } from '
 import { RegulixBadge } from '../components/RegulixBadge/RegulixBadge'
 import { industries } from '../data/mock'
 
+// ── Inline icon components ──────────────────────────────────────────────────
+
+const RegulixMarkIcon = ({ size = 28 }: { size?: number }) => {
+  const h = Math.round((size * 699.83) / 600)
+  return (
+    <svg viewBox="0 0 600 699.83" width={size} height={h} xmlns="http://www.w3.org/2000/svg">
+      <rect y="174.96" width="174.96" height="174.96" rx="17.5" ry="17.5" fill="#ff3d00" />
+      <path
+        fill="#ff3d00"
+        d="M597.42,684.9l-108.78-108.78c-26.8-26.8-61.39-44-98.45-49.4-1.34-.49-2.3-1.77-2.3-3.27,0-1.4.83-2.61,2.02-3.16.44-.1.87-.21,1.31-.32.06,0,.11-.02.17-.02h-.1c76.65-18.59,133.58-87.65,133.58-170.02v-174.96C524.87,78.33,446.54,0,349.92,0h-157.46c-9.66,0-17.5,7.83-17.5,17.5v139.97c0,9.66,7.83,17.5,17.5,17.5h139.97c9.66,0,17.5,7.83,17.5,17.5v139.97c0,9.66-7.83,17.5-17.5,17.5h-139.97c-9.66,0-17.5,7.83-17.5,17.5v142.97c0,9.28,3.69,18.18,10.25,24.74l159.58,159.59c3.28,3.28,7.73,5.12,12.37,5.12h234.07c7.79,0,11.7-9.42,6.19-14.93Z"
+      />
+    </svg>
+  )
+}
+
+const StarIcon = ({ size = 28 }: { size?: number }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="var(--kt-olive-700)"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+  </svg>
+)
+
+const PlusIcon = () => (
+  <svg
+    width="12"
+    height="12"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.5"
+    strokeLinecap="round"
+  >
+    <line x1="12" y1="5" x2="12" y2="19" />
+    <line x1="5" y1="12" x2="19" y2="12" />
+  </svg>
+)
+
+// ── Suggested skills by industry ────────────────────────────────────────────
+
+const suggestedSkillsByIndustry: Record<string, string[]> = {
+  construction: [
+    'Framing',
+    'Drywall',
+    'Concrete',
+    'Roofing',
+    'Plumbing',
+    'Electrical',
+    'OSHA 10',
+    'Blueprint Reading',
+    'Welding',
+    'Heavy Equipment',
+  ],
+  healthcare: [
+    'CPR/BLS',
+    'Patient Care',
+    'Phlebotomy',
+    'EMR/EHR',
+    'Wound Care',
+    'IV Therapy',
+    'CNA',
+    'HIPAA',
+    'Vitals Monitoring',
+  ],
+  hospitality: [
+    'Food Safety',
+    'ServSafe',
+    'POS Systems',
+    'Customer Service',
+    'Food Prep',
+    'Barista',
+    'Event Setup',
+    'Table Service',
+  ],
+  retail: [
+    'Cash Handling',
+    'Inventory Management',
+    'POS Systems',
+    'Customer Service',
+    'Loss Prevention',
+    'Merchandising',
+    'Stock',
+  ],
+  transportation: [
+    'CDL-A',
+    'CDL-B',
+    'Forklift',
+    'DOT Compliance',
+    'Route Planning',
+    'Hazmat',
+    'Logistics',
+    'Load Securing',
+  ],
+  manufacturing: [
+    'CNC Operation',
+    'Quality Control',
+    'Forklift',
+    'Assembly Line',
+    'Welding',
+    'ISO Standards',
+    'Lean Manufacturing',
+    'Machine Operation',
+  ],
+  landscaping: [
+    'Lawn Care',
+    'Irrigation',
+    'Pruning',
+    'Pesticide License',
+    'Hardscaping',
+    'Plant Identification',
+    'Sod Installation',
+    'Snow Removal',
+  ],
+  security: [
+    'CPR/AED',
+    'Crowd Control',
+    'CCTV Monitoring',
+    'Incident Reporting',
+    'Guard Card',
+    'First Aid',
+    'Access Control',
+    'Patrol',
+  ],
+}
+
+// ── Layout helpers ───────────────────────────────────────────────────────────
+
 const Section = ({
   title,
   subtitle,
@@ -46,6 +177,8 @@ const FieldRow = ({ children, columns = 2 }: { children: React.ReactNode; column
   </div>
 )
 
+// ── Select options ───────────────────────────────────────────────────────────
+
 const payTypeOptions = [
   { value: 'hour', label: 'Per Hour' },
   { value: 'salary', label: 'Annual Salary' },
@@ -64,6 +197,8 @@ const experienceOptions = [
   { value: 'senior', label: 'Senior (3–5 yrs)' },
   { value: 'lead', label: 'Lead / Expert (5+ yrs)' },
 ]
+
+// ── Page component ───────────────────────────────────────────────────────────
 
 export const PostJobPage: React.FC = () => {
   const navigate = useNavigate()
@@ -87,33 +222,46 @@ export const PostJobPage: React.FC = () => {
   const [appLimit, setAppLimit] = useState('50')
   const [urgentHiring, setUrgentHiring] = useState(false)
   const [regulixPreferred, setRegulixPreferred] = useState(false)
+  const [questions, setQuestions] = useState<string[]>([''])
 
   const estimatedCost =
     stopMode === 'limit' ? `$${(Number(appLimit) * 38).toLocaleString()}` : 'pay-per-application'
-  const [questions, setQuestions] = useState<string[]>(['', '', ''])
 
   const [errors, setErrors] = useState<Record<string, string>>({})
 
-  const addSkill = () => {
-    const s = skillInput.trim()
+  // Skills
+  const addSkill = (skill?: string) => {
+    const s = (skill ?? skillInput).trim()
     if (s && !parsedSkills.includes(s)) {
       setParsedSkills((prev) => [...prev, s])
-      setSkillInput('')
+      if (!skill) setSkillInput('')
     }
   }
-
   const removeSkill = (s: string) => setParsedSkills((prev) => prev.filter((x) => x !== s))
+
+  const suggestedSkills = industry
+    ? (suggestedSkillsByIndustry[industry] ?? []).filter((s) => !parsedSkills.includes(s))
+    : []
+
+  // Questions
+  const addQuestion = () => {
+    if (questions.length < 6) setQuestions((prev) => [...prev, ''])
+  }
+  const removeQuestion = (i: number) => setQuestions((prev) => prev.filter((_, idx) => idx !== i))
+  const updateQuestion = (i: number, value: string) => {
+    const next = [...questions]
+    next[i] = value
+    setQuestions(next)
+  }
 
   const validate = () => {
     const e: Record<string, string> = {}
     if (!title.trim()) e.title = 'Job title is required'
     if (!industry) e.industry = 'Industry is required'
     if (!location.trim()) e.location = 'Location is required'
-    if (!payMin || !payMax) e.pay = 'Pay range is required'
     if (payMin && payMax && Number(payMin) >= Number(payMax))
       e.pay = 'Pay min must be less than pay max'
     if (!description.trim()) e.description = 'Job description is required'
-    if (!requirements.trim()) e.requirements = 'Requirements are required'
     setErrors(e)
     return Object.keys(e).length === 0
   }
@@ -122,7 +270,7 @@ export const PostJobPage: React.FC = () => {
     e.preventDefault()
     if (!validate()) return
     setSubmitted(true)
-    setTimeout(() => navigate('/site/dashboard/company'), 2500)
+    setTimeout(() => navigate('/site/jobs/j1'), 2500)
   }
 
   if (submitted) {
@@ -157,7 +305,7 @@ export const PostJobPage: React.FC = () => {
             maxWidth: 400,
           }}
         >
-          Your job listing is now live. Redirecting you to your dashboard…
+          Your job listing is now live. Redirecting you to your posting…
         </p>
         {regulixPreferred && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -205,12 +353,13 @@ export const PostJobPage: React.FC = () => {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} noValidate>
+      {/* Form — outer padding matches the header's container padding */}
+      <form onSubmit={handleSubmit} noValidate style={{ padding: '0 var(--kt-space-6)' }}>
         <div
           style={{
             maxWidth: 860,
             margin: '0 auto',
-            padding: '28px var(--kt-space-6)',
+            padding: '28px 0',
             display: 'flex',
             flexDirection: 'column',
             gap: 20,
@@ -334,10 +483,8 @@ export const PostJobPage: React.FC = () => {
               placeholder="• 3+ years experience&#10;• OSHA 10 certification preferred&#10;• Valid driver's license…"
               value={requirements}
               onChange={(e) => setRequirements(e.target.value)}
-              error={errors.requirements}
               rows={5}
               maxChars={1000}
-              required
               helperText="Enter each requirement on a new line for best formatting."
             />
           </Section>
@@ -347,6 +494,7 @@ export const PostJobPage: React.FC = () => {
             title="Required Skills"
             subtitle="Tag the skills workers need. These help match your job to the right candidates."
           >
+            {/* Input row */}
             <div style={{ display: 'flex', gap: 10, marginBottom: 12 }}>
               <Input
                 placeholder="Add a skill (e.g. Framing, CPR/BLS, CDL-A)…"
@@ -360,12 +508,14 @@ export const PostJobPage: React.FC = () => {
                 }}
                 style={{ flex: 1 }}
               />
-              <Button type="button" variant="outline" size="md" onClick={addSkill}>
+              <Button type="button" variant="outline" size="md" onClick={() => addSkill()}>
                 Add
               </Button>
             </div>
+
+            {/* Added skills */}
             {parsedSkills.length > 0 && (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
                 {parsedSkills.map((s) => (
                   <span
                     key={s}
@@ -402,10 +552,67 @@ export const PostJobPage: React.FC = () => {
                 ))}
               </div>
             )}
-            {parsedSkills.length === 0 && (
-              <p style={{ fontSize: 'var(--kt-text-xs)', color: 'var(--kt-text-muted)' }}>
+
+            {/* Empty state */}
+            {parsedSkills.length === 0 && suggestedSkills.length === 0 && (
+              <p
+                style={{
+                  fontSize: 'var(--kt-text-xs)',
+                  color: 'var(--kt-text-muted)',
+                  marginBottom: 8,
+                }}
+              >
                 No skills added yet. Type a skill and press Enter or click Add.
               </p>
+            )}
+
+            {/* Suggested skills */}
+            {suggestedSkills.length > 0 && (
+              <div>
+                <p
+                  style={{
+                    fontSize: 'var(--kt-text-xs)',
+                    fontWeight: 'var(--kt-weight-medium)',
+                    color: 'var(--kt-text-muted)',
+                    marginBottom: 8,
+                  }}
+                >
+                  Suggested skills:
+                </p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {suggestedSkills.map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => addSkill(s)}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 5,
+                        padding: '4px 12px 4px 8px',
+                        background: 'rgba(109, 117, 49, 0.07)',
+                        border: '1px solid rgba(109, 117, 49, 0.22)',
+                        borderRadius: 'var(--kt-radius-full)',
+                        fontSize: 'var(--kt-text-xs)',
+                        fontWeight: 'var(--kt-weight-medium)',
+                        color: 'var(--kt-olive-700)',
+                        cursor: 'pointer',
+                        fontFamily: 'var(--kt-font-sans)',
+                        transition: 'background var(--kt-duration-fast)',
+                      }}
+                      onMouseOver={(e) =>
+                        (e.currentTarget.style.background = 'rgba(109, 117, 49, 0.14)')
+                      }
+                      onMouseOut={(e) =>
+                        (e.currentTarget.style.background = 'rgba(109, 117, 49, 0.07)')
+                      }
+                    >
+                      <PlusIcon />
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
             )}
           </Section>
 
@@ -416,24 +623,78 @@ export const PostJobPage: React.FC = () => {
           >
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {questions.map((q, i) => (
-                <Input
-                  key={i}
-                  label={`Question ${i + 1}${i === 0 ? '' : ' (optional)'}`}
-                  placeholder={
-                    i === 0
-                      ? "e.g. Do you have a valid driver's license?"
-                      : i === 1
-                        ? 'e.g. Are you available to start immediately?'
-                        : 'e.g. Do you have the required certification?'
-                  }
-                  value={q}
-                  onChange={(e) => {
-                    const next = [...questions]
-                    next[i] = e.target.value
-                    setQuestions(next)
-                  }}
-                />
+                <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-end' }}>
+                  <div style={{ flex: 1 }}>
+                    <Input
+                      label={`Question ${i + 1}${i > 0 ? ' (optional)' : ''}`}
+                      placeholder={
+                        i === 0
+                          ? "e.g. Do you have a valid driver's license?"
+                          : i === 1
+                            ? 'e.g. Are you available to start immediately?'
+                            : 'e.g. Do you have the required certification?'
+                      }
+                      value={q}
+                      onChange={(e) => updateQuestion(i, e.target.value)}
+                    />
+                  </div>
+                  {questions.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeQuestion(i)}
+                      style={{
+                        background: 'none',
+                        border: '1px solid var(--kt-border)',
+                        borderRadius: 'var(--kt-radius-sm)',
+                        cursor: 'pointer',
+                        color: 'var(--kt-text-muted)',
+                        fontSize: 18,
+                        padding: '6px 10px',
+                        lineHeight: 1,
+                        fontFamily: 'var(--kt-font-sans)',
+                        marginBottom: 1,
+                        transition:
+                          'color var(--kt-duration-fast), border-color var(--kt-duration-fast)',
+                      }}
+                      onMouseOver={(e) => {
+                        e.currentTarget.style.color = 'var(--kt-danger)'
+                        e.currentTarget.style.borderColor = 'var(--kt-danger)'
+                      }}
+                      onMouseOut={(e) => {
+                        e.currentTarget.style.color = 'var(--kt-text-muted)'
+                        e.currentTarget.style.borderColor = 'var(--kt-border)'
+                      }}
+                      aria-label={`Remove question ${i + 1}`}
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
               ))}
+
+              {questions.length < 6 && (
+                <button
+                  type="button"
+                  onClick={addQuestion}
+                  style={{
+                    alignSelf: 'flex-start',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: 'var(--kt-primary)',
+                    fontSize: 'var(--kt-text-sm)',
+                    fontWeight: 'var(--kt-weight-medium)',
+                    fontFamily: 'var(--kt-font-sans)',
+                    padding: '4px 0',
+                  }}
+                >
+                  <PlusIcon />
+                  Add another question
+                </button>
+              )}
             </div>
           </Section>
 
@@ -451,16 +712,26 @@ export const PostJobPage: React.FC = () => {
                   justifyContent: 'space-between',
                   gap: 16,
                   padding: '16px 18px',
-                  background: regulixPreferred
-                    ? 'linear-gradient(135deg, #f0f4e8, #e8eedb)'
-                    : 'var(--kt-bg)',
-                  border: `1px solid ${regulixPreferred ? 'var(--kt-olive-300)' : 'var(--kt-border)'}`,
+                  background: regulixPreferred ? 'rgba(109, 117, 49, 0.07)' : 'var(--kt-bg)',
+                  border: `1px solid ${regulixPreferred ? 'var(--kt-accent)' : 'var(--kt-border)'}`,
                   borderRadius: 'var(--kt-radius-md)',
                   transition: 'all var(--kt-duration-fast)',
                 }}
               >
-                <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                  <RegulixBadge size="md" pulse={regulixPreferred} />
+                <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+                  {/* Regulix R mark — same footprint as the star in the sponsor card */}
+                  <div
+                    style={{
+                      width: 28,
+                      height: 28,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                    }}
+                  >
+                    <RegulixMarkIcon size={24} />
+                  </div>
                   <div>
                     <p
                       style={{
@@ -479,31 +750,8 @@ export const PostJobPage: React.FC = () => {
                         lineHeight: 1.5,
                       }}
                     >
-                      Mark this job as preferring Regulix Ready candidates. Your listing will be
-                      boosted to workers with completed W-4, I-9, direct deposit, and background
-                      check.
+                      Mark this job as preferring candidates with up-to-date Regulix accounts.
                     </p>
-                    {regulixPreferred && (
-                      <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
-                        {['W-4 Done', 'I-9 Verified', 'Direct Deposit', 'Background Check'].map(
-                          (tag) => (
-                            <span
-                              key={tag}
-                              style={{
-                                fontSize: 'var(--kt-text-xs)',
-                                padding: '2px 8px',
-                                background: 'var(--kt-olive-100)',
-                                color: 'var(--kt-olive-800)',
-                                borderRadius: 'var(--kt-radius-full)',
-                                fontWeight: 'var(--kt-weight-medium)',
-                              }}
-                            >
-                              {tag}
-                            </span>
-                          )
-                        )}
-                      </div>
-                    )}
                   </div>
                 </div>
                 <Switch
@@ -513,36 +761,60 @@ export const PostJobPage: React.FC = () => {
                 />
               </div>
 
-              <Divider />
-
               {/* Sponsored / Featured */}
-              {sponsorMode === 'off' ? (
-                /* ── Collapsed promo card ── */
+              <div
+                style={{
+                  border: `1px solid ${sponsorMode === 'on' ? 'var(--kt-accent)' : 'var(--kt-border)'}`,
+                  borderRadius: 'var(--kt-radius-md)',
+                  overflow: 'hidden',
+                  transition: 'border-color var(--kt-duration-fast)',
+                }}
+              >
+                {/* Always-visible top row */}
                 <div
                   style={{
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     gap: 16,
-                    padding: '18px 20px',
-                    background: 'var(--kt-bg)',
-                    border: '1px solid var(--kt-border)',
-                    borderRadius: 'var(--kt-radius-md)',
+                    padding: '16px 18px',
+                    background: sponsorMode === 'on' ? 'rgba(109, 117, 49, 0.07)' : 'var(--kt-bg)',
+                    borderBottom: sponsorMode === 'on' ? '1px solid var(--kt-border)' : 'none',
+                    transition: 'background var(--kt-duration-fast)',
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
-                    <span style={{ fontSize: 28, lineHeight: 1 }}>⭐</span>
+                    <div
+                      style={{
+                        width: 28,
+                        height: 28,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                      }}
+                    >
+                      <StarIcon size={24} />
+                    </div>
                     <div>
-                      <p
-                        style={{
-                          fontWeight: 'var(--kt-weight-semibold)',
-                          color: 'var(--kt-text)',
-                          fontSize: 'var(--kt-text-sm)',
-                          marginBottom: 4,
-                        }}
+                      <div
+                        style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}
                       >
-                        Sponsor this listing
-                      </p>
+                        <p
+                          style={{
+                            fontWeight: 'var(--kt-weight-semibold)',
+                            color: 'var(--kt-text)',
+                            fontSize: 'var(--kt-text-sm)',
+                          }}
+                        >
+                          Sponsor this listing
+                        </p>
+                        {sponsorMode === 'on' && (
+                          <Badge variant="accent" size="sm">
+                            Active
+                          </Badge>
+                        )}
+                      </div>
                       <p
                         style={{
                           fontSize: 'var(--kt-text-xs)',
@@ -579,75 +851,18 @@ export const PostJobPage: React.FC = () => {
                         per application
                       </p>
                     </div>
-                    <Button
-                      type="button"
-                      variant="accent"
-                      size="sm"
-                      onClick={() => setSponsorMode('on')}
-                    >
-                      Set up →
-                    </Button>
+                    <Switch
+                      checked={sponsorMode === 'on'}
+                      onChange={(e) => {
+                        setSponsorMode(e.target.checked ? 'on' : 'off')
+                        if (!e.target.checked) setUrgentHiring(false)
+                      }}
+                      size="md"
+                    />
                   </div>
                 </div>
-              ) : (
-                /* ── Expanded sponsor config ── */
-                <div
-                  style={{
-                    border: '1px solid var(--kt-primary)',
-                    borderRadius: 'var(--kt-radius-md)',
-                    overflow: 'hidden',
-                  }}
-                >
-                  {/* Sponsor header */}
-                  <div
-                    style={{
-                      background: 'var(--kt-primary-subtle)',
-                      padding: '14px 20px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      borderBottom: '1px solid var(--kt-border)',
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <span style={{ fontSize: 18 }}>⭐</span>
-                      <div>
-                        <p
-                          style={{
-                            fontWeight: 'var(--kt-weight-semibold)',
-                            color: 'var(--kt-text)',
-                            fontSize: 'var(--kt-text-sm)',
-                          }}
-                        >
-                          Sponsored Listing
-                        </p>
-                        <p style={{ fontSize: 'var(--kt-text-xs)', color: 'var(--kt-text-muted)' }}>
-                          Active — only pay when someone applies
-                        </p>
-                      </div>
-                      <Badge variant="accent" size="sm">
-                        Active
-                      </Badge>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
-                      <span
-                        style={{
-                          fontSize: 'var(--kt-text-2xl)',
-                          fontWeight: 'var(--kt-weight-bold)',
-                          color: 'var(--kt-text)',
-                        }}
-                      >
-                        $38.00
-                      </span>
-                      <span
-                        style={{ fontSize: 'var(--kt-text-xs)', color: 'var(--kt-text-muted)' }}
-                      >
-                        / application
-                      </span>
-                    </div>
-                  </div>
 
-                  {/* Config body */}
+                {sponsorMode === 'on' && (
                   <div
                     style={{
                       padding: '20px',
@@ -674,7 +889,7 @@ export const PostJobPage: React.FC = () => {
                         <label
                           style={{
                             display: 'flex',
-                            alignItems: 'flex-start',
+                            alignItems: 'center',
                             gap: 10,
                             cursor: 'pointer',
                           }}
@@ -684,7 +899,7 @@ export const PostJobPage: React.FC = () => {
                             name="stopMode"
                             checked={stopMode === 'pause'}
                             onChange={() => setStopMode('pause')}
-                            style={{ marginTop: 3, accentColor: 'var(--kt-primary)' }}
+                            style={{ accentColor: 'var(--kt-primary)', flexShrink: 0 }}
                           />
                           <div>
                             <p
@@ -715,7 +930,7 @@ export const PostJobPage: React.FC = () => {
                         <label
                           style={{
                             display: 'flex',
-                            alignItems: 'flex-start',
+                            alignItems: 'center',
                             gap: 10,
                             cursor: 'pointer',
                           }}
@@ -725,7 +940,7 @@ export const PostJobPage: React.FC = () => {
                             name="stopMode"
                             checked={stopMode === 'limit'}
                             onChange={() => setStopMode('limit')}
-                            style={{ marginTop: 3, accentColor: 'var(--kt-primary)' }}
+                            style={{ accentColor: 'var(--kt-primary)', flexShrink: 0 }}
                           />
                           <div style={{ flex: 1 }}>
                             <div
@@ -849,32 +1064,9 @@ export const PostJobPage: React.FC = () => {
                         </label>
                       </div>
                     </div>
-
-                    {/* Turn off */}
-                    <div style={{ borderTop: '1px solid var(--kt-border)', paddingTop: 14 }}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSponsorMode('off')
-                          setUrgentHiring(false)
-                        }}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          cursor: 'pointer',
-                          padding: 0,
-                          fontSize: 'var(--kt-text-xs)',
-                          color: 'var(--kt-text-muted)',
-                          textDecoration: 'underline',
-                          fontFamily: 'var(--kt-font-sans)',
-                        }}
-                      >
-                        Turn off sponsorship
-                      </button>
-                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </Section>
 

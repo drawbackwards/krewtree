@@ -16,6 +16,8 @@ import {
 } from './pages'
 import { ColorLandingPage } from './pages/ColorLandingPage'
 import { LoginPage } from './pages/auth/LoginPage'
+import { LoginPageV2 } from './pages/auth/LoginPageV2'
+import { LoginPageV3 } from './pages/auth/LoginPageV3'
 import { SignupRolePage } from './pages/auth/SignupRolePage'
 import { WorkerSignupPage } from './pages/auth/WorkerSignupPage'
 import { CompanySignupPage } from './pages/auth/CompanySignupPage'
@@ -43,6 +45,8 @@ export const SiteRouter: React.FC = () => (
     <Routes>
       {/* ── Auth routes — no Navbar ──────────────────────────────────── */}
       <Route path="/site/login" element={<LoginPage />} />
+      <Route path="/site/login/v2" element={<LoginPageV2 />} />
+      <Route path="/site/login/v3" element={<LoginPageV3 />} />
       <Route path="/site/signup" element={<SignupRolePage />} />
       <Route path="/site/signup/worker" element={<WorkerSignupPage />} />
       <Route path="/site/signup/company" element={<CompanySignupPage />} />

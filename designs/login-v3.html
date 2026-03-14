@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>krewtree — Login V3 (Left Panel Split)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-height: 100vh; display: flex;
+    }
+
+    /* ── Left panel — navy brand ── */
+    .left-panel {
+      width: 42%; flex-shrink: 0;
+      background: #0a232d;
+      display: flex; flex-direction: column;
+      padding: 36px 52px;
+      position: relative; overflow: hidden;
+    }
+
+    /* Watermark */
+    .bg-mark {
+      position: absolute;
+      bottom: -60px; right: -80px;
+      width: 480px; height: auto;
+      opacity: 0.06;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    /* Logo */
+    .logo-wrap {
+      position: relative; z-index: 1;
+      display: inline-flex; line-height: 0;
+    }
+
+    /* Center content */
+    .panel-body {
+      flex: 1;
+      display: flex; flex-direction: column; justify-content: center;
+      position: relative; z-index: 1;
+      padding: 40px 0;
+    }
+    .panel-headline {
+      font-size: clamp(30px, 2.8vw, 50px);
+      font-weight: 800; color: #fff;
+      line-height: 1.05; letter-spacing: -1.5px;
+      margin-bottom: 18px;
+    }
+    .panel-headline .accent { color: #e5dac3; }
+    .panel-sub {
+      font-size: 15px; color: rgba(255,255,255,0.55);
+      line-height: 1.65; max-width: 310px;
+      margin-bottom: 52px;
+    }
+
+    /* Stat rows */
+    .stats { display: flex; flex-direction: column; gap: 22px; }
+    .stat-row { display: flex; align-items: center; gap: 14px; }
+    .stat-bar {
+      width: 3px; height: 38px;
+      background: #6d7531; border-radius: 2px; flex-shrink: 0;
+    }
+    .stat-num {
+      font-size: clamp(18px, 1.5vw, 22px);
+      font-weight: 800; color: #e5dac3; line-height: 1;
+    }
+    .stat-label {
+      font-size: 12px; color: rgba(255,255,255,0.45);
+      margin-top: 3px;
+    }
+
+    /* Footer */
+    .panel-footer {
+      position: relative; z-index: 1;
+      font-size: 11px; color: rgba(255,255,255,0.18);
+      letter-spacing: 0.02em;
+    }
+
+    /* ── Right panel — white form ── */
+    .right-panel {
+      flex: 1;
+      background: #fff;
+      display: flex; flex-direction: column;
+      position: relative;
+    }
+
+    /* Top-right nav */
+    .top-nav {
+      display: flex; justify-content: flex-end; align-items: center;
+      gap: 12px; padding: 24px 40px;
+    }
+    .top-nav-text { font-size: 13px; color: #6b6b80; }
+    .create-btn {
+      background: #0a232d; color: #fff;
+      border: none; border-radius: 9999px;
+      padding: 7px 18px; font-size: 13px; font-weight: 600;
+      cursor: pointer; font-family: inherit;
+      text-decoration: none; display: inline-block;
+      transition: opacity 0.15s;
+    }
+    .create-btn:hover { opacity: 0.85; }
+
+    /* Form area */
+    .form-area {
+      flex: 1;
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px 60px 48px;
+    }
+    .form-inner { width: 100%; max-width: 380px; }
+
+    .form-inner h2 {
+      font-size: 28px; font-weight: 800; color: #111218;
+      margin-bottom: 6px; letter-spacing: -0.5px;
+    }
+    .form-inner .sub { font-size: 13px; color: #6b6b80; margin-bottom: 32px; }
+
+    form { display: flex; flex-direction: column; gap: 18px; }
+
+    .field-group { display: flex; flex-direction: column; }
+    .field-row {
+      display: flex; justify-content: space-between;
+      align-items: baseline; margin-bottom: 6px;
+    }
+    label { font-size: 13px; font-weight: 600; color: #111218; }
+    .forgot {
+      background: none; border: none; cursor: pointer;
+      font-size: 13px; color: #6d7531; font-family: inherit; padding: 0;
+    }
+    input[type="email"], input[type="password"] {
+      width: 100%; border: 1px solid #e0e0ea; border-radius: 10px;
+      padding: 10px 14px; font-size: 15px;
+      font-family: inherit; color: #111218;
+      background: #fff; outline: none;
+    }
+    input:focus { border-color: #0a232d; box-shadow: 0 0 0 3px rgba(10,35,45,0.08); }
+
+    .submit-btn {
+      width: 100%; background: #0a232d; color: #fff;
+      border: none; border-radius: 10px;
+      padding: 12px; font-size: 15px; font-weight: 600;
+      cursor: pointer; font-family: inherit; margin-top: 4px;
+    }
+    .submit-btn:hover { background: #113648; }
+
+    /* Divider */
+    .divider { display: flex; align-items: center; gap: 10px; margin: 24px 0; }
+    .divider-line { flex: 1; height: 1px; background: #e0e0ea; }
+    .divider-or {
+      font-size: 11px; color: #9191a8;
+      text-transform: uppercase; letter-spacing: 0.06em;
+    }
+
+    .signup-link { text-align: center; font-size: 13px; color: #6b6b80; }
+    .signup-link a { color: #6d7531; font-weight: 700; text-decoration: none; }
+    .signup-link a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+<!-- Left panel -->
+<div class="left-panel">
+
+  <!-- Background watermark — large tree mark, low opacity -->
+  <svg class="bg-mark" viewBox="0 0 156.28 242" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <path fill="#e5dac3" d="M156.06,112.61c-29.43,0-54.02-21.12-59.57-49.06,11.2,6.82,24.34,10.75,38.38,10.75v-34.57C113.06,39.74,95.32,21.92,95.32,0h0s-34.58,0-34.58,0h0c0,21.92-17.74,39.74-39.55,39.74v34.57c14.04,0,27.18-3.94,38.38-10.76-5.54,27.94-30.15,49.06-59.57,49.06v34.57c23.01,0,44.13-8.21,60.62-21.87v47.06l17.41,6.85,17.41-6.85v-47.05c16.49,13.65,37.61,21.86,60.61,21.86v-34.57Z"/>
+    <path fill="#6d7531" d="M78.2,199.57L.22,168.87v41.64l77.98,31.49,77.98-31.49v-41.64l-77.98,30.7Z"/>
+  </svg>
+
+  <!-- Logo -->
+  <a class="logo-wrap" href="#" aria-label="krewtree home">
+    <!-- onDark: sand mark, sand krew, olive tree -->
+    <svg viewBox="0 0 1006.19 242" width="141" height="34" xmlns="http://www.w3.org/2000/svg" aria-label="krewtree">
+      <path fill="#6d7531" d="M78.2,199.57L.22,168.87v41.64l77.98,31.49,77.98-31.49v-41.64l-77.98,30.7Z"/>
+      <path fill="#e5dac3" d="M156.06,112.61c-29.43,0-54.02-21.12-59.57-49.06,11.2,6.82,24.34,10.75,38.38,10.75v-34.57C113.06,39.74,95.32,21.92,95.32,0h0s-34.58,0-34.58,0h0c0,21.92-17.74,39.74-39.55,39.74v34.57c14.04,0,27.18-3.94,38.38-10.76-5.54,27.94-30.15,49.06-59.57,49.06v34.57c23.01,0,44.13-8.21,60.62-21.87v47.06l17.41,6.85,17.41-6.85v-47.05c16.49,13.65,37.61,21.86,60.61,21.86v-34.57Z"/>
+      <path fill="#e5dac3" d="M225.08,51.94h21.87v78.77h18.77l25.74-36.97h24.19l-32.32,46.45,34.26,49.93h-24.19l-28.06-40.84h-18.39v40.84h-21.87V51.94Z"/>
+      <path fill="#e5dac3" d="M332.1,93.74h20.32v16.45l16.06-16.45h26.71v18.77h-21.87l-19.35,19.74v57.87h-21.87v-96.38Z"/>
+      <path fill="#e5dac3" d="M402.94,170.96v-57.87l19.16-19.35h52.45l19.55,19.35v36h-69.29v15.48l7.35,7.35h33.1l6.97-7.16v-5.81h21.68v12.39l-18.77,18.77h-53.22l-18.97-19.16ZM472.22,133.03v-13.35l-7.55-7.74h-32.32l-7.55,7.74v13.35h47.42Z"/>
+      <path fill="#e5dac3" d="M506.67,93.74h22.26l12.77,67.16h.77l19.35-67.16h20.13l17.61,67.16h.77l14.13-67.16h22.26l-24.77,96.38h-21.1l-18.97-69.87h-.77l-20.32,69.87h-21.1l-23.03-96.38Z"/>
+      <path fill="#6d7531" d="M662.86,170.96v-58.64h-17.42v-18.58h17.81v-31.35h21.48v31.35h29.61v18.58h-29.61v51.68l7.55,7.55h22.06v18.58h-32.32l-19.16-19.16Z"/>
+      <path fill="#6d7531" d="M732.72,93.74h20.32v16.45l16.06-16.45h26.71v18.77h-21.87l-19.35,19.74v57.87h-21.87v-96.38Z"/>
+      <path fill="#6d7531" d="M803.56,170.96v-57.87l19.16-19.35h52.45l19.55,19.35v36h-69.29v15.48l7.35,7.35h33.1l6.97-7.16v-5.81h21.68v12.39l-18.77,18.77h-53.22l-18.97-19.16ZM872.84,133.03v-13.35l-7.55-7.74h-32.32l-7.55,7.74v13.35h47.42Z"/>
+      <path fill="#6d7531" d="M915.03,170.96v-57.87l19.16-19.35h52.45l19.55,19.35v36h-69.29v15.48l7.35,7.35h33.1l6.97-7.16v-5.81h21.68v12.39l-18.77,18.77h-53.22l-18.97-19.16ZM984.32,133.03v-13.35l-7.55-7.74h-32.32l-7.55,7.74v13.35h47.42Z"/>
+    </svg>
+  </a>
+
+  <!-- Center content -->
+  <div class="panel-body">
+    <h1 class="panel-headline">
+      Real work.<br>
+      Real workers.<br>
+      <span class="accent">Right now.</span>
+    </h1>
+    <p class="panel-sub">
+      krewtree connects hourly workers with employers who are ready to hire today.
+    </p>
+
+    <!-- Stats -->
+    <div class="stats">
+      <div class="stat-row">
+        <div class="stat-bar"></div>
+        <div>
+          <div class="stat-num">12,400+</div>
+          <div class="stat-label">Active job listings</div>
+        </div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-bar"></div>
+        <div>
+          <div class="stat-num">54,000+</div>
+          <div class="stat-label">Verified workers</div>
+        </div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-bar"></div>
+        <div>
+          <div class="stat-num">620+</div>
+          <div class="stat-label">Hiring companies</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <p class="panel-footer">A Regulix Partner Platform · © 2026 krewtree</p>
+</div>
+
+<!-- Right panel -->
+<div class="right-panel">
+
+  <!-- Top-right nav -->
+  <div class="top-nav">
+    <span class="top-nav-text">New to krewtree?</span>
+    <a href="#" class="create-btn">Create account</a>
+  </div>
+
+  <!-- Form -->
+  <div class="form-area">
+    <div class="form-inner">
+      <h2>Sign in</h2>
+      <p class="sub">Good to have you back.</p>
+
+      <form>
+        <div class="field-group">
+          <label for="email" style="margin-bottom:6px;">Email address</label>
+          <input type="email" id="email" placeholder="you@example.com" />
+        </div>
+
+        <div class="field-group">
+          <div class="field-row">
+            <label for="password">Password</label>
+            <button type="button" class="forgot">Forgot password?</button>
+          </div>
+          <input type="password" id="password" placeholder="••••••••" />
+        </div>
+
+        <button type="submit" class="submit-btn">Sign in →</button>
+      </form>
+
+      <div class="divider">
+        <div class="divider-line"></div>
+        <span class="divider-or">or</span>
+        <div class="divider-line"></div>
+      </div>
+
+      <p class="signup-link">
+        New to krewtree? <a href="#">Create a free account →</a>
+      </p>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>
