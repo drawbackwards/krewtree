@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>krewtree Web App Architecture</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 11px;
+      color: #000;
+      background: #fff;
+      padding: 48px 52px;
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+
+    /* ── Doc header ── */
+    .doc-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 40px;
+    }
+    .doc-title {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+
+    /* ── Legend ── */
+    .legend {
+      border: 1.5px solid #000;
+      padding: 8px 14px 10px;
+      font-size: 10px;
+      line-height: 1.7;
+      min-width: 140px;
+    }
+    .legend-row { display: flex; align-items: baseline; gap: 4px; }
+
+    /* ── Section wrapper ── */
+    .section { margin-bottom: 44px; }
+
+    .section-label {
+      font-weight: 700;
+      font-size: 13px;
+      margin-bottom: 6px;
+    }
+
+    /* ── Column grid ── */
+    .columns {
+      display: flex;
+      border-top: 2px solid #000;
+      border-bottom: 1.5px solid #000;
+    }
+
+    .col {
+      flex: 1;
+      padding: 10px 14px 12px;
+      border-right: 1px solid #000;
+      min-width: 0;
+    }
+    .col:last-child { border-right: none; }
+
+    .col-title {
+      font-weight: 700;
+      font-size: 11px;
+      margin-bottom: 8px;
+      padding-bottom: 4px;
+      border-bottom: 1.5px solid #000;
+    }
+
+    /* ── Hierarchy items ── */
+    .sub-page {
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+      font-size: 10px;
+      margin-top: 5px;
+      margin-bottom: 1px;
+    }
+    .sub-page::before {
+      content: '—';
+      flex-shrink: 0;
+      font-size: 9px;
+    }
+
+    .item {
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+      font-size: 10px;
+      padding-left: 12px;
+      margin-bottom: 1px;
+      color: #111;
+    }
+    .item::before {
+      content: '•';
+      flex-shrink: 0;
+      font-size: 9px;
+    }
+
+    .sub-item {
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+      font-size: 9.5px;
+      padding-left: 22px;
+      margin-bottom: 1px;
+      color: #333;
+    }
+    .sub-item::before {
+      content: '·';
+      flex-shrink: 0;
+    }
+
+    /* ── Status tags ── */
+    .tag {
+      display: inline-block;
+      font-size: 7.5px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 1px 4px;
+      border: 1px solid #000;
+      border-radius: 2px;
+      vertical-align: middle;
+      margin-left: 3px;
+      line-height: 1.4;
+    }
+    .tag-planned { background: #fff; color: #555; border-color: #999; }
+    .tag-built   { background: #000; color: #fff; border-color: #000; }
+
+    @media print {
+      body { padding: 24px 28px; }
+      .section { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Title + Legend ── -->
+  <div class="doc-header">
+    <h1 class="doc-title">krewtree Web App Architecture</h1>
+    <div class="legend">
+      <div class="legend-row" style="font-weight:700">Section</div>
+      <div class="legend-row" style="padding-left:8px">└ Sub Page</div>
+      <div class="legend-row" style="padding-left:16px">• Page Content</div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════════
+       SECTION 1: Navbar + Logged Out UX (side by side)
+       ══════════════════════════════════════ -->
+  <div style="display:grid; grid-template-columns:4fr 1fr; margin-bottom:44px;">
+
+    <div class="section-label">Navbar (Global — Persistent on All App Pages)</div>
+    <div class="section-label">Logged Out User Experience</div>
+
+    <div class="columns">
+
+      <div class="col">
+        <div class="col-title">Account Settings</div>
+        <div class="sub-page">Organization Settings</div>
+          <div class="item">Company Name</div>
+          <div class="item">Industry</div>
+          <div class="item">Team Members</div>
+          <div class="item">Billing</div>
+        <div class="sub-page">Personal Settings</div>
+          <div class="item">Name &amp; Headline</div>
+          <div class="item">Avatar</div>
+          <div class="item">Location</div>
+          <div class="item">Password</div>
+          <div class="item">Photo</div>
+          <div class="item">Notifications</div>
+          <div class="item">Dark / Light Mode</div>
+        <div class="sub-page">Log Out</div>
+      </div>
+
+      <div class="col">
+        <div class="col-title">Messages</div>
+        <div class="sub-page">Conversations List</div>
+          <div class="item">Worker ↔ Company threads</div>
+          <div class="item">Unread count badge</div>
+        <div class="sub-page">Message Thread</div>
+          <div class="item">Read / Unread state</div>
+      </div>
+
+      <div class="col">
+        <div class="col-title">Notifications</div>
+        <div class="sub-page">Application Updates</div>
+        <div class="sub-page">New Job Matches</div>
+        <div class="sub-page">Document Expiration</div>
+        <div class="sub-page">New Messages</div>
+        <div class="sub-page">Mark All as Read</div>
+      </div>
+
+      <div class="col" style="border-right:1px solid #000;">
+        <div class="col-title">Auth State (Logged Out)</div>
+        <div class="sub-page">Log In Button</div>
+        <div class="sub-page">Sign Up Button</div>
+        <div class="sub-page">Featured Jobs</div>
+      </div>
+
+    </div>
+
+    <div class="columns">
+      <div class="col">
+        <div class="col-title">Home — Logged Out <span style="font-weight:400;font-size:9px;color:#555">(Worker &amp; Company)</span></div>
+        <div class="sub-page">Hero — Path Chooser</div>
+          <div class="item">Worker Card</div>
+            <div class="sub-item">Browse Jobs →</div>
+          <div class="item">Company Card</div>
+            <div class="sub-item">Post a Job →</div>
+        <div class="sub-page">Featured Jobs</div>
+          <div class="item">JobCard components</div>
+          <div class="item">Regulix Ready badge</div>
+        <div class="sub-page">How krewtree Works</div>
+          <div class="item">01 Create Profile</div>
+          <div class="item">02 Get Verified (Regulix)</div>
+          <div class="item">03 Get Hired Same-Day</div>
+        <div class="sub-page">Browse by Industry</div>
+          <div class="item">8 industries (4-col grid)</div>
+          <div class="item">SVG icons per slug</div>
+        <div class="sub-page">Regulix Promo</div>
+          <div class="item">Regulix partnership pitch</div>
+          <div class="item">Get Verified CTA</div>
+        <div class="sub-page">CTA &amp; Footer</div>
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- ══════════════════════════════════════
+       SECTION 3: Worker Experience
+       ══════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-label">Worker Experience</div>
+    <div class="columns">
+
+      <div class="col">
+        <div class="col-title">Home — Logged In (Worker)</div>
+        <div class="sub-page">Personalized Hero</div>
+          <div class="item">Welcome message</div>
+          <div class="item">Profile completion prompt</div>
+        <div class="sub-page">Featured Jobs</div>
+          <div class="item">Tailored job matches</div>
+          <div class="item">Regulix Ready badge</div>
+        <div class="sub-page">Browse by Industry</div>
+          <div class="item">8 industries (4-col grid)</div>
+          <div class="item">SVG icons per slug</div>
+        <div class="sub-page">Regulix Promo</div>
+          <div class="item">Verification status</div>
+          <div class="item">Get Verified CTA</div>
+        <div class="sub-page">CTA</div>
+      </div>
+
+      <div class="col">
+        <div class="col-title">Jobs</div>
+        <div class="sub-page">Search &amp; Filter</div>
+          <div class="item">Industry</div>
+          <div class="item">Job Type</div>
+          <div class="item">Location</div>
+          <div class="item">Pay Range</div>
+        <div class="sub-page">Job Listings</div>
+          <div class="item">Sponsored Jobs</div>
+          <div class="item">Regular Listings</div>
+          <div class="item">Regulix Ready filter</div>
+        <div class="sub-page">Job Detail</div>
+          <div class="item">Company Info</div>
+          <div class="item">Description</div>
+          <div class="item">Requirements &amp; Skills</div>
+          <div class="item">Quick Apply (Regulix)</div>
+          <div class="item">Standard Apply</div>
+          <div class="item">Boost Add-on ($X)</div>
+          <div class="item">Save Job</div>
+      </div>
+
+      <div class="col">
+        <div class="col-title">Dashboard</div>
+        <div class="sub-page">Stats</div>
+          <div class="item">Applications Sent</div>
+          <div class="item">Profile Views</div>
+          <div class="item">Response Rate</div>
+        <div class="sub-page">Boost Profile</div>
+          <div class="item">Boost modal</div>
+          <div class="item">Apple Pay / Zelle</div>
+        <div class="sub-page">Recent Applications</div>
+          <div class="item">Status per job</div>
+        <div class="sub-page">Activity Feed</div>
+      </div>
+
+      <div class="col">
+        <div class="col-title">Resume</div>
+        <div class="sub-page">Bio &amp; Headline</div>
+        <div class="sub-page">Skills &amp; Certifications</div>
+          <div class="item">Skill Level</div>
+            <div class="sub-item">Beginner / Intermediate / Expert</div>
+        <div class="sub-page">Job History</div>
+          <div class="item">Regulix Verified entries</div>
+          <div class="item">Employer &amp; Title</div>
+          <div class="item">Date Range</div>
+        <div class="sub-page">Regulix Ready Badge</div>
+          <div class="item">Performance Score (0–5)</div>
+          <div class="item">Profile Complete %</div>
+      </div>
+
+      <div class="col">
+        <div class="col-title">More</div>
+        <div class="sub-page">Saved Jobs</div>
+          <div class="item">Saved JobCard list</div>
+          <div class="item">Apply from Save</div>
+        <div class="sub-page">Messages</div>
+        <div class="sub-page">Referrals</div>
+          <div class="item">Referral Code</div>
+          <div class="item">Referral History</div>
+          <div class="item">Earnings</div>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════════
+       SECTION 3: Company Experience
+       ══════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-label">Company Experience</div>
+    <div class="columns">
+
+      <div class="col">
+        <div class="col-title">Dashboard</div>
+        <div class="sub-page">Analytics Panel</div>
+          <div class="item">Total Views</div>
+          <div class="item">Applications</div>
+          <div class="item">Hires</div>
+        <div class="sub-page">Job Boost</div>
+          <div class="item">Short-term tier · $X</div>
+          <div class="item">Mid-term tier · $X</div>
+          <div class="item">Long-term tier · $X</div>
+          <div class="item">Saved payment on file</div>
+        <div class="sub-page">Post a Job</div>
+          <div class="item">Title</div>
+          <div class="item">Industry</div>
+          <div class="item">Type (FT / PT / Contract)</div>
+          <div class="item">Location</div>
+          <div class="item">Pay (min / max)</div>
+          <div class="item">Requirements &amp; Skills</div>
+        <div class="sub-page">Sponsored Listing</div>
+          <div class="item">$X / application</div>
+          <div class="item">Stop Mode</div>
+          <div class="item">Urgently Hiring label</div>
+      </div>
+
+      <div class="col">
+        <div class="col-title">Candidates <span class="tag tag-planned">Planned</span></div>
+        <div class="sub-page">Search &amp; Filter</div>
+          <div class="item">Industry</div>
+          <div class="item">Skills</div>
+          <div class="item">Location</div>
+          <div class="item">Availability</div>
+          <div class="item">Regulix Ready Only</div>
+        <div class="sub-page">Worker Cards</div>
+          <div class="item">Name &amp; Headline</div>
+          <div class="item">Skills Summary</div>
+          <div class="item">Regulix Ready Badge</div>
+          <div class="item">Performance Score</div>
+        <div class="sub-page">Worker Profile View</div>
+          <div class="item">Bio &amp; Resume</div>
+          <div class="item">Job History</div>
+          <div class="item">Certifications</div>
+          <div class="item">Message Worker</div>
+      </div>
+
+      <div class="col">
+        <div class="col-title">Manage Jobs <span class="tag tag-planned">Planned</span></div>
+        <div class="sub-page">Listings Table</div>
+          <div class="item">Job Title</div>
+          <div class="item">Applicant Count</div>
+          <div class="item">Status (Active / Paused / Archived)</div>
+          <div class="item">Date Posted</div>
+          <div class="item">Boost indicator</div>
+        <div class="sub-page">Search &amp; Filter</div>
+          <div class="item">By status</div>
+          <div class="item">By industry</div>
+          <div class="item">By date range</div>
+        <div class="sub-page">Bulk Actions</div>
+          <div class="item">Pause / Resume</div>
+          <div class="item">Archive</div>
+          <div class="item">Boost selected</div>
+        <div class="sub-page">Per-Listing Actions</div>
+          <div class="item">Edit</div>
+          <div class="item">Duplicate</div>
+          <div class="item">View Applicants</div>
+      </div>
+
+      <div class="col">
+        <div class="col-title">Pipeline <span class="tag tag-planned">Planned</span></div>
+        <div class="sub-page">Filter</div>
+          <div class="item">By job listing</div>
+          <div class="item">By stage</div>
+          <div class="item">By date</div>
+        <div class="sub-page">Applicant Cards</div>
+          <div class="item">Name &amp; Role Applied For</div>
+          <div class="item">Current Stage</div>
+          <div class="item">Regulix Ready Badge</div>
+          <div class="item">Last Activity</div>
+        <div class="sub-page">Stages</div>
+          <div class="item">Applied</div>
+          <div class="item">Reviewed</div>
+          <div class="item">Interview</div>
+          <div class="item">Offer</div>
+          <div class="item">Hired</div>
+          <div class="item">Rejected</div>
+      </div>
+
+      <div class="col">
+        <div class="col-title">Messages</div>
+        <div class="sub-page">Conversations</div>
+          <div class="item">Per Applicant</div>
+          <div class="item">Per Job Thread</div>
+        <div class="sub-page">Message Thread</div>
+          <div class="item">Interview Scheduling</div>
+          <div class="item">Offer Communication</div>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════════
+       SECTION 4: Auth Flow
+       ══════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-label">Auth Flow (No Navbar)</div>
+    <div class="columns">
+
+      <div class="col">
+        <div class="col-title">Role Picker</div>
+        <div class="sub-page">Choose Account Type</div>
+          <div class="item">Worker Card</div>
+          <div class="item">Company Card</div>
+        <div class="sub-page">Already have account?</div>
+          <div class="item">Log In link</div>
+      </div>
+
+      <div class="col">
+        <div class="col-title">Worker Sign Up</div>
+        <div class="sub-page">Navy Background</div>
+        <div class="sub-page">Registration Form</div>
+          <div class="item">Full Name</div>
+          <div class="item">Email</div>
+          <div class="item">Password</div>
+          <div class="item">Phone</div>
+          <div class="item">Location</div>
+        <div class="sub-page">Regulix CTA</div>
+          <div class="item">Get Verified prompt</div>
+        <div class="sub-page">On Success → Worker Dashboard</div>
+      </div>
+
+      <div class="col">
+        <div class="col-title">Company Sign Up</div>
+        <div class="sub-page">Olive Background</div>
+        <div class="sub-page">Registration Form</div>
+          <div class="item">Company Name</div>
+          <div class="item">Email</div>
+          <div class="item">Password</div>
+          <div class="item">Industry</div>
+          <div class="item">Company Size</div>
+        <div class="sub-page">Benefit Highlights</div>
+          <div class="item">Hire-Ready Workers</div>
+          <div class="item">Regulix Verified</div>
+        <div class="sub-page">On Success → Company Dashboard</div>
+      </div>
+
+      <div class="col">
+        <div class="col-title">Log In</div>
+        <div class="sub-page">Worker Tab</div>
+          <div class="item">Navy background</div>
+          <div class="item">Email + Password</div>
+          <div class="item">Remember Me</div>
+        <div class="sub-page">Company Tab</div>
+          <div class="item">Olive background</div>
+          <div class="item">Smooth bg transition</div>
+        <div class="sub-page">Forgot Password</div>
+        <div class="sub-page">On Success → Respective Dashboard</div>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════════
+       SECTION 5: Industry Subdomains
+       ══════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-label">Industry Subdomains <span class="tag tag-planned">Planned</span></div>
+    <div class="columns">
+
+      <div class="col">
+        <div class="col-title">Scoped Landing Page</div>
+        <div class="sub-page">Industry-specific hero</div>
+          <div class="item">Tailored headline &amp; copy</div>
+          <div class="item">Relevant imagery</div>
+        <div class="sub-page">Jobs filtered to vertical</div>
+          <div class="item">Default industry filter applied</div>
+      </div>
+
+      <div class="col">
+        <div class="col-title">Shared Account</div>
+        <div class="sub-page">One universal login</div>
+          <div class="item">Same account across all subdomains</div>
+        <div class="sub-page">Profile carries over</div>
+          <div class="item">Skills &amp; job history universal</div>
+          <div class="item">Regulix Ready badge universal</div>
+      </div>
+
+      <div class="col">
+        <div class="col-title">Worker Experience</div>
+        <div class="sub-page">Follows same architecture</div>
+          <div class="item">Jobs, Dashboard, Profile</div>
+          <div class="item">Saved Jobs, Messages, Referrals</div>
+        <div class="sub-page">Scoped job results</div>
+          <div class="item">Industry pre-filtered</div>
+          <div class="item">Can expand to all industries</div>
+      </div>
+
+      <div class="col">
+        <div class="col-title">Company Experience</div>
+        <div class="sub-page">Follows same architecture</div>
+          <div class="item">Dashboard, Post Job, Browse Workers</div>
+        <div class="sub-page">Scoped posting defaults</div>
+          <div class="item">Industry pre-filled on job post</div>
+      </div>
+
+    </div>
+  </div>
+
+</body>
+</html>
