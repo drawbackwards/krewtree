@@ -1,4 +1,5 @@
 export { LandingPage } from './LandingPage'
+export { WorkerProfileEditPage } from './WorkerProfileEditPage'
 export { JobsPage } from './JobsPage'
 export { JobDetailPage } from './JobDetailPage'
 export { WorkerDashboard } from './WorkerDashboard'

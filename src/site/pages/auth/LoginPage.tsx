@@ -58,15 +58,24 @@ export const LoginPage: React.FC = () => {
   const [searchParams] = useSearchParams()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [authError, setAuthError] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // For mock demo routing only — not shown in UI
-  const isCompanyDemo = searchParams.get('type') === 'company'
+  // unused — kept for type check
+  void searchParams
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setAuthError('')
+    setIsSubmitting(true)
+    const { error, persona } = await login(email, password)
+    setIsSubmitting(false)
+    if (error) {
+      setAuthError(error)
+      return
+    }
     setPassword('')
-    login(isCompanyDemo ? 'company' : 'worker')
-    navigate(isCompanyDemo ? '/site/dashboard/company' : '/site/dashboard/worker')
+    navigate(persona === 'company' ? '/site/dashboard/company' : '/site/dashboard/worker')
   }
 
   return (
@@ -295,9 +304,21 @@ export const LoginPage: React.FC = () => {
                 />
               </div>
 
+              {authError && (
+                <p
+                  style={{
+                    fontSize: 'var(--kt-text-sm)',
+                    color: 'var(--kt-error, #c0392b)',
+                    margin: 0,
+                  }}
+                >
+                  {authError}
+                </p>
+              )}
+
               <div style={{ marginTop: 4 }}>
-                <Button type="submit" variant="primary" size="lg" fullWidth>
-                  Sign in →
+                <Button type="submit" variant="primary" size="lg" fullWidth disabled={isSubmitting}>
+                  {isSubmitting ? 'Signing in…' : 'Sign in →'}
                 </Button>
               </div>
             </form>

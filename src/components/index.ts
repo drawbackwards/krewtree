@@ -24,3 +24,6 @@ export * from './Progress'
 export * from './Spinner'
 export * from './Tooltip'
 export * from './Toast'
+
+// Navigation
+export * from './Stepper'

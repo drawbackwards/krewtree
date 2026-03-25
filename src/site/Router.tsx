@@ -7,6 +7,7 @@ import {
   JobDetailPage,
   WorkerDashboard,
   WorkerProfilePage,
+  WorkerProfileEditPage,
   CompanyDashboard,
   PostJobPage,
   CompanyProfilePage,
@@ -18,6 +19,8 @@ import { LoginPage } from './pages/auth/LoginPage'
 import { SignupRolePage } from './pages/auth/SignupRolePage'
 import { WorkerSignupPage } from './pages/auth/WorkerSignupPage'
 import { CompanySignupPage } from './pages/auth/CompanySignupPage'
+import { useAuth } from './context/AuthContext'
+import type { Persona } from './context/AuthContext'
 
 // Scrolls to the top of the page on every navigation
 const ScrollToTop: React.FC = () => {
@@ -36,31 +39,63 @@ const AppLayout: React.FC = () => (
   </>
 )
 
+// Requires authentication. Optionally enforces a specific persona.
+// Shows nothing while session is loading, then redirects to login if not authenticated.
+// If a persona is required and doesn't match, redirects to the correct dashboard.
+const RequireAuth: React.FC<{ persona?: Persona }> = ({ persona }) => {
+  const { isLoggedIn, isLoading, persona: userPersona } = useAuth()
+  if (isLoading) return null
+  if (!isLoggedIn) return <Navigate to="/site/login" replace />
+  if (persona && userPersona !== persona) {
+    return (
+      <Navigate
+        to={userPersona === 'company' ? '/site/dashboard/company' : '/site/dashboard/worker'}
+        replace
+      />
+    )
+  }
+  return <Outlet />
+}
+
 export const SiteRouter: React.FC = () => (
   <>
     <ScrollToTop />
     <Routes>
       {/* ── Auth routes — no Navbar ──────────────────────────────────── */}
       <Route path="/site/login" element={<LoginPage />} />
-
       <Route path="/site/signup" element={<SignupRolePage />} />
       <Route path="/site/signup/worker" element={<WorkerSignupPage />} />
       <Route path="/site/signup/company" element={<CompanySignupPage />} />
 
       {/* ── App routes — full Navbar via AppLayout ───────────────────── */}
       <Route element={<AppLayout />}>
+        {/* Public */}
         <Route path="/site" element={<LandingPage />} />
-
         <Route path="/site/jobs" element={<JobsPage />} />
         <Route path="/site/jobs/:id" element={<JobDetailPage />} />
-        <Route path="/site/dashboard/worker" element={<WorkerDashboard />} />
-        <Route path="/site/dashboard/company" element={<CompanyDashboard />} />
         <Route path="/site/profile/:id" element={<WorkerProfilePage />} />
-        <Route path="/site/post-job" element={<PostJobPage />} />
         <Route path="/site/company/:id" element={<CompanyProfilePage />} />
-        <Route path="/site/saved-jobs" element={<SavedJobsPage />} />
-        <Route path="/site/messages" element={<MessagesPage />} />
-        <Route path="/site/referrals" element={<ReferralPage />} />
+
+        {/* Worker-only */}
+        <Route element={<RequireAuth persona="worker" />}>
+          <Route path="/site/dashboard/worker" element={<WorkerDashboard />} />
+          <Route path="/site/profile/edit" element={<WorkerProfileEditPage />} />
+          <Route path="/site/profile/create" element={<WorkerProfileEditPage />} />
+          <Route path="/site/saved-jobs" element={<SavedJobsPage />} />
+          <Route path="/site/referrals" element={<ReferralPage />} />
+        </Route>
+
+        {/* Company-only */}
+        <Route element={<RequireAuth persona="company" />}>
+          <Route path="/site/dashboard/company" element={<CompanyDashboard />} />
+          <Route path="/site/post-job" element={<PostJobPage />} />
+        </Route>
+
+        {/* Requires auth (any persona) */}
+        <Route element={<RequireAuth />}>
+          <Route path="/site/messages" element={<MessagesPage />} />
+        </Route>
+
         {/* Catch-all redirect */}
         <Route path="*" element={<Navigate to="/site" replace />} />
       </Route>

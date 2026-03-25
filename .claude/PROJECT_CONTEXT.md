@@ -1,5 +1,5 @@
 # krewtree — Project Context & Master Flow
-> Last updated: March 13, 2026 (session 4)
+> Last updated: March 16, 2026 (session 5)
 > This file is the single source of truth for Claude context. Read this first after any memory reset.
 
 ---
@@ -85,7 +85,8 @@ krewtree is a **job board platform for hourly / blue-collar workers and the comp
 - CSS modules for component scoping, inline styles for page-level layouts
 - Dark mode supported via token system but no UI toggle yet on site
 - Brand name is always lowercase: **krewtree**
-- All SVG icons are inline React components — no icon library
+- **All SVG icons must be imported from `src/site/icons/index.tsx`** — never define inline SVG icon components in page or component files. Add new icons to the shared library, then import.
+- **No emoji** — use SVG icon components for all iconography, never emoji characters
 - WCAG AA contrast must be maintained: on olive `#6D7531` backgrounds, only white passes AA for normal text
 
 ---
@@ -116,6 +117,8 @@ src/
     ├── Router.tsx             — all site routes + Navbar wrapper (AppLayout)
     ├── context/
     │   └── AuthContext.tsx    — AuthContext with login/logout, persona state (worker | company)
+    ├── icons/
+    │   └── index.tsx          — shared SVG icon library (~60+ icons, all named exports)
     ├── data/
     │   └── mock.ts            — all mock data (56KB) — types + data; replace with real API
     ├── types/

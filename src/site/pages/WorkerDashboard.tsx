@@ -237,6 +237,18 @@ export const WorkerDashboard: React.FC = () => {
               </p>
             </div>
           </div>
+          <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
+            <Link to="/site/profile/edit">
+              <Button variant="outline" size="sm">
+                Edit profile
+              </Button>
+            </Link>
+            <Link to={`/site/profile/${currentWorker.id}`}>
+              <Button variant="ghost" size="sm">
+                View profile
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
 
