@@ -82,6 +82,7 @@ export const CompanySignupPage: React.FC = () => {
   const [confirmPasswordError, setConfirmPasswordError] = useState('')
   const [authError, setAuthError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [confirmationSent, setConfirmationSent] = useState(false)
 
   const industryOptions = industries.map((ind) => ({
     value: ind.slug,
@@ -109,15 +110,49 @@ export const CompanySignupPage: React.FC = () => {
     if (!termsAgreed || !valid) return
 
     setIsSubmitting(true)
-    const { error } = await signUp(email, password, 'company', companyName)
+    const { error, needsConfirmation } = await signUp(email, password, 'company', companyName)
     setIsSubmitting(false)
     if (error) {
       setAuthError(error)
       return
     }
+    if (needsConfirmation) {
+      setConfirmationSent(true)
+      return
+    }
     setPassword('')
     setConfirmPassword('')
     navigate('/site/dashboard/company')
+  }
+
+  if (confirmationSent) {
+    return (
+      <div
+        style={{
+          minHeight: '100vh',
+          background: 'var(--kt-navy-900)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '32px',
+        }}
+      >
+        <div style={{ textAlign: 'center', color: 'white', maxWidth: 400 }}>
+          <KrewtreeLogo style={{ marginBottom: 32 }} />
+          <h2 style={{ fontSize: 28, fontWeight: 700, marginBottom: 12 }}>Check your email</h2>
+          <p style={{ color: 'var(--kt-navy-300)', lineHeight: 1.6 }}>
+            We sent a confirmation link to <strong style={{ color: 'white' }}>{email}</strong>.
+            Click the link to activate your account and get started.
+          </p>
+          <p style={{ color: 'var(--kt-navy-400)', fontSize: 13, marginTop: 24 }}>
+            Already confirmed?{' '}
+            <Link to="/site/login" style={{ color: 'var(--kt-olive-400)' }}>
+              Sign in
+            </Link>
+          </p>
+        </div>
+      </div>
+    )
   }
 
   return (

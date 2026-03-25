@@ -16,7 +16,7 @@ interface AuthState {
     password: string,
     persona: Persona,
     displayName?: string
-  ) => Promise<{ error: string | null; persona?: Persona }>
+  ) => Promise<{ error: string | null; persona?: Persona; needsConfirmation?: boolean }>
   logout: () => Promise<void>
   /** Set persona without changing auth state (used on landing/signup choice screens) */
   setPersona: (p: Persona) => void
@@ -96,7 +96,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     password: string,
     role: Persona,
     displayName = ''
-  ): Promise<{ error: string | null; persona?: Persona }> => {
+  ): Promise<{ error: string | null; persona?: Persona; needsConfirmation?: boolean }> => {
     // Pass role + name in metadata — the handle_new_user trigger creates the rows
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -111,6 +111,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     })
     if (error) return { error: error.message }
     if (!data.user) return { error: 'Sign-up failed — no user returned.' }
+
+    // If no session, email confirmation is required
+    if (!data.session) return { error: null, persona: role, needsConfirmation: true }
 
     setPersonaState(role)
     return { error: null, persona: role }
