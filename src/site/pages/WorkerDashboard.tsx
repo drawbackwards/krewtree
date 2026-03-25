@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom'
 import { Badge, Button, Modal, Progress, Divider } from '../../components'
 import { StatCard } from '../components/StatCard/StatCard'
 import { RegulixBadge } from '../components/RegulixBadge/RegulixBadge'
-import { currentWorker, myApplications, applicationEvents, jobs, savedJobs } from '../data/mock'
+import { currentWorker } from '../data/mock'
+import type { Application, ApplicationEvent, Job } from '../types'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import {
@@ -38,14 +39,6 @@ const statusConfig: Record<
   Rejected: { variant: 'danger', label: 'Rejected' },
 }
 
-const profileChecklist = [
-  { label: 'Basic Info', done: true },
-  { label: 'Work Experience', done: true },
-  { label: 'Skills', done: true },
-  { label: 'Regulix Verified', done: currentWorker.isRegulixReady },
-  { label: 'Profile Photo', done: false },
-]
-
 const timelineStatusIcon: Record<string, React.ReactNode> = {
   Applied: <ClipboardIcon size={14} />,
   Viewed: <EyeIcon size={14} />,
@@ -54,11 +47,7 @@ const timelineStatusIcon: Record<string, React.ReactNode> = {
   Rejected: <DangerCircleIcon size={14} />,
 }
 
-// Recommended: jobs matching worker's industries, not already applied
-const appliedJobIds = new Set(myApplications.map((a) => a.jobId))
-const recommendedJobs = jobs
-  .filter((j) => currentWorker.industries.includes(j.industry) && !appliedJobIds.has(j.id))
-  .slice(0, 3)
+const daysSince = (iso: string) => Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000)
 
 export const WorkerDashboard: React.FC = () => {
   const { user } = useAuth()
@@ -110,13 +99,173 @@ export const WorkerDashboard: React.FC = () => {
     }),
   }
 
+  const [applications, setApplications] = useState<Application[]>([])
+  const [appEvents, setAppEvents] = useState<ApplicationEvent[]>([])
+  const [recommendedJobs, setRecommendedJobs] = useState<Job[]>([])
+  const [savedJobsCount, setSavedJobsCount] = useState(0)
+
+  useEffect(() => {
+    if (!user) return
+
+    // Applications with job + company
+    supabase
+      .from('applications')
+      .select(
+        'id, status, is_boosted, created_at, job_id, jobs(id, title, industry, industry_slug, type, location, pay_min, pay_max, pay_type, is_sponsored, company_profiles(id, name))'
+      )
+      .eq('worker_id', user.id)
+      .order('created_at', { ascending: false })
+      .then(({ data }) => {
+        if (!data) return
+        const mapped: Application[] = data.map((a) => {
+          const j = a.jobs as unknown as {
+            id: string
+            title: string
+            industry: string
+            industry_slug: string
+            type: string
+            location: string
+            pay_min: number
+            pay_max: number
+            pay_type: string
+            is_sponsored: boolean
+            company_profiles: { id: string; name: string }
+          } | null
+          return {
+            id: a.id,
+            jobId: a.job_id,
+            status: a.status as Application['status'],
+            isBoosted: a.is_boosted,
+            appliedDaysAgo: daysSince(a.created_at),
+            job: {
+              id: j?.id ?? '',
+              companyId: j?.company_profiles?.id ?? '',
+              company: {
+                id: j?.company_profiles?.id ?? '',
+                name: j?.company_profiles?.name ?? '',
+                logo: '',
+                location: '',
+                industry: '',
+                isVerified: false,
+                description: '',
+                size: '',
+                website: '',
+              },
+              title: j?.title ?? '',
+              industry: j?.industry ?? '',
+              industrySlug: j?.industry_slug ?? '',
+              type: (j?.type ?? 'Full-time') as Job['type'],
+              location: j?.location ?? '',
+              payMin: j?.pay_min ?? 0,
+              payMax: j?.pay_max ?? 0,
+              payType: (j?.pay_type ?? 'hour') as Job['payType'],
+              description: '',
+              requirements: [],
+              skills: [],
+              isSponsored: j?.is_sponsored ?? false,
+              regulixReadyApplicants: 0,
+              totalApplicants: 0,
+              postedDaysAgo: 0,
+              status: 'active',
+            },
+          }
+        })
+        setApplications(mapped)
+
+        // Application events for these applications
+        const ids = mapped.map((a) => a.id)
+        if (ids.length > 0) {
+          supabase
+            .from('application_events')
+            .select('id, application_id, status, note, created_at')
+            .in('application_id', ids)
+            .then(({ data: evData }) => {
+              if (!evData) return
+              setAppEvents(
+                evData.map((e) => ({
+                  id: e.id,
+                  applicationId: e.application_id,
+                  status: e.status as Application['status'],
+                  note: e.note,
+                  occurredDaysAgo: daysSince(e.created_at),
+                }))
+              )
+            })
+        }
+      })
+
+    // Saved jobs count
+    supabase
+      .from('saved_jobs')
+      .select('id', { count: 'exact', head: true })
+      .eq('worker_id', user.id)
+      .then(({ count }) => setSavedJobsCount(count ?? 0))
+
+    // Recommended: latest active jobs
+    supabase
+      .from('jobs')
+      .select(
+        'id, title, industry, industry_slug, type, location, pay_min, pay_max, pay_type, is_sponsored, company_profiles(id, name)'
+      )
+      .eq('status', 'active')
+      .order('created_at', { ascending: false })
+      .limit(3)
+      .then(({ data }) => {
+        if (!data) return
+        setRecommendedJobs(
+          data.map((j) => {
+            const co = j.company_profiles as unknown as { id: string; name: string } | null
+            return {
+              id: j.id,
+              companyId: co?.id ?? '',
+              company: {
+                id: co?.id ?? '',
+                name: co?.name ?? '',
+                logo: '',
+                location: '',
+                industry: '',
+                isVerified: false,
+                description: '',
+                size: '',
+                website: '',
+              },
+              title: j.title,
+              industry: j.industry,
+              industrySlug: j.industry_slug,
+              type: j.type as Job['type'],
+              location: j.location,
+              payMin: j.pay_min ?? 0,
+              payMax: j.pay_max ?? 0,
+              payType: (j.pay_type ?? 'hour') as Job['payType'],
+              description: '',
+              requirements: [],
+              skills: [],
+              isSponsored: j.is_sponsored,
+              regulixReadyApplicants: 0,
+              totalApplicants: 0,
+              postedDaysAgo: 0,
+              status: 'active',
+            }
+          })
+        )
+      })
+  }, [user])
+
+  const profileChecklist = [
+    { label: 'Basic Info', done: !!profile?.full_name },
+    { label: 'Work Experience', done: false },
+    { label: 'Skills', done: false },
+    { label: 'Regulix Verified', done: worker.isRegulixReady },
+    { label: 'Profile Photo', done: false },
+  ]
+
   const [selectedBoostId, setSelectedBoostId] = useState<string | null>(null)
   const [boostPayMethod, setBoostPayMethod] = useState<'apple' | 'zelle'>('apple')
   const [boostSuccess, setBoostSuccess] = useState(false)
   const [boostedAppIds, setBoostedAppIds] = useState<Set<string>>(new Set())
   const [expandedAppId, setExpandedAppId] = useState<string | null>(null)
 
-  const boostingApp = selectedBoostId ? myApplications.find((a) => a.id === selectedBoostId) : null
+  const boostingApp = selectedBoostId ? applications.find((a) => a.id === selectedBoostId) : null
 
   const handleBoostClick = (appId: string) => {
     setSelectedBoostId(appId)
@@ -139,31 +288,31 @@ export const WorkerDashboard: React.FC = () => {
   const stats = [
     {
       label: 'Applications',
-      value: myApplications.length,
+      value: applications.length,
       icon: <BriefcaseIcon size={18} />,
       color: 'primary' as const,
-      trend: { direction: 'up' as const, value: '+2 this week' },
+      trend: { direction: 'flat' as const, value: '' },
     },
     {
       label: 'Profile Views',
-      value: 47,
+      value: 0,
       icon: <EyeIcon size={18} />,
       color: 'accent' as const,
-      trend: { direction: 'up' as const, value: '+12 vs last week' },
+      trend: { direction: 'flat' as const, value: '' },
     },
     {
       label: 'Interviews',
-      value: myApplications.filter((a) => a.status === 'Interviewing').length,
+      value: applications.filter((a) => a.status === 'Interviewing').length,
       icon: <TrendingUpIcon size={18} />,
       color: 'info' as const,
-      trend: { direction: 'flat' as const, value: 'No change' },
+      trend: { direction: 'flat' as const, value: '' },
     },
     {
       label: 'Offers',
-      value: myApplications.filter((a) => a.status === 'Offer').length,
+      value: applications.filter((a) => a.status === 'Offer').length,
       icon: <CheckCircleIcon size={18} />,
       color: 'success' as const,
-      trend: { direction: 'up' as const, value: 'New offer!' },
+      trend: { direction: 'flat' as const, value: '' },
     },
   ]
 
@@ -361,11 +510,26 @@ export const WorkerDashboard: React.FC = () => {
               ))}
             </div>
 
-            {myApplications.map((app, i) => {
+            {applications.length === 0 && (
+              <div
+                style={{
+                  padding: '40px 24px',
+                  textAlign: 'center',
+                  color: 'var(--kt-text-muted)',
+                  fontSize: 'var(--kt-text-sm)',
+                }}
+              >
+                No applications yet.{' '}
+                <Link to="/site/jobs" style={{ color: 'var(--kt-accent)' }}>
+                  Browse jobs →
+                </Link>
+              </div>
+            )}
+            {applications.map((app, i) => {
               const cfg = statusConfig[app.status]
-              const isLast = i === myApplications.length - 1
+              const isLast = i === applications.length - 1
               const isExpanded = expandedAppId === app.id
-              const events = applicationEvents.filter((e) => e.applicationId === app.id)
+              const events = appEvents.filter((e) => e.applicationId === app.id)
               return (
                 <React.Fragment key={app.id}>
                   <div
@@ -882,7 +1046,7 @@ export const WorkerDashboard: React.FC = () => {
                 {
                   label: (
                     <>
-                      <BookmarkFilledIcon size={14} /> Saved Jobs ({savedJobs.length})
+                      <BookmarkFilledIcon size={14} /> Saved Jobs ({savedJobsCount})
                     </>
                   ),
                   to: '/site/saved-jobs',
