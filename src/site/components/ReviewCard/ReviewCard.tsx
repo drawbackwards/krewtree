@@ -1,5 +1,13 @@
 import React from 'react'
 import type { CompanyReview } from '../../types'
+import {
+  StarIcon,
+  StarOutlineIcon,
+  ThumbsUpIcon,
+  ThumbsDownIcon,
+  CheckIcon,
+  DangerCircleIcon,
+} from '../../icons'
 import styles from './ReviewCard.module.css'
 
 interface ReviewCardProps {
@@ -11,7 +19,7 @@ function Stars({ rating }: { rating: number }) {
     <div className={styles.starRow} aria-label={`${rating} out of 5 stars`}>
       {[1, 2, 3, 4, 5].map((i) => (
         <span key={i} className={[styles.star, i <= rating ? styles.filled : ''].join(' ')}>
-          ★
+          {i <= rating ? <StarIcon size={14} /> : <StarOutlineIcon size={14} />}
         </span>
       ))}
     </div>
@@ -35,7 +43,11 @@ export const ReviewCard: React.FC<ReviewCardProps> = ({ review }) => {
           <div className={styles.reviewerInfo}>
             <div className={styles.reviewerName}>
               {review.workerName}
-              {review.isVerified && <span className={styles.verifiedBadge}>✓ Verified Worker</span>}
+              {review.isVerified && (
+                <span className={styles.verifiedBadge}>
+                  <CheckIcon size={12} /> Verified Worker
+                </span>
+              )}
             </div>
             <div className={styles.reviewDate}>{monthsLabel(review.datedMonthsAgo)}</div>
           </div>
@@ -48,11 +60,15 @@ export const ReviewCard: React.FC<ReviewCardProps> = ({ review }) => {
 
       <div className={styles.prosConsRow}>
         <div className={styles.prosBox}>
-          <div className={styles.prosLabel}>👍 Pros</div>
+          <div className={styles.prosLabel}>
+            <ThumbsUpIcon size={13} /> Pros
+          </div>
           <div className={styles.prosText}>{review.pros}</div>
         </div>
         <div className={styles.consBox}>
-          <div className={styles.consLabel}>👎 Cons</div>
+          <div className={styles.consLabel}>
+            <ThumbsDownIcon size={13} /> Cons
+          </div>
           <div className={styles.consText}>{review.cons}</div>
         </div>
       </div>
@@ -61,7 +77,15 @@ export const ReviewCard: React.FC<ReviewCardProps> = ({ review }) => {
         <span
           className={[styles.recommendBadge, review.recommend ? styles.yes : styles.no].join(' ')}
         >
-          {review.recommend ? '✓ Recommends' : "✗ Doesn't recommend"}
+          {review.recommend ? (
+            <>
+              <CheckIcon size={12} /> Recommends
+            </>
+          ) : (
+            <>
+              <DangerCircleIcon size={12} /> Doesn't recommend
+            </>
+          )}
         </span>
         <span>this employer</span>
       </div>

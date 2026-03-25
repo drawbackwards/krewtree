@@ -8,29 +8,29 @@
 
 :root {
   /* --- Brand primitives --- */
-  --kt-navy-950:  #060f13;
-  --kt-navy-900:  #0a232d;
-  --kt-navy-800:  #0d2d3a;
-  --kt-navy-700:  #113648;
-  --kt-navy-600:  #164355;
-  --kt-navy-500:  #1d5669;
-  --kt-navy-400:  #2e7a94;
-  --kt-navy-300:  #4da0bd;
-  --kt-navy-200:  #8dcada;
-  --kt-navy-100:  #c5e5ef;
-  --kt-navy-50:   #f0f7fa;
+  --kt-navy-950: #060f13;
+  --kt-navy-900: #0a232d;
+  --kt-navy-800: #0d2d3a;
+  --kt-navy-700: #113648;
+  --kt-navy-600: #164355;
+  --kt-navy-500: #1d5669;
+  --kt-navy-400: #2e7a94;
+  --kt-navy-300: #4da0bd;
+  --kt-navy-200: #8dcada;
+  --kt-navy-100: #c5e5ef;
+  --kt-navy-50: #f0f7fa;
 
-  --kt-sand-950:  #3a2d19;
-  --kt-sand-900:  #7a5c32;
-  --kt-sand-800:  #a07a4a;
-  --kt-sand-700:  #c49a60;
-  --kt-sand-600:  #d4b48a;
-  --kt-sand-500:  #ddc9a8;
-  --kt-sand-400:  #e5dac3;
-  --kt-sand-300:  #ede5d3;
-  --kt-sand-200:  #f3ede3;
-  --kt-sand-100:  #f8f4ef;
-  --kt-sand-50:   #fdfcfa;
+  --kt-sand-950: #3a2d19;
+  --kt-sand-900: #7a5c32;
+  --kt-sand-800: #a07a4a;
+  --kt-sand-700: #c49a60;
+  --kt-sand-600: #d4b48a;
+  --kt-sand-500: #ddc9a8;
+  --kt-sand-400: #e5dac3;
+  --kt-sand-300: #ede5d3;
+  --kt-sand-200: #f3ede3;
+  --kt-sand-100: #f8f4ef;
+  --kt-sand-50: #fdfcfa;
 
   --kt-olive-950: #1e2109;
   --kt-olive-900: #343d0f;
@@ -42,187 +42,196 @@
   --kt-olive-300: #cedb95;
   --kt-olive-200: #e2ecb8;
   --kt-olive-100: #f1f6da;
-  --kt-olive-50:  #f8fbee;
+  --kt-olive-50: #f8fbee;
 
-  --kt-grey-900:  #111218;
-  --kt-grey-800:  #1f2028;
-  --kt-grey-700:  #3d3e4a;
-  --kt-grey-600:  #56576a;
-  --kt-grey-500:  #6b6b80;
-  --kt-grey-400:  #9191a8;
-  --kt-grey-300:  #b8b8cc;
-  --kt-grey-200:  #e0e0ea;
-  --kt-grey-100:  #f0f0f6;
-  --kt-grey-50:   #f8f8fa;
-  --kt-white:     #ffffff;
+  --kt-grey-900: #111218;
+  --kt-grey-800: #1f2028;
+  --kt-grey-700: #3d3e4a;
+  --kt-grey-600: #56576a;
+  --kt-grey-500: #6b6b80;
+  --kt-grey-400: #9191a8;
+  --kt-grey-300: #b8b8cc;
+  --kt-grey-200: #e0e0ea;
+  --kt-grey-100: #f0f0f6;
+  --kt-grey-50: #f8f8fa;
+  --kt-white: #ffffff;
 
   /* --- Semantic: Light Mode --- */
-  --kt-bg:                  var(--kt-white);
-  --kt-bg-subtle:           var(--kt-grey-50);
-  --kt-surface:             var(--kt-white);
-  --kt-surface-raised:      var(--kt-grey-50);
-  --kt-surface-overlay:     rgba(10, 35, 45, 0.45);
+  --kt-bg: var(--kt-white);
+  --kt-bg-subtle: var(--kt-grey-50);
+  --kt-surface: var(--kt-white);
+  --kt-surface-raised: var(--kt-grey-50);
+  --kt-surface-overlay: rgba(10, 35, 45, 0.45);
 
-  --kt-border:              var(--kt-grey-200);
-  --kt-border-strong:       var(--kt-grey-300);
+  --kt-border: var(--kt-grey-200);
+  --kt-border-strong: var(--kt-grey-300);
 
-  --kt-text:                var(--kt-grey-900);
-  --kt-text-muted:          var(--kt-grey-500);
-  --kt-text-placeholder:    var(--kt-grey-400);
-  --kt-text-inverse:        var(--kt-white);
-  --kt-text-on-primary:     var(--kt-white);
-  --kt-text-on-accent:      var(--kt-white);
+  --kt-text: var(--kt-grey-900);
+  --kt-text-muted: var(--kt-grey-500);
+  --kt-text-placeholder: var(--kt-grey-400);
+  --kt-text-inverse: var(--kt-white);
+  --kt-text-on-primary: var(--kt-white);
+  --kt-text-on-accent: var(--kt-white);
 
   /* Primary — Navy (CTAs, logo, links — not backgrounds) */
-  --kt-primary:             var(--kt-navy-900);
-  --kt-primary-hover:       var(--kt-navy-700);
-  --kt-primary-active:      var(--kt-navy-950);
-  --kt-primary-subtle:      var(--kt-navy-50);
-  --kt-primary-fg:          var(--kt-white);
+  --kt-primary: var(--kt-navy-900);
+  --kt-primary-hover: var(--kt-navy-700);
+  --kt-primary-active: var(--kt-navy-950);
+  --kt-primary-subtle: var(--kt-navy-50);
+  --kt-primary-fg: var(--kt-white);
 
   /* Secondary — neutral surface */
-  --kt-secondary:           var(--kt-grey-100);
-  --kt-secondary-hover:     var(--kt-grey-200);
-  --kt-secondary-active:    var(--kt-grey-300);
-  --kt-secondary-subtle:    var(--kt-grey-50);
-  --kt-secondary-fg:        var(--kt-grey-900);
+  --kt-secondary: var(--kt-grey-100);
+  --kt-secondary-hover: var(--kt-grey-200);
+  --kt-secondary-active: var(--kt-grey-300);
+  --kt-secondary-subtle: var(--kt-grey-50);
+  --kt-secondary-fg: var(--kt-grey-900);
 
   /* Accent — Olive (primary CTA buttons, Regulix) */
-  --kt-accent:              var(--kt-olive-700);
-  --kt-accent-hover:        var(--kt-olive-800);
-  --kt-accent-active:       var(--kt-olive-900);
-  --kt-accent-subtle:       var(--kt-olive-50);
-  --kt-accent-fg:           var(--kt-white);
+  --kt-accent: var(--kt-olive-700);
+  --kt-accent-hover: var(--kt-olive-800);
+  --kt-accent-active: var(--kt-olive-900);
+  --kt-accent-subtle: var(--kt-olive-50);
+  --kt-accent-fg: var(--kt-white);
 
   /* Status */
-  --kt-success:             #1e7a4a;
-  --kt-success-subtle:      #edf7f2;
-  --kt-success-fg:          #ffffff;
-  --kt-warning:             #b96a0a;
-  --kt-warning-subtle:      #fef6e8;
-  --kt-warning-fg:          #ffffff;
-  --kt-danger:              #c0392b;
-  --kt-danger-subtle:       #fdf0ef;
-  --kt-danger-fg:           #ffffff;
-  --kt-info:                var(--kt-navy-500);
-  --kt-info-subtle:         var(--kt-navy-50);
-  --kt-info-fg:             #ffffff;
+  --kt-success: #1e7a4a;
+  --kt-success-subtle: #edf7f2;
+  --kt-success-fg: #ffffff;
+  --kt-warning: #b96a0a;
+  --kt-warning-subtle: #fef6e8;
+  --kt-warning-fg: #ffffff;
+  --kt-danger: #c0392b;
+  --kt-danger-subtle: #fdf0ef;
+  --kt-danger-fg: #ffffff;
+  --kt-info: var(--kt-navy-500);
+  --kt-info-subtle: var(--kt-navy-50);
+  --kt-info-fg: #ffffff;
 
   /* --- Spacing --- */
-  --kt-space-1:   4px;
-  --kt-space-2:   8px;
-  --kt-space-3:   12px;
-  --kt-space-4:   16px;
-  --kt-space-5:   20px;
-  --kt-space-6:   24px;
-  --kt-space-8:   32px;
-  --kt-space-10:  40px;
-  --kt-space-12:  48px;
-  --kt-space-16:  64px;
+  --kt-space-1: 4px;
+  --kt-space-2: 8px;
+  --kt-space-3: 12px;
+  --kt-space-4: 16px;
+  --kt-space-5: 20px;
+  --kt-space-6: 24px;
+  --kt-space-8: 32px;
+  --kt-space-10: 40px;
+  --kt-space-12: 48px;
+  --kt-space-16: 64px;
 
   /* --- Radius --- */
-  --kt-radius-sm:   6px;
-  --kt-radius-md:   10px;
-  --kt-radius-lg:   16px;
-  --kt-radius-xl:   24px;
+  --kt-radius-sm: 6px;
+  --kt-radius-md: 10px;
+  --kt-radius-lg: 16px;
+  --kt-radius-xl: 24px;
   --kt-radius-full: 9999px;
 
   /* --- Shadows (light, diffuse — not navy-tinted) --- */
-  --kt-shadow-sm:  0 1px 3px rgba(17,18,24,0.06), 0 1px 2px rgba(17,18,24,0.04);
-  --kt-shadow-md:  0 4px 16px rgba(17,18,24,0.08), 0 2px 6px rgba(17,18,24,0.04);
-  --kt-shadow-lg:  0 12px 32px rgba(17,18,24,0.10), 0 4px 12px rgba(17,18,24,0.06);
-  --kt-shadow-xl:  0 24px 56px rgba(17,18,24,0.12), 0 8px 24px rgba(17,18,24,0.08);
+  --kt-shadow-sm: 0 1px 3px rgba(17, 18, 24, 0.06), 0 1px 2px rgba(17, 18, 24, 0.04);
+  --kt-shadow-md: 0 4px 16px rgba(17, 18, 24, 0.08), 0 2px 6px rgba(17, 18, 24, 0.04);
+  --kt-shadow-lg: 0 12px 32px rgba(17, 18, 24, 0.1), 0 4px 12px rgba(17, 18, 24, 0.06);
+  --kt-shadow-xl: 0 24px 56px rgba(17, 18, 24, 0.12), 0 8px 24px rgba(17, 18, 24, 0.08);
 
   /* --- Typography --- */
-  --kt-font-sans:  'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --kt-font-mono:  'JetBrains Mono', 'Fira Code', monospace;
+  --kt-font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --kt-font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 
-  --kt-text-xs:   11px;
-  --kt-text-sm:   13px;
-  --kt-text-md:   15px;
-  --kt-text-lg:   17px;
-  --kt-text-xl:   21px;
-  --kt-text-2xl:  27px;
-  --kt-text-3xl:  36px;
-  --kt-text-4xl:  48px;
+  --kt-text-xs: 11px;
+  --kt-text-sm: 13px;
+  --kt-text-md: 15px;
+  --kt-text-lg: 17px;
+  --kt-text-xl: 21px;
+  --kt-text-2xl: 27px;
+  --kt-text-3xl: 36px;
+  --kt-text-4xl: 48px;
 
-  --kt-leading-tight:  1.15;
+  --kt-leading-tight: 1.15;
   --kt-leading-normal: 1.55;
-  --kt-leading-loose:  1.8;
+  --kt-leading-loose: 1.8;
 
-  --kt-weight-light:    300;
-  --kt-weight-normal:   400;
-  --kt-weight-medium:   500;
+  --kt-weight-light: 300;
+  --kt-weight-normal: 400;
+  --kt-weight-medium: 500;
   --kt-weight-semibold: 600;
-  --kt-weight-bold:     700;
-  --kt-weight-display:  300;
+  --kt-weight-bold: 700;
+  --kt-weight-display: 300;
 
   /* --- Transitions --- */
-  --kt-ease:            cubic-bezier(0.4, 0, 0.2, 1);
-  --kt-duration-fast:   120ms;
-  --kt-duration-base:   200ms;
-  --kt-duration-slow:   350ms;
+  --kt-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --kt-duration-fast: 120ms;
+  --kt-duration-base: 200ms;
+  --kt-duration-slow: 350ms;
+
+  /* --- UI-specific semantic colors --- */
+  --kt-badge-worker-bg: #103949; /* "For Workers" badge background (light navy-teal) */
+  --kt-olive-label: #8b9a3e; /* Account type label on white cards (lighter olive) */
+  --kt-rating: #f5a623; /* Star rating / review score (amber) */
 
   /* --- Z-index --- */
-  --kt-z-base:      0;
-  --kt-z-raised:    10;
-  --kt-z-dropdown:  200;
-  --kt-z-sticky:    300;
-  --kt-z-overlay:   400;
-  --kt-z-modal:     500;
-  --kt-z-toast:     600;
-  --kt-z-tooltip:   700;
+  --kt-z-base: 0;
+  --kt-z-raised: 10;
+  --kt-z-dropdown: 200;
+  --kt-z-sticky: 300;
+  --kt-z-overlay: 400;
+  --kt-z-modal: 500;
+  --kt-z-toast: 600;
+  --kt-z-tooltip: 700;
 }
 
 /* ============================================================
    DARK MODE
 ============================================================ */
-[data-theme="dark"] {
-  --kt-bg:                  #0f1117;
-  --kt-bg-subtle:           #161820;
-  --kt-surface:             #1a1c25;
-  --kt-surface-raised:      #21232e;
-  --kt-surface-overlay:     rgba(0, 0, 0, 0.65);
+[data-theme='dark'] {
+  --kt-bg: #0f1117;
+  --kt-bg-subtle: #161820;
+  --kt-surface: #1a1c25;
+  --kt-surface-raised: #21232e;
+  --kt-surface-overlay: rgba(0, 0, 0, 0.65);
 
-  --kt-border:              rgba(255,255,255,0.08);
-  --kt-border-strong:       rgba(255,255,255,0.14);
+  --kt-border: rgba(255, 255, 255, 0.08);
+  --kt-border-strong: rgba(255, 255, 255, 0.14);
 
-  --kt-text:                #f0f0f6;
-  --kt-text-muted:          #9191a8;
-  --kt-text-placeholder:    #56576a;
-  --kt-text-inverse:        var(--kt-grey-900);
-  --kt-text-on-primary:     var(--kt-grey-900);
-  --kt-text-on-accent:      var(--kt-white);
+  --kt-text: #f0f0f6;
+  --kt-text-muted: #9191a8;
+  --kt-text-placeholder: #56576a;
+  --kt-text-inverse: var(--kt-grey-900);
+  --kt-text-on-primary: var(--kt-grey-900);
+  --kt-text-on-accent: var(--kt-white);
 
-  --kt-primary:             var(--kt-sand-400);
-  --kt-primary-hover:       var(--kt-sand-300);
-  --kt-primary-active:      var(--kt-sand-200);
-  --kt-primary-subtle:      rgba(229, 218, 195, 0.08);
-  --kt-primary-fg:          var(--kt-navy-900);
+  --kt-primary: var(--kt-sand-400);
+  --kt-primary-hover: var(--kt-sand-300);
+  --kt-primary-active: var(--kt-sand-200);
+  --kt-primary-subtle: rgba(229, 218, 195, 0.08);
+  --kt-primary-fg: var(--kt-navy-900);
 
-  --kt-secondary:           rgba(255,255,255,0.06);
-  --kt-secondary-hover:     rgba(255,255,255,0.10);
-  --kt-secondary-active:    rgba(255,255,255,0.14);
-  --kt-secondary-subtle:    rgba(255,255,255,0.04);
-  --kt-secondary-fg:        #f0f0f6;
+  --kt-secondary: rgba(255, 255, 255, 0.06);
+  --kt-secondary-hover: rgba(255, 255, 255, 0.1);
+  --kt-secondary-active: rgba(255, 255, 255, 0.14);
+  --kt-secondary-subtle: rgba(255, 255, 255, 0.04);
+  --kt-secondary-fg: #f0f0f6;
 
-  --kt-accent:              var(--kt-olive-500);
-  --kt-accent-hover:        var(--kt-olive-400);
-  --kt-accent-active:       var(--kt-olive-300);
-  --kt-accent-subtle:       rgba(109, 117, 49, 0.15);
-  --kt-accent-fg:           var(--kt-white);
+  --kt-accent: var(--kt-olive-500);
+  --kt-accent-hover: var(--kt-olive-400);
+  --kt-accent-active: var(--kt-olive-300);
+  --kt-accent-subtle: rgba(109, 117, 49, 0.15);
+  --kt-accent-fg: var(--kt-white);
 
-  --kt-success:             #3da666;
-  --kt-success-subtle:      rgba(61, 166, 102, 0.12);
-  --kt-warning:             #e08d28;
-  --kt-warning-subtle:      rgba(224, 141, 40, 0.12);
-  --kt-danger:              #e05252;
-  --kt-danger-subtle:       rgba(224, 82, 82, 0.12);
-  --kt-info:                var(--kt-navy-300);
-  --kt-info-subtle:         rgba(77, 160, 189, 0.12);
+  --kt-success: #3da666;
+  --kt-success-subtle: rgba(61, 166, 102, 0.12);
+  --kt-warning: #e08d28;
+  --kt-warning-subtle: rgba(224, 141, 40, 0.12);
+  --kt-danger: #e05252;
+  --kt-danger-subtle: rgba(224, 82, 82, 0.12);
+  --kt-info: var(--kt-navy-300);
+  --kt-info-subtle: rgba(77, 160, 189, 0.12);
 
-  --kt-shadow-sm:  0 1px 3px rgba(0,0,0,0.3);
-  --kt-shadow-md:  0 4px 16px rgba(0,0,0,0.4);
-  --kt-shadow-lg:  0 12px 32px rgba(0,0,0,0.5);
-  --kt-shadow-xl:  0 24px 56px rgba(0,0,0,0.6);
+  --kt-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --kt-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+  --kt-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.5);
+  --kt-shadow-xl: 0 24px 56px rgba(0, 0, 0, 0.6);
+
+  --kt-badge-worker-bg: #1d5669; /* slightly lighter on dark */
+  --kt-olive-label: var(--kt-olive-400);
+  --kt-rating: #f5a623;
 }

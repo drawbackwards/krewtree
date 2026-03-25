@@ -72,7 +72,7 @@
 }
 
 .star.filled {
-  color: #F5A623;
+  color: var(--kt-rating);
 }
 
 .title {
@@ -119,8 +119,12 @@
   margin-bottom: 3px;
 }
 
-.prosLabel { color: var(--kt-success); }
-.consLabel { color: var(--kt-warning); }
+.prosLabel {
+  color: var(--kt-success);
+}
+.consLabel {
+  color: var(--kt-warning);
+}
 
 .prosText,
 .consText {

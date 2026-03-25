@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { SiteRouter } from './site/Router'
 import { AuthProvider } from './site/context/AuthContext'
+import { MoonIcon, SunIcon } from './site/icons'
 import {
   Button,
   Badge,
@@ -135,7 +136,7 @@ export default function App() {
         style={{
           position: 'sticky',
           top: 0,
-          zIndex: 'var(--kt-z-sticky)' as never,
+          zIndex: 10,
           backgroundColor: 'var(--kt-surface)',
           borderBottom: '1px solid var(--kt-border)',
           padding: '0 var(--kt-space-8)',
@@ -167,7 +168,7 @@ export default function App() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <Tooltip content={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}>
             <Button variant="ghost" size="sm" onClick={toggleTheme} aria-label="Toggle theme">
-              {theme === 'light' ? '🌙' : '☀️'}
+              {theme === 'light' ? <MoonIcon size={16} /> : <SunIcon size={16} />}
             </Button>
           </Tooltip>
         </div>

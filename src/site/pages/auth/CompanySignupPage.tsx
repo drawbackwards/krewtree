@@ -315,7 +315,7 @@ export const CompanySignupPage: React.FC = () => {
                 display: 'block',
                 fontSize: 11,
                 fontWeight: 700,
-                color: '#8B9A3E',
+                color: 'var(--kt-olive-label)',
                 textTransform: 'uppercase',
                 letterSpacing: '0.08em',
                 marginBottom: 14,

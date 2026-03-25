@@ -10,6 +10,7 @@ import {
   locationRegions,
   savedSearches as initialSavedSearches,
 } from '../data/mock'
+import { LocationIcon, SearchIcon, LightningIcon } from '../icons'
 
 const TYPES = ['Full-time', 'Part-time', 'Contract', 'Temporary']
 const PAY_RANGES = [
@@ -294,7 +295,13 @@ export const JobsPage: React.FC = () => {
                 transition: 'all 0.15s',
               }}
             >
-              {locationView ? '← List View' : '📍 Browse by Location'}
+              {locationView ? (
+                '← List View'
+              ) : (
+                <>
+                  <LocationIcon size={14} /> Browse by Location
+                </>
+              )}
             </button>
           </div>
           {/* Search bar */}
@@ -741,7 +748,9 @@ export const JobsPage: React.FC = () => {
                       ;(e.currentTarget as HTMLButtonElement).style.boxShadow = 'none'
                     }}
                   >
-                    <div style={{ fontSize: '28px', marginBottom: 8 }}>📍</div>
+                    <div style={{ marginBottom: 8, color: 'var(--kt-text-muted)' }}>
+                      <LocationIcon size={28} />
+                    </div>
                     <div
                       style={{
                         fontSize: 'var(--kt-text-lg)',
@@ -857,7 +866,9 @@ export const JobsPage: React.FC = () => {
                 <div
                   style={{ textAlign: 'center', padding: '60px 0', color: 'var(--kt-text-muted)' }}
                 >
-                  <div style={{ fontSize: 40, marginBottom: 12 }}>🔍</div>
+                  <div style={{ marginBottom: 12, color: 'var(--kt-text-muted)' }}>
+                    <SearchIcon size={40} />
+                  </div>
                   <p
                     style={{
                       fontWeight: 'var(--kt-weight-semibold)',
@@ -909,7 +920,7 @@ export const JobsPage: React.FC = () => {
                               (e.currentTarget.style.background = 'var(--kt-olive-700)')
                             }
                           >
-                            ⚡ Quick Apply
+                            <LightningIcon size={12} /> Quick Apply
                           </button>
                         </div>
                       </div>

@@ -288,7 +288,7 @@
   color: var(--kt-danger);
 }
 .menuItemDanger:hover {
-  background-color: #fff5f5;
+  background-color: var(--kt-danger-subtle);
 }
 
 .menuDivider {

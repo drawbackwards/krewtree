@@ -28,18 +28,18 @@ export class ErrorBoundary extends React.Component<React.PropsWithChildren, Stat
             textAlign: 'center',
           }}
         >
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: '#0A232D', margin: 0 }}>
+          <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--kt-primary)', margin: 0 }}>
             Something went wrong
           </h1>
-          <p style={{ color: '#666', margin: 0 }}>Refresh the page to try again.</p>
+          <p style={{ color: 'var(--kt-text-muted)', margin: 0 }}>Refresh the page to try again.</p>
           <button
             onClick={() => window.location.reload()}
             style={{
               marginTop: 8,
               padding: '9px 22px',
               cursor: 'pointer',
-              background: '#0A232D',
-              color: 'white',
+              background: 'var(--kt-primary)',
+              color: 'var(--kt-white)',
               border: 'none',
               borderRadius: 8,
               fontSize: 14,

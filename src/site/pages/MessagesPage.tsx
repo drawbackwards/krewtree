@@ -168,7 +168,7 @@ export const MessagesPage: React.FC = () => {
                           right: -2,
                           width: 16,
                           height: 16,
-                          background: '#e03e3e',
+                          background: 'var(--kt-danger)',
                           borderRadius: '50%',
                           display: 'flex',
                           alignItems: 'center',

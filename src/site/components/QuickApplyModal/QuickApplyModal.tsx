@@ -2,6 +2,14 @@ import React, { useState } from 'react'
 import { Modal } from '../../../components'
 import type { Job } from '../../types'
 import { currentWorker } from '../../data/mock'
+import {
+  HourglassIcon,
+  RocketIcon,
+  CelebrationIcon,
+  LightningIcon,
+  CheckIcon,
+  CheckSmallIcon,
+} from '../../icons'
 import styles from './QuickApplyModal.module.css'
 
 interface QuickApplyModalProps {
@@ -118,11 +126,19 @@ export const QuickApplyModal: React.FC<QuickApplyModalProps> = ({
                 gap: 'var(--kt-space-2)',
               }}
             >
-              {loading
-                ? '⏳ Submitting...'
-                : wantBoost
-                  ? '🚀 Apply + Boost — $9.99'
-                  : '⚡ Submit Application'}
+              {loading ? (
+                <>
+                  <HourglassIcon size={14} /> Submitting...
+                </>
+              ) : wantBoost ? (
+                <>
+                  <RocketIcon size={14} /> Apply + Boost — $9.99
+                </>
+              ) : (
+                <>
+                  <LightningIcon size={14} /> Submit Application
+                </>
+              )}
             </button>
           </div>
         )
@@ -130,7 +146,9 @@ export const QuickApplyModal: React.FC<QuickApplyModalProps> = ({
     >
       {submitted ? (
         <div className={styles.successState}>
-          <div className={styles.successIcon}>{submittedWithBoost ? '🚀' : '🎉'}</div>
+          <div className={styles.successIcon}>
+            {submittedWithBoost ? <RocketIcon size={48} /> : <CelebrationIcon size={48} />}
+          </div>
           <div className={styles.successTitle}>
             {submittedWithBoost ? 'Application Sent + Boosted!' : 'Application Sent!'}
           </div>
@@ -148,7 +166,8 @@ export const QuickApplyModal: React.FC<QuickApplyModalProps> = ({
                 lineHeight: 1.5,
               }}
             >
-              🚀 Your application has been moved to the top of the employer's applicant list.
+              <RocketIcon size={14} /> Your application has been moved to the top of the employer's
+              applicant list.
             </p>
           )}
         </div>
@@ -173,7 +192,9 @@ export const QuickApplyModal: React.FC<QuickApplyModalProps> = ({
               <div className={styles.workerHeadline}>{currentWorker.headline}</div>
             </div>
             {currentWorker.isRegulixReady && (
-              <span className={styles.readyBadge}>✓ Regulix Ready</span>
+              <span className={styles.readyBadge}>
+                <CheckIcon size={12} /> Regulix Ready
+              </span>
             )}
           </div>
 
@@ -242,7 +263,7 @@ export const QuickApplyModal: React.FC<QuickApplyModalProps> = ({
               }}
             >
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                <span style={{ fontSize: 20, lineHeight: 1.2 }}>🚀</span>
+                <RocketIcon size={20} />
                 <div>
                   <p
                     style={{
@@ -282,20 +303,7 @@ export const QuickApplyModal: React.FC<QuickApplyModalProps> = ({
                   transition: 'all 0.15s ease',
                 }}
               >
-                {wantBoost && (
-                  <svg
-                    width="11"
-                    height="9"
-                    viewBox="0 0 11 9"
-                    fill="none"
-                    stroke="white"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M1 4.5l3 3 6-6" />
-                  </svg>
-                )}
+                {wantBoost && <CheckSmallIcon size={11} color="white" />}
               </div>
             </div>
           </div>

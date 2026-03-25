@@ -1,15 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Button, Input, Checkbox, Badge } from '../../../components'
+import { Button, Input, Checkbox } from '../../../components'
 import { industries } from '../../data/mock'
 import { KrewtreeLogo, KrewtreeBgMark } from '../../components/Logo'
 import { useAuth } from '../../context/AuthContext'
+import { BriefcaseIcon, ShieldCheckIcon, LightningIcon, SparkleIcon } from '../../icons'
 
-const BENEFITS = [
-  { icon: '💼', label: 'Browse 12,400+ jobs across 8 industries' },
-  { icon: '🪪', label: 'One profile works everywhere you want to work' },
-  { icon: '⚡', label: 'Get Regulix Ready — get hired the same day' },
-  { icon: '✨', label: 'Free to sign up, always' },
+const BENEFITS: { icon: React.ReactNode; label: string }[] = [
+  { icon: <BriefcaseIcon size={15} />, label: 'Browse 12,400+ jobs across 8 industries' },
+  { icon: <ShieldCheckIcon size={15} />, label: 'One profile works everywhere you want to work' },
+  { icon: <LightningIcon size={15} />, label: 'Get Regulix Ready — get hired the same day' },
+  { icon: <SparkleIcon size={15} />, label: 'Free to sign up, always' },
 ]
 
 export const WorkerSignupPage: React.FC = () => {
@@ -108,10 +109,10 @@ export const WorkerSignupPage: React.FC = () => {
           style={{ display: 'inline-flex', lineHeight: 0 }}
           aria-label="krewtree home"
         >
-          <KrewtreeLogo height={34} onDark />
+          <KrewtreeLogo height={34} onDark accentColor="white" />
         </Link>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={{ fontSize: 'var(--kt-text-sm)', color: 'rgba(229,218,195,0.45)' }}>
+          <span style={{ fontSize: 'var(--kt-text-sm)', color: 'rgba(255,255,255,0.7)' }}>
             Already have an account?
           </span>
           <Link
@@ -168,31 +169,6 @@ export const WorkerSignupPage: React.FC = () => {
               top: 48,
             }}
           >
-            <div
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                background: 'rgba(109,117,49,0.25)',
-                border: '1px solid rgba(109,117,49,0.4)',
-                borderRadius: 'var(--kt-radius-full)',
-                padding: '4px 12px',
-                marginBottom: 18,
-              }}
-            >
-              <span style={{ fontSize: 13 }}>👷</span>
-              <span
-                style={{
-                  fontSize: 11,
-                  fontWeight: 700,
-                  color: 'var(--kt-sand-300)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.06em',
-                }}
-              >
-                Worker Account
-              </span>
-            </div>
             <h1
               style={{
                 fontSize: 'clamp(28px, 3vw, 44px)',
@@ -208,7 +184,7 @@ export const WorkerSignupPage: React.FC = () => {
             <p
               style={{
                 fontSize: 'var(--kt-text-md)',
-                color: 'rgba(229,218,195,0.45)',
+                color: 'rgba(255,255,255,0.85)',
                 lineHeight: 1.7,
                 marginBottom: 44,
                 maxWidth: 340,
@@ -224,14 +200,15 @@ export const WorkerSignupPage: React.FC = () => {
                       width: 36,
                       height: 36,
                       borderRadius: 10,
-                      background: 'rgba(229,218,195,0.07)',
-                      border: '1px solid rgba(229,218,195,0.1)',
+                      background: 'rgba(255,255,255,0.12)',
+                      border: '1px solid rgba(255,255,255,0.15)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       fontSize: 15,
                       flexShrink: 0,
                       marginTop: 1,
+                      color: 'white',
                     }}
                   >
                     {icon}
@@ -239,7 +216,7 @@ export const WorkerSignupPage: React.FC = () => {
                   <span
                     style={{
                       fontSize: 'var(--kt-text-sm)',
-                      color: 'rgba(229,218,195,0.5)',
+                      color: 'rgba(255,255,255,0.85)',
                       lineHeight: 1.55,
                       paddingTop: 7,
                     }}
@@ -256,10 +233,7 @@ export const WorkerSignupPage: React.FC = () => {
                 marginTop: 40,
                 display: 'inline-flex',
                 flexDirection: 'column',
-                padding: '16px 20px',
-                background: 'rgba(229,218,195,0.05)',
-                border: '1px solid rgba(229,218,195,0.1)',
-                borderRadius: 12,
+                padding: '16px 20px 16px 0',
               }}
             >
               <span
@@ -275,7 +249,7 @@ export const WorkerSignupPage: React.FC = () => {
               <span
                 style={{
                   fontSize: 11,
-                  color: 'rgba(229,218,195,0.35)',
+                  color: 'rgba(255,255,255,0.75)',
                   marginTop: 4,
                   letterSpacing: '0.02em',
                 }}
@@ -296,11 +270,19 @@ export const WorkerSignupPage: React.FC = () => {
               boxShadow: '0 24px 64px rgba(0,0,0,0.45), 0 2px 8px rgba(0,0,0,0.2)',
             }}
           >
-            <div style={{ marginBottom: 6 }}>
-              <Badge variant="accent" size="sm">
-                Worker Profile
-              </Badge>
-            </div>
+            <span
+              style={{
+                display: 'block',
+                fontSize: 11,
+                fontWeight: 700,
+                color: 'var(--kt-navy-500)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.08em',
+                marginBottom: 14,
+              }}
+            >
+              Worker Account
+            </span>
             <h2
               style={{
                 fontSize: 'var(--kt-text-2xl)',
@@ -392,10 +374,7 @@ export const WorkerSignupPage: React.FC = () => {
                     marginBottom: 8,
                   }}
                 >
-                  Industries you work in{' '}
-                  <span style={{ color: 'var(--kt-text-muted)', fontWeight: 400 }}>
-                    (select all that apply)
-                  </span>
+                  Industries you work in
                 </p>
                 {/* Trigger */}
                 <button
@@ -532,7 +511,6 @@ export const WorkerSignupPage: React.FC = () => {
                               </svg>
                             )}
                           </span>
-                          <span style={{ fontSize: 15, lineHeight: 1 }}>{ind.icon}</span>
                           <span>{ind.name}</span>
                         </button>
                       )
@@ -589,7 +567,7 @@ export const WorkerSignupPage: React.FC = () => {
                   color: 'var(--kt-text-muted)',
                 }}
               >
-                Wrong path?{' '}
+                Need to create a company account?{' '}
                 <button
                   type="button"
                   onClick={() => navigate('/site/signup')}
@@ -603,7 +581,7 @@ export const WorkerSignupPage: React.FC = () => {
                     padding: 0,
                   }}
                 >
-                  Go back and choose your path
+                  Go back
                 </button>
               </p>
             </form>

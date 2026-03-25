@@ -1,60 +1,8 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { Job } from '../../types'
+import { LocationIcon, ClockIcon, ShieldCheckIcon, BriefcaseIcon } from '../../icons'
 import styles from './JobCard.module.css'
-
-const LocationIcon = () => (
-  <svg
-    width="13"
-    height="13"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-  >
-    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
-    <circle cx="12" cy="10" r="3" />
-  </svg>
-)
-const ClockIcon = () => (
-  <svg
-    width="13"
-    height="13"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-  >
-    <circle cx="12" cy="12" r="10" />
-    <polyline points="12 6 12 12 16 14" />
-  </svg>
-)
-const VerifiedIcon = () => (
-  <svg width="13" height="13" viewBox="0 0 24 24" fill="#1d5669" aria-label="Verified">
-    <path
-      fillRule="evenodd"
-      d="M12 1.5l9 3.375v7.5c0 5.25-3.75 10.125-9 11.625C6.75 22.5 3 17.625 3 12.375v-7.5L12 1.5zm4.28 7.72a.75.75 0 00-1.06-1.06L10.5 12.88 8.78 11.16a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.06 0l5.25-5.25z"
-      clipRule="evenodd"
-    />
-  </svg>
-)
-const BriefcaseIcon = () => (
-  <svg
-    width="13"
-    height="13"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <rect x="2" y="7" width="20" height="14" rx="2" />
-    <path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2" />
-  </svg>
-)
 
 const formatPay = (job: Job) => {
   if (job.payType === 'hour') {
@@ -102,7 +50,7 @@ export const JobCard: React.FC<JobCardProps> = ({ job, compact = false }) => {
             {job.company.name}
             {job.company.isVerified && (
               <span className={styles.verifiedIcon} title="Verified Company">
-                <VerifiedIcon />
+                <ShieldCheckIcon size={13} color="var(--kt-navy-500)" />
               </span>
             )}
           </span>
@@ -112,19 +60,19 @@ export const JobCard: React.FC<JobCardProps> = ({ job, compact = false }) => {
       <div className={styles.meta}>
         <span className={styles.metaItem}>
           <span className={styles.metaIcon}>
-            <LocationIcon />
+            <LocationIcon size={13} />
           </span>
           {job.location}
         </span>
         <span className={styles.metaItem}>
           <span className={styles.metaIcon}>
-            <ClockIcon />
+            <ClockIcon size={13} />
           </span>
           {postedLabel(job.postedDaysAgo)}
         </span>
         <span className={styles.metaItem}>
           <span className={styles.metaIcon}>
-            <BriefcaseIcon />
+            <BriefcaseIcon size={13} />
           </span>
           {job.type}
         </span>

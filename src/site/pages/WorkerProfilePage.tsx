@@ -3,86 +3,19 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import { Badge, Button, Divider, Progress } from '../../components'
 import { RegulixBadge } from '../components/RegulixBadge/RegulixBadge'
 import type { SkillEndorsement } from '../types'
+import {
+  MapPinIcon,
+  BriefcaseIcon,
+  StarIcon,
+  VerifiedShieldIcon,
+  LinkedInSimpleIcon,
+  InstagramIcon,
+  FacebookSimpleIcon,
+  CheckIcon,
+  FolderIcon,
+  ClipboardIcon,
+} from '../icons'
 import { workers, skillEndorsements, resumeDocuments, portfolioItems } from '../data/mock'
-
-const MapPinIcon = () => (
-  <svg
-    width="14"
-    height="14"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-  >
-    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
-    <circle cx="12" cy="10" r="3" />
-  </svg>
-)
-
-const IndustryIcon = () => (
-  <svg
-    width="14"
-    height="14"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-  >
-    <rect x="2" y="7" width="20" height="14" rx="2" />
-    <path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16" />
-  </svg>
-)
-
-const StarFilledIcon = () => (
-  <svg
-    width="15"
-    height="15"
-    viewBox="0 0 24 24"
-    fill="var(--kt-warning)"
-    stroke="var(--kt-warning)"
-    strokeWidth="1"
-  >
-    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-  </svg>
-)
-
-const VerifiedShieldIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="var(--kt-olive-600)">
-    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-    <path d="M9 12l2 2 4-4" stroke="white" strokeWidth="2" strokeLinecap="round" fill="none" />
-  </svg>
-)
-
-const LinkedInIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-    <path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z" />
-    <circle cx="4" cy="4" r="2" />
-  </svg>
-)
-
-const InstagramIcon = () => (
-  <svg
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-  >
-    <rect x="2" y="2" width="20" height="20" rx="5" />
-    <path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z" />
-    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
-  </svg>
-)
-
-const FacebookIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-    <path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z" />
-  </svg>
-)
 
 export const WorkerProfilePage: React.FC = () => {
   const { id } = useParams<{ id: string }>()
@@ -134,8 +67,7 @@ export const WorkerProfilePage: React.FC = () => {
         <div
           style={{
             height: 120,
-            background:
-              'linear-gradient(135deg, var(--kt-grey-100) 0%, var(--kt-grey-50, #f9f9fb) 100%)',
+            background: 'var(--kt-grey-100)',
           }}
         />
 
@@ -220,7 +152,7 @@ export const WorkerProfilePage: React.FC = () => {
                     color: 'var(--kt-text-muted)',
                   }}
                 >
-                  <MapPinIcon />
+                  <MapPinIcon size={14} />
                   {worker.location}
                 </span>
                 <span
@@ -232,7 +164,7 @@ export const WorkerProfilePage: React.FC = () => {
                     color: 'var(--kt-text-muted)',
                   }}
                 >
-                  <IndustryIcon />
+                  <BriefcaseIcon size={14} />
                   {worker.industries.join(', ')}
                 </span>
               </div>
@@ -261,7 +193,7 @@ export const WorkerProfilePage: React.FC = () => {
           <div style={{ marginTop: 16, display: 'flex', gap: 24, flexWrap: 'wrap' }}>
             {worker.performanceScore && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <StarFilledIcon />
+                <StarIcon size={15} color="var(--kt-warning)" />
                 <span
                   style={{
                     fontSize: 'var(--kt-text-sm)',
@@ -288,7 +220,7 @@ export const WorkerProfilePage: React.FC = () => {
                   href={worker.socialLinks.linkedin}
                   style={{ color: 'var(--kt-text-muted)', display: 'flex', alignItems: 'center' }}
                 >
-                  <LinkedInIcon />
+                  <LinkedInSimpleIcon size={16} />
                 </a>
               )}
               {worker.socialLinks.instagram && (
@@ -304,7 +236,7 @@ export const WorkerProfilePage: React.FC = () => {
                   href={worker.socialLinks.facebook}
                   style={{ color: 'var(--kt-text-muted)', display: 'flex', alignItems: 'center' }}
                 >
-                  <FacebookIcon />
+                  <FacebookSimpleIcon size={16} />
                 </a>
               )}
             </div>
@@ -391,7 +323,13 @@ export const WorkerProfilePage: React.FC = () => {
                       fontWeight: 'var(--kt-weight-medium)',
                     }}
                   >
-                    {uploadSuccess ? '✓ Uploaded!' : '+ Upload Resume'}
+                    {uploadSuccess ? (
+                      <>
+                        <CheckIcon size={12} /> Uploaded!
+                      </>
+                    ) : (
+                      '+ Upload Resume'
+                    )}
                   </button>
                 )}
               </div>
@@ -418,7 +356,13 @@ export const WorkerProfilePage: React.FC = () => {
                       background: 'var(--kt-bg)',
                     }}
                   >
-                    <span style={{ fontSize: '24px' }}>{doc.fileType === 'pdf' ? '📄' : '📝'}</span>
+                    <span style={{ color: 'var(--kt-text-muted)' }}>
+                      {doc.fileType === 'pdf' ? (
+                        <FolderIcon size={24} />
+                      ) : (
+                        <ClipboardIcon size={24} />
+                      )}
+                    </span>
                     <div style={{ flex: 1 }}>
                       <p
                         style={{
@@ -824,7 +768,13 @@ export const WorkerProfilePage: React.FC = () => {
                             transition: 'all 0.15s',
                           }}
                         >
-                          {alreadyEndorsed ? '✓ Endorsed' : '+ Endorse'}
+                          {alreadyEndorsed ? (
+                            <>
+                              <CheckIcon size={12} /> Endorsed
+                            </>
+                          ) : (
+                            '+ Endorse'
+                          )}
                         </button>
                       )}
                     </div>
@@ -850,9 +800,7 @@ export const WorkerProfilePage: React.FC = () => {
           {/* Regulix Status */}
           <div
             style={{
-              background: worker.isRegulixReady
-                ? 'linear-gradient(135deg, #f0f4e8, #e8eedb)'
-                : 'var(--kt-surface)',
+              background: worker.isRegulixReady ? 'var(--kt-olive-100)' : 'var(--kt-surface)',
               border: `1px solid ${worker.isRegulixReady ? 'var(--kt-olive-300)' : 'var(--kt-border)'}`,
               borderRadius: 'var(--kt-radius-lg)',
               padding: 18,

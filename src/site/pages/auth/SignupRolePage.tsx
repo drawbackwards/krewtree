@@ -1,6 +1,7 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import { KrewtreeLogo } from '../../components/Logo'
+import { CheckIcon } from '../../icons'
 
 export const SignupRolePage: React.FC = () => {
   return (
@@ -147,7 +148,7 @@ export const SignupRolePage: React.FC = () => {
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: 5,
-                  background: '#103949',
+                  background: 'var(--kt-badge-worker-bg)',
                   border: 'none',
                   borderRadius: 'var(--kt-radius-full)',
                   padding: '3px 10px',
@@ -215,9 +216,7 @@ export const SignupRolePage: React.FC = () => {
                     color: 'rgba(229,218,195,0.65)',
                   }}
                 >
-                  <span style={{ color: 'var(--kt-accent)', fontWeight: 700, flexShrink: 0 }}>
-                    ✓
-                  </span>
+                  <CheckIcon size={14} color="var(--kt-accent)" />
                   {item}
                 </li>
               ))}
@@ -346,9 +345,7 @@ export const SignupRolePage: React.FC = () => {
                     color: 'rgba(255,255,255,0.65)',
                   }}
                 >
-                  <span style={{ color: 'rgba(255,255,255,0.9)', fontWeight: 700, flexShrink: 0 }}>
-                    ✓
-                  </span>
+                  <CheckIcon size={14} color="rgba(255,255,255,0.9)" />
                   {item}
                 </li>
               ))}

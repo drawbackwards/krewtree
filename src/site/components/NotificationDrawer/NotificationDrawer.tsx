@@ -1,6 +1,7 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import type { Notification } from '../../types'
+import { ClipboardIcon, MessageIcon, RefreshIcon, BellIcon, StarIcon } from '../../icons'
 import styles from './NotificationDrawer.module.css'
 
 interface NotificationDrawerProps {
@@ -9,12 +10,12 @@ interface NotificationDrawerProps {
   onNotificationClick: (id: string) => void
 }
 
-const TYPE_ICONS: Record<Notification['type'], string> = {
-  application: '📋',
-  message: '💬',
-  status_change: '🔄',
-  job_alert: '🔔',
-  review: '⭐',
+const TYPE_ICONS: Record<Notification['type'], React.ReactNode> = {
+  application: <ClipboardIcon size={14} />,
+  message: <MessageIcon size={14} />,
+  status_change: <RefreshIcon size={14} />,
+  job_alert: <BellIcon size={14} />,
+  review: <StarIcon size={14} />,
 }
 
 function timeLabel(daysAgo: number): string {

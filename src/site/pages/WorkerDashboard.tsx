@@ -4,6 +4,26 @@ import { Badge, Button, Modal, Progress, Divider } from '../../components'
 import { StatCard } from '../components/StatCard/StatCard'
 import { RegulixBadge } from '../components/RegulixBadge/RegulixBadge'
 import { currentWorker, myApplications, applicationEvents, jobs, savedJobs } from '../data/mock'
+import {
+  StarIcon,
+  StarOutlineIcon,
+  BriefcaseIcon,
+  EyeIcon,
+  TrendingUpIcon,
+  CheckCircleIcon,
+  RocketIcon,
+  ClipboardIcon,
+  CalendarIcon,
+  CelebrationIcon,
+  DangerCircleIcon,
+  MessageIcon,
+  PersonIcon,
+  CheckIcon,
+  SparkleIcon,
+  SearchIcon,
+  BookmarkFilledIcon,
+  GiftIcon,
+} from '../icons'
 
 const statusConfig: Record<
   string,
@@ -16,96 +36,6 @@ const statusConfig: Record<
   Rejected: { variant: 'danger', label: 'Rejected' },
 }
 
-const StarIcon = ({ filled }: { filled: boolean }) => (
-  <svg
-    width="13"
-    height="13"
-    viewBox="0 0 24 24"
-    fill={filled ? 'var(--kt-warning)' : 'none'}
-    stroke={filled ? 'var(--kt-warning)' : 'var(--kt-border-strong)'}
-    strokeWidth="2"
-  >
-    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-  </svg>
-)
-
-const BriefcaseIcon = () => (
-  <svg
-    width="18"
-    height="18"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-  >
-    <rect x="2" y="7" width="20" height="14" rx="2" />
-    <path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16" />
-  </svg>
-)
-
-const EyeIcon = () => (
-  <svg
-    width="18"
-    height="18"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-  >
-    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-    <circle cx="12" cy="12" r="3" />
-  </svg>
-)
-
-const TrendingUpIcon = () => (
-  <svg
-    width="18"
-    height="18"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-  >
-    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
-    <polyline points="17 6 23 6 23 12" />
-  </svg>
-)
-
-const CheckCircleIcon = () => (
-  <svg
-    width="18"
-    height="18"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-  >
-    <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
-    <polyline points="22 4 12 14.01 9 11.01" />
-  </svg>
-)
-
-const RocketIcon = () => (
-  <svg
-    width="14"
-    height="14"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-  >
-    <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 00-2.91-.09z" />
-    <path d="M12 15l-3-3a22 22 0 012-3.95A12.88 12.88 0 0122 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 01-4 2z" />
-    <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0" />
-    <path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5" />
-  </svg>
-)
-
 const profileChecklist = [
   { label: 'Basic Info', done: true },
   { label: 'Work Experience', done: true },
@@ -114,12 +44,12 @@ const profileChecklist = [
   { label: 'Profile Photo', done: false },
 ]
 
-const timelineStatusIcon: Record<string, string> = {
-  Applied: '📋',
-  Viewed: '👁️',
-  Interviewing: '🗓️',
-  Offer: '🎉',
-  Rejected: '❌',
+const timelineStatusIcon: Record<string, React.ReactNode> = {
+  Applied: <ClipboardIcon size={14} />,
+  Viewed: <EyeIcon size={14} />,
+  Interviewing: <CalendarIcon size={14} />,
+  Offer: <CelebrationIcon size={14} />,
+  Rejected: <DangerCircleIcon size={14} />,
 }
 
 // Recommended: jobs matching worker's industries, not already applied
@@ -159,28 +89,28 @@ export const WorkerDashboard: React.FC = () => {
     {
       label: 'Applications',
       value: myApplications.length,
-      icon: <BriefcaseIcon />,
+      icon: <BriefcaseIcon size={18} />,
       color: 'primary' as const,
       trend: { direction: 'up' as const, value: '+2 this week' },
     },
     {
       label: 'Profile Views',
       value: 47,
-      icon: <EyeIcon />,
+      icon: <EyeIcon size={18} />,
       color: 'accent' as const,
       trend: { direction: 'up' as const, value: '+12 vs last week' },
     },
     {
       label: 'Interviews',
       value: myApplications.filter((a) => a.status === 'Interviewing').length,
-      icon: <TrendingUpIcon />,
+      icon: <TrendingUpIcon size={18} />,
       color: 'info' as const,
       trend: { direction: 'flat' as const, value: 'No change' },
     },
     {
       label: 'Offers',
       value: myApplications.filter((a) => a.status === 'Offer').length,
-      icon: <CheckCircleIcon />,
+      icon: <CheckCircleIcon size={18} />,
       color: 'success' as const,
       trend: { direction: 'up' as const, value: 'New offer!' },
     },
@@ -610,7 +540,7 @@ export const WorkerDashboard: React.FC = () => {
                     fontSize: 'var(--kt-text-md)',
                   }}
                 >
-                  ✨ Recommended for You
+                  <SparkleIcon size={16} /> Recommended for You
                 </h2>
                 <Link
                   to="/site/jobs"
@@ -746,9 +676,13 @@ export const WorkerDashboard: React.FC = () => {
                 </div>
                 <div>
                   <div style={{ display: 'flex', gap: 2, marginBottom: 6 }}>
-                    {[1, 2, 3, 4, 5].map((n) => (
-                      <StarIcon key={n} filled={n <= Math.round(currentWorker.performanceScore!)} />
-                    ))}
+                    {[1, 2, 3, 4, 5].map((n) =>
+                      n <= Math.round(currentWorker.performanceScore!) ? (
+                        <StarIcon key={n} size={13} color="var(--kt-warning)" />
+                      ) : (
+                        <StarOutlineIcon key={n} size={13} color="var(--kt-border-strong)" />
+                      )
+                    )}
                   </div>
                   <p style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text-muted)' }}>
                     Based on {currentWorker.ratingCount} employer ratings
@@ -886,11 +820,46 @@ export const WorkerDashboard: React.FC = () => {
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {[
-                { label: `🔍 Browse Jobs`, to: '/site/jobs' },
-                { label: `🔖 Saved Jobs (${savedJobs.length})`, to: '/site/saved-jobs' },
-                { label: '💬 Messages', to: '/site/messages' },
-                { label: '👤 Edit Profile', to: `/site/profile/${currentWorker.id}` },
-                { label: '🎁 Referrals', to: '/site/referrals' },
+                {
+                  label: (
+                    <>
+                      <SearchIcon size={14} /> Browse Jobs
+                    </>
+                  ),
+                  to: '/site/jobs',
+                },
+                {
+                  label: (
+                    <>
+                      <BookmarkFilledIcon size={14} /> Saved Jobs ({savedJobs.length})
+                    </>
+                  ),
+                  to: '/site/saved-jobs',
+                },
+                {
+                  label: (
+                    <>
+                      <MessageIcon size={14} /> Messages
+                    </>
+                  ),
+                  to: '/site/messages',
+                },
+                {
+                  label: (
+                    <>
+                      <PersonIcon size={14} /> Edit Profile
+                    </>
+                  ),
+                  to: `/site/profile/${currentWorker.id}`,
+                },
+                {
+                  label: (
+                    <>
+                      <GiftIcon size={14} /> Referrals
+                    </>
+                  ),
+                  to: '/site/referrals',
+                },
               ].map((link) => (
                 <Link
                   key={link.to}
@@ -968,7 +937,13 @@ export const WorkerDashboard: React.FC = () => {
         open={selectedBoostId !== null}
         onClose={handleBoostClose}
         size="sm"
-        title={boostSuccess ? undefined : '🚀 Boost Your Application'}
+        title={
+          boostSuccess ? undefined : (
+            <>
+              <RocketIcon size={16} /> Boost Your Application
+            </>
+          )
+        }
         showClose={!boostSuccess}
         footer={
           boostSuccess ? (
@@ -1031,7 +1006,9 @@ export const WorkerDashboard: React.FC = () => {
       >
         {boostSuccess ? (
           <div style={{ textAlign: 'center', padding: '8px 0 16px' }}>
-            <div style={{ fontSize: 48, marginBottom: 12 }}>🚀</div>
+            <div style={{ marginBottom: 12 }}>
+              <RocketIcon size={48} />
+            </div>
             <p
               style={{
                 fontSize: 'var(--kt-text-md)',
@@ -1120,7 +1097,7 @@ export const WorkerDashboard: React.FC = () => {
                       flexShrink: 0,
                     }}
                   >
-                    ✓
+                    <CheckIcon size={14} />
                   </span>
                   <span
                     style={{
@@ -1169,7 +1146,7 @@ export const WorkerDashboard: React.FC = () => {
                       transition: 'all 0.15s ease',
                     }}
                   >
-                    {method === 'apple' ? '🍎 Apple Pay' : '💸 Zelle'}
+                    {method === 'apple' ? 'Apple Pay' : 'Zelle'}
                   </button>
                 ))}
               </div>

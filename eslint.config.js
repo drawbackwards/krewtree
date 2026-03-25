@@ -8,7 +8,7 @@ import prettierConfig from 'eslint-config-prettier'
 
 export default tseslint.config(
   // Ignore build output and deps
-  { ignores: ['dist', 'node_modules', '.vite'] },
+  { ignores: ['dist', 'node_modules', '.vite', '.claude'] },
 
   // TypeScript + React rules for all source files
   {
@@ -47,6 +47,35 @@ export default tseslint.config(
       // General quality rules
       'no-console': ['warn', { allow: ['warn', 'error'] }],
       'prefer-const': 'error',
+
+      // Design token enforcement — ban raw hex color strings outside token files.
+      // Use --kt-* CSS custom properties (var(--kt-...)) or import from src/tokens/colors.ts instead.
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "Literal[value=/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/]",
+          message: "Raw hex color detected. Use a --kt-* CSS token (var(--kt-...)) or import from src/tokens/colors.ts instead.",
+        },
+      ],
+    },
+  },
+
+  // These files are exempt from the hex color rule:
+  // - colors.ts: IS the token source of truth
+  // - App.tsx: color swatch documentation
+  // - mock.ts: placeholder data, will be replaced by API
+  // - icons/index.tsx: SVG brand icon library — paths use exact brand colors as fill attributes
+  // - landing/sections.tsx: contains Regulix brand SVG logo with exact brand colors
+  {
+    files: [
+      '**/tokens/colors.ts',
+      '**/App.tsx',
+      '**/data/mock.ts',
+      '**/icons/index.tsx',
+      '**/landing/sections.tsx',
+    ],
+    rules: {
+      'no-restricted-syntax': 'off',
     },
   },
 

@@ -1,4 +1,5 @@
 import React from 'react'
+import { colors } from '../../tokens/colors'
 
 // ── Background watermark mark ─────────────────────────────────────────────────
 
@@ -23,7 +24,7 @@ export const KrewtreeBgMark: React.FC<{ style?: React.CSSProperties }> = ({ styl
       userSelect: 'none',
       opacity: 0.07,
       flexShrink: 0,
-      color: '#e5dac3',
+      color: colors.sand[400],
       ...style,
     }}
   >
@@ -68,8 +69,8 @@ export const KrewtreeLogo: React.FC<KrewtreeLogoProps> = ({
   accentColor,
   style,
 }) => {
-  const sand = onDark ? '#e5dac3' : '#0a232d'
-  const olive = accentColor ?? '#6d7531'
+  const sand = onDark ? colors.sand[400] : colors.navy[900]
+  const olive = accentColor ?? colors.olive[700]
   const width = Math.round(height * (1006.19 / 242))
 
   return (

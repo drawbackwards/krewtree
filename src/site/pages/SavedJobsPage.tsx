@@ -4,6 +4,7 @@ import { Button } from '../../components'
 import { JobCard } from '../components/JobCard/JobCard'
 import type { SavedJob } from '../types'
 import { savedJobs as initialSavedJobs } from '../data/mock'
+import { BookmarkFilledIcon, ClipboardIcon } from '../icons'
 
 export const SavedJobsPage: React.FC = () => {
   const [saved, setSaved] = useState<SavedJob[]>(initialSavedJobs)
@@ -99,7 +100,9 @@ export const SavedJobsPage: React.FC = () => {
               border: '1px solid var(--kt-border)',
             }}
           >
-            <div style={{ fontSize: '48px', marginBottom: 16 }}>🔖</div>
+            <div style={{ marginBottom: 16, color: 'var(--kt-text-muted)' }}>
+              <BookmarkFilledIcon size={48} />
+            </div>
             <h2
               style={{
                 fontSize: 'var(--kt-text-lg)',
@@ -151,7 +154,8 @@ export const SavedJobsPage: React.FC = () => {
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
                     <span style={{ fontSize: 'var(--kt-text-xs)', color: 'var(--kt-text-muted)' }}>
-                      🔖 Saved {item.savedDaysAgo === 0 ? 'today' : `${item.savedDaysAgo}d ago`}
+                      <BookmarkFilledIcon size={12} /> Saved{' '}
+                      {item.savedDaysAgo === 0 ? 'today' : `${item.savedDaysAgo}d ago`}
                     </span>
                     {item.note && (
                       <span
@@ -168,7 +172,7 @@ export const SavedJobsPage: React.FC = () => {
                           whiteSpace: 'nowrap',
                         }}
                       >
-                        📝 {item.note}
+                        <ClipboardIcon size={12} /> {item.note}
                       </span>
                     )}
                   </div>

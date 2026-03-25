@@ -2,6 +2,7 @@ import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Badge } from '../../components'
 import { useAuth } from '../context/AuthContext'
+import { CheckIcon } from '../icons'
 import {
   FeaturedJobsSection,
   HowItWorksSection,
@@ -98,7 +99,7 @@ const HeroDefault = () => {
               size="sm"
               style={{
                 marginBottom: 14,
-                background: '#103949',
+                background: 'var(--kt-badge-worker-bg)',
                 color: 'rgba(229,218,195,0.85)',
                 border: 'none',
               }}
@@ -156,7 +157,7 @@ const HeroDefault = () => {
                   color: 'rgba(255,255,255,0.65)',
                 }}
               >
-                <span style={{ color: 'rgba(255,255,255,0.9)', fontWeight: 700 }}>✓</span> {item}
+                <CheckIcon size={14} color="rgba(255,255,255,0.9)" /> {item}
               </li>
             ))}
           </ul>
@@ -277,7 +278,7 @@ const HeroDefault = () => {
                   color: 'rgba(255,255,255,0.65)',
                 }}
               >
-                <span style={{ color: 'rgba(255,255,255,0.9)', fontWeight: 700 }}>✓</span> {item}
+                <CheckIcon size={14} color="rgba(255,255,255,0.9)" /> {item}
               </li>
             ))}
           </ul>

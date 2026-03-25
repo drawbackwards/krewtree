@@ -4,27 +4,16 @@ import { Button, Divider } from '../../components'
 import { JobCard } from '../components/JobCard/JobCard'
 import { ReviewCard } from '../components/ReviewCard/ReviewCard'
 import type { CompanyReview } from '../types'
+import {
+  StarIcon,
+  StarOutlineIcon,
+  VerifiedShieldIcon,
+  LocationIcon,
+  UsersIcon,
+  CalendarIcon,
+  CheckIcon,
+} from '../icons'
 import { companies, jobs, companyDetails, companyReviews } from '../data/mock'
-
-const StarIcon = ({ filled }: { filled: boolean }) => (
-  <svg
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill={filled ? 'var(--kt-warning)' : 'none'}
-    stroke="var(--kt-warning)"
-    strokeWidth="1.5"
-  >
-    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-  </svg>
-)
-
-const VerifiedIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--kt-olive-600)">
-    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-    <path d="M9 12l2 2 4-4" stroke="white" strokeWidth="2" strokeLinecap="round" fill="none" />
-  </svg>
-)
 
 export const CompanyProfilePage: React.FC = () => {
   const { id } = useParams<{ id: string }>()
@@ -104,8 +93,7 @@ export const CompanyProfilePage: React.FC = () => {
         <div
           style={{
             height: 140,
-            background:
-              'linear-gradient(135deg, var(--kt-grey-100) 0%, var(--kt-grey-50, #f9f9fb) 100%)',
+            background: 'var(--kt-grey-100)',
           }}
         />
         <div
@@ -167,7 +155,7 @@ export const CompanyProfilePage: React.FC = () => {
                 </h1>
                 {company.isVerified && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <VerifiedIcon />
+                    <VerifiedShieldIcon size={16} color="var(--kt-olive-600)" />
                     <span
                       style={{
                         fontSize: 'var(--kt-text-xs)',
@@ -187,13 +175,13 @@ export const CompanyProfilePage: React.FC = () => {
               </p>
               <div style={{ display: 'flex', gap: 16, marginTop: 8, flexWrap: 'wrap' }}>
                 <span style={{ fontSize: 'var(--kt-text-xs)', color: 'var(--kt-text-muted)' }}>
-                  📍 {detail.headquarters}
+                  <LocationIcon size={14} /> {detail.headquarters}
                 </span>
                 <span style={{ fontSize: 'var(--kt-text-xs)', color: 'var(--kt-text-muted)' }}>
-                  👥 {detail.teamSize} employees
+                  <UsersIcon size={14} /> {detail.teamSize} employees
                 </span>
                 <span style={{ fontSize: 'var(--kt-text-xs)', color: 'var(--kt-text-muted)' }}>
-                  📅 Founded {detail.founded}
+                  <CalendarIcon size={14} /> Founded {detail.founded}
                 </span>
               </div>
             </div>
@@ -210,9 +198,13 @@ export const CompanyProfilePage: React.FC = () => {
                   {avgRating.toFixed(1)}
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'center', gap: 1, marginBottom: 2 }}>
-                  {[1, 2, 3, 4, 5].map((s) => (
-                    <StarIcon key={s} filled={s <= Math.round(avgRating)} />
-                  ))}
+                  {[1, 2, 3, 4, 5].map((s) =>
+                    s <= Math.round(avgRating) ? (
+                      <StarIcon key={s} size={16} color="var(--kt-warning)" />
+                    ) : (
+                      <StarOutlineIcon key={s} size={16} color="var(--kt-warning)" />
+                    )
+                  )}
                 </div>
                 <div style={{ fontSize: '10px', color: 'var(--kt-text-muted)' }}>
                   {reviews.length} reviews
@@ -476,7 +468,7 @@ export const CompanyProfilePage: React.FC = () => {
                         color: 'var(--kt-text)',
                       }}
                     >
-                      <span style={{ color: 'var(--kt-olive-600)', fontWeight: 'bold' }}>✓</span>
+                      <CheckIcon size={14} color="var(--kt-olive-600)" />
                       {perk}
                     </li>
                   ))}
@@ -512,9 +504,13 @@ export const CompanyProfilePage: React.FC = () => {
                     <div
                       style={{ display: 'flex', justifyContent: 'center', gap: 2, margin: '6px 0' }}
                     >
-                      {[1, 2, 3, 4, 5].map((s) => (
-                        <StarIcon key={s} filled={s <= Math.round(avgRating)} />
-                      ))}
+                      {[1, 2, 3, 4, 5].map((s) =>
+                        s <= Math.round(avgRating) ? (
+                          <StarIcon key={s} size={16} color="var(--kt-warning)" />
+                        ) : (
+                          <StarOutlineIcon key={s} size={16} color="var(--kt-warning)" />
+                        )
+                      )}
                     </div>
                     <div style={{ fontSize: 'var(--kt-text-xs)', color: 'var(--kt-text-muted)' }}>
                       {reviews.length} reviews
@@ -533,7 +529,7 @@ export const CompanyProfilePage: React.FC = () => {
                             width: 30,
                           }}
                         >
-                          {star} ★
+                          {star} <StarIcon size={12} color="var(--kt-warning)" />
                         </span>
                         <div
                           style={{
@@ -589,7 +585,7 @@ export const CompanyProfilePage: React.FC = () => {
                       color: 'var(--kt-success)',
                     }}
                   >
-                    ✓ Your review has been submitted!
+                    <CheckIcon size={14} /> Your review has been submitted!
                   </div>
                 )}
               </div>
@@ -641,7 +637,11 @@ export const CompanyProfilePage: React.FC = () => {
                             padding: 2,
                           }}
                         >
-                          <StarIcon filled={s <= reviewForm.rating} />
+                          {s <= reviewForm.rating ? (
+                            <StarIcon size={16} color="var(--kt-warning)" />
+                          ) : (
+                            <StarOutlineIcon size={16} color="var(--kt-warning)" />
+                          )}
                         </button>
                       ))}
                     </div>

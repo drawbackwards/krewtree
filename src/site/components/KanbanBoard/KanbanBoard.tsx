@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { KanbanApplicant, KanbanStage } from '../../types'
+import { CheckIcon, StarIcon, CloseIcon } from '../../icons'
 import styles from './KanbanBoard.module.css'
 
 interface KanbanBoardProps {
@@ -102,10 +103,14 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ initialApplicants }) =
 
                   <div className={styles.cardMeta}>
                     {applicant.isRegulixReady && (
-                      <span className={styles.regulixChip}>✓ Regulix</span>
+                      <span className={styles.regulixChip}>
+                        <CheckIcon size={10} /> Regulix
+                      </span>
                     )}
                     {applicant.performanceScore && (
-                      <span className={styles.scoreChip}>★ {applicant.performanceScore}</span>
+                      <span className={styles.scoreChip}>
+                        <StarIcon size={10} /> {applicant.performanceScore}
+                      </span>
                     )}
                   </div>
 
@@ -157,7 +162,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ initialApplicants }) =
                           onClick={() => moveToStage(applicant.id, 'rejected')}
                           title="Reject"
                         >
-                          ✗
+                          <CloseIcon size={10} />
                         </button>
                       )}
                     </div>

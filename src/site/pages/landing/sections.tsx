@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Button, Badge } from '../../../components'
 import { industries, jobs } from '../../data/mock'
 import { JobCard } from '../../components/JobCard/JobCard'
+import { CheckIcon } from '../../icons'
 import regulixStyles from './RegulixBanner.module.css'
 
 // ── shared styles ─────────────────────────────────────────────────────────────
@@ -335,25 +336,25 @@ const RegulixLogo = () => (
     style={{ display: 'block' }}
   >
     <path
-      fill="#ffffff"
+      fill="white"
       d="M348.43,173.06l-18.46-42.49h-18.46v42.49h-22.91V58.49h58.4c13.37,0,22.6,9.23,22.6,22.6v26.89c0,10.82-6.05,18.94-15.59,21.64l19.1,43.44h-24.66ZM346.67,85.54c0-3.5-1.91-5.41-5.41-5.41h-29.76v29.12h29.76c3.5,0,5.41-1.91,5.41-5.41v-18.3Z"
     />
     <path
-      fill="#ffffff"
+      fill="white"
       d="M514.7,58.49v21.64h-52.03v23.55h42.17v21.64h-42.17v26.1h52.03v21.64h-74.95V58.49h74.95Z"
     />
     <path
-      fill="#ffffff"
+      fill="white"
       d="M638.65,84.9c0-3.5-1.91-5.41-5.41-5.41h-26.26c-3.5,0-5.41,1.91-5.41,5.41v61.74c0,3.5,1.91,5.41,5.41,5.41h26.26c3.5,0,5.41-1.91,5.41-5.41v-17.03h-21v-20.69h43.92v42.17c0,13.37-9.23,22.6-22.6,22.6h-37.71c-13.37,0-22.6-9.23-22.6-22.6v-70.65c0-13.37,9.23-22.6,22.6-22.6h37.71c13.37,0,22.6,9.23,22.6,22.6v14.96h-22.91v-10.5Z"
     />
     <path
-      fill="#ffffff"
+      fill="white"
       d="M811.29,151.1c0,13.37-9.23,22.6-22.6,22.6h-36.6c-13.37,0-22.6-9.23-22.6-22.6V58.49h22.91v88.15c0,3.5,1.91,5.41,5.41,5.41h25.14c3.5,0,5.41-1.91,5.41-5.41V58.49h22.91v92.61Z"
     />
-    <path fill="#ffffff" d="M905.32,58.49v92.93h48.06v21.64h-70.97V58.49h22.91Z" />
-    <path fill="#ffffff" d="M1018.45,58.49h22.91v114.57h-22.91V58.49Z" />
+    <path fill="white" d="M905.32,58.49v92.93h48.06v21.64h-70.97V58.49h22.91Z" />
+    <path fill="white" d="M1018.45,58.49h22.91v114.57h-22.91V58.49Z" />
     <path
-      fill="#ffffff"
+      fill="white"
       d="M1128.87,173.06h-24.98l34.37-58.72-33.42-55.85h26.73l21.32,36.12,21.16-36.12h24.98l-33.26,57.29,34.21,57.28h-26.73l-22.28-37.87-22.12,37.87Z"
     />
     <rect fill="#ff3d00" x="0" y="57.89" width="57.89" height="57.89" rx="5.79" ry="5.79" />
@@ -461,7 +462,7 @@ export const RegulixBannerSection = () => (
                   gap: 8,
                 }}
               >
-                <span style={{ color: 'white', fontWeight: 700 }}>✓</span> {item}
+                <CheckIcon size={14} color="white" /> {item}
               </li>
             ))}
           </ul>
@@ -529,7 +530,7 @@ export const RegulixBannerSection = () => (
                   gap: 8,
                 }}
               >
-                <span style={{ color: 'white', fontWeight: 700 }}>✓</span> {item}
+                <CheckIcon size={14} color="white" /> {item}
               </li>
             ))}
           </ul>

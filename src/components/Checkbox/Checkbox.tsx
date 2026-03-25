@@ -1,24 +1,16 @@
 import React, { useId } from 'react'
+import { CheckSmallIcon, DashIcon } from '../../site/icons'
 import styles from './Checkbox.module.css'
 
-export interface CheckboxProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type' | 'size'> {
+export interface CheckboxProps extends Omit<
+  React.InputHTMLAttributes<HTMLInputElement>,
+  'type' | 'size'
+> {
   label?: string
   helperText?: string
   error?: string
   indeterminate?: boolean
 }
-
-const CheckIcon = () => (
-  <svg width="11" height="8" viewBox="0 0 11 8" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M1 4l3 3 6-6" />
-  </svg>
-)
-
-const DashIcon = () => (
-  <svg width="10" height="2" viewBox="0 0 10 2" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-    <line x1="1" y1="1" x2="9" y2="1" />
-  </svg>
-)
 
 export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
   (
@@ -55,16 +47,24 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
         />
         <span className={styles.box}>
           {indeterminate ? (
-            <span className={styles.check}><DashIcon /></span>
+            <span className={styles.check}>
+              <DashIcon size={10} />
+            </span>
           ) : isChecked ? (
-            <span className={styles.check}><CheckIcon /></span>
+            <span className={styles.check}>
+              <CheckSmallIcon size={11} />
+            </span>
           ) : null}
         </span>
         {label && (
           <span>
             <span className={styles.labelText}>{label}</span>
             {helperText && <span className={styles.helperText}>{helperText}</span>}
-            {error && <span className={styles.errorText} role="alert">{error}</span>}
+            {error && (
+              <span className={styles.errorText} role="alert">
+                {error}
+              </span>
+            )}
           </span>
         )}
       </label>

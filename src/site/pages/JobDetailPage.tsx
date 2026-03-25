@@ -5,215 +5,27 @@ import { RegulixBadge } from '../components/RegulixBadge/RegulixBadge'
 import { QuickApplyModal } from '../components/QuickApplyModal/QuickApplyModal'
 import { jobs, companyDetails } from '../data/mock'
 import { useAuth } from '../context/AuthContext'
-
-const CheckIcon = () => (
-  <svg
-    width="14"
-    height="14"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2.5"
-    strokeLinecap="round"
-  >
-    <path d="M20 6L9 17l-5-5" />
-  </svg>
-)
-
-const MapPinIcon = () => (
-  <svg
-    width="14"
-    height="14"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-  >
-    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
-    <circle cx="12" cy="10" r="3" />
-  </svg>
-)
-
-const ClockIcon = () => (
-  <svg
-    width="14"
-    height="14"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-  >
-    <circle cx="12" cy="12" r="10" />
-    <path d="M12 6v6l4 2" />
-  </svg>
-)
-
-const DollarIcon = () => (
-  <svg
-    width="14"
-    height="14"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-  >
-    <line x1="12" y1="1" x2="12" y2="23" />
-    <path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
-  </svg>
-)
-
-const UsersIcon = () => (
-  <svg
-    width="14"
-    height="14"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-  >
-    <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
-    <circle cx="9" cy="7" r="4" />
-    <path d="M23 21v-2a4 4 0 00-3-3.87" />
-    <path d="M16 3.13a4 4 0 010 7.75" />
-  </svg>
-)
-
-const ShareIcon = () => (
-  <svg
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-  >
-    <circle cx="18" cy="5" r="3" />
-    <circle cx="6" cy="12" r="3" />
-    <circle cx="18" cy="19" r="3" />
-    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
-    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
-  </svg>
-)
-
-const BookmarkIcon = () => (
-  <svg
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-  >
-    <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" />
-  </svg>
-)
-
-const RegulixMarkIcon = ({ size = 24 }: { size?: number }) => {
-  const h = Math.round((size * 699.83) / 600)
-  return (
-    <svg viewBox="0 0 600 699.83" width={size} height={h} xmlns="http://www.w3.org/2000/svg">
-      <rect y="174.96" width="174.96" height="174.96" rx="17.5" ry="17.5" fill="#ff3d00" />
-      <path
-        fill="#ff3d00"
-        d="M597.42,684.9l-108.78-108.78c-26.8-26.8-61.39-44-98.45-49.4-1.34-.49-2.3-1.77-2.3-3.27,0-1.4.83-2.61,2.02-3.16.44-.1.87-.21,1.31-.32.06,0,.11-.02.17-.02h-.1c76.65-18.59,133.58-87.65,133.58-170.02v-174.96C524.87,78.33,446.54,0,349.92,0h-157.46c-9.66,0-17.5,7.83-17.5,17.5v139.97c0,9.66,7.83,17.5,17.5,17.5h139.97c9.66,0,17.5,7.83,17.5,17.5v139.97c0,9.66-7.83,17.5-17.5,17.5h-139.97c-9.66,0-17.5,7.83-17.5,17.5v142.97c0,9.28,3.69,18.18,10.25,24.74l159.58,159.59c3.28,3.28,7.73,5.12,12.37,5.12h234.07c7.79,0,11.7-9.42,6.19-14.93Z"
-      />
-    </svg>
-  )
-}
-
-const BuildingIcon = () => (
-  <svg
-    width="14"
-    height="14"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-  >
-    <rect x="2" y="7" width="20" height="14" rx="2" />
-    <path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16" />
-  </svg>
-)
-
-const GlobeIcon = () => (
-  <svg
-    width="13"
-    height="13"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-  >
-    <circle cx="12" cy="12" r="10" />
-    <line x1="2" y1="12" x2="22" y2="12" />
-    <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" />
-  </svg>
-)
-
-const VerifiedIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="var(--kt-accent)" stroke="none">
-    <path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-    <path d="M9 12l2 2 4-4" stroke="white" strokeWidth="2" strokeLinecap="round" fill="none" />
-  </svg>
-)
-
-const LinkedInIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
-  </svg>
-)
-
-const XIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.748l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-  </svg>
-)
-
-const FacebookIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-  </svg>
-)
-
-const EnvelopeShareIcon = () => (
-  <svg
-    width="20"
-    height="20"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    aria-hidden="true"
-  >
-    <rect x="2" y="4" width="20" height="16" rx="2" />
-    <path d="M2 7l10 7 10-7" />
-  </svg>
-)
-
-const LinkIcon = () => (
-  <svg
-    width="14"
-    height="14"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    aria-hidden="true"
-  >
-    <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" />
-    <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" />
-  </svg>
-)
+import {
+  CheckIcon,
+  MapPinIcon,
+  ClockIcon,
+  DollarIcon,
+  UsersIcon,
+  ShareIcon,
+  BookmarkIcon,
+  RegulixMarkIcon,
+  BuildingIcon,
+  GlobeIcon,
+  VerifiedBadgeIcon,
+  LinkedInIcon,
+  XIcon,
+  FacebookIcon,
+  EnvelopeIcon,
+  LinkIcon,
+  LightningIcon,
+  StarIcon,
+  SearchIcon,
+} from '../icons'
 
 const preInterviewQuestions: Record<string, string[]> = {
   j1: [
@@ -286,7 +98,9 @@ export const JobDetailPage: React.FC = () => {
           gap: 16,
         }}
       >
-        <div style={{ fontSize: 48 }}>🔍</div>
+        <div style={{ color: 'var(--kt-text-muted)' }}>
+          <SearchIcon size={48} />
+        </div>
         <p
           style={{
             fontSize: 'var(--kt-text-xl)',
@@ -452,7 +266,9 @@ export const JobDetailPage: React.FC = () => {
                   >
                     {job.company.name}
                   </Link>
-                  {job.company.isVerified && <VerifiedIcon />}
+                  {job.company.isVerified && (
+                    <VerifiedBadgeIcon size={14} color="var(--kt-accent)" />
+                  )}
                   <span style={{ color: 'var(--kt-border-strong)' }}>·</span>
                   <Badge variant="secondary" size="sm">
                     {job.type}
@@ -462,11 +278,16 @@ export const JobDetailPage: React.FC = () => {
                 {/* Meta row */}
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16 }}>
                   {[
-                    { icon: <MapPinIcon />, label: job.location },
-                    { icon: <DollarIcon />, label: payLabel },
-                    { icon: <ClockIcon />, label: `Posted ${postedLabel}` },
+                    { icon: <MapPinIcon size={14} />, label: job.location },
+                    { icon: <DollarIcon size={14} />, label: payLabel },
+                    { icon: <ClockIcon size={14} />, label: `Posted ${postedLabel}` },
                     ...(!isCompany
-                      ? [{ icon: <UsersIcon />, label: `${job.totalApplicants} applicants` }]
+                      ? [
+                          {
+                            icon: <UsersIcon size={14} />,
+                            label: `${job.totalApplicants} applicants`,
+                          },
+                        ]
                       : []),
                   ].map(({ icon, label }) => (
                     <div
@@ -506,7 +327,7 @@ export const JobDetailPage: React.FC = () => {
                       transition: 'all var(--kt-duration-fast)',
                     }}
                   >
-                    <BookmarkIcon />
+                    <BookmarkIcon size={16} />
                   </button>
                 )}
                 <button
@@ -526,7 +347,7 @@ export const JobDetailPage: React.FC = () => {
                     transition: 'all var(--kt-duration-fast)',
                   }}
                 >
-                  <ShareIcon />
+                  <ShareIcon size={16} />
                 </button>
               </div>
             </div>
@@ -556,7 +377,7 @@ export const JobDetailPage: React.FC = () => {
           {!isCompany && job.regulixReadyApplicants > 0 && (
             <div
               style={{
-                background: 'linear-gradient(135deg, #f0f4e8, #e8eedb)',
+                background: 'var(--kt-olive-100)',
                 border: '1px solid var(--kt-olive-200)',
                 borderRadius: 'var(--kt-radius-lg)',
                 padding: '16px 20px',
@@ -669,7 +490,7 @@ export const JobDetailPage: React.FC = () => {
                       marginTop: 1,
                     }}
                   >
-                    <CheckIcon />
+                    <CheckIcon size={14} />
                   </span>
                   <span
                     style={{
@@ -906,7 +727,7 @@ export const JobDetailPage: React.FC = () => {
                             flexShrink: 0,
                           }}
                         >
-                          <UsersIcon />
+                          <UsersIcon size={14} />
                         </div>
                         <div>
                           <p
@@ -993,7 +814,15 @@ export const JobDetailPage: React.FC = () => {
                 onClick={() => setQuickApplyOpen(true)}
                 disabled={applied}
               >
-                {applied ? '✓ Applied' : '⚡ Quick Apply'}
+                {applied ? (
+                  <>
+                    <CheckIcon size={12} /> Applied
+                  </>
+                ) : (
+                  <>
+                    <LightningIcon size={14} /> Quick Apply
+                  </>
+                )}
               </Button>
 
               <Button
@@ -1001,7 +830,13 @@ export const JobDetailPage: React.FC = () => {
                 style={{ width: '100%' }}
                 onClick={() => setSaved((s) => !s)}
               >
-                {saved ? '✓ Saved' : 'Save Job'}
+                {saved ? (
+                  <>
+                    <CheckIcon size={12} /> Saved
+                  </>
+                ) : (
+                  'Save Job'
+                )}
               </Button>
 
               <Divider style={{ margin: '16px 0' }} />
@@ -1109,7 +944,9 @@ export const JobDetailPage: React.FC = () => {
                   >
                     {job.company.name}
                   </span>
-                  {job.company.isVerified && <VerifiedIcon />}
+                  {job.company.isVerified && (
+                    <VerifiedBadgeIcon size={14} color="var(--kt-accent)" />
+                  )}
                 </div>
                 <span style={{ fontSize: 'var(--kt-text-xs)', color: 'var(--kt-text-muted)' }}>
                   {job.company.industry}
@@ -1130,9 +967,9 @@ export const JobDetailPage: React.FC = () => {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 14 }}>
               {[
-                { icon: <MapPinIcon />, label: job.company.location },
-                { icon: <BuildingIcon />, label: `${job.company.size} employees` },
-                { icon: <GlobeIcon />, label: job.company.website },
+                { icon: <MapPinIcon size={14} />, label: job.company.location },
+                { icon: <BuildingIcon size={14} />, label: `${job.company.size} employees` },
+                { icon: <GlobeIcon size={13} />, label: job.company.website },
               ].map(({ icon, label }) => (
                 <div
                   key={label}
@@ -1165,18 +1002,15 @@ export const JobDetailPage: React.FC = () => {
                 <div>
                   <div style={{ display: 'flex', gap: 2, marginBottom: 2 }}>
                     {[1, 2, 3, 4, 5].map((i) => (
-                      <span
+                      <StarIcon
                         key={i}
-                        style={{
-                          fontSize: '11px',
-                          color:
-                            i <= Math.round(detail.avgRating)
-                              ? '#F5A623'
-                              : 'var(--kt-border-strong)',
-                        }}
-                      >
-                        ★
-                      </span>
+                        size={11}
+                        color={
+                          i <= Math.round(detail.avgRating)
+                            ? 'var(--kt-rating)'
+                            : 'var(--kt-border-strong)'
+                        }
+                      />
                     ))}
                   </div>
                   <span style={{ fontSize: 'var(--kt-text-xs)', color: 'var(--kt-text-muted)' }}>
@@ -1550,19 +1384,19 @@ export const JobDetailPage: React.FC = () => {
             [
               {
                 label: 'LinkedIn',
-                bg: '#0A66C2',
+                bg: '#0A66C2', // eslint-disable-line no-restricted-syntax -- LinkedIn brand color
                 href: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`,
                 icon: <LinkedInIcon />,
               },
               {
                 label: 'X',
-                bg: '#000000',
+                bg: '#000000', // eslint-disable-line no-restricted-syntax -- X/Twitter brand color
                 href: `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`,
                 icon: <XIcon />,
               },
               {
                 label: 'Facebook',
-                bg: '#1877F2',
+                bg: '#1877F2', // eslint-disable-line no-restricted-syntax -- Facebook brand color
                 href: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`,
                 icon: <FacebookIcon />,
               },
@@ -1570,7 +1404,7 @@ export const JobDetailPage: React.FC = () => {
                 label: 'Email',
                 bg: 'var(--kt-navy-900)',
                 href: `mailto:?subject=${encodeURIComponent(`Job: ${job.title} at ${job.company.name}`)}&body=${encodeURIComponent(`Hi,\n\nI thought you might be interested in this opportunity:\n\n${job.title} at ${job.company.name}\n${job.location} · ${payLabel}\n\nView posting: ${shareUrl}`)}`,
-                icon: <EnvelopeShareIcon />,
+                icon: <EnvelopeIcon size={20} />,
               },
             ] as { label: string; bg: string; href: string; icon: React.ReactNode }[]
           ).map(({ label, bg, href, icon }) => (
@@ -1659,7 +1493,7 @@ export const JobDetailPage: React.FC = () => {
             style={{
               flexShrink: 0,
               padding: '4px 14px',
-              background: copied ? '#2e7d32' : 'var(--kt-primary)',
+              background: copied ? 'var(--kt-success)' : 'var(--kt-primary)',
               color: 'white',
               border: 'none',
               borderRadius: 'var(--kt-radius-sm)',
@@ -1671,7 +1505,13 @@ export const JobDetailPage: React.FC = () => {
               whiteSpace: 'nowrap',
             }}
           >
-            {copied ? '✓ Copied!' : 'Copy'}
+            {copied ? (
+              <>
+                <CheckIcon size={12} /> Copied!
+              </>
+            ) : (
+              'Copy'
+            )}
           </button>
         </div>
       </Modal>

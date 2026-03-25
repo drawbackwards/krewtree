@@ -2,49 +2,8 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Input, Textarea, Select, Button, Badge, Alert, Switch, Divider } from '../../components'
 import { RegulixBadge } from '../components/RegulixBadge/RegulixBadge'
+import { RegulixMarkIcon, StarIcon, PlusIcon, CelebrationIcon, LightningIcon } from '../icons'
 import { industries } from '../data/mock'
-
-// ── Inline icon components ──────────────────────────────────────────────────
-
-const RegulixMarkIcon = ({ size = 28 }: { size?: number }) => {
-  const h = Math.round((size * 699.83) / 600)
-  return (
-    <svg viewBox="0 0 600 699.83" width={size} height={h} xmlns="http://www.w3.org/2000/svg">
-      <rect y="174.96" width="174.96" height="174.96" rx="17.5" ry="17.5" fill="#ff3d00" />
-      <path
-        fill="#ff3d00"
-        d="M597.42,684.9l-108.78-108.78c-26.8-26.8-61.39-44-98.45-49.4-1.34-.49-2.3-1.77-2.3-3.27,0-1.4.83-2.61,2.02-3.16.44-.1.87-.21,1.31-.32.06,0,.11-.02.17-.02h-.1c76.65-18.59,133.58-87.65,133.58-170.02v-174.96C524.87,78.33,446.54,0,349.92,0h-157.46c-9.66,0-17.5,7.83-17.5,17.5v139.97c0,9.66,7.83,17.5,17.5,17.5h139.97c9.66,0,17.5,7.83,17.5,17.5v139.97c0,9.66-7.83,17.5-17.5,17.5h-139.97c-9.66,0-17.5,7.83-17.5,17.5v142.97c0,9.28,3.69,18.18,10.25,24.74l159.58,159.59c3.28,3.28,7.73,5.12,12.37,5.12h234.07c7.79,0,11.7-9.42,6.19-14.93Z"
-      />
-    </svg>
-  )
-}
-
-const StarIcon = ({ size = 28 }: { size?: number }) => (
-  <svg
-    width={size}
-    height={size}
-    viewBox="0 0 24 24"
-    fill="var(--kt-olive-700)"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-  </svg>
-)
-
-const PlusIcon = () => (
-  <svg
-    width="12"
-    height="12"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2.5"
-    strokeLinecap="round"
-  >
-    <line x1="12" y1="5" x2="12" y2="19" />
-    <line x1="5" y1="12" x2="19" y2="12" />
-  </svg>
-)
 
 // ── Suggested skills by industry ────────────────────────────────────────────
 
@@ -286,7 +245,9 @@ export const PostJobPage: React.FC = () => {
           padding: '40px var(--kt-space-6)',
         }}
       >
-        <div style={{ fontSize: 64 }}>🎉</div>
+        <div>
+          <CelebrationIcon size={64} />
+        </div>
         <h1
           style={{
             fontSize: 'var(--kt-text-2xl)',
@@ -451,7 +412,7 @@ export const PostJobPage: React.FC = () => {
                 />
               </FieldRow>
               <p style={{ fontSize: 'var(--kt-text-xs)', color: 'var(--kt-text-muted)' }}>
-                💡 Jobs with a posted pay range receive 3× more applications on average.
+                Jobs with a posted pay range receive 3x more applications on average.
               </p>
             </div>
           </Section>
@@ -607,7 +568,7 @@ export const PostJobPage: React.FC = () => {
                         (e.currentTarget.style.background = 'rgba(109, 117, 49, 0.07)')
                       }
                     >
-                      <PlusIcon />
+                      <PlusIcon size={12} />
                       {s}
                     </button>
                   ))}
@@ -691,7 +652,7 @@ export const PostJobPage: React.FC = () => {
                     padding: '4px 0',
                   }}
                 >
-                  <PlusIcon />
+                  <PlusIcon size={12} />
                   Add another question
                 </button>
               )}
@@ -794,7 +755,7 @@ export const PostJobPage: React.FC = () => {
                         flexShrink: 0,
                       }}
                     >
-                      <StarIcon size={24} />
+                      <StarIcon size={24} color="var(--kt-olive-700)" />
                     </div>
                     <div>
                       <div
@@ -1058,7 +1019,7 @@ export const PostJobPage: React.FC = () => {
                                 color: 'var(--kt-warning-text)',
                               }}
                             >
-                              ⚡ Urgently Hiring
+                              <LightningIcon size={12} /> Urgently Hiring
                             </div>
                           )}
                         </label>

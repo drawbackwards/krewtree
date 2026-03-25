@@ -1,6 +1,6 @@
 # krewtree — Architecture Overview
 
-> Last updated: March 13, 2026 (session 4)
+> Last updated: March 16, 2026 (session 5)
 
 ---
 
@@ -62,6 +62,7 @@ krewtree/
 │       ├── Router.tsx           Route definitions + AppLayout wrapper
 │       ├── context/
 │       │   └── AuthContext.tsx  useAuth() hook — login(type), logout(), persona state
+│       ├── icons/index.tsx       Shared SVG icon library (~60+ icons, named exports)
 │       ├── data/mock.ts         Mock data (56KB) — replace with real API calls
 │       ├── types/index.ts       Shared TypeScript interfaces
 │       ├── components/          Site-specific components
@@ -115,7 +116,8 @@ Other values: `#103949` (light navy-teal — "For Workers" badge), `#8B9A3E` (li
 
 - **No gradients** — flat solid colors only
 - **No Tailwind** — CSS modules + custom properties
-- **No icon libraries** — inline React SVG components only
+- **No external icon libraries** — all icons are inline React SVG components in a shared icon library (`src/site/icons/index.tsx`). Always import from there; never define icons inline in pages or components. Add new icons to the library first.
+- **No emoji** — use SVG icon components for all iconography, never emoji characters
 - **CSS modules** for component-level scoping
 - **Inline styles** for page-level layout
 - Brand name is always lowercase: **krewtree**

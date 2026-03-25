@@ -3,6 +3,15 @@ import { Badge } from '../../components'
 import type { BadgeVariant } from '../../components/Badge/Badge'
 import type { Referral } from '../types'
 import { referrals as initialReferrals } from '../data/mock'
+import {
+  UsersIcon,
+  CheckCircleIcon,
+  CelebrationIcon,
+  MoneyIcon,
+  WorkerIcon,
+  BuildingIcon,
+  CheckIcon,
+} from '../icons'
 
 const statusColor: Record<string, BadgeVariant> = {
   pending: 'warning',
@@ -10,10 +19,14 @@ const statusColor: Record<string, BadgeVariant> = {
   hired: 'success',
 }
 
-const statusLabel: Record<string, string> = {
+const statusLabel: Record<string, React.ReactNode> = {
   pending: 'Pending',
   joined: 'Joined',
-  hired: 'Hired ✓',
+  hired: (
+    <>
+      <CheckIcon size={12} /> Hired
+    </>
+  ),
 }
 
 export const ReferralPage: React.FC = () => {
@@ -95,10 +108,18 @@ export const ReferralPage: React.FC = () => {
           }}
         >
           {[
-            { label: 'Total Referred', value: stats.total, icon: '👥' },
-            { label: 'Joined', value: stats.joined, icon: '✅' },
-            { label: 'Got Hired', value: stats.hired, icon: '🎉' },
-            { label: 'Total Earned', value: `$${stats.earned}`, icon: '💰' },
+            { label: 'Total Referred', value: stats.total, icon: <UsersIcon size={24} /> },
+            {
+              label: 'Joined',
+              value: stats.joined,
+              icon: <CheckCircleIcon size={24} color="var(--kt-success)" />,
+            },
+            { label: 'Got Hired', value: stats.hired, icon: <CelebrationIcon size={24} /> },
+            {
+              label: 'Total Earned',
+              value: `$${stats.earned}`,
+              icon: <MoneyIcon size={24} color="var(--kt-success)" />,
+            },
           ].map(({ label, value, icon }) => (
             <div
               key={label}
@@ -110,7 +131,7 @@ export const ReferralPage: React.FC = () => {
                 textAlign: 'center',
               }}
             >
-              <div style={{ fontSize: '24px', marginBottom: 6 }}>{icon}</div>
+              <div style={{ marginBottom: 6, color: 'var(--kt-text-muted)' }}>{icon}</div>
               <div
                 style={{
                   fontSize: 'var(--kt-text-xl)',
@@ -228,7 +249,15 @@ export const ReferralPage: React.FC = () => {
                         textTransform: 'capitalize',
                       }}
                     >
-                      {t === 'worker' ? '👷 Worker' : '🏢 Company'}
+                      {t === 'worker' ? (
+                        <>
+                          <WorkerIcon size={14} /> Worker
+                        </>
+                      ) : (
+                        <>
+                          <BuildingIcon size={14} /> Company
+                        </>
+                      )}
                     </button>
                   ))}
                 </div>
@@ -248,9 +277,19 @@ export const ReferralPage: React.FC = () => {
                   opacity: form.name && form.email ? 1 : 0.5,
                   fontFamily: 'var(--kt-font-sans)',
                   transition: 'opacity 0.15s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6,
                 }}
               >
-                {sent ? '✓ Invite Sent!' : 'Send Invite'}
+                {sent ? (
+                  <>
+                    <CheckIcon size={14} /> Invite Sent!
+                  </>
+                ) : (
+                  'Send Invite'
+                )}
               </button>
             </div>
           </div>
@@ -378,7 +417,13 @@ export const ReferralPage: React.FC = () => {
                   fontFamily: 'var(--kt-font-sans)',
                 }}
               >
-                {copied ? '✓ Copied' : 'Copy'}
+                {copied ? (
+                  <>
+                    <CheckIcon size={11} /> Copied
+                  </>
+                ) : (
+                  'Copy'
+                )}
               </button>
             </div>
           </div>
@@ -447,7 +492,15 @@ export const ReferralPage: React.FC = () => {
                     </td>
                     <td style={{ padding: '12px 16px' }}>
                       <Badge variant="secondary" size="sm">
-                        {ref.type === 'worker' ? '👷 Worker' : '🏢 Company'}
+                        {ref.type === 'worker' ? (
+                          <>
+                            <WorkerIcon size={12} /> Worker
+                          </>
+                        ) : (
+                          <>
+                            <BuildingIcon size={12} /> Company
+                          </>
+                        )}
                       </Badge>
                     </td>
                     <td style={{ padding: '12px 16px' }}>

@@ -1,4 +1,5 @@
 import React from 'react'
+import { ChevronDownIcon } from '../../site/icons'
 import styles from './Select.module.css'
 
 export type SelectSize = 'sm' | 'md' | 'lg'
@@ -19,12 +20,6 @@ export interface SelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectE
   required?: boolean
 }
 
-const ChevronIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="6 9 12 15 18 9" />
-  </svg>
-)
-
 export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
   (
     {
@@ -43,10 +38,13 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
     },
     ref
   ) => {
-    const selectId = id ?? (label ? `select-${label.replace(/\s+/g, '-').toLowerCase()}` : undefined)
+    const selectId =
+      id ?? (label ? `select-${label.replace(/\s+/g, '-').toLowerCase()}` : undefined)
 
     const wrapCls = [styles.selectWrap, size !== 'md' ? styles[size] : ''].filter(Boolean).join(' ')
-    const selectCls = [styles.select, error ? styles.error : '', className ?? ''].filter(Boolean).join(' ')
+    const selectCls = [styles.select, error ? styles.error : '', className ?? '']
+      .filter(Boolean)
+      .join(' ')
 
     return (
       <div className={styles.wrapper}>
@@ -70,20 +68,26 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
             className={selectCls}
             disabled={disabled}
             aria-invalid={!!error}
-            aria-describedby={error ? `${selectId}-error` : helperText ? `${selectId}-hint` : undefined}
+            aria-describedby={
+              error ? `${selectId}-error` : helperText ? `${selectId}-hint` : undefined
+            }
             {...props}
           >
-            {placeholder && <option value="" disabled>{placeholder}</option>}
+            {placeholder && (
+              <option value="" disabled>
+                {placeholder}
+              </option>
+            )}
             {children
               ? children
-              : options.map(opt => (
+              : options.map((opt) => (
                   <option key={opt.value} value={opt.value} disabled={opt.disabled}>
                     {opt.label}
                   </option>
                 ))}
           </select>
           <span className={styles.chevron} aria-hidden="true">
-            <ChevronIcon />
+            <ChevronDownIcon size={16} />
           </span>
         </div>
         {error && (

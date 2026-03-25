@@ -100,7 +100,9 @@
   color: var(--kt-text);
 }
 
-.starIcon { color: #f59e0b; }
+.starIcon {
+  color: var(--kt-rating);
+}
 
 .ratingCount {
   font-size: var(--kt-text-xs);
