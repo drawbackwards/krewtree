@@ -1,9 +1,11 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Badge, Button, Modal, Progress, Divider } from '../../components'
 import { StatCard } from '../components/StatCard/StatCard'
 import { RegulixBadge } from '../components/RegulixBadge/RegulixBadge'
 import { currentWorker, myApplications, applicationEvents, jobs, savedJobs } from '../data/mock'
+import { supabase } from '../../lib/supabase'
+import { useAuth } from '../context/AuthContext'
 import {
   StarIcon,
   StarOutlineIcon,
@@ -59,6 +61,55 @@ const recommendedJobs = jobs
   .slice(0, 3)
 
 export const WorkerDashboard: React.FC = () => {
+  const { user } = useAuth()
+  const [profile, setProfile] = useState<{
+    full_name: string
+    city: string
+    region: string
+    is_regulix_ready: boolean
+    performance_score: number | null
+    profile_complete_pct: number
+    total_hours_worked: number | null
+  } | null>(null)
+
+  useEffect(() => {
+    if (!user) return
+    supabase
+      .from('worker_profiles')
+      .select(
+        'full_name, city, region, is_regulix_ready, performance_score, profile_complete_pct, total_hours_worked'
+      )
+      .eq('id', user.id)
+      .single()
+      .then(({ data }) => {
+        if (data) setProfile(data)
+      })
+  }, [user])
+
+  // Overlay real profile data on top of mock defaults
+  const worker = {
+    ...currentWorker,
+    ...(profile && {
+      name: profile.full_name || currentWorker.name,
+      initials: profile.full_name
+        ? profile.full_name
+            .split(' ')
+            .map((p) => p[0])
+            .join('')
+            .toUpperCase()
+            .slice(0, 2)
+        : currentWorker.initials,
+      location:
+        profile.city && profile.region
+          ? `${profile.city}, ${profile.region}`
+          : profile.city || profile.region || currentWorker.location,
+      isRegulixReady: profile.is_regulix_ready,
+      performanceScore: profile.performance_score ?? undefined,
+      profileCompletePct: profile.profile_complete_pct,
+      totalHoursWorked: profile.total_hours_worked ?? undefined,
+    }),
+  }
+
   const [selectedBoostId, setSelectedBoostId] = useState<string | null>(null)
   const [boostPayMethod, setBoostPayMethod] = useState<'apple' | 'zelle'>('apple')
   const [boostSuccess, setBoostSuccess] = useState(false)
@@ -144,7 +195,7 @@ export const WorkerDashboard: React.FC = () => {
                 border: '2px solid var(--kt-border)',
               }}
             >
-              {currentWorker.initials}
+              {worker.initials}
             </div>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
@@ -156,14 +207,14 @@ export const WorkerDashboard: React.FC = () => {
                     margin: 0,
                   }}
                 >
-                  Welcome back, {currentWorker.name.split(' ')[0]}
+                  Welcome back, {worker.name.split(' ')[0]}
                 </h1>
-                {currentWorker.isRegulixReady && <RegulixBadge size="sm" />}
+                {worker.isRegulixReady && <RegulixBadge size="sm" />}
               </div>
               <p
                 style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text-muted)', margin: 0 }}
               >
-                {currentWorker.headline} · {currentWorker.location}
+                {worker.headline} · {worker.location}
               </p>
             </div>
           </div>
@@ -173,7 +224,7 @@ export const WorkerDashboard: React.FC = () => {
                 Edit profile
               </Button>
             </Link>
-            <Link to={`/site/profile/${currentWorker.id}`}>
+            <Link to={`/site/profile/${worker.id}`}>
               <Button variant="ghost" size="sm">
                 View profile
               </Button>
@@ -202,7 +253,7 @@ export const WorkerDashboard: React.FC = () => {
           </div>
 
           {/* Regulix CTA — only if not ready */}
-          {!currentWorker.isRegulixReady && (
+          {!worker.isRegulixReady && (
             <div
               style={{
                 background: 'color-mix(in srgb, var(--kt-accent) 6%, var(--kt-surface))',
@@ -632,7 +683,7 @@ export const WorkerDashboard: React.FC = () => {
           )}
 
           {/* Performance */}
-          {currentWorker.performanceScore && (
+          {worker.performanceScore && (
             <div
               style={{
                 background: 'var(--kt-surface)',
@@ -671,13 +722,13 @@ export const WorkerDashboard: React.FC = () => {
                       color: 'var(--kt-olive-700)',
                     }}
                   >
-                    {currentWorker.performanceScore}
+                    {worker.performanceScore}
                   </span>
                 </div>
                 <div>
                   <div style={{ display: 'flex', gap: 2, marginBottom: 6 }}>
                     {[1, 2, 3, 4, 5].map((n) =>
-                      n <= Math.round(currentWorker.performanceScore!) ? (
+                      n <= Math.round(worker.performanceScore!) ? (
                         <StarIcon key={n} size={13} color="var(--kt-warning)" />
                       ) : (
                         <StarOutlineIcon key={n} size={13} color="var(--kt-border-strong)" />
@@ -686,8 +737,8 @@ export const WorkerDashboard: React.FC = () => {
                   </div>
                   <p style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text-muted)' }}>
                     Based on {currentWorker.ratingCount} employer ratings
-                    {currentWorker.totalHoursWorked &&
-                      ` · ${currentWorker.totalHoursWorked.toLocaleString()} hours worked`}
+                    {worker.totalHoursWorked &&
+                      ` · ${worker.totalHoursWorked.toLocaleString()} hours worked`}
                   </p>
                 </div>
               </div>
@@ -732,15 +783,15 @@ export const WorkerDashboard: React.FC = () => {
                   color: 'var(--kt-olive-700)',
                 }}
               >
-                {currentWorker.profileCompletePct}%
+                {worker.profileCompletePct}%
               </span>
             </div>
             <Progress
-              value={currentWorker.profileCompletePct}
+              value={worker.profileCompletePct}
               color={
-                currentWorker.profileCompletePct >= 90
+                worker.profileCompletePct >= 90
                   ? 'success'
-                  : currentWorker.profileCompletePct >= 60
+                  : worker.profileCompletePct >= 60
                     ? 'warning'
                     : 'danger'
               }
@@ -790,7 +841,7 @@ export const WorkerDashboard: React.FC = () => {
             </div>
             <Divider style={{ margin: '14px 0' }} />
             <Link
-              to={`/site/profile/${currentWorker.id}`}
+              to={`/site/profile/${worker.id}`}
               style={{ textDecoration: 'none', display: 'block' }}
             >
               <Button variant="outline" size="sm" style={{ width: '100%' }}>
@@ -850,7 +901,7 @@ export const WorkerDashboard: React.FC = () => {
                       <PersonIcon size={14} /> Edit Profile
                     </>
                   ),
-                  to: `/site/profile/${currentWorker.id}`,
+                  to: `/site/profile/${worker.id}`,
                 },
                 {
                   label: (
@@ -902,7 +953,7 @@ export const WorkerDashboard: React.FC = () => {
               My Top Skills
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {currentWorker.skills.map((skill) => (
+              {worker.skills.map((skill) => (
                 <div key={skill.name}>
                   <div
                     style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}
