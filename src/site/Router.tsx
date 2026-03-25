@@ -66,7 +66,6 @@ export const SiteRouter: React.FC = () => (
       <Route path="/site/signup" element={<SignupRolePage />} />
       <Route path="/site/signup/worker" element={<WorkerSignupPage />} />
       <Route path="/site/signup/company" element={<CompanySignupPage />} />
-      <Route path="/site/profile/setup" element={<WorkerProfileSetupPage />} />
 
       {/* ── App routes — full Navbar via AppLayout ───────────────────── */}
       <Route element={<AppLayout />}>
