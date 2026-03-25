@@ -67,7 +67,7 @@ const COMPANY_SIZES = [
 
 export const CompanySignupPage: React.FC = () => {
   const navigate = useNavigate()
-  const { login } = useAuth()
+  const { signUp } = useAuth()
 
   const [companyName, setCompanyName] = useState('')
   const [contactName, setContactName] = useState('')
@@ -80,13 +80,15 @@ export const CompanySignupPage: React.FC = () => {
   const [termsAgreed, setTermsAgreed] = useState(false)
   const [passwordError, setPasswordError] = useState('')
   const [confirmPasswordError, setConfirmPasswordError] = useState('')
+  const [authError, setAuthError] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const industryOptions = industries.map((ind) => ({
     value: ind.slug,
     label: ind.name,
   }))
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     let valid = true
 
@@ -106,9 +108,15 @@ export const CompanySignupPage: React.FC = () => {
 
     if (!termsAgreed || !valid) return
 
+    setIsSubmitting(true)
+    const { error } = await signUp(email, password, 'company', companyName)
+    setIsSubmitting(false)
+    if (error) {
+      setAuthError(error)
+      return
+    }
     setPassword('')
     setConfirmPassword('')
-    login('company')
     navigate('/site/dashboard/company')
   }
 
@@ -450,9 +458,27 @@ export const CompanySignupPage: React.FC = () => {
                 required
               />
 
+              {authError && (
+                <p
+                  style={{
+                    fontSize: 'var(--kt-text-sm)',
+                    color: 'var(--kt-error, #c0392b)',
+                    margin: 0,
+                  }}
+                >
+                  {authError}
+                </p>
+              )}
+
               <div style={{ marginTop: 4 }}>
-                <Button type="submit" variant="primary" size="lg" fullWidth disabled={!termsAgreed}>
-                  Create company account →
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="lg"
+                  fullWidth
+                  disabled={!termsAgreed || isSubmitting}
+                >
+                  {isSubmitting ? 'Creating account…' : 'Create company account →'}
                 </Button>
               </div>
 

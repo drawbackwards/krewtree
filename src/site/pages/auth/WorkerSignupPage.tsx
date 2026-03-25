@@ -14,7 +14,7 @@ const BENEFITS = [
 
 export const WorkerSignupPage: React.FC = () => {
   const navigate = useNavigate()
-  const { login } = useAuth()
+  const { signUp } = useAuth()
 
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -45,30 +45,37 @@ export const WorkerSignupPage: React.FC = () => {
     )
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [authError, setAuthError] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     let valid = true
 
     if (password.length < 8) {
       setPasswordError('Password must be at least 8 characters')
       valid = false
-    } else {
-      setPasswordError('')
-    }
+    } else setPasswordError('')
 
     if (password !== confirmPassword) {
       setConfirmPasswordError('Passwords do not match')
       valid = false
-    } else {
-      setConfirmPasswordError('')
-    }
+    } else setConfirmPasswordError('')
 
     if (!termsAgreed || !valid) return
 
+    setAuthError('')
+    setIsSubmitting(true)
+    const { error } = await signUp(email, password, 'worker', name)
+    setIsSubmitting(false)
+    if (error) {
+      setAuthError(error)
+      return
+    }
+
     setPassword('')
     setConfirmPassword('')
-    login('worker')
-    navigate('/site/dashboard/worker')
+    navigate('/site/profile/create')
   }
 
   return (
@@ -551,9 +558,27 @@ export const WorkerSignupPage: React.FC = () => {
                 />
               </div>
 
+              {authError && (
+                <p
+                  style={{
+                    fontSize: 'var(--kt-text-sm)',
+                    color: 'var(--kt-error, #c0392b)',
+                    margin: 0,
+                  }}
+                >
+                  {authError}
+                </p>
+              )}
+
               <div style={{ marginTop: 4 }}>
-                <Button type="submit" variant="accent" size="lg" fullWidth disabled={!termsAgreed}>
-                  Create free account →
+                <Button
+                  type="submit"
+                  variant="accent"
+                  size="lg"
+                  fullWidth
+                  disabled={!termsAgreed || isSubmitting}
+                >
+                  {isSubmitting ? 'Creating account…' : 'Create free account →'}
                 </Button>
               </div>
 

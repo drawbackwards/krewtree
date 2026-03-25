@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import { Badge, Button, Divider, Progress } from '../../components'
 import { RegulixBadge } from '../components/RegulixBadge/RegulixBadge'
 import type { SkillEndorsement } from '../types'
@@ -86,6 +86,7 @@ const FacebookIcon = () => (
 
 export const WorkerProfilePage: React.FC = () => {
   const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
   const worker = workers.find((w) => w.id === id) ?? workers[0]
 
   const isOwnProfile = worker.id === 'w1'
@@ -239,12 +240,20 @@ export const WorkerProfilePage: React.FC = () => {
 
             {/* Actions */}
             <div style={{ display: 'flex', gap: 8, flexShrink: 0, paddingBottom: 4 }}>
-              <Button variant="primary" size="md">
-                Message
-              </Button>
-              <Button variant="outline" size="md">
-                Save
-              </Button>
+              {isOwnProfile ? (
+                <Button variant="primary" size="md" onClick={() => navigate('/site/profile/edit')}>
+                  Edit profile
+                </Button>
+              ) : (
+                <>
+                  <Button variant="primary" size="md">
+                    Message
+                  </Button>
+                  <Button variant="outline" size="md">
+                    Save
+                  </Button>
+                </>
+              )}
             </div>
           </div>
 
