@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
 import type { Conversation, Message } from '../types'
+// TODO: replace with real Supabase query for conversations by user_id
 import { conversations as initialConvs } from '../data/mock'
 
 export const MessagesPage: React.FC = () => {

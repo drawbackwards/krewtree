@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { NotificationDrawer } from '../NotificationDrawer/NotificationDrawer'
 import type { Notification } from '../../types'
+// TODO: replace with real Supabase query for user notifications
 import { notifications as allNotifs } from '../../data/mock'
 import { KrewtreeLogo } from '../Logo'
 import { useAuth } from '../../context/AuthContext'

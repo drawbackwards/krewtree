@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { Badge } from '../../components'
 import type { BadgeVariant } from '../../components/Badge/Badge'
 import type { Referral } from '../types'
+// TODO: replace with real Supabase query for referrals by user_id
 import { referrals as initialReferrals } from '../data/mock'
 import {
   UsersIcon,

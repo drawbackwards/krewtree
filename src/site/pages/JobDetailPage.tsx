@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import { Badge, Button, Divider, Alert, Modal } from '../../components'
 import { RegulixBadge } from '../components/RegulixBadge/RegulixBadge'
 import { QuickApplyModal } from '../components/QuickApplyModal/QuickApplyModal'
+// TODO: replace with real Supabase query by job slug/id
 import { jobs, companyDetails } from '../data/mock'
 import { useAuth } from '../context/AuthContext'
 import {

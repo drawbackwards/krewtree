@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Input, Textarea, Select, Button, Badge, Alert, Switch, Divider } from '../../components'
 import { RegulixBadge } from '../components/RegulixBadge/RegulixBadge'
 import { RegulixMarkIcon, StarIcon, PlusIcon, CelebrationIcon, LightningIcon } from '../icons'
+// TODO: replace with real Supabase query for industries list
 import { industries } from '../data/mock'
 
 // ── Suggested skills by industry ────────────────────────────────────────────

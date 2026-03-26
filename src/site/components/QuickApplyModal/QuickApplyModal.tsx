@@ -1,7 +1,9 @@
 import React, { useState } from 'react'
 import { Modal } from '../../../components'
 import type { Job } from '../../types'
+// TODO: replace with real worker profile from auth context / workerService
 import { currentWorker } from '../../data/mock'
+import { useAuth } from '../../context/AuthContext'
 import {
   HourglassIcon,
   RocketIcon,
@@ -9,6 +11,7 @@ import {
   LightningIcon,
   CheckIcon,
   CheckSmallIcon,
+  EnvelopeIcon,
 } from '../../icons'
 import styles from './QuickApplyModal.module.css'
 
@@ -25,11 +28,27 @@ export const QuickApplyModal: React.FC<QuickApplyModalProps> = ({
   onClose,
   onApplied,
 }) => {
+  const { user, isEmailVerified, resendVerificationEmail } = useAuth()
   const [coverNote, setCoverNote] = useState('')
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
   const [wantBoost, setWantBoost] = useState(false)
   const [submittedWithBoost, setSubmittedWithBoost] = useState(false)
+  const [resendLoading, setResendLoading] = useState(false)
+  const [resendSent, setResendSent] = useState(false)
+  const [resendError, setResendError] = useState('')
+
+  const handleResend = async () => {
+    setResendLoading(true)
+    setResendError('')
+    const { error } = await resendVerificationEmail()
+    setResendLoading(false)
+    if (error) {
+      setResendError(error)
+    } else {
+      setResendSent(true)
+    }
+  }
 
   const handleSubmit = () => {
     setLoading(true)
@@ -66,10 +85,28 @@ export const QuickApplyModal: React.FC<QuickApplyModalProps> = ({
       open={open}
       onClose={handleClose}
       size="md"
-      title={submitted ? undefined : 'Quick Apply'}
+      title={!isEmailVerified ? 'Verify your email' : submitted ? undefined : 'Quick Apply'}
       showClose={!submitted}
       footer={
-        submitted ? (
+        !isEmailVerified ? (
+          <button
+            onClick={handleClose}
+            style={{
+              width: '100%',
+              padding: 'var(--kt-space-3)',
+              background: 'transparent',
+              color: 'var(--kt-text)',
+              border: '1px solid var(--kt-border)',
+              borderRadius: 'var(--kt-radius-md)',
+              fontSize: 'var(--kt-text-sm)',
+              fontWeight: 'var(--kt-weight-medium)',
+              cursor: 'pointer',
+              fontFamily: 'var(--kt-font-sans)',
+            }}
+          >
+            Close
+          </button>
+        ) : submitted ? (
           <button
             onClick={handleClose}
             style={{
@@ -144,7 +181,61 @@ export const QuickApplyModal: React.FC<QuickApplyModalProps> = ({
         )
       }
     >
-      {submitted ? (
+      {!isEmailVerified ? (
+        <div className={styles.successState}>
+          <div className={styles.successIcon}>
+            <EnvelopeIcon size={48} />
+          </div>
+          <div className={styles.successTitle}>Check your inbox</div>
+          <p className={styles.successBody}>
+            You need to verify your email address before applying to jobs. We sent a link to{' '}
+            <strong>{user?.email ?? 'your email'}</strong>.
+          </p>
+          {resendSent ? (
+            <p
+              style={{
+                marginTop: 12,
+                fontSize: 'var(--kt-text-sm)',
+                color: 'var(--kt-success, #2d7a4f)',
+                fontWeight: 'var(--kt-weight-medium)',
+              }}
+            >
+              Verification email resent. Check your inbox!
+            </p>
+          ) : (
+            <button
+              onClick={handleResend}
+              disabled={resendLoading}
+              style={{
+                marginTop: 16,
+                padding: '10px 20px',
+                background: 'var(--kt-primary)',
+                color: 'var(--kt-text-on-primary)',
+                border: 'none',
+                borderRadius: 'var(--kt-radius-md)',
+                fontSize: 'var(--kt-text-sm)',
+                fontWeight: 'var(--kt-weight-semibold)',
+                cursor: resendLoading ? 'not-allowed' : 'pointer',
+                fontFamily: 'var(--kt-font-sans)',
+                opacity: resendLoading ? 0.6 : 1,
+              }}
+            >
+              {resendLoading ? 'Sending…' : 'Resend verification email'}
+            </button>
+          )}
+          {resendError && (
+            <p
+              style={{
+                marginTop: 8,
+                fontSize: 'var(--kt-text-xs)',
+                color: 'var(--kt-error, #c0392b)',
+              }}
+            >
+              {resendError}
+            </p>
+          )}
+        </div>
+      ) : submitted ? (
         <div className={styles.successState}>
           <div className={styles.successIcon}>
             {submittedWithBoost ? <RocketIcon size={48} /> : <CelebrationIcon size={48} />}

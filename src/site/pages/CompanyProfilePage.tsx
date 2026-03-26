@@ -13,6 +13,7 @@ import {
   CalendarIcon,
   CheckIcon,
 } from '../icons'
+// TODO: replace with real Supabase query by company id
 import { companies, jobs, companyDetails, companyReviews } from '../data/mock'
 
 export const CompanyProfilePage: React.FC = () => {

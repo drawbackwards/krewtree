@@ -3,10 +3,18 @@ import { Link } from 'react-router-dom'
 import { Badge, Button, Modal, Progress, Divider } from '../../components'
 import { StatCard } from '../components/StatCard/StatCard'
 import { RegulixBadge } from '../components/RegulixBadge/RegulixBadge'
+// TODO: replace mock fallback with real DB data once worker profile is complete
 import { currentWorker } from '../data/mock'
 import type { Application, ApplicationEvent, Job } from '../types'
-import { supabase } from '../../lib/supabase'
 import { useAuth } from '../context/AuthContext'
+import {
+  getWorkerProfile,
+  getWorkerApplications,
+  getApplicationEvents,
+  getSavedJobsCount,
+  getRecommendedJobs,
+  type WorkerProfileRow,
+} from '../services/workerService'
 import {
   StarIcon,
   StarOutlineIcon,
@@ -47,32 +55,18 @@ const timelineStatusIcon: Record<string, React.ReactNode> = {
   Rejected: <DangerCircleIcon size={14} />,
 }
 
-const daysSince = (iso: string) => Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000)
-
 export const WorkerDashboard: React.FC = () => {
-  const { user } = useAuth()
-  const [profile, setProfile] = useState<{
-    full_name: string
-    city: string
-    region: string
-    is_regulix_ready: boolean
-    performance_score: number | null
-    profile_complete_pct: number
-    total_hours_worked: number | null
-  } | null>(null)
+  const { user, isEmailVerified } = useAuth()
+  const [profileError, setProfileError] = useState<string | null>(null)
+  const [dataError, setDataError] = useState<string | null>(null)
+  const [profile, setProfile] = useState<WorkerProfileRow | null>(null)
 
   useEffect(() => {
     if (!user) return
-    supabase
-      .from('worker_profiles')
-      .select(
-        'full_name, city, region, is_regulix_ready, performance_score, profile_complete_pct, total_hours_worked'
-      )
-      .eq('id', user.id)
-      .single()
-      .then(({ data }) => {
-        if (data) setProfile(data)
-      })
+    getWorkerProfile(user.id).then(({ data, error }) => {
+      if (error) setProfileError(error)
+      if (data) setProfile(data)
+    })
   }, [user])
 
   // Overlay real profile data on top of mock defaults
@@ -107,148 +101,31 @@ export const WorkerDashboard: React.FC = () => {
   useEffect(() => {
     if (!user) return
 
-    // Applications with job + company
-    supabase
-      .from('applications')
-      .select(
-        'id, status, is_boosted, created_at, job_id, jobs(id, title, industry, industry_slug, type, location, pay_min, pay_max, pay_type, is_sponsored, company_profiles(id, name))'
-      )
-      .eq('worker_id', user.id)
-      .order('created_at', { ascending: false })
-      .then(({ data }) => {
-        if (!data) return
-        const mapped: Application[] = data.map((a) => {
-          const j = a.jobs as unknown as {
-            id: string
-            title: string
-            industry: string
-            industry_slug: string
-            type: string
-            location: string
-            pay_min: number
-            pay_max: number
-            pay_type: string
-            is_sponsored: boolean
-            company_profiles: { id: string; name: string }
-          } | null
-          return {
-            id: a.id,
-            jobId: a.job_id,
-            status: a.status as Application['status'],
-            isBoosted: a.is_boosted,
-            appliedDaysAgo: daysSince(a.created_at),
-            job: {
-              id: j?.id ?? '',
-              companyId: j?.company_profiles?.id ?? '',
-              company: {
-                id: j?.company_profiles?.id ?? '',
-                name: j?.company_profiles?.name ?? '',
-                logo: '',
-                location: '',
-                industry: '',
-                isVerified: false,
-                description: '',
-                size: '',
-                website: '',
-              },
-              title: j?.title ?? '',
-              industry: j?.industry ?? '',
-              industrySlug: j?.industry_slug ?? '',
-              type: (j?.type ?? 'Full-time') as Job['type'],
-              location: j?.location ?? '',
-              payMin: j?.pay_min ?? 0,
-              payMax: j?.pay_max ?? 0,
-              payType: (j?.pay_type ?? 'hour') as Job['payType'],
-              description: '',
-              requirements: [],
-              skills: [],
-              isSponsored: j?.is_sponsored ?? false,
-              regulixReadyApplicants: 0,
-              totalApplicants: 0,
-              postedDaysAgo: 0,
-              status: 'active',
-            },
-          }
-        })
-        setApplications(mapped)
-
-        // Application events for these applications
-        const ids = mapped.map((a) => a.id)
-        if (ids.length > 0) {
-          supabase
-            .from('application_events')
-            .select('id, application_id, status, note, created_at')
-            .in('application_id', ids)
-            .then(({ data: evData }) => {
-              if (!evData) return
-              setAppEvents(
-                evData.map((e) => ({
-                  id: e.id,
-                  applicationId: e.application_id,
-                  status: e.status as Application['status'],
-                  note: e.note,
-                  occurredDaysAgo: daysSince(e.created_at),
-                }))
-              )
-            })
+    getWorkerApplications(user.id).then(({ data, error }) => {
+      if (error) {
+        setDataError(error)
+        return
+      }
+      setApplications(data)
+      const ids = data.map((a) => a.id)
+      getApplicationEvents(ids).then(({ data: evData, error: evError }) => {
+        if (evError) {
+          setDataError(evError)
+          return
         }
+        setAppEvents(evData)
       })
+    })
 
-    // Saved jobs count
-    supabase
-      .from('saved_jobs')
-      .select('id', { count: 'exact', head: true })
-      .eq('worker_id', user.id)
-      .then(({ count }) => setSavedJobsCount(count ?? 0))
+    getSavedJobsCount(user.id).then(({ count, error }) => {
+      if (error) setDataError(error)
+      else setSavedJobsCount(count)
+    })
 
-    // Recommended: latest active jobs
-    supabase
-      .from('jobs')
-      .select(
-        'id, title, industry, industry_slug, type, location, pay_min, pay_max, pay_type, is_sponsored, company_profiles(id, name)'
-      )
-      .eq('status', 'active')
-      .order('created_at', { ascending: false })
-      .limit(3)
-      .then(({ data }) => {
-        if (!data) return
-        setRecommendedJobs(
-          data.map((j) => {
-            const co = j.company_profiles as unknown as { id: string; name: string } | null
-            return {
-              id: j.id,
-              companyId: co?.id ?? '',
-              company: {
-                id: co?.id ?? '',
-                name: co?.name ?? '',
-                logo: '',
-                location: '',
-                industry: '',
-                isVerified: false,
-                description: '',
-                size: '',
-                website: '',
-              },
-              title: j.title,
-              industry: j.industry,
-              industrySlug: j.industry_slug,
-              type: j.type as Job['type'],
-              location: j.location,
-              payMin: j.pay_min ?? 0,
-              payMax: j.pay_max ?? 0,
-              payType: (j.pay_type ?? 'hour') as Job['payType'],
-              description: '',
-              requirements: [],
-              skills: [],
-              isSponsored: j.is_sponsored,
-              regulixReadyApplicants: 0,
-              totalApplicants: 0,
-              postedDaysAgo: 0,
-              status: 'active',
-            }
-          })
-        )
-      })
+    getRecommendedJobs().then(({ data, error }) => {
+      if (error) setDataError(error)
+      else setRecommendedJobs(data)
+    })
   }, [user])
 
   const profileChecklist = [
@@ -318,6 +195,34 @@ export const WorkerDashboard: React.FC = () => {
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--kt-bg)' }}>
+      {!isEmailVerified && (
+        <div
+          style={{
+            background: 'var(--kt-amber-subtle, #fffbeb)',
+            borderBottom: '1px solid var(--kt-amber-border, #fde68a)',
+            padding: '10px var(--kt-space-6)',
+            fontSize: 'var(--kt-text-sm)',
+            color: 'var(--kt-amber-text, #92400e)',
+            textAlign: 'center',
+          }}
+        >
+          Please verify your email address to unlock job applications.{' '}
+          <strong>{user?.email}</strong>
+        </div>
+      )}
+      {(profileError || dataError) && (
+        <div
+          style={{
+            background: 'var(--kt-danger-subtle)',
+            color: 'var(--kt-danger)',
+            padding: '10px var(--kt-space-6)',
+            fontSize: 'var(--kt-text-sm)',
+            textAlign: 'center',
+          }}
+        >
+          {profileError ?? dataError}
+        </div>
+      )}
       {/* Page header */}
       <div
         style={{

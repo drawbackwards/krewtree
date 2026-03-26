@@ -1,6 +1,6 @@
 # krewtree — Architecture Overview
 
-> Last updated: March 16, 2026 (session 5)
+> Last updated: March 26, 2026 (session 6)
 
 ---
 
@@ -27,7 +27,8 @@ krewtree is a job board for hourly and blue-collar workers and the companies tha
 | Styling      | CSS Modules + CSS custom properties (`--kt-*` design tokens)                                              |
 | Linting      | ESLint 9 (flat config) + typescript-eslint + eslint-plugin-react + react-hooks + react-refresh + prettier |
 | Git hooks    | husky + lint-staged (runs ESLint + Prettier on commit)                                                    |
-| Deployment   | Vercel — SPA rewrites, root `/` redirects to `/site`                                                      |
+| Backend      | Supabase — Auth, Postgres, Row Level Security (RLS)                                                       |
+| Deployment   | Vercel — SPA rewrites, root `/` redirects to `/site`; HTTP security headers via `vercel.json`             |
 
 **What's intentionally excluded:**
 
@@ -59,22 +60,35 @@ krewtree/
 │   │   ├── ...                  (see Component Library section)
 │   │   └── index.ts             Barrel export
 │   └── site/                    The krewtree application
-│       ├── Router.tsx           Route definitions + AppLayout wrapper
+│       ├── Router.tsx           Route definitions + AppLayout wrapper + ProtectedRoute guard
 │       ├── context/
-│       │   └── AuthContext.tsx  useAuth() hook — login(type), logout(), persona state
+│       │   └── AuthContext.tsx  useAuth() — login, signUp, logout, isLoggedIn, isEmailVerified,
+│       │                                     resendVerificationEmail, persona
 │       ├── icons/index.tsx       Shared SVG icon library (~60+ icons, named exports)
-│       ├── data/mock.ts         Mock data (56KB) — replace with real API calls
+│       ├── data/mock.ts         Mock data (56KB) — being replaced with service calls
 │       ├── types/index.ts       Shared TypeScript interfaces
+│       ├── services/            Supabase data access layer
+│       │   └── workerService.ts getWorkerProfile, getWorkerApplications, getSavedJobsCount,
+│       │                        getRecommendedJobs, getApplicationEvents, upsertWorkerProfile
+│       ├── utils/
+│       │   └── date.ts          daysSince(isoString) helper
 │       ├── components/          Site-specific components
 │       │   ├── Logo.tsx         KrewtreeLogo + KrewtreeBgMark (official brand SVGs)
 │       │   ├── Navbar/          Top nav with persona switcher + auth buttons
 │       │   └── ...              (10 components total)
 │       └── pages/
-│           ├── auth/            Auth flow — 4 pages, full visual system, no real auth yet
+│           ├── auth/            Auth flow — 4 pages, Supabase-wired
 │           │   ├── LoginPage.tsx
 │           │   ├── SignupRolePage.tsx
 │           │   ├── WorkerSignupPage.tsx
 │           │   └── CompanySignupPage.tsx
+│           ├── WorkerProfileEdit/  Sub-components for WorkerProfileEditPage (6 files)
+│           │   ├── types.ts
+│           │   ├── icons.tsx
+│           │   ├── Step1Section.tsx
+│           │   ├── StepAboutSection.tsx
+│           │   ├── Step2Section.tsx
+│           │   └── Step3Section.tsx
 │           ├── landing/
 │           │   ├── sections.tsx              Landing page section components
 │           │   └── RegulixBanner.module.css  Subgrid two-card layout + mobile stacking breakpoint
@@ -132,13 +146,14 @@ All routes live under `/site`. The root `/` redirects via `vercel.json`.
 **Auth routes** (no Navbar):
 | Path | Page | Notes |
 |------|------|-------|
-| `/site/login` | LoginPage | Neutral white/gray page — email + password only, no persona toggle |
-| `/site/login?type=company` | LoginPage | Same neutral page; `?type=company` silently routes mock demo to company dashboard |
+| `/site/login` | LoginPage | Neutral white/gray page — email + password only |
+| `/site/login?type=company` | LoginPage | `?type=company` routes to company dashboard after login |
 | `/site/signup` | SignupRolePage | Role picker |
-| `/site/signup/worker` | WorkerSignupPage | |
-| `/site/signup/company` | CompanySignupPage | Sign-in link routes to `?type=company` |
+| `/site/signup/worker` | WorkerSignupPage | Supabase signUp → immediate redirect to profile setup |
+| `/site/signup/company` | CompanySignupPage | Supabase signUp → immediate redirect to company dashboard |
+| `/site/confirm-email` | EmailConfirmationPage | Shown while awaiting email verification |
 
-**App routes** (wrapped in AppLayout with Navbar):
+**App routes** (wrapped in AppLayout with Navbar; protected by `ProtectedRoute`):
 | Path | Page |
 |------|------|
 | `/site` | LandingPage |
@@ -155,8 +170,6 @@ All routes live under `/site`. The root `/` redirects via `vercel.json`.
 | `/site/candidates` | _(planned)_ — company: search & filter workers by profile info |
 | `/site/manage-jobs` | _(planned)_ — company: listings table with bulk actions and per-listing stats |
 | `/site/pipeline` | _(planned)_ — company: all interacted applicants by hiring stage |
-
-> ⚠️ **Auth guards are not yet implemented.** All routes are currently open.
 
 ---
 
@@ -244,7 +257,7 @@ Located in `src/site/components/`.
 | `StatCard`           | Dashboard KPI tile (value + label + trend direction)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | `AnalyticsPanel`     | Bar/line chart display for company dashboard                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | `KanbanBoard`        | Applicant pipeline: Applied → Reviewed → Interview → Hired                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| `QuickApplyModal`    | 1-click apply for Regulix Ready workers; optional $9.99 boost add-on                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `QuickApplyModal`    | 1-click apply; optional $9.99 boost. Gates apply behind `isEmailVerified` — unverified users see "Check your inbox" with a resend button instead of the form.                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | `ReviewCard`         | Employer or worker review with star rating                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | `NotificationDrawer` | Slide-in notification panel with mark-all-read                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 
@@ -252,33 +265,69 @@ Located in `src/site/components/`.
 
 ## Data Layer
 
-Currently all data is mocked in `src/site/data/mock.ts` (56KB).
+Mock data lives in `src/site/data/mock.ts` (56KB) and is being replaced incrementally.
 
-**When connecting a real backend:**
+**Service layer (`src/site/services/`):**
 
-1. Create `src/site/api/` with typed fetch functions per resource
-2. Replace mock imports one page at a time
-3. Consider React Query or SWR for caching, loading, and error states
+All Supabase queries go here — never inline in components. Each function returns `{ data, error }`.
+
+| Function                            | Description                     |
+| ----------------------------------- | ------------------------------- |
+| `getWorkerProfile(userId)`          | Fetch worker profile row        |
+| `getWorkerApplications(userId)`     | Fetch submitted applications    |
+| `getApplicationEvents(userId)`      | Fetch application status events |
+| `getSavedJobsCount(userId)`         | Count of saved jobs             |
+| `getRecommendedJobs(userId)`        | Recommended job listings        |
+| `upsertWorkerProfile(userId, data)` | Create or update profile        |
+
+**To replace a mock import:**
+
+1. Write a function in `src/site/services/` that queries Supabase
+2. Replace the mock import in the component with a `useEffect` + service call
+3. Handle loading + error states in the UI
 
 ---
 
-## Auth (Not Yet Implemented)
+## Auth
 
-The auth UI is complete. What still needs to be built:
+Supabase auth is fully wired. `useAuth()` provides:
 
-1. **ProtectedRoute** — redirects unauthenticated users to `/site/login`
-2. **Real API** — POST `/auth/login`, `/auth/register`; store JWT or session cookie
-3. **Replace persona switcher** — `Navbar` currently has a dev-only toggle; should derive from `AuthContext` after real login
-4. **`AuthContext` already exists** — `useAuth()` exposes `login(type)` / `logout()`, persona state; needs real session persistence
+| Field / Method                               | Description                                                          |
+| -------------------------------------------- | -------------------------------------------------------------------- |
+| `user`                                       | Supabase `User` object or `null`                                     |
+| `session`                                    | Active `Session` or `null`                                           |
+| `persona`                                    | `'worker' \| 'company' \| null` — loaded from `user_roles` table     |
+| `isLoggedIn`                                 | `true` immediately after signup/login                                |
+| `isEmailVerified`                            | `true` once user clicks verification link (`email_confirmed_at` set) |
+| `isLoading`                                  | `true` while session is being restored on mount                      |
+| `login(email, password)`                     | Sign in; returns `{ error, persona }`                                |
+| `signUp(email, password, role, displayName)` | Register; metadata triggers `handle_new_user` DB trigger             |
+| `logout()`                                   | Sign out                                                             |
+| `resendVerificationEmail()`                  | Resend signup confirmation email                                     |
+
+**Email verification gate:**
+Users gain full app access immediately after signup. Specific actions (e.g. job applications via `QuickApplyModal`) are gated behind `isEmailVerified`. When unverified:
+
+- `WorkerDashboard` shows an amber nudge banner
+- `QuickApplyModal` replaces the apply form with a "Check your inbox" screen and a resend button
+
+**ProtectedRoute:** Redirects unauthenticated users to `/site/login`. Implemented in `Router.tsx`.
 
 ---
 
 ## What's Built vs. What's Next
 
-### ✅ Complete (prototype level)
+### ✅ Complete
 
 - Design token system (light + dark)
 - 21-component UI library + ErrorBoundary
+- HTTP security headers via `vercel.json` (CSP, X-Frame-Options, HSTS, etc.)
+- Supabase auth — signup, login, logout, email verification, role-based persona
+- `AuthContext` — `isEmailVerified`, `resendVerificationEmail`, `ProtectedRoute`
+- Email verification gate — `QuickApplyModal` blocks apply until email confirmed; `WorkerDashboard` shows nudge banner
+- Service layer — `src/site/services/workerService.ts` centralizes Supabase queries
+- `WorkerDashboard` + `WorkerProfileEditPage` wired to real Supabase data
+- `WorkerProfileEditPage` refactored (2094 → 476 lines) with 6 sub-components in `WorkerProfileEdit/`
 - All 12 app pages + 4 auth pages, including full `JobDetailPage` feature set:
   - **Worker view** — Quick Apply / Save Job sidebar, pre-interview questions preview, Regulix Ready applicant banner
   - **Company view** — Edit Job / Manage Listing / View Pipeline sidebar; Job Applicants split card (Regulix Ready R-logo + green box, Standard users-icon + white box); "View Candidates →" button; "Learn more about Regulix →" external link
@@ -297,9 +346,9 @@ The auth UI is complete. What still needs to be built:
 
 ### 🔜 Next priorities
 
-1. **Auth** — ProtectedRoute, real login/register API, session persistence
-2. **API integration** — replace mock.ts with real fetch calls
-3. **Company pages** — Candidates (`/site/candidates`), Manage Jobs (`/site/manage-jobs`), Pipeline (`/site/pipeline`) — architecture defined, UI not yet built
+1. **API integration** — replace remaining `mock.ts` imports with service calls (17 files still have TODO comments)
+2. **Company pages** — Candidates (`/site/candidates`), Manage Jobs (`/site/manage-jobs`), Pipeline (`/site/pipeline`) — architecture defined, UI not yet built
+3. **Worker profile setup flow** — post-signup onboarding wizard wired to `upsertWorkerProfile`
 4. **Mobile layouts** — no responsive CSS exists yet
 5. **Tests** — Vitest + @testing-library/react
 6. **SEO** — per-page `<title>` and `<meta>` tags

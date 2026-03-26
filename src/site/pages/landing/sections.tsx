@@ -1,6 +1,7 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button, Badge } from '../../../components'
+// TODO: replace with real Supabase queries for featured industries and jobs
 import { industries, jobs } from '../../data/mock'
 import { JobCard } from '../../components/JobCard/JobCard'
 import { CheckIcon } from '../../icons'

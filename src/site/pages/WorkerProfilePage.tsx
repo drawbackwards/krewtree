@@ -15,6 +15,7 @@ import {
   FolderIcon,
   ClipboardIcon,
 } from '../icons'
+// TODO: replace with real Supabase query for worker profile by id
 import { workers, skillEndorsements, resumeDocuments, portfolioItems } from '../data/mock'
 
 export const WorkerProfilePage: React.FC = () => {

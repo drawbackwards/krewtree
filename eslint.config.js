@@ -64,6 +64,7 @@ export default tseslint.config(
   // - colors.ts: IS the token source of truth
   // - App.tsx: color swatch documentation
   // - mock.ts: placeholder data, will be replaced by API
+  // - industries.ts: static data file — each industry has a specific brand color code
   // - icons/index.tsx: SVG brand icon library — paths use exact brand colors as fill attributes
   // - landing/sections.tsx: contains Regulix brand SVG logo with exact brand colors
   {
@@ -71,6 +72,7 @@ export default tseslint.config(
       '**/tokens/colors.ts',
       '**/App.tsx',
       '**/data/mock.ts',
+      '**/data/industries.ts',
       '**/icons/index.tsx',
       '**/landing/sections.tsx',
     ],

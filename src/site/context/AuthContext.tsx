@@ -9,6 +9,8 @@ interface AuthState {
   session: Session | null
   persona: Persona | null
   isLoggedIn: boolean
+  /** True once the user has clicked the verification link in their email. */
+  isEmailVerified: boolean
   isLoading: boolean
   login: (email: string, password: string) => Promise<{ error: string | null; persona?: Persona }>
   signUp: (
@@ -16,8 +18,9 @@ interface AuthState {
     password: string,
     persona: Persona,
     displayName?: string
-  ) => Promise<{ error: string | null; persona?: Persona; needsConfirmation?: boolean }>
+  ) => Promise<{ error: string | null; persona?: Persona }>
   logout: () => Promise<void>
+  resendVerificationEmail: () => Promise<{ error: string | null }>
   /** Set persona without changing auth state (used on landing/signup choice screens) */
   setPersona: (p: Persona) => void
 }
@@ -27,10 +30,12 @@ const AuthContext = createContext<AuthState>({
   session: null,
   persona: null,
   isLoggedIn: false,
+  isEmailVerified: false,
   isLoading: true,
   login: async () => ({ error: null, persona: undefined }),
   signUp: async () => ({ error: null, persona: undefined }),
   logout: async () => {},
+  resendVerificationEmail: async () => ({ error: null }),
   setPersona: () => {},
 })
 
@@ -96,7 +101,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     password: string,
     role: Persona,
     displayName = ''
-  ): Promise<{ error: string | null; persona?: Persona; needsConfirmation?: boolean }> => {
+  ): Promise<{ error: string | null; persona?: Persona }> => {
     // Pass role + name in metadata — the handle_new_user trigger creates the rows
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -111,12 +116,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     })
     if (error) return { error: error.message }
     if (!data.user) return { error: 'Sign-up failed — no user returned.' }
-
-    // If no session, email confirmation is required
-    if (!data.session) return { error: null, persona: role, needsConfirmation: true }
-
     setPersonaState(role)
     return { error: null, persona: role }
+  }
+
+  const resendVerificationEmail = async (): Promise<{ error: string | null }> => {
+    const { error } = await supabase.auth.resend({ type: 'signup', email: user?.email ?? '' })
+    if (error) return { error: error.message }
+    return { error: null }
   }
 
   const logout = async () => {
@@ -133,10 +140,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         session,
         persona,
         isLoggedIn: !!user,
+        isEmailVerified: !!user?.email_confirmed_at,
         isLoading,
         login,
         signUp,
         logout,
+        resendVerificationEmail,
         setPersona,
       }}
     >

@@ -19,6 +19,7 @@ import {
   CheckIcon,
   ChevronUpIcon,
 } from '../icons'
+// TODO: replace with real Supabase queries (company profile, jobs, applicants)
 import {
   currentCompany,
   companyJobs,

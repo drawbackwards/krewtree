@@ -4,6 +4,7 @@ import { Input, Badge } from '../../components'
 import { JobCard } from '../components/JobCard/JobCard'
 import { QuickApplyModal } from '../components/QuickApplyModal/QuickApplyModal'
 import type { SavedSearch, Job } from '../types'
+// TODO: replace with real Supabase queries (jobs list, industries, locations, saved searches)
 import {
   jobs,
   industries,

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Button } from '../../components'
 import { JobCard } from '../components/JobCard/JobCard'
 import type { SavedJob } from '../types'
+// TODO: replace with real Supabase query for saved_jobs by worker_id
 import { savedJobs as initialSavedJobs } from '../data/mock'
 import { BookmarkFilledIcon, ClipboardIcon } from '../icons'
 

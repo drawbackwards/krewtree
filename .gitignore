@@ -12,3 +12,10 @@ dist/
 
 # Claude Code — local permissions cache (machine-specific, not for version control)
 .claude/settings.local.json
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
