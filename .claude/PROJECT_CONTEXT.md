@@ -1,5 +1,5 @@
 # krewtree — Project Context & Master Flow
-> Last updated: March 27, 2026 (session 7)
+> Last updated: March 27, 2026 (session 8)
 > This file is the single source of truth for Claude context. Read this first after any memory reset.
 
 ---
@@ -472,17 +472,30 @@ Each subdomain shows industry-scoped jobs by default. "Browse by Industry" is in
 - Section headers: `--kt-navy-900`, bold; experience timeline dots: `--kt-success` green
 - Skills hero strip: `--kt-navy-50` background, no border, rounded; industry label hidden if only 1 industry; sorted by years exp desc
 - Certifications: expiry date → earned date (UI + service; DB column unchanged)
-- Completion indicator hidden at 100% on both dashboard and edit page
-- Edit page: View Profile button replaces back link; 2-column skill grid; full width when stepper hidden
+- Edit page: View Profile button replaces back link
+
+**Worker profile UI (session 8):**
+- Skills "Your skills" list in edit profile: 2-column grid (`1fr 1fr`) with label above spanning full width
+- Completion indicator hidden at 100% on both WorkerDashboard AND WorkerProfileEditPage stepper
+- localStorage (`kt_profile_edit_v*`) cleared on logout to prevent data leaking into new accounts
+- ⚠️ **Pending:** edit page layout width should match public profile width when stepper is hidden (profile at 100%) — not yet implemented
+
+**Architecture decisions (session 8 — 2026-03-27):**
+- Email validation service: Supabase built-in confirmation is sufficient for launch; Abstract API optional for pre-signup format/MX validation only
+- Phone validation service: Supabase Phone Auth (built-in Twilio) preferred — keeps verified phone on `auth.users` in same session; Twilio Verify is fallback
+- Resume AI cost: Claude Haiku (~$0.0001–0.0003/parse); Vercel serverless free tier covers realistic volume; only real cost is Claude API
+- Auto-save on edit profile: decided NOT to implement — full-replace upsert makes partial saves unsafe; localStorage draft is sufficient
+- localStorage cleared on logout: must wipe `kt_profile_edit_v*` in `AuthContext.signOut` so new accounts don't inherit previous user's draft
 
 ### ⚠️ Pre-launch blockers
 
 | Item | Status | Notes |
 |------|--------|-------|
-| Resume AI analysis | Mocked | Use Vercel fn + Claude Haiku — see `project_resume_ai.md` |
-| Phone verification | Stub | Use Supabase Phone Auth (Twilio) — see `project_phone_verification.md` |
-| Supabase "Confirm email" | Off | Enable in Supabase Dashboard → Auth → Providers → Email |
-| Endorsements | Not built | Comes from Regulix connection |
+| Resume AI analysis | Mocked | Vercel serverless fn + Claude Haiku; ~$0.0001–0.0003/parse; keep mock until build sprint — see `project_resume_ai.md` |
+| Phone verification | Stub | Supabase Phone Auth (Twilio) — keeps in one auth session; configure in Supabase project settings — see `project_phone_verification.md` |
+| Supabase "Confirm email" | Off | Enable in Supabase Dashboard → Auth → Providers → Email; users are auto-verified until then |
+| Endorsements | Not built | Comes from Regulix connection — not yet designed |
+| Edit page width at 100% | Pending | When stepper is hidden, edit layout should match public profile width |
 
 ### ❌ Not Yet Built
 - **Candidates page** (`/site/candidates`) — search & filter workers by profile info
