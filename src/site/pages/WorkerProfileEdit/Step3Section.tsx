@@ -12,6 +12,7 @@ import {
   SparkleIcon,
 } from './icons'
 import type { WorkEntry, Step3Data } from './types'
+import { uploadWorkerResume } from '../../services/workerService'
 
 // ── Collapsible work entry card ───────────────────────────────────────────────
 
@@ -256,18 +257,28 @@ const MOCK_RESUME_ENTRIES: WorkEntry[] = [
 export const Step3Section: React.FC<{
   data: Step3Data
   workerIndustries: string[]
+  userId: string | null
   onChange: (d: Step3Data) => void
-}> = ({ data, workerIndustries, onChange }) => {
+}> = ({ data, workerIndustries, userId, onChange }) => {
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [resumeFile, setResumeFile] = useState<string | null>(null)
   const [analyzing, setAnalyzing] = useState(false)
   const [analyzed, setAnalyzed] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const handleResumeUpload = (file: File) => {
+  const handleResumeUpload = async (file: File) => {
     setResumeFile(file.name)
     setAnalyzing(true)
     setAnalyzed(false)
+    setUploadError(null)
+
+    if (userId) {
+      const { error } = await uploadWorkerResume(userId, file)
+      if (error) setUploadError(error)
+    }
+
+    // Simulate AI analysis delay then prefill mock work history entries
     setTimeout(() => {
       setAnalyzing(false)
       setAnalyzed(true)
@@ -350,6 +361,7 @@ export const Step3Section: React.FC<{
           style={{ display: 'none' }}
           onChange={(e) => {
             const f = e.target.files?.[0]
+            e.target.value = ''
             if (f) handleResumeUpload(f)
           }}
         />
@@ -426,7 +438,7 @@ export const Step3Section: React.FC<{
                 <SparkleIcon /> Analyzing with AI…
               </span>
             )}
-            {analyzed && (
+            {analyzed && !uploadError && (
               <span
                 style={{
                   display: 'flex',
@@ -437,6 +449,11 @@ export const Step3Section: React.FC<{
                 }}
               >
                 <CheckCircleIcon color="var(--kt-success)" /> Work history prefilled
+              </span>
+            )}
+            {uploadError && (
+              <span style={{ fontSize: 'var(--kt-text-xs)', color: 'var(--kt-danger)' }}>
+                {uploadError}
               </span>
             )}
             <button

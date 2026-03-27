@@ -62,7 +62,8 @@ CREATE TABLE user_roles (
 
 CREATE TABLE worker_profiles (
   id                   UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  full_name            TEXT NOT NULL DEFAULT '',
+  first_name           TEXT NOT NULL DEFAULT '',
+  last_name            TEXT NOT NULL DEFAULT '',
   city                 TEXT NOT NULL DEFAULT '',
   region               TEXT NOT NULL DEFAULT '',
   phone                TEXT NOT NULL DEFAULT '',

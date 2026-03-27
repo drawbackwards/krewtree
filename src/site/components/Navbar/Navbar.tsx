@@ -2,28 +2,29 @@ import React, { useState, useRef, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { NotificationDrawer } from '../NotificationDrawer/NotificationDrawer'
 import type { Notification } from '../../types'
-// TODO: replace with real Supabase query for user notifications
-import { notifications as allNotifs } from '../../data/mock'
 import { KrewtreeLogo } from '../Logo'
 import { useAuth } from '../../context/AuthContext'
 import { BellIcon, ChevronDownIcon } from '../../icons'
+import { getWorkerProfile } from '../../services/workerService'
 import styles from './Navbar.module.css'
 
 // Keep Persona export so existing imports don't break
 export type Persona = 'worker' | 'company'
 
 export const Navbar: React.FC = () => {
-  const { isLoggedIn, persona, logout } = useAuth()
+  const { isLoggedIn, persona, logout, user } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
   const isActive = (path: string) => (location.pathname.startsWith(path) ? styles.active : '')
 
   const [notifOpen, setNotifOpen] = useState(false)
-  const [notifs, setNotifs] = useState<Notification[]>(allNotifs)
+  const [notifs, setNotifs] = useState<Notification[]>([])
   const notifRef = useRef<HTMLDivElement>(null)
 
   const [avatarMenuOpen, setAvatarMenuOpen] = useState(false)
   const avatarRef = useRef<HTMLDivElement>(null)
+
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
 
   const unreadCount = notifs.filter((n) => !n.isRead).length
 
@@ -49,6 +50,14 @@ export const Navbar: React.FC = () => {
     return () => document.removeEventListener('mousedown', handler)
   }, [avatarMenuOpen])
 
+  // Fetch avatar URL for worker persona
+  useEffect(() => {
+    if (!isLoggedIn || persona !== 'worker' || !user) return
+    getWorkerProfile(user.id).then(({ data }) => {
+      if (data?.avatar_url) setAvatarUrl(data.avatar_url)
+    })
+  }, [isLoggedIn, persona, user])
+
   const handleMarkAllRead = () => {
     setNotifs((prev) => prev.map((n) => ({ ...n, isRead: true })))
   }
@@ -64,8 +73,16 @@ export const Navbar: React.FC = () => {
     navigate('/site')
   }
 
-  const userInitials = persona === 'worker' ? 'MT' : 'AB'
-  const companyName = 'Apex Builders LLC'
+  const firstName: string = user?.user_metadata?.first_name ?? ''
+  const lastName: string = user?.user_metadata?.last_name ?? ''
+  const companyName: string = user?.user_metadata?.company_name ?? ''
+  const userInitials = firstName
+    ? `${firstName[0]}${lastName[0] ?? ''}`.toUpperCase()
+    : (user?.email?.[0]?.toUpperCase() ?? '')
+  const displayName =
+    persona === 'worker'
+      ? ((`${firstName} ${lastName}`.trim() || user?.email) ?? '')
+      : ((companyName || user?.email) ?? '')
 
   return (
     <nav className={styles.nav}>
@@ -93,7 +110,7 @@ export const Navbar: React.FC = () => {
                   Dashboard
                 </Link>
                 <Link
-                  to="/site/profile/w1"
+                  to={`/site/profile/${user!.id}`}
                   className={[styles.link, isActive('/site/profile')].filter(Boolean).join(' ')}
                 >
                   My Profile
@@ -229,11 +246,16 @@ export const Navbar: React.FC = () => {
                   aria-label="Account menu"
                   aria-expanded={avatarMenuOpen}
                 >
-                  <div
-                    className={styles.avatar}
-                    title={persona === 'worker' ? 'Marcus T.' : companyName}
-                  >
-                    {userInitials}
+                  <div className={styles.avatar} title={displayName}>
+                    {avatarUrl ? (
+                      <img
+                        src={avatarUrl}
+                        alt={displayName}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                    ) : (
+                      userInitials
+                    )}
                   </div>
                   <ChevronDownIcon size={12} />
                 </button>
@@ -242,11 +264,9 @@ export const Navbar: React.FC = () => {
                   <div className={styles.avatarMenu} role="menu">
                     {/* User identity header */}
                     <div className={styles.menuHeader}>
-                      <span className={styles.menuHeaderName}>
-                        {persona === 'worker' ? 'Marcus T.' : 'Alex Brennan'}
-                      </span>
-                      {persona === 'company' && (
-                        <span className={styles.menuHeaderSub}>{companyName}</span>
+                      <span className={styles.menuHeaderName}>{displayName}</span>
+                      {persona === 'company' && user?.email && (
+                        <span className={styles.menuHeaderSub}>{user.email}</span>
                       )}
                     </div>
 

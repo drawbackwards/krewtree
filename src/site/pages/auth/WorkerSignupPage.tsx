@@ -18,13 +18,12 @@ export const WorkerSignupPage: React.FC = () => {
   const navigate = useNavigate()
   const { signUp } = useAuth()
 
-  const [name, setName] = useState('')
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [location, setLocation] = useState('')
   const [selectedIndustries, setSelectedIndustries] = useState<string[]>([])
-  const [regulixOptIn, setRegulixOptIn] = useState(false)
   const [termsAgreed, setTermsAgreed] = useState(false)
   const [passwordError, setPasswordError] = useState('')
   const [confirmPasswordError, setConfirmPasswordError] = useState('')
@@ -68,7 +67,7 @@ export const WorkerSignupPage: React.FC = () => {
 
     setAuthError('')
     setIsSubmitting(true)
-    const { error } = await signUp(email, password, 'worker', name)
+    const { error } = await signUp(email, password, 'worker', firstName, lastName)
     setIsSubmitting(false)
     if (error) {
       setAuthError(error)
@@ -77,7 +76,7 @@ export const WorkerSignupPage: React.FC = () => {
 
     setPassword('')
     setConfirmPassword('')
-    navigate('/site/profile/create')
+    navigate('/site/dashboard/worker')
   }
 
   return (
@@ -312,19 +311,19 @@ export const WorkerSignupPage: React.FC = () => {
             >
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
                 <Input
-                  label="Full name"
+                  label="First name"
                   type="text"
-                  placeholder="Marcus Torres"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Your first name"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
                   required
                 />
                 <Input
-                  label="City, State"
+                  label="Last name"
                   type="text"
-                  placeholder="Phoenix, AZ"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
+                  placeholder="Your last name"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
                   required
                 />
               </div>
@@ -520,15 +519,7 @@ export const WorkerSignupPage: React.FC = () => {
                 )}
               </div>
 
-              <div style={{ height: 1, background: 'var(--kt-border)' }} />
-
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <Checkbox
-                  checked={regulixOptIn}
-                  onChange={(e) => setRegulixOptIn(e.target.checked)}
-                  label="Start my Regulix verification to become hire-ready"
-                  helperText="Takes ~10 min. Complete once, use everywhere."
-                />
                 <Checkbox
                   checked={termsAgreed}
                   onChange={(e) => setTermsAgreed(e.target.checked)}

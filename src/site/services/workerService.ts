@@ -5,9 +5,12 @@ import { daysSince } from '@site/utils/date'
 // ── Worker Profile ─────────────────────────────────────────────────────────────
 
 export type WorkerProfileRow = {
-  full_name: string | null
+  first_name: string | null
+  last_name: string | null
   city: string | null
   region: string | null
+  primary_trade: string | null
+  avatar_url: string | null
   is_regulix_ready: boolean
   performance_score: number | null
   profile_complete_pct: number
@@ -20,7 +23,7 @@ export async function getWorkerProfile(
   const { data, error } = await supabase
     .from('worker_profiles')
     .select(
-      'full_name, city, region, is_regulix_ready, performance_score, profile_complete_pct, total_hours_worked'
+      'first_name, last_name, city, region, primary_trade, avatar_url, is_regulix_ready, performance_score, profile_complete_pct, total_hours_worked'
     )
     .eq('id', userId)
     .single()
@@ -200,10 +203,211 @@ export async function getRecommendedJobs(
   }
 }
 
+// ── Full Worker Profile (view page) ───────────────────────────────────────────
+
+export type FullWorkerProfile = {
+  firstName: string
+  lastName: string
+  city: string
+  region: string
+  phone: string
+  primaryTrade: string
+  bio: string
+  avatarUrl: string | null
+  resumeUrl: string | null
+  isRegulixReady: boolean
+  performanceScore: number | null
+  profileCompletePct: number
+  totalHoursWorked: number | null
+  industries: string[]
+  skills: { id: string; name: string; yearsExp: number | null; industryId: string | null }[]
+  certifications: {
+    id: string
+    certName: string
+    issuingBody: string
+    earnedDate: string | null
+  }[]
+  socialLinks: { id: string; platform: string; url: string }[]
+  workHistory: {
+    id: string
+    employerName: string
+    roleTitle: string
+    startDate: string | null
+    endDate: string | null
+    isCurrent: boolean
+    contractType: string
+    industryId: string | null
+    description: string
+  }[]
+}
+
+export async function getFullWorkerProfile(
+  userId: string
+): Promise<{ data: FullWorkerProfile | null; error: string | null }> {
+  const [
+    profileRes,
+    industriesRes,
+    skillsRes,
+    certsRes,
+    socialLinksRes,
+    workHistoryRes,
+    resumeRes,
+  ] = await Promise.all([
+    supabase
+      .from('worker_profiles')
+      .select(
+        'first_name, last_name, city, region, phone, primary_trade, bio, avatar_url, is_regulix_ready, performance_score, profile_complete_pct, total_hours_worked'
+      )
+      .eq('id', userId)
+      .single(),
+    supabase.from('worker_industries').select('industry_id').eq('worker_id', userId),
+    supabase
+      .from('worker_skills')
+      .select('id, name, years_exp, industry_id')
+      .eq('worker_id', userId),
+    supabase
+      .from('worker_certifications')
+      .select('id, cert_name, issuing_body, expiry_date')
+      .eq('worker_id', userId),
+    supabase.from('worker_social_links').select('id, platform, url').eq('worker_id', userId),
+    supabase
+      .from('worker_work_history')
+      .select(
+        'id, employer_name, role_title, start_date, end_date, is_current, contract_type, industry_id, description'
+      )
+      .eq('worker_id', userId)
+      .order('start_date', { ascending: false }),
+    supabase
+      .from('worker_resumes')
+      .select('file_path')
+      .eq('worker_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ])
+
+  if (profileRes.error) return { data: null, error: profileRes.error.message }
+  if (!profileRes.data) return { data: null, error: 'Profile not found' }
+
+  const p = profileRes.data
+
+  return {
+    data: {
+      firstName: p.first_name ?? '',
+      lastName: p.last_name ?? '',
+      city: p.city ?? '',
+      region: p.region ?? '',
+      phone: p.phone ?? '',
+      primaryTrade: p.primary_trade ?? '',
+      bio: p.bio ?? '',
+      avatarUrl: p.avatar_url ?? null,
+      resumeUrl: resumeRes.data?.file_path
+        ? supabase.storage.from('resumes').getPublicUrl(resumeRes.data.file_path).data.publicUrl
+        : null,
+      isRegulixReady: p.is_regulix_ready,
+      performanceScore: p.performance_score,
+      profileCompletePct: p.profile_complete_pct,
+      totalHoursWorked: p.total_hours_worked,
+      industries: (industriesRes.data ?? []).map((r) => r.industry_id),
+      skills: (skillsRes.data ?? []).map((r) => ({
+        id: r.id,
+        name: r.name,
+        yearsExp: r.years_exp,
+        industryId: r.industry_id,
+      })),
+      certifications: (certsRes.data ?? []).map((r) => ({
+        id: r.id,
+        certName: r.cert_name,
+        issuingBody: r.issuing_body,
+        earnedDate: r.expiry_date,
+      })),
+      socialLinks: (socialLinksRes.data ?? []).map((r) => ({
+        id: r.id,
+        platform: r.platform,
+        url: r.url,
+      })),
+      workHistory: (workHistoryRes.data ?? []).map((r) => ({
+        id: r.id,
+        employerName: r.employer_name,
+        roleTitle: r.role_title,
+        startDate: r.start_date,
+        endDate: r.end_date,
+        isCurrent: r.is_current,
+        contractType: r.contract_type,
+        industryId: r.industry_id,
+        description: r.description,
+      })),
+    },
+    error: null,
+  }
+}
+
+// ── Avatar Upload ──────────────────────────────────────────────────────────────
+
+export async function uploadWorkerAvatar(
+  userId: string,
+  file: File
+): Promise<{ url: string | null; error: string | null }> {
+  const ext = file.name.split('.').pop() ?? 'jpg'
+  const path = `${userId}/avatar.${ext}`
+
+  const { error: uploadError } = await supabase.storage
+    .from('avatars')
+    .upload(path, file, { upsert: true, contentType: file.type })
+
+  if (uploadError) return { url: null, error: uploadError.message }
+
+  const { data } = supabase.storage.from('avatars').getPublicUrl(path)
+  // Bust cache so the new image shows immediately
+  return { url: `${data.publicUrl}?t=${Date.now()}`, error: null }
+}
+
+export async function updateWorkerAvatarUrl(
+  userId: string,
+  avatarUrl: string
+): Promise<{ error: string | null }> {
+  const { error } = await supabase
+    .from('worker_profiles')
+    .update({ avatar_url: avatarUrl })
+    .eq('id', userId)
+  if (error) return { error: error.message }
+  return { error: null }
+}
+
+// ── Resume Upload ──────────────────────────────────────────────────────────────
+
+export async function uploadWorkerResume(
+  userId: string,
+  file: File
+): Promise<{ error: string | null }> {
+  const ext = file.name.split('.').pop()?.toLowerCase() ?? 'pdf'
+  const path = `${userId}/${file.name}`
+
+  const { error: uploadError } = await supabase.storage
+    .from('resumes')
+    .upload(path, file, { upsert: true, contentType: file.type })
+
+  if (uploadError) return { error: uploadError.message }
+
+  const sizeKb = Math.round(file.size / 1024)
+  const { error: dbError } = await supabase.from('worker_resumes').insert({
+    worker_id: userId,
+    filename: file.name,
+    file_path: path,
+    file_type: ext as 'pdf' | 'doc' | 'docx',
+    size_kb: sizeKb,
+    is_primary: true,
+  })
+
+  if (dbError) return { error: dbError.message }
+  return { error: null }
+}
+
 // ── Upsert Worker Profile ──────────────────────────────────────────────────────
 
 export type UpsertWorkerProfileParams = {
-  p_full_name: string
+  p_first_name: string
+  p_last_name: string
   p_city: string
   p_region: string
   p_phone: string

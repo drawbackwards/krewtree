@@ -99,7 +99,8 @@ export type Database = {
       worker_profiles: {
         Row: {
           id: string
-          full_name: string
+          first_name: string
+          last_name: string
           city: string
           region: string
           phone: string
@@ -116,7 +117,8 @@ export type Database = {
         }
         Insert: {
           id: string
-          full_name?: string
+          first_name?: string
+          last_name?: string
           city?: string
           region?: string
           phone?: string
@@ -673,13 +675,20 @@ export type Database = {
     Functions: {
       get_my_role: { Args: Record<PropertyKey, never>; Returns: string | null }
       setup_worker_profile: {
-        Args: { p_user_id: string; p_full_name?: string; p_city?: string; p_region?: string }
+        Args: {
+          p_user_id: string
+          p_first_name?: string
+          p_last_name?: string
+          p_city?: string
+          p_region?: string
+        }
         Returns: undefined
       }
       setup_company_profile: { Args: { p_user_id: string; p_name?: string }; Returns: undefined }
       upsert_worker_profile: {
         Args: {
-          p_full_name: string
+          p_first_name: string
+          p_last_name: string
           p_city: string
           p_region: string
           p_phone: string

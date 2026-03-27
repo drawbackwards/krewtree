@@ -71,13 +71,11 @@ export const CompanySignupPage: React.FC = () => {
   const { signUp } = useAuth()
 
   const [companyName, setCompanyName] = useState('')
-  const [contactName, setContactName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [industry, setIndustry] = useState('')
   const [companySize, setCompanySize] = useState('10-50')
-  const [website, setWebsite] = useState('')
   const [termsAgreed, setTermsAgreed] = useState(false)
   const [passwordError, setPasswordError] = useState('')
   const [confirmPasswordError, setConfirmPasswordError] = useState('')
@@ -110,7 +108,15 @@ export const CompanySignupPage: React.FC = () => {
     if (!termsAgreed || !valid) return
 
     setIsSubmitting(true)
-    const { error } = await signUp(email, password, 'company', companyName)
+    const { error } = await signUp(
+      email,
+      password,
+      'company',
+      companyName,
+      '',
+      industry,
+      companySize
+    )
     setIsSubmitting(false)
     if (error) {
       setAuthError(error)
@@ -350,29 +356,19 @@ export const CompanySignupPage: React.FC = () => {
               onSubmit={handleSubmit}
               style={{ display: 'flex', flexDirection: 'column', gap: 18 }}
             >
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-                <Input
-                  label="Company name"
-                  type="text"
-                  placeholder="Apex Builders LLC"
-                  value={companyName}
-                  onChange={(e) => setCompanyName(e.target.value)}
-                  required
-                />
-                <Input
-                  label="Your name"
-                  type="text"
-                  placeholder="Alex Brennan"
-                  value={contactName}
-                  onChange={(e) => setContactName(e.target.value)}
-                  required
-                />
-              </div>
+              <Input
+                label="Company name"
+                type="text"
+                placeholder="Your company name"
+                value={companyName}
+                onChange={(e) => setCompanyName(e.target.value)}
+                required
+              />
 
               <Input
                 label="Work email"
                 type="email"
-                placeholder="alex@apexbuilders.com"
+                placeholder="Your work email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -405,24 +401,14 @@ export const CompanySignupPage: React.FC = () => {
                 />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-                <Select
-                  label="Primary industry"
-                  placeholder="Select industry"
-                  options={industryOptions}
-                  value={industry}
-                  onChange={(e) => setIndustry(e.target.value)}
-                  required
-                />
-                <Input
-                  label="Website"
-                  type="url"
-                  placeholder="https://yourcompany.com"
-                  value={website}
-                  onChange={(e) => setWebsite(e.target.value)}
-                  helperText="Optional"
-                />
-              </div>
+              <Select
+                label="Primary industry"
+                placeholder="Select industry"
+                options={industryOptions}
+                value={industry}
+                onChange={(e) => setIndustry(e.target.value)}
+                required
+              />
 
               {/* Company size */}
               <div>
@@ -449,8 +435,6 @@ export const CompanySignupPage: React.FC = () => {
                   ))}
                 </div>
               </div>
-
-              <div style={{ height: 1, background: 'var(--kt-border)', margin: '2px 0' }} />
 
               <Checkbox
                 checked={termsAgreed}

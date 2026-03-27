@@ -251,11 +251,17 @@ export const JobsPage: React.FC = () => {
       <div
         style={{
           background: 'var(--kt-bg)',
-          padding: '48px var(--kt-space-6) 36px',
+          padding: '48px 0 36px',
           borderBottom: '1px solid var(--kt-border)',
         }}
       >
-        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+        <div
+          style={{
+            maxWidth: 'var(--kt-layout-max-width)',
+            margin: '0 auto',
+            padding: '0 var(--kt-space-6)',
+          }}
+        >
           <div
             style={{
               display: 'flex',
@@ -353,7 +359,7 @@ export const JobsPage: React.FC = () => {
 
       <div
         style={{
-          maxWidth: 1200,
+          maxWidth: 'var(--kt-layout-max-width)',
           margin: '0 auto',
           padding: '32px var(--kt-space-6)',
           display: 'flex',

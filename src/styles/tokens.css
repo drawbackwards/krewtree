@@ -116,6 +116,9 @@
   --kt-space-5: 20px;
   --kt-space-6: 24px;
   --kt-space-8: 32px;
+
+  /* --- Layout --- */
+  --kt-layout-max-width: 1280px;
   --kt-space-10: 40px;
   --kt-space-12: 48px;
   --kt-space-16: 64px;
