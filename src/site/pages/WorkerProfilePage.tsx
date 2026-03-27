@@ -1,100 +1,185 @@
-import React, { useState } from 'react'
-import { useParams, Link, useNavigate } from 'react-router-dom'
-import { Badge, Button, Divider, Progress } from '../../components'
+import React, { useEffect, useState } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
+import { Badge, Button } from '../../components'
 import { RegulixBadge } from '../components/RegulixBadge/RegulixBadge'
-import type { SkillEndorsement } from '../types'
+import { useAuth } from '../context/AuthContext'
 import {
   MapPinIcon,
-  BriefcaseIcon,
   StarIcon,
-  VerifiedShieldIcon,
   LinkedInSimpleIcon,
   InstagramIcon,
   FacebookSimpleIcon,
-  CheckIcon,
-  FolderIcon,
-  ClipboardIcon,
+  XIcon,
+  GlobeIcon,
+  EnvelopeIcon,
+  PhoneIcon,
+  VerifiedBadgeIcon,
 } from '../icons'
-// TODO: replace with real Supabase query for worker profile by id
-import { workers, skillEndorsements, resumeDocuments, portfolioItems } from '../data/mock'
+import { getFullWorkerProfile } from '../services/workerService'
+import type { FullWorkerProfile } from '../services/workerService'
+import { INDUSTRIES } from '../data/industries'
+
+// ── Helpers ────────────────────────────────────────────────────────────────────
+
+const formatMonth = (d: string | null): string => {
+  if (!d) return ''
+  const parts = d.split('-')
+  const y = parts[0]
+  const m = parts[1]
+  if (!y || !m) return d
+  const month = new Date(Number(y), Number(m) - 1).toLocaleString('default', { month: 'short' })
+  return `${month} ${y}`
+}
+
+const contractLabel = (t: string): string => {
+  if (t === 'day_rate') return 'Day Rate'
+  if (t === 'project') return 'Project'
+  if (t === 'long_term_temp') return 'Long-term Temp'
+  return ''
+}
+
+const industryName = (id: string | null): string =>
+  INDUSTRIES.find((i) => i.id === id)?.name ?? id ?? ''
+
+const SocialLinkIcon: React.FC<{ platform: string }> = ({ platform }) => {
+  const size = 17
+  switch (platform) {
+    case 'linkedin':
+      return <LinkedInSimpleIcon size={size} />
+    case 'instagram':
+      return <InstagramIcon size={size} />
+    case 'facebook':
+      return <FacebookSimpleIcon size={size} />
+    case 'x':
+      return <XIcon size={size} />
+    default:
+      return <GlobeIcon size={size} />
+  }
+}
+
+// ── Shared styles ──────────────────────────────────────────────────────────────
+
+const card: React.CSSProperties = {
+  background: 'var(--kt-surface)',
+  border: '1px solid var(--kt-border)',
+  borderRadius: 'var(--kt-radius-lg)',
+  padding: 24,
+}
+
+const sectionHeading: React.CSSProperties = {
+  fontSize: 'var(--kt-text-lg)',
+  fontWeight: 'var(--kt-weight-bold)',
+  color: 'var(--kt-navy-900)',
+  margin: '0 0 16px',
+}
+
+// ── Component ──────────────────────────────────────────────────────────────────
 
 export const WorkerProfilePage: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const worker = workers.find((w) => w.id === id) ?? workers[0]
+  const { user } = useAuth()
+  const isOwnProfile = !!user && user.id === id
 
-  const isOwnProfile = worker.id === 'w1'
-  const [endorsements, setEndorsements] = useState<SkillEndorsement[]>(
-    skillEndorsements.filter(() => worker.id === 'w1')
+  const [profile, setProfile] = useState<FullWorkerProfile | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [fetchError, setFetchError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!id) return
+    setLoading(true)
+    getFullWorkerProfile(id).then(({ data, error }) => {
+      if (error) setFetchError(error)
+      else setProfile(data)
+      setLoading(false)
+    })
+  }, [id])
+
+  if (loading) {
+    return (
+      <div
+        style={{
+          minHeight: '100vh',
+          background: 'var(--kt-bg)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <p style={{ color: 'var(--kt-text-muted)', fontSize: 'var(--kt-text-sm)' }}>
+          Loading profile…
+        </p>
+      </div>
+    )
+  }
+
+  if (fetchError || !profile) {
+    return (
+      <div
+        style={{
+          minHeight: '100vh',
+          background: 'var(--kt-bg)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <p style={{ color: 'var(--kt-danger)', fontSize: 'var(--kt-text-sm)' }}>
+          {fetchError ?? 'Profile not found.'}
+        </p>
+      </div>
+    )
+  }
+
+  const fullName = `${profile.firstName} ${profile.lastName}`.trim()
+  const initials = profile.firstName
+    ? `${profile.firstName[0]}${profile.lastName?.[0] ?? ''}`.toUpperCase()
+    : '?'
+  const location = [profile.city, profile.region].filter(Boolean).join(', ')
+  const hasContent =
+    !!profile.bio ||
+    !!profile.phone ||
+    profile.socialLinks.some((l) => l.url) ||
+    profile.skills.length > 0 ||
+    profile.certifications.length > 0 ||
+    profile.workHistory.length > 0
+
+  // Group skills by industry for display
+  const skillsByIndustry = profile.skills.reduce<Record<string, typeof profile.skills>>(
+    (acc, skill) => {
+      const key = skill.industryId ?? '__other__'
+      if (!acc[key]) acc[key] = []
+      acc[key].push(skill)
+      return acc
+    },
+    {}
   )
-  const [endorsedSkills, setEndorsedSkills] = useState<Set<string>>(new Set())
-  const [resumes] = useState(resumeDocuments.filter((r) => r.workerId === worker.id))
-  const [portfolio] = useState(portfolioItems.filter((p) => p.workerId === worker.id))
-  const [uploadSuccess, setUploadSuccess] = useState(false)
-
-  const handleEndorse = (skillName: string) => {
-    if (endorsedSkills.has(skillName)) return
-    setEndorsedSkills((prev) => new Set([...prev, skillName]))
-    setEndorsements((prev) => [
-      ...prev,
-      { skillName, endorserId: 'viewer', endorserName: 'You', endorserInitials: 'YO' },
-    ])
-  }
-
-  const handleMockUpload = () => {
-    setUploadSuccess(true)
-    setTimeout(() => setUploadSuccess(false), 3000)
-  }
-
-  const levelWidth = (level: string) =>
-    level === 'Expert' ? '95%' : level === 'Intermediate' ? '65%' : '35%'
-
-  const formatDate = (d: string) => {
-    const [y, m] = d.split('-')
-    const month = new Date(Number(y), Number(m) - 1).toLocaleString('default', { month: 'short' })
-    return `${month} ${y}`
-  }
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--kt-bg)' }}>
-      {/* Cover / Hero */}
-      <div
-        style={{
-          background: 'var(--kt-surface)',
-          borderBottom: '1px solid var(--kt-border)',
-        }}
-      >
-        {/* Cover bar */}
-        <div
-          style={{
-            height: 120,
-            background: 'var(--kt-grey-100)',
-          }}
-        />
-
+      {/* ── Hero ─────────────────────────────────────────────────────────────── */}
+      <div style={{ background: 'var(--kt-surface)' }}>
         {/* Profile row */}
         <div
           style={{
             maxWidth: 900,
             margin: '0 auto',
-            padding: '0 var(--kt-space-6)',
-            paddingBottom: 24,
+            padding: '32px var(--kt-space-6) 0',
           }}
         >
           <div
             style={{
               display: 'flex',
               gap: 20,
-              alignItems: 'flex-end',
-              marginTop: -36,
+              alignItems: 'center',
               flexWrap: 'wrap',
             }}
           >
             {/* Avatar */}
             <div
               style={{
-                width: 88,
-                height: 88,
+                width: 112,
+                height: 112,
                 borderRadius: '50%',
                 background: 'var(--kt-primary)',
                 color: 'var(--kt-primary-fg)',
@@ -102,49 +187,51 @@ export const WorkerProfilePage: React.FC = () => {
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontWeight: 'var(--kt-weight-bold)',
-                fontSize: 'var(--kt-text-2xl)',
-                border: `4px solid ${worker.isPremium ? 'var(--kt-accent)' : 'var(--kt-white)'}`,
+                fontSize: 'var(--kt-text-3xl)',
+                border: '4px solid var(--kt-surface)',
                 flexShrink: 0,
-                boxShadow: worker.isPremium ? '0 0 0 2px var(--kt-accent)' : 'var(--kt-shadow-sm)',
+                boxShadow: 'var(--kt-shadow-sm)',
+                overflow: 'hidden',
               }}
             >
-              {worker.initials}
+              {profile.avatarUrl ? (
+                <img
+                  src={profile.avatarUrl}
+                  alt={fullName}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+              ) : (
+                initials
+              )}
             </div>
 
-            <div style={{ flex: 1, paddingBottom: 4, minWidth: 0 }}>
-              <div
+            {/* Identity */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <h1
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 10,
-                  flexWrap: 'wrap',
-                  marginBottom: 4,
+                  fontSize: 'var(--kt-text-2xl)',
+                  fontWeight: 'var(--kt-weight-bold)',
+                  color: 'var(--kt-text)',
+                  margin: '0 0 4px',
                 }}
               >
-                <h1
+                {fullName || 'Worker Profile'}
+              </h1>
+
+              {profile.primaryTrade && (
+                <p
                   style={{
-                    fontSize: 'var(--kt-text-2xl)',
-                    fontWeight: 'var(--kt-weight-bold)',
-                    color: 'var(--kt-text)',
-                    margin: 0,
+                    fontSize: 'var(--kt-text-sm)',
+                    color: 'var(--kt-text-muted)',
+                    margin: '0 0 8px',
                   }}
                 >
-                  {worker.name}
-                </h1>
-                {worker.isRegulixReady && <RegulixBadge size="md" />}
-                {worker.isPremium && (
-                  <Badge variant="accent" size="sm">
-                    Premium
-                  </Badge>
-                )}
-              </div>
-              <p
-                style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text-muted)', margin: 0 }}
-              >
-                {worker.headline}
-              </p>
-              <div style={{ display: 'flex', gap: 16, marginTop: 8, flexWrap: 'wrap' }}>
-                <span
+                  {profile.primaryTrade}
+                </p>
+              )}
+
+              {location && (
+                <div
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -153,22 +240,10 @@ export const WorkerProfilePage: React.FC = () => {
                     color: 'var(--kt-text-muted)',
                   }}
                 >
-                  <MapPinIcon size={14} />
-                  {worker.location}
-                </span>
-                <span
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 5,
-                    fontSize: 'var(--kt-text-xs)',
-                    color: 'var(--kt-text-muted)',
-                  }}
-                >
-                  <BriefcaseIcon size={14} />
-                  {worker.industries.join(', ')}
-                </span>
-              </div>
+                  <MapPinIcon size={13} />
+                  {location}
+                </div>
+              )}
             </div>
 
             {/* Actions */}
@@ -190,603 +265,464 @@ export const WorkerProfilePage: React.FC = () => {
             </div>
           </div>
 
-          {/* Rating & hours */}
-          <div style={{ marginTop: 16, display: 'flex', gap: 24, flexWrap: 'wrap' }}>
-            {worker.performanceScore && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <StarIcon size={15} color="var(--kt-warning)" />
-                <span
-                  style={{
-                    fontSize: 'var(--kt-text-sm)',
-                    fontWeight: 'var(--kt-weight-semibold)',
-                    color: 'var(--kt-text)',
-                  }}
-                >
-                  {worker.performanceScore}
-                </span>
-                <span style={{ fontSize: 'var(--kt-text-xs)', color: 'var(--kt-text-muted)' }}>
-                  ({worker.ratingCount} ratings)
-                </span>
-              </div>
-            )}
-            {worker.totalHoursWorked && (
-              <div style={{ fontSize: 'var(--kt-text-xs)', color: 'var(--kt-text-muted)' }}>
-                {worker.totalHoursWorked.toLocaleString()} verified hours worked
-              </div>
-            )}
-            {/* Social links */}
-            <div style={{ display: 'flex', gap: 8, marginLeft: 'auto' }}>
-              {worker.socialLinks.linkedin && (
-                <a
-                  href={worker.socialLinks.linkedin}
-                  style={{ color: 'var(--kt-text-muted)', display: 'flex', alignItems: 'center' }}
-                >
-                  <LinkedInSimpleIcon size={16} />
-                </a>
-              )}
-              {worker.socialLinks.instagram && (
-                <a
-                  href={worker.socialLinks.instagram}
-                  style={{ color: 'var(--kt-text-muted)', display: 'flex', alignItems: 'center' }}
-                >
-                  <InstagramIcon />
-                </a>
-              )}
-              {worker.socialLinks.facebook && (
-                <a
-                  href={worker.socialLinks.facebook}
-                  style={{ color: 'var(--kt-text-muted)', display: 'flex', alignItems: 'center' }}
-                >
-                  <FacebookSimpleIcon size={16} />
-                </a>
-              )}
+          {/* Skills strip */}
+          {profile.skills.length > 0 && (
+            <div
+              style={{
+                marginTop: 20,
+                background: 'var(--kt-navy-50)',
+                borderRadius: 'var(--kt-radius-lg)',
+                padding: '16px 20px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 14,
+              }}
+            >
+              {Object.entries(skillsByIndustry).map(([indId, skills]) => {
+                const sorted = [...skills].sort((a, b) => (b.yearsExp ?? 0) - (a.yearsExp ?? 0))
+                return (
+                  <div key={indId}>
+                    {Object.keys(skillsByIndustry).length > 1 && (
+                      <p
+                        style={{
+                          fontSize: 'var(--kt-text-xs)',
+                          fontWeight: 'var(--kt-weight-semibold)',
+                          color: 'var(--kt-navy-500)',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.5px',
+                          margin: '0 0 8px',
+                        }}
+                      >
+                        {indId === '__other__' ? 'Other' : industryName(indId)}
+                      </p>
+                    )}
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                      {sorted.map((skill) => (
+                        <div
+                          key={skill.id}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 6,
+                            padding: '5px 12px',
+                            background: 'var(--kt-surface)',
+                            border: '1px solid var(--kt-navy-100)',
+                            borderRadius: 'var(--kt-radius-full)',
+                            fontSize: 'var(--kt-text-sm)',
+                            color: 'var(--kt-navy-600)',
+                            fontWeight: 'var(--kt-weight-medium)',
+                          }}
+                        >
+                          {skill.name}
+                          {skill.yearsExp != null && skill.yearsExp > 0 && (
+                            <span
+                              style={{
+                                fontSize: 'var(--kt-text-xs)',
+                                color: 'var(--kt-navy-400)',
+                                fontWeight: 'var(--kt-weight-normal)',
+                              }}
+                            >
+                              {skill.yearsExp} yr{skill.yearsExp !== 1 ? 's' : ''}
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )
+              })}
             </div>
-          </div>
+          )}
         </div>
       </div>
 
-      {/* Body */}
+      {/* ── Body ─────────────────────────────────────────────────────────────── */}
       <div
         style={{
           maxWidth: 900,
           margin: '0 auto',
-          padding: '28px var(--kt-space-6)',
+          padding: '20px var(--kt-space-6)',
           display: 'flex',
           gap: 24,
           alignItems: 'flex-start',
         }}
       >
-        {/* ---- Main ---- */}
+        {/* ── Main column ── */}
         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 20 }}>
-          {/* Bio */}
-          <div
-            style={{
-              background: 'var(--kt-surface)',
-              border: '1px solid var(--kt-border)',
-              borderRadius: 'var(--kt-radius-lg)',
-              padding: 24,
-            }}
-          >
-            <h2
-              style={{
-                fontSize: 'var(--kt-text-md)',
-                fontWeight: 'var(--kt-weight-semibold)',
-                color: 'var(--kt-text)',
-                marginBottom: 12,
-              }}
-            >
-              About
-            </h2>
-            <p style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text)', lineHeight: 1.7 }}>
-              {worker.bio}
-            </p>
-          </div>
+          {/* About */}
+          {(() => {
+            const hasSocials = profile.socialLinks.some((l) => l.url)
+            const hasEmail = isOwnProfile && !!user?.email
+            const hasContact = !!profile.phone || hasEmail || hasSocials
+            if (!profile.bio && !hasContact) return null
+            return (
+              <div style={card}>
+                <h2 style={sectionHeading}>About</h2>
 
-          {/* Resume & Portfolio */}
-          {(resumes.length > 0 || isOwnProfile) && (
-            <div
-              style={{
-                background: 'var(--kt-surface)',
-                border: '1px solid var(--kt-border)',
-                borderRadius: 'var(--kt-radius-lg)',
-                padding: 24,
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginBottom: 16,
-                }}
-              >
-                <h2
-                  style={{
-                    fontSize: 'var(--kt-text-md)',
-                    fontWeight: 'var(--kt-weight-semibold)',
-                    color: 'var(--kt-text)',
-                  }}
-                >
-                  Resume & Portfolio
-                </h2>
-                {isOwnProfile && (
-                  <button
-                    onClick={handleMockUpload}
-                    style={{
-                      fontSize: 'var(--kt-text-xs)',
-                      color: 'var(--kt-primary)',
-                      background: 'transparent',
-                      border: '1px solid var(--kt-border)',
-                      borderRadius: 'var(--kt-radius-md)',
-                      padding: '5px 12px',
-                      cursor: 'pointer',
-                      fontFamily: 'var(--kt-font-sans)',
-                      fontWeight: 'var(--kt-weight-medium)',
-                    }}
-                  >
-                    {uploadSuccess ? (
-                      <>
-                        <CheckIcon size={12} /> Uploaded!
-                      </>
-                    ) : (
-                      '+ Upload Resume'
-                    )}
-                  </button>
-                )}
-              </div>
-
-              {/* Resume files */}
-              <div
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 10,
-                  marginBottom: portfolio.length > 0 ? 20 : 0,
-                }}
-              >
-                {resumes.map((doc) => (
-                  <div
-                    key={doc.id}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 12,
-                      padding: '12px 14px',
-                      borderRadius: 'var(--kt-radius-md)',
-                      border: '1px solid var(--kt-border)',
-                      background: 'var(--kt-bg)',
-                    }}
-                  >
-                    <span style={{ color: 'var(--kt-text-muted)' }}>
-                      {doc.fileType === 'pdf' ? (
-                        <FolderIcon size={24} />
-                      ) : (
-                        <ClipboardIcon size={24} />
-                      )}
-                    </span>
-                    <div style={{ flex: 1 }}>
-                      <p
-                        style={{
-                          fontSize: 'var(--kt-text-sm)',
-                          fontWeight: 'var(--kt-weight-medium)',
-                          color: 'var(--kt-text)',
-                          marginBottom: 2,
-                        }}
-                      >
-                        {doc.filename}
-                        {doc.isPrimary && (
-                          <span
-                            style={{
-                              marginLeft: 8,
-                              fontSize: '10px',
-                              color: 'var(--kt-success)',
-                              background: 'color-mix(in srgb, var(--kt-success) 10%, transparent)',
-                              padding: '1px 6px',
-                              borderRadius: 'var(--kt-radius-full)',
-                              fontWeight: 'var(--kt-weight-semibold)',
-                            }}
-                          >
-                            Primary
-                          </span>
-                        )}
-                      </p>
-                      <p style={{ fontSize: 'var(--kt-text-xs)', color: 'var(--kt-text-muted)' }}>
-                        {doc.sizeKb}KB · Uploaded{' '}
-                        {doc.uploadedDaysAgo === 0 ? 'today' : `${doc.uploadedDaysAgo} days ago`}
-                      </p>
-                    </div>
-                    <button
-                      style={{
-                        fontSize: 'var(--kt-text-xs)',
-                        padding: '4px 10px',
-                        border: '1px solid var(--kt-border)',
-                        borderRadius: 'var(--kt-radius-sm)',
-                        background: 'transparent',
-                        color: 'var(--kt-primary)',
-                        cursor: 'pointer',
-                        fontFamily: 'var(--kt-font-sans)',
-                        fontWeight: 'var(--kt-weight-medium)',
-                      }}
-                    >
-                      Download
-                    </button>
-                  </div>
-                ))}
-              </div>
-
-              {/* Portfolio */}
-              {portfolio.length > 0 && (
-                <>
-                  <h3
+                {/* Bio */}
+                {profile.bio && (
+                  <p
                     style={{
                       fontSize: 'var(--kt-text-sm)',
-                      fontWeight: 'var(--kt-weight-semibold)',
                       color: 'var(--kt-text)',
-                      marginBottom: 12,
+                      lineHeight: 1.75,
+                      margin: 0,
+                      marginBottom: hasContact ? 20 : 0,
                     }}
                   >
-                    Portfolio
-                  </h3>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
-                    {portfolio.map((item) => (
-                      <div
-                        key={item.id}
-                        style={{
-                          padding: 14,
-                          borderRadius: 'var(--kt-radius-md)',
-                          border: '1px solid var(--kt-border)',
-                          background: 'var(--kt-bg)',
-                        }}
-                      >
-                        <div style={{ fontSize: '32px', marginBottom: 8, textAlign: 'center' }}>
-                          {item.imageEmoji}
-                        </div>
-                        <p
-                          style={{
-                            fontSize: 'var(--kt-text-xs)',
-                            fontWeight: 'var(--kt-weight-semibold)',
-                            color: 'var(--kt-text)',
-                            marginBottom: 4,
-                          }}
+                    {profile.bio}
+                  </p>
+                )}
+
+                {/* Contact + social rows */}
+                {hasContact && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {profile.phone && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <span
+                          style={{ color: 'var(--kt-text-muted)', flexShrink: 0, display: 'flex' }}
                         >
-                          {item.title}
-                        </p>
-                        <p
-                          style={{
-                            fontSize: 'var(--kt-text-xs)',
-                            color: 'var(--kt-text-muted)',
-                            marginBottom: 8,
-                            lineHeight: 1.4,
-                          }}
-                        >
-                          {item.description}
-                        </p>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                          {item.tags.map((t) => (
-                            <span
-                              key={t}
-                              style={{
-                                fontSize: '10px',
-                                padding: '1px 6px',
-                                borderRadius: 'var(--kt-radius-full)',
-                                background: 'color-mix(in srgb, var(--kt-primary) 8%, transparent)',
-                                color: 'var(--kt-primary)',
-                                fontWeight: 'var(--kt-weight-medium)',
-                              }}
-                            >
-                              {t}
-                            </span>
-                          ))}
-                        </div>
-                        <p
-                          style={{
-                            fontSize: '10px',
-                            color: 'var(--kt-text-placeholder)',
-                            marginTop: 6,
-                          }}
-                        >
-                          {item.projectDate}
-                        </p>
+                          <PhoneIcon size={15} />
+                        </span>
+                        <span style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text)' }}>
+                          {profile.phone}
+                        </span>
                       </div>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-
-          {/* Job History */}
-          <div
-            style={{
-              background: 'var(--kt-surface)',
-              border: '1px solid var(--kt-border)',
-              borderRadius: 'var(--kt-radius-lg)',
-              padding: 24,
-            }}
-          >
-            <h2
-              style={{
-                fontSize: 'var(--kt-text-md)',
-                fontWeight: 'var(--kt-weight-semibold)',
-                color: 'var(--kt-text)',
-                marginBottom: 18,
-              }}
-            >
-              Work Experience
-            </h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-              {worker.jobHistory.map((job, i) => {
-                const isLast = i === worker.jobHistory.length - 1
-                return (
-                  <div key={i} style={{ display: 'flex', gap: 16 }}>
-                    {/* Timeline */}
-                    <div
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        flexShrink: 0,
-                      }}
-                    >
-                      <div
-                        style={{
-                          width: 12,
-                          height: 12,
-                          borderRadius: '50%',
-                          background: job.isRegulixVerified
-                            ? 'var(--kt-accent)'
-                            : 'var(--kt-border-strong)',
-                          border: `2px solid ${job.isRegulixVerified ? 'var(--kt-olive-300)' : 'var(--kt-border)'}`,
-                          marginTop: 4,
-                        }}
-                      />
-                      {!isLast && (
-                        <div
+                    )}
+                    {hasEmail && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <span
+                          style={{ color: 'var(--kt-text-muted)', flexShrink: 0, display: 'flex' }}
+                        >
+                          <EnvelopeIcon size={15} />
+                        </span>
+                        <span style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text)' }}>
+                          {user!.email}
+                        </span>
+                        {user!.email_confirmed_at && (
+                          <span
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 3,
+                              fontSize: 'var(--kt-text-xs)',
+                              color: 'var(--kt-success)',
+                              flexShrink: 0,
+                            }}
+                          >
+                            <VerifiedBadgeIcon size={13} color="var(--kt-success)" />
+                            Verified
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    {profile.socialLinks
+                      .filter((l) => l.url)
+                      .map((link) => (
+                        <a
+                          key={link.id}
+                          href={link.url.startsWith('http') ? link.url : `https://${link.url}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
                           style={{
-                            width: 2,
-                            flex: 1,
-                            background: 'var(--kt-border)',
-                            margin: '4px 0',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 10,
+                            color: 'var(--kt-text-muted)',
+                            textDecoration: 'none',
+                            transition: 'color 0.15s',
                           }}
-                        />
-                      )}
-                    </div>
+                          onMouseOver={(e) => (e.currentTarget.style.color = 'var(--kt-text)')}
+                          onMouseOut={(e) => (e.currentTarget.style.color = 'var(--kt-text-muted)')}
+                        >
+                          <span style={{ flexShrink: 0, display: 'flex' }}>
+                            <SocialLinkIcon platform={link.platform} />
+                          </span>
+                          <span style={{ fontSize: 'var(--kt-text-sm)' }}>
+                            {link.url.replace(/^https?:\/\//, '')}
+                          </span>
+                        </a>
+                      ))}
+                  </div>
+                )}
+              </div>
+            )
+          })()}
 
-                    {/* Content */}
-                    <div style={{ flex: 1, paddingBottom: isLast ? 0 : 20 }}>
+          {/* Work Experience */}
+          {profile.workHistory.length > 0 && (
+            <div style={card}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: 20,
+                }}
+              >
+                <h2 style={{ ...sectionHeading, margin: 0 }}>Work Experience</h2>
+                {profile.resumeUrl && (
+                  <a
+                    href={profile.resumeUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      fontSize: 'var(--kt-text-xs)',
+                      fontWeight: 'var(--kt-weight-semibold)',
+                      color: 'var(--kt-primary)',
+                      textDecoration: 'none',
+                      border: '1px solid var(--kt-primary)',
+                      borderRadius: 'var(--kt-radius-md)',
+                      padding: '4px 10px',
+                    }}
+                  >
+                    View Resume
+                  </a>
+                )}
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                {profile.workHistory.map((job, i) => {
+                  const isLast = i === profile.workHistory.length - 1
+                  const label = contractLabel(job.contractType)
+                  const dateRange = [
+                    formatMonth(job.startDate),
+                    job.isCurrent ? 'Present' : formatMonth(job.endDate),
+                  ]
+                    .filter(Boolean)
+                    .join(' — ')
+
+                  return (
+                    <div key={job.id} style={{ display: 'flex', gap: 14 }}>
+                      {/* Timeline */}
                       <div
                         style={{
                           display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'flex-start',
-                          gap: 8,
-                          flexWrap: 'wrap',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          flexShrink: 0,
                         }}
                       >
-                        <div>
-                          <p
+                        <div
+                          style={{
+                            width: 10,
+                            height: 10,
+                            borderRadius: '50%',
+                            background: 'var(--kt-success)',
+                            border: '2px solid var(--kt-success-subtle)',
+                            marginTop: 6,
+                            flexShrink: 0,
+                          }}
+                        />
+                        {!isLast && (
+                          <div
                             style={{
-                              fontWeight: 'var(--kt-weight-semibold)',
-                              color: 'var(--kt-text)',
-                              fontSize: 'var(--kt-text-sm)',
-                              marginBottom: 2,
+                              width: 2,
+                              flex: 1,
+                              background: 'var(--kt-border)',
+                              margin: '4px 0',
                             }}
-                          >
-                            {job.title}
-                          </p>
-                          <p
-                            style={{ fontSize: 'var(--kt-text-xs)', color: 'var(--kt-text-muted)' }}
-                          >
-                            {job.employer}
-                          </p>
+                          />
+                        )}
+                      </div>
+
+                      {/* Content */}
+                      <div style={{ flex: 1, paddingBottom: isLast ? 0 : 24 }}>
+                        <div
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'flex-start',
+                            gap: 8,
+                            flexWrap: 'wrap',
+                          }}
+                        >
+                          <div>
+                            <p
+                              style={{
+                                fontWeight: 'var(--kt-weight-semibold)',
+                                fontSize: 'var(--kt-text-sm)',
+                                color: 'var(--kt-text)',
+                                margin: '0 0 2px',
+                              }}
+                            >
+                              {job.roleTitle}
+                            </p>
+                            <p
+                              style={{
+                                fontSize: 'var(--kt-text-xs)',
+                                color: 'var(--kt-text-muted)',
+                                margin: 0,
+                              }}
+                            >
+                              {job.employerName}
+                            </p>
+                          </div>
+                          {dateRange && (
+                            <span
+                              style={{
+                                fontSize: 'var(--kt-text-xs)',
+                                color: 'var(--kt-text-muted)',
+                                flexShrink: 0,
+                              }}
+                            >
+                              {dateRange}
+                            </span>
+                          )}
                         </div>
-                        <div style={{ textAlign: 'right', flexShrink: 0 }}>
+
+                        {/* Industry + contract type badges */}
+                        {(job.industryId || label) && (
+                          <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
+                            {job.industryId && (
+                              <Badge variant="secondary" size="sm">
+                                {industryName(job.industryId)}
+                              </Badge>
+                            )}
+                            {label && (
+                              <Badge variant="secondary" size="sm">
+                                {label}
+                              </Badge>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Description */}
+                        {job.description && (
                           <p
                             style={{
                               fontSize: 'var(--kt-text-xs)',
                               color: 'var(--kt-text-muted)',
-                              marginBottom: 4,
+                              lineHeight: 1.65,
+                              margin: '8px 0 0',
                             }}
                           >
-                            {formatDate(job.startDate)} —{' '}
-                            {job.endDate ? formatDate(job.endDate) : 'Present'}
+                            {job.description}
                           </p>
-                          {job.isRegulixVerified && (
-                            <div
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 4,
-                                justifyContent: 'flex-end',
-                              }}
-                            >
-                              <VerifiedShieldIcon />
-                              <span
-                                style={{
-                                  fontSize: 'var(--kt-text-xs)',
-                                  color: 'var(--kt-olive-700)',
-                                  fontWeight: 'var(--kt-weight-medium)',
-                                }}
-                              >
-                                Regulix Verified
-                              </span>
-                            </div>
-                          )}
-                        </div>
+                        )}
                       </div>
                     </div>
-                  </div>
-                )
-              })}
+                  )
+                })}
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* Skills */}
-          <div
-            style={{
-              background: 'var(--kt-surface)',
-              border: '1px solid var(--kt-border)',
-              borderRadius: 'var(--kt-radius-lg)',
-              padding: 24,
-            }}
-          >
-            <h2
-              style={{
-                fontSize: 'var(--kt-text-md)',
-                fontWeight: 'var(--kt-weight-semibold)',
-                color: 'var(--kt-text)',
-                marginBottom: 18,
-              }}
-            >
-              Skills
-            </h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {worker.skills.map((skill) => {
-                const skillEndorsers = endorsements.filter((e) => e.skillName === skill.name)
-                const alreadyEndorsed = endorsedSkills.has(skill.name)
-                return (
-                  <div key={skill.name}>
-                    <div
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        marginBottom: 6,
-                      }}
-                    >
-                      <span
+          {/* Certifications */}
+          {profile.certifications.length > 0 && (
+            <div style={card}>
+              <h2 style={sectionHeading}>Certifications</h2>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {profile.certifications.map((cert) => (
+                  <div
+                    key={cert.id}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      gap: 12,
+                      padding: '12px 14px',
+                      border: '1px solid var(--kt-border)',
+                      borderRadius: 'var(--kt-radius-md)',
+                      background: 'var(--kt-bg)',
+                    }}
+                  >
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p
                         style={{
+                          fontWeight: 'var(--kt-weight-semibold)',
                           fontSize: 'var(--kt-text-sm)',
-                          fontWeight: 'var(--kt-weight-medium)',
                           color: 'var(--kt-text)',
+                          margin: '0 0 2px',
                         }}
                       >
-                        {skill.name}
-                      </span>
-                      <span
-                        style={{
-                          fontSize: 'var(--kt-text-xs)',
-                          fontWeight: 'var(--kt-weight-medium)',
-                          color:
-                            skill.level === 'Expert'
-                              ? 'var(--kt-success)'
-                              : skill.level === 'Intermediate'
-                                ? 'var(--kt-info)'
-                                : 'var(--kt-text-muted)',
-                          padding: '2px 8px',
-                          borderRadius: 'var(--kt-radius-full)',
-                          background:
-                            skill.level === 'Expert'
-                              ? 'var(--kt-success-subtle)'
-                              : skill.level === 'Intermediate'
-                                ? 'var(--kt-info-subtle)'
-                                : 'var(--kt-bg)',
-                          border: `1px solid ${skill.level === 'Expert' ? 'var(--kt-success)' : skill.level === 'Intermediate' ? 'var(--kt-info)' : 'var(--kt-border)'}`,
-                        }}
-                      >
-                        {skill.level}
-                      </span>
-                    </div>
-                    <Progress
-                      value={parseFloat(levelWidth(skill.level))}
-                      color={skill.level === 'Expert' ? 'success' : 'primary'}
-                      size="sm"
-                    />
-                    {/* Endorsements row */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 8 }}>
-                      {/* Endorser avatar stack */}
-                      {skillEndorsers.length > 0 && (
-                        <div style={{ display: 'flex', alignItems: 'center' }}>
-                          {skillEndorsers.slice(0, 3).map((e, idx) => (
-                            <div
-                              key={e.endorserId}
-                              title={e.endorserName}
-                              style={{
-                                width: 22,
-                                height: 22,
-                                borderRadius: '50%',
-                                background: 'var(--kt-primary)',
-                                color: 'var(--kt-primary-fg)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: '9px',
-                                fontWeight: 'var(--kt-weight-bold)',
-                                border: '2px solid var(--kt-surface)',
-                                marginLeft: idx === 0 ? 0 : -6,
-                                zIndex: 3 - idx,
-                                position: 'relative',
-                              }}
-                            >
-                              {e.endorserInitials}
-                            </div>
-                          ))}
-                          {skillEndorsers.length > 3 && (
-                            <div
-                              style={{
-                                width: 22,
-                                height: 22,
-                                borderRadius: '50%',
-                                background: 'var(--kt-bg)',
-                                border: '2px solid var(--kt-surface)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: '9px',
-                                color: 'var(--kt-text-muted)',
-                                fontWeight: 'var(--kt-weight-bold)',
-                                marginLeft: -6,
-                                position: 'relative',
-                              }}
-                            >
-                              +{skillEndorsers.length - 3}
-                            </div>
-                          )}
-                        </div>
-                      )}
-                      <span
-                        style={{ fontSize: 'var(--kt-text-xs)', color: 'var(--kt-text-muted)' }}
-                      >
-                        {skillEndorsers.length > 0
-                          ? `${skillEndorsers.length} endorsement${skillEndorsers.length !== 1 ? 's' : ''}`
-                          : 'No endorsements yet'}
-                      </span>
-                      {!isOwnProfile && (
-                        <button
-                          onClick={() => handleEndorse(skill.name)}
-                          disabled={alreadyEndorsed}
+                        {cert.certName}
+                      </p>
+                      {cert.issuingBody && (
+                        <p
                           style={{
-                            marginLeft: 'auto',
                             fontSize: 'var(--kt-text-xs)',
-                            padding: '3px 10px',
-                            border: `1px solid ${alreadyEndorsed ? 'var(--kt-border)' : 'var(--kt-primary)'}`,
-                            borderRadius: 'var(--kt-radius-full)',
-                            background: alreadyEndorsed ? 'var(--kt-bg)' : 'transparent',
-                            color: alreadyEndorsed ? 'var(--kt-text-muted)' : 'var(--kt-primary)',
-                            cursor: alreadyEndorsed ? 'default' : 'pointer',
-                            fontFamily: 'var(--kt-font-sans)',
-                            fontWeight: 'var(--kt-weight-medium)',
-                            transition: 'all 0.15s',
+                            color: 'var(--kt-text-muted)',
+                            margin: 0,
                           }}
                         >
-                          {alreadyEndorsed ? (
-                            <>
-                              <CheckIcon size={12} /> Endorsed
-                            </>
-                          ) : (
-                            '+ Endorse'
-                          )}
-                        </button>
+                          {cert.issuingBody}
+                        </p>
                       )}
                     </div>
+                    {cert.earnedDate && (
+                      <span
+                        style={{
+                          flexShrink: 0,
+                          fontSize: 'var(--kt-text-xs)',
+                          color: 'var(--kt-text-muted)',
+                          padding: '2px 8px',
+                          borderRadius: 'var(--kt-radius-full)',
+                          border: '1px solid var(--kt-border)',
+                        }}
+                      >
+                        Earned {formatMonth(cert.earnedDate)}
+                      </span>
+                    )}
                   </div>
-                )
-              })}
+                ))}
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* Empty state — only shown when profile is genuinely empty and incomplete */}
+          {!hasContent && profile.profileCompletePct < 100 && (
+            <div
+              style={{
+                ...card,
+                textAlign: 'center',
+                padding: '48px 24px',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+              }}
+            >
+              <p
+                style={{
+                  fontSize: 'var(--kt-text-sm)',
+                  fontWeight: 'var(--kt-weight-bold)',
+                  color: 'var(--kt-text)',
+                  margin: '0 0 6px',
+                }}
+              >
+                {isOwnProfile
+                  ? 'Your profile is empty.'
+                  : "This worker hasn't filled in their profile yet."}
+              </p>
+              {isOwnProfile && (
+                <p
+                  style={{
+                    fontSize: 'var(--kt-text-sm)',
+                    color: 'var(--kt-text-muted)',
+                    margin: '0 0 20px',
+                  }}
+                >
+                  Add your skills and experience to stand out to employers.
+                </p>
+              )}
+              {isOwnProfile && (
+                <div>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => navigate('/site/profile/edit')}
+                  >
+                    Build your profile
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
-        {/* ---- Sidebar ---- */}
+        {/* ── Sidebar ── */}
         <div
           style={{
             width: 240,
@@ -796,32 +732,38 @@ export const WorkerProfilePage: React.FC = () => {
             gap: 16,
             position: 'sticky',
             top: 80,
+            alignSelf: !hasContent ? 'stretch' : 'flex-start',
           }}
         >
-          {/* Regulix Status */}
+          {/* Regulix status */}
           <div
             style={{
-              background: worker.isRegulixReady ? 'var(--kt-olive-100)' : 'var(--kt-surface)',
-              border: `1px solid ${worker.isRegulixReady ? 'var(--kt-olive-300)' : 'var(--kt-border)'}`,
+              background: profile.isRegulixReady ? 'var(--kt-olive-100)' : 'var(--kt-surface)',
+              border: `1px solid ${profile.isRegulixReady ? 'var(--kt-olive-300)' : 'var(--kt-border)'}`,
               borderRadius: 'var(--kt-radius-lg)',
               padding: 18,
               textAlign: 'center',
+              flex: !hasContent ? 1 : undefined,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: !hasContent ? 'center' : undefined,
             }}
           >
             <RegulixBadge
               size="lg"
-              variant={worker.isRegulixReady ? 'filled' : 'pending'}
-              pulse={worker.isRegulixReady}
+              variant={profile.isRegulixReady ? 'filled' : 'pending'}
+              pulse={profile.isRegulixReady}
             />
             <p
               style={{
                 marginTop: 10,
                 fontSize: 'var(--kt-text-sm)',
                 fontWeight: 'var(--kt-weight-semibold)',
-                color: worker.isRegulixReady ? 'var(--kt-olive-800)' : 'var(--kt-text-muted)',
+                color: profile.isRegulixReady ? 'var(--kt-olive-800)' : 'var(--kt-text-muted)',
               }}
             >
-              {worker.isRegulixReady ? 'Regulix Ready' : 'Not Yet Regulix Ready'}
+              {profile.isRegulixReady ? 'Regulix Ready' : 'Not Yet Regulix Ready'}
             </p>
             <p
               style={{
@@ -831,87 +773,95 @@ export const WorkerProfilePage: React.FC = () => {
                 lineHeight: 1.5,
               }}
             >
-              {worker.isRegulixReady
+              {profile.isRegulixReady
                 ? 'All onboarding docs verified. Day-1 hire-ready.'
                 : 'Complete onboarding to become hire-ready.'}
             </p>
           </div>
 
-          {/* Profile completion */}
-          <div
-            style={{
-              background: 'var(--kt-surface)',
-              border: '1px solid var(--kt-border)',
-              borderRadius: 'var(--kt-radius-lg)',
-              padding: 18,
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-              <span
-                style={{
-                  fontSize: 'var(--kt-text-xs)',
-                  fontWeight: 'var(--kt-weight-semibold)',
-                  color: 'var(--kt-text)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
-                }}
-              >
-                Profile
-              </span>
-              <span
-                style={{
-                  fontSize: 'var(--kt-text-xs)',
-                  fontWeight: 'var(--kt-weight-bold)',
-                  color: 'var(--kt-olive-700)',
-                }}
-              >
-                {worker.profileCompletePct}%
-              </span>
-            </div>
-            <Progress
-              value={worker.profileCompletePct}
-              color={worker.profileCompletePct >= 90 ? 'success' : 'warning'}
-              size="sm"
-            />
-          </div>
-
-          {/* Industries */}
-          <div
-            style={{
-              background: 'var(--kt-surface)',
-              border: '1px solid var(--kt-border)',
-              borderRadius: 'var(--kt-radius-lg)',
-              padding: 18,
-            }}
-          >
-            <h3
+          {/* Stats */}
+          {(profile.performanceScore != null ||
+            (profile.totalHoursWorked != null && profile.totalHoursWorked > 0)) && (
+            <div
               style={{
-                fontSize: 'var(--kt-text-xs)',
-                fontWeight: 'var(--kt-weight-semibold)',
-                color: 'var(--kt-text)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px',
-                marginBottom: 10,
+                background: 'var(--kt-surface)',
+                border: '1px solid var(--kt-border)',
+                borderRadius: 'var(--kt-radius-lg)',
+                padding: 18,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 16,
               }}
             >
-              Industries
-            </h3>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {worker.industries.map((ind) => (
-                <Badge key={ind} variant="secondary" size="sm">
-                  {ind}
-                </Badge>
-              ))}
+              {profile.performanceScore != null && (
+                <div style={{ textAlign: 'center' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 6,
+                      marginBottom: 4,
+                    }}
+                  >
+                    <StarIcon size={18} color="var(--kt-warning)" />
+                    <span
+                      style={{
+                        fontSize: 'var(--kt-text-3xl)',
+                        fontWeight: 'var(--kt-weight-bold)',
+                        color: 'var(--kt-text)',
+                        lineHeight: 1,
+                      }}
+                    >
+                      {profile.performanceScore}
+                    </span>
+                  </div>
+                  <p
+                    style={{
+                      fontSize: 'var(--kt-text-xs)',
+                      color: 'var(--kt-text-muted)',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                      margin: 0,
+                    }}
+                  >
+                    Rating
+                  </p>
+                </div>
+              )}
+              {profile.performanceScore != null &&
+                profile.totalHoursWorked != null &&
+                profile.totalHoursWorked > 0 && (
+                  <div style={{ height: 1, background: 'var(--kt-border)' }} />
+                )}
+              {profile.totalHoursWorked != null && profile.totalHoursWorked > 0 && (
+                <div style={{ textAlign: 'center' }}>
+                  <p
+                    style={{
+                      fontSize: 'var(--kt-text-3xl)',
+                      fontWeight: 'var(--kt-weight-bold)',
+                      color: 'var(--kt-text)',
+                      margin: '0 0 4px',
+                      lineHeight: 1,
+                    }}
+                  >
+                    {profile.totalHoursWorked.toLocaleString()}
+                  </p>
+                  <p
+                    style={{
+                      fontSize: 'var(--kt-text-xs)',
+                      color: 'var(--kt-text-muted)',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                      margin: 0,
+                    }}
+                  >
+                    Verified hrs
+                  </p>
+                </div>
+              )}
             </div>
-          </div>
-
-          {/* Back to jobs */}
-          <Divider />
-          <Link to="/site/jobs" style={{ textDecoration: 'none' }}>
-            <Button variant="ghost" size="sm" style={{ width: '100%' }}>
-              ← Back to Jobs
-            </Button>
-          </Link>
+          )}
         </div>
       </div>
     </div>

@@ -153,7 +153,7 @@ const IndustrySkillsCard: React.FC<{
       ...data,
       certifications: [
         ...data.certifications,
-        { id: crypto.randomUUID(), certName: '', issuingBody: '', expiryDate: '' },
+        { id: crypto.randomUUID(), certName: '', issuingBody: '', earnedDate: '' },
       ],
     })
   const removeCert = (id: string) =>
@@ -281,89 +281,93 @@ const IndustrySkillsCard: React.FC<{
           )}
 
           {data.skills.length > 0 ? (
-            <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div style={{ marginTop: 14 }}>
               <p
                 style={{
                   fontSize: 'var(--kt-text-xs)',
                   fontWeight: 'var(--kt-weight-medium)',
                   color: 'var(--kt-text-muted)',
-                  margin: 0,
+                  margin: '0 0 6px',
                 }}
               >
                 Your skills ({data.skills.length})
               </p>
-              {data.skills.map((skill) => (
-                <div
-                  key={skill.id}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 10,
-                    padding: '7px 12px',
-                    borderRadius: 'var(--kt-radius-md)',
-                    border: '1px solid var(--kt-border)',
-                    background: 'var(--kt-surface-raised)',
-                  }}
-                >
-                  <span style={{ flex: 1, fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text)' }}>
-                    {skill.name}
-                    {skill.source === 'custom' && (
-                      <span
-                        style={{
-                          fontSize: 'var(--kt-text-xs)',
-                          color: 'var(--kt-text-muted)',
-                          marginLeft: 6,
-                        }}
-                      >
-                        (custom)
-                      </span>
-                    )}
-                  </span>
-                  <label
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                {data.skills.map((skill) => (
+                  <div
+                    key={skill.id}
                     style={{
-                      fontSize: 'var(--kt-text-xs)',
-                      color: 'var(--kt-text-muted)',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    Yrs exp
-                  </label>
-                  <input
-                    type="number"
-                    min={0}
-                    max={99}
-                    placeholder="—"
-                    value={skill.yearsExp === null ? '' : skill.yearsExp}
-                    onChange={(e) => updateSkillYears(skill.id, e.target.value)}
-                    style={{
-                      width: 52,
-                      padding: '4px 8px',
-                      borderRadius: 'var(--kt-radius-sm)',
-                      border: '1px solid var(--kt-border)',
-                      fontSize: 'var(--kt-text-sm)',
-                      background: 'var(--kt-surface)',
-                      color: 'var(--kt-text)',
-                      fontFamily: 'var(--kt-font-sans)',
-                      textAlign: 'center',
-                    }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removeSkill(skill.id)}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      cursor: 'pointer',
-                      color: 'var(--kt-text-muted)',
-                      padding: 4,
                       display: 'flex',
-                      borderRadius: 'var(--kt-radius-sm)',
+                      alignItems: 'center',
+                      gap: 10,
+                      padding: '7px 12px',
+                      borderRadius: 'var(--kt-radius-md)',
+                      border: '1px solid var(--kt-border)',
+                      background: 'var(--kt-surface-raised)',
                     }}
                   >
-                    <XIcon />
-                  </button>
-                </div>
-              ))}
+                    <span
+                      style={{ flex: 1, fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text)' }}
+                    >
+                      {skill.name}
+                      {skill.source === 'custom' && (
+                        <span
+                          style={{
+                            fontSize: 'var(--kt-text-xs)',
+                            color: 'var(--kt-text-muted)',
+                            marginLeft: 6,
+                          }}
+                        >
+                          (custom)
+                        </span>
+                      )}
+                    </span>
+                    <label
+                      style={{
+                        fontSize: 'var(--kt-text-xs)',
+                        color: 'var(--kt-text-muted)',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      Yrs exp
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={99}
+                      placeholder="—"
+                      value={skill.yearsExp === null ? '' : skill.yearsExp}
+                      onChange={(e) => updateSkillYears(skill.id, e.target.value)}
+                      style={{
+                        width: 52,
+                        padding: '4px 8px',
+                        borderRadius: 'var(--kt-radius-sm)',
+                        border: '1px solid var(--kt-border)',
+                        fontSize: 'var(--kt-text-sm)',
+                        background: 'var(--kt-surface)',
+                        color: 'var(--kt-text)',
+                        fontFamily: 'var(--kt-font-sans)',
+                        textAlign: 'center',
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeSkill(skill.id)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        color: 'var(--kt-text-muted)',
+                        padding: 4,
+                        display: 'flex',
+                        borderRadius: 'var(--kt-radius-sm)',
+                      }}
+                    >
+                      <XIcon />
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
           ) : (
             <div
@@ -447,7 +451,6 @@ const IndustrySkillsCard: React.FC<{
           )}
 
           {data.certifications.map((cert, idx) => {
-            const expired = cert.expiryDate && new Date(cert.expiryDate) < new Date()
             return (
               <div
                 key={cert.id}
@@ -500,27 +503,12 @@ const IndustrySkillsCard: React.FC<{
                     onChange={(e) => updateCert(cert.id, 'issuingBody', e.target.value)}
                     placeholder="e.g. OSHA, Red Cross"
                   />
-                  <div>
-                    <Input
-                      label="Expiry date"
-                      type="date"
-                      value={cert.expiryDate}
-                      onChange={(e) => updateCert(cert.id, 'expiryDate', e.target.value)}
-                    />
-                    {cert.expiryDate && (
-                      <p
-                        style={{
-                          fontSize: 'var(--kt-text-xs)',
-                          color: 'var(--kt-text-muted)',
-                          margin: '3px 0 0',
-                        }}
-                      >
-                        {expired
-                          ? `Expired on: ${cert.expiryDate}`
-                          : `Expires on: ${cert.expiryDate}`}
-                      </p>
-                    )}
-                  </div>
+                  <Input
+                    label="Earned date"
+                    type="date"
+                    value={cert.earnedDate}
+                    onChange={(e) => updateCert(cert.id, 'earnedDate', e.target.value)}
+                  />
                 </div>
               </div>
             )

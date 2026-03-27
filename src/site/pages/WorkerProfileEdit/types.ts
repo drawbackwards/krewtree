@@ -12,7 +12,7 @@ export type ProfileCert = {
   id: string
   certName: string
   issuingBody: string
-  expiryDate: string
+  earnedDate: string
 }
 
 export type WorkEntry = {
@@ -28,10 +28,12 @@ export type WorkEntry = {
 }
 
 export type Step1Data = {
-  fullName: string
+  firstName: string
+  lastName: string
   city: string
   region: string
   phone: string
+  avatarUrl: string
 }
 
 export type Step2Data = {

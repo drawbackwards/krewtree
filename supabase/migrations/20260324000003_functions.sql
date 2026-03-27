@@ -10,7 +10,8 @@
 -- normally allow it.
 CREATE OR REPLACE FUNCTION setup_worker_profile(
   p_user_id    UUID,
-  p_full_name  TEXT DEFAULT '',
+  p_first_name TEXT DEFAULT '',
+  p_last_name  TEXT DEFAULT '',
   p_city       TEXT DEFAULT '',
   p_region     TEXT DEFAULT ''
 )
@@ -22,8 +23,8 @@ BEGIN
     VALUES (p_user_id, 'worker')
     ON CONFLICT (id) DO NOTHING;
 
-  INSERT INTO worker_profiles (id, full_name, city, region)
-    VALUES (p_user_id, p_full_name, p_city, p_region)
+  INSERT INTO worker_profiles (id, first_name, last_name, city, region)
+    VALUES (p_user_id, p_first_name, p_last_name, p_city, p_region)
     ON CONFLICT (id) DO NOTHING;
 END;
 $$;
@@ -52,7 +53,8 @@ $$;
 -- Replaces all skills, certifications, social links, and work history
 -- belonging to the worker, then updates the core profile row.
 CREATE OR REPLACE FUNCTION upsert_worker_profile(
-  p_full_name    TEXT,
+  p_first_name   TEXT,
+  p_last_name    TEXT,
   p_city         TEXT,
   p_region       TEXT,
   p_phone        TEXT,
@@ -70,14 +72,22 @@ AS $$
 DECLARE
   v_worker_id UUID := auth.uid();
 BEGIN
-  -- Core profile
+  -- Core profile (also recomputes completion %)
+  -- 4 sections × 25 each: basic info, about, skills, work history
   UPDATE worker_profiles SET
-    full_name     = p_full_name,
+    first_name    = p_first_name,
+    last_name     = p_last_name,
     city          = p_city,
     region        = p_region,
     phone         = p_phone,
     primary_trade = p_primary_trade,
-    bio           = p_bio
+    bio           = p_bio,
+    profile_complete_pct = (
+      CASE WHEN p_first_name <> '' AND p_last_name <> '' AND p_city <> '' AND p_phone <> '' THEN 25 ELSE 0 END +
+      CASE WHEN p_primary_trade <> '' AND p_bio <> '' THEN 25 ELSE 0 END +
+      CASE WHEN jsonb_array_length(p_skills) > 0 THEN 25 ELSE 0 END +
+      CASE WHEN jsonb_array_length(p_work_history) > 0 THEN 25 ELSE 0 END
+    )
   WHERE id = v_worker_id;
 
   -- Industries (full replace)
@@ -94,7 +104,7 @@ BEGIN
       NULLIF(s->>'skill_id', ''),
       s->>'name',
       NULLIF(s->>'years_exp', '')::INTEGER,
-      COALESCE(s->>'source', 'custom')
+      CASE WHEN s->>'source' = 'suggested' THEN 'suggested' ELSE 'custom' END
     FROM jsonb_array_elements(p_skills) s;
 
   -- Certifications (full replace)

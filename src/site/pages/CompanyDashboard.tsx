@@ -111,7 +111,7 @@ export const CompanyDashboard: React.FC = () => {
       >
         <div
           style={{
-            maxWidth: 1280,
+            maxWidth: 'var(--kt-layout-max-width)',
             margin: '0 auto',
             padding: '28px var(--kt-space-6)',
             display: 'flex',
@@ -169,7 +169,7 @@ export const CompanyDashboard: React.FC = () => {
 
       <div
         style={{
-          maxWidth: 1280,
+          maxWidth: 'var(--kt-layout-max-width)',
           margin: '0 auto',
           padding: '28px var(--kt-space-6)',
           display: 'flex',

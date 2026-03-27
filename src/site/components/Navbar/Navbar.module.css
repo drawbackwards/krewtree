@@ -8,7 +8,7 @@
 }
 
 .inner {
-  max-width: 1280px;
+  max-width: var(--kt-layout-max-width);
   margin: 0 auto;
   padding: 0 var(--kt-space-6);
   height: 60px;
@@ -189,6 +189,7 @@
   flex-shrink: 0;
   border: 2px solid transparent;
   transition: border-color var(--kt-duration-fast);
+  overflow: hidden;
 }
 .avatar:hover {
   border-color: var(--kt-border-strong);

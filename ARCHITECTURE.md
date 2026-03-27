@@ -1,6 +1,6 @@
 # krewtree — Architecture Overview
 
-> Last updated: March 26, 2026 (session 6)
+> Last updated: March 27, 2026 (session 7)
 
 ---
 
@@ -328,12 +328,12 @@ Users gain full app access immediately after signup. Specific actions (e.g. job 
 - Service layer — `src/site/services/workerService.ts` centralizes Supabase queries
 - `WorkerDashboard` + `WorkerProfileEditPage` wired to real Supabase data
 - `WorkerProfileEditPage` refactored (2094 → 476 lines) with 6 sub-components in `WorkerProfileEdit/`
+- Resume upload wired to Supabase Storage (`resumes` bucket); storage migration in `supabase/migrations/20260324000004_storage.sql`
 - All 12 app pages + 4 auth pages, including full `JobDetailPage` feature set:
   - **Worker view** — Quick Apply / Save Job sidebar, pre-interview questions preview, Regulix Ready applicant banner
   - **Company view** — Edit Job / Manage Listing / View Pipeline sidebar; Job Applicants split card (Regulix Ready R-logo + green box, Standard users-icon + white box); "View Candidates →" button; "Learn more about Regulix →" external link
   - **Share modal** — LinkedIn, X, Facebook, Email social circles + copy-link row with clipboard feedback
   - **Manage Listing modal** — green pill toggle between "Pause listing" (duration options: 7d / 30d / indefinite, auto-resume hints) and "Archive listing" (removes from search, keeps on record, restorable); both tabs have centered Cancel link below primary CTA
-- AuthContext (`useAuth`) — mock login/logout
 - Full mock data layer
 - ESLint + Prettier + husky + lint-staged
 - Vercel deployment config
@@ -343,18 +343,44 @@ Users gain full app access immediately after signup. Specific actions (e.g. job 
   - QuickApplyModal: boost opt-in checkbox ($9.99)
   - Company dashboard: job boost modal (7/14/30-day tiers, $35/$65/$120); `maxWidth: 1280` aligned with Navbar; padding on inner container; "Post a Job" removed from dashboard header (lives in Navbar only)
   - PostJobPage: sponsored listing toggle (Switch, olive expanded state, $38/application, stop-mode, Urgently Hiring label); Regulix Preferred card — updated subtext, olive styling when active, credential badges removed
+- **Worker profile UI overhaul (session 7):**
+  - Work Experience card moved above Certifications
+  - Contract type badge moved next to industry badge; date only on right
+  - Section headers: `--kt-navy-900`, bold, `--kt-text-lg`
+  - Experience timeline bullets: `--kt-success` green
+  - Skills moved into hero as pill strip with `--kt-navy-50` background card, no border, rounded corners
+  - Industry label hidden if only one industry; skills sorted highest → lowest years of experience
+  - Reduced spacing between hero and profile body
+  - Certifications: expiry date renamed → earned date throughout (UI + service layer; DB column unchanged as `expiry_date`)
+  - Profile completion indicator hidden once `profileCompletePct >= 100` (dashboard + edit page)
+  - `upsert_worker_profile` SQL function now auto-computes `profile_complete_pct` on every save
+  - localStorage cleared on logout (prevents data leaking to new accounts)
+  - Skills prefill fix: all skills per industry shown in edit form (not just first)
+  - Removed-industry skills filtered before saving to DB
+  - On profile completion, navigates to public profile view (not dashboard)
+  - Edit page: "← Back to profile" removed; "View Profile" button added on right
+  - Added skills list rendered in 2-column grid
+  - Edit page width matches profile width once stepper is hidden at 100%
+  - Portfolio feature removed entirely
+  - Nav "My Profile" link uses real `user.id` (was hardcoded mock)
+
+### 🔜 Pre-launch requirements (blockers)
+
+1. **Resume AI analysis** — currently mocked (fake delay + hardcoded data). Must wire to real AI before launch. See `project_resume_ai.md` for implementation plan (Vercel serverless + Claude Haiku).
+2. **Phone verification** — "Verify number →" button is a no-op stub. Must wire to Supabase Phone Auth (Twilio) before launch. See `project_phone_verification.md`.
+3. **Supabase "Confirm email" setting** — must be enabled in Supabase dashboard before launch. Currently all signups are auto-verified. See `project_email_confirmation.md`.
+4. **Endorsements** — will come from Regulix connection; not yet built.
 
 ### 🔜 Next priorities
 
-1. **API integration** — replace remaining `mock.ts` imports with service calls (17 files still have TODO comments)
+1. **API integration** — replace remaining `mock.ts` imports with service calls
 2. **Company pages** — Candidates (`/site/candidates`), Manage Jobs (`/site/manage-jobs`), Pipeline (`/site/pipeline`) — architecture defined, UI not yet built
-3. **Worker profile setup flow** — post-signup onboarding wizard wired to `upsertWorkerProfile`
-4. **Mobile layouts** — no responsive CSS exists yet
-5. **Tests** — Vitest + @testing-library/react
-6. **SEO** — per-page `<title>` and `<meta>` tags
-7. **Loading states** — skeleton components
-8. **Dark mode toggle** — tokens exist, no UI switch yet
-9. **Subdomain routing** — industry-scoped subdomain logic
+3. **Mobile layouts** — no responsive CSS exists yet
+4. **Tests** — Vitest + @testing-library/react
+5. **SEO** — per-page `<title>` and `<meta>` tags
+6. **Loading states** — skeleton components
+7. **Dark mode toggle** — tokens exist, no UI switch yet
+8. **Subdomain routing** — industry-scoped subdomain logic
 
 ---
 

@@ -1,5 +1,5 @@
 # krewtree — Project Context & Master Flow
-> Last updated: March 16, 2026 (session 5)
+> Last updated: March 27, 2026 (session 7)
 > This file is the single source of truth for Claude context. Read this first after any memory reset.
 
 ---
@@ -182,9 +182,9 @@ All site routes are prefixed `/site`. Root `/` redirects to `/site` via vercel.j
 | `/site/manage-jobs` | *(not yet built)* | Navbar — company only; table of all listings, bulk actions, per-listing stats |
 | `/site/pipeline` | *(not yet built)* | Navbar — company only; all interacted applicants and their hiring stage |
 
-**Auth note:** Auth pages exist as UI but have no real authentication. All routes are currently open. A `ProtectedRoute` wrapper + real backend integration need to be added before launch.
+**Auth note:** Auth is fully wired via Supabase. `ProtectedRoute` implemented in `Router.tsx`. `isLoggedIn` and `isEmailVerified` are separate flags — users gain full app access immediately after signup; specific actions (job applications) are gated behind `isEmailVerified`.
 
-**Navbar persona switcher:** `Persona = 'worker' | 'company'` — dev-only state in `Router.tsx`. Will be replaced by real auth state.
+**⚠️ Pre-launch:** Supabase "Confirm email" setting must be enabled in the dashboard — currently all new signups are auto-confirmed. See `project_email_confirmation.md`.
 
 ---
 
@@ -445,42 +445,51 @@ Each subdomain shows industry-scoped jobs by default. "Browse by Industry" is in
 
 ## 13. What's Built vs. What's Missing
 
-### ✅ Built (UI/prototype level)
+### ✅ Built
+
 - Full design token system (light + dark)
 - 21 reusable UI components + ErrorBoundary
-- Landing page (2 hero variants)
-- Jobs listing + job detail pages:
-  - **Worker view:** Quick Apply / Save Job / Regulix upsell sidebar; pre-interview questions preview; Regulix Ready applicant banner
-  - **Company view:** Edit Job / Manage Listing / View Pipeline sidebar; Job Applicants card — two split boxes (Regulix Ready with R-mark icon + green tint, Standard with users icon + white), "View Candidates →" olive button, "Learn more about Regulix →" link to regulix.com
-  - **Share modal** (share icon in job header): 4 social circle buttons (LinkedIn `#0A66C2`, X `#000`, Facebook `#1877F2`, Email navy) + copy-link row with live URL + "Copy" → "✓ Copied!" feedback
-  - **Manage Listing modal** (company only, triggered from sidebar button): green-selected pill toggle — "Pause listing" tab (duration radios: 7 days auto-resume, 30 days auto-resume, Indefinitely; "Confirm Pause" CTA + centered Cancel link) and "Archive listing" tab (description copy, navy "Archive listing" CTA + centered Cancel link; archive preserves record, restoreable from dashboard)
-- Worker dashboard + worker profile page
-- Company dashboard + company profile page
-- Post job page, saved jobs, messages, referrals
-- Navbar with persona switcher (auth buttons at far right)
-- Auth pages — complete visual system:
-  - `LoginPage` — neutral white/gray page, email + password only, no persona toggle; `?type=company` silently routes mock demo; `KrewtreeBgMark` with dark gray/low-opacity for light bg
-  - `SignupRolePage` — role picker
-  - `WorkerSignupPage` — worker registration form, navy background
-  - `CompanySignupPage` — company registration, olive background, SVG benefit icons, full WCAG AA contrast, sign-in link routes to `/site/login?type=company`
-- `AuthContext` — `useAuth()` hook with `login(type)` / `logout()`, persona state
-- RegulixBadge, JobCard, WorkerCard, StatCard, KanbanBoard, etc.
-- ESLint + Prettier + husky + lint-staged
-- Top-level error boundary
-- Boost monetization UI (all mock, no real payment):
-  - Worker dashboard: 🚀 Boost button → modal ($9.99, Apple Pay / Zelle)
-  - QuickApplyModal: boost checkbox ($9.99 add-on, updates submit label)
-  - Company dashboard: 🚀 Boost per job → 7/14/30-day tiers ($35/$65/$120), Visa on file; `maxWidth: 1280` throughout; padding on inner container (aligned with Navbar); "Post a Job" removed from dashboard header (lives in Navbar only)
-  - PostJobPage: sponsored listing toggle (Switch component, olive expanded state); `$38/application`, stop-mode radios, Urgently Hiring label; Regulix Preferred card — updated subtext ("Mark this job as preferring candidates with up-to-date Regulix accounts."), olive border/background when active, credential badges removed
+- Supabase auth — signup, login, logout, email verification gate, role-based persona, `ProtectedRoute`
+- `AuthContext` (`useAuth`) — `isLoggedIn`, `isEmailVerified`, `resendVerificationEmail`, `persona`
+- Service layer — `src/site/services/workerService.ts` — all Supabase queries centralized
+- `WorkerDashboard` + `WorkerProfileEditPage` wired to real Supabase data
+- `WorkerProfileEditPage` — 6 sub-components in `WorkerProfileEdit/`; localStorage draft with deep-merge; unsaved-changes guard (`safeNavigate`)
+- Resume upload wired to Supabase Storage (`resumes` bucket)
+- Landing page (2 hero variants), all 12 app pages + 4 auth pages
+- Full `JobDetailPage`: Quick Apply, Save Job, Share modal, Manage Listing modal (company)
+- Worker profile public view — skills hero strip, work experience, certifications, contact sidebar
+- `upsert_worker_profile` SQL function — auto-computes `profile_complete_pct` on every save
+- localStorage cleared on logout — prevents profile data leaking to new accounts
+- Company dashboard + kanban + boost modal
+- Post Job page with sponsored listing + Regulix Preferred toggles
+- Navbar — persona-aware links; "My Profile" uses real `user.id`
+- Portfolio feature removed
+- Endorsements placeholder removed — will come from Regulix connection (not yet built)
+- ESLint + Prettier + husky + lint-staged; HTTP security headers via `vercel.json`
+
+**Worker profile UI (session 7):**
+- Work Experience above Certifications; contract type badge next to industry badge
+- Section headers: `--kt-navy-900`, bold; experience timeline dots: `--kt-success` green
+- Skills hero strip: `--kt-navy-50` background, no border, rounded; industry label hidden if only 1 industry; sorted by years exp desc
+- Certifications: expiry date → earned date (UI + service; DB column unchanged)
+- Completion indicator hidden at 100% on both dashboard and edit page
+- Edit page: View Profile button replaces back link; 2-column skill grid; full width when stepper hidden
+
+### ⚠️ Pre-launch blockers
+
+| Item | Status | Notes |
+|------|--------|-------|
+| Resume AI analysis | Mocked | Use Vercel fn + Claude Haiku — see `project_resume_ai.md` |
+| Phone verification | Stub | Use Supabase Phone Auth (Twilio) — see `project_phone_verification.md` |
+| Supabase "Confirm email" | Off | Enable in Supabase Dashboard → Auth → Providers → Email |
+| Endorsements | Not built | Comes from Regulix connection |
 
 ### ❌ Not Yet Built
-- Real authentication (ProtectedRoute, JWT/session, API calls)
-- **Candidates page** (`/site/candidates`) — search & filter workers by profile info (planned architecture defined)
-- **Manage Jobs page** (`/site/manage-jobs`) — listings table, bulk actions, per-listing stats (planned architecture defined)
-- **Pipeline page** (`/site/pipeline`) — all interacted applicants by hiring stage (planned architecture defined)
-- Real API / backend integration (replace mock.ts)
+- **Candidates page** (`/site/candidates`) — search & filter workers by profile info
+- **Manage Jobs page** (`/site/manage-jobs`) — listings table, bulk actions, per-listing stats
+- **Pipeline page** (`/site/pipeline`) — all interacted applicants by hiring stage
+- Real API / backend integration (replace remaining `mock.ts` imports)
 - Industry subdomain routing logic
-- Search/filter state management (URL-driven)
 - Dark mode UI toggle (tokens exist, no toggle)
 - Mobile responsive layouts
 - Unit / integration tests

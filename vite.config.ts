@@ -7,7 +7,7 @@ export default defineConfig({
   server: {
     // Use EXPOSE_HOST=true to allow network access (e.g. for testing on device)
     host: process.env.EXPOSE_HOST === 'true' ? true : 'localhost',
-    port: 5173,
+    port: process.env.PORT ? parseInt(process.env.PORT) : 5173,
   },
   resolve: {
     alias: {

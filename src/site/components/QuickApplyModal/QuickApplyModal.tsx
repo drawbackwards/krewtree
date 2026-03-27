@@ -1,15 +1,12 @@
 import React, { useState } from 'react'
 import { Modal } from '../../../components'
 import type { Job } from '../../types'
-// TODO: replace with real worker profile from auth context / workerService
-import { currentWorker } from '../../data/mock'
 import { useAuth } from '../../context/AuthContext'
 import {
   HourglassIcon,
   RocketIcon,
   CelebrationIcon,
   LightningIcon,
-  CheckIcon,
   CheckSmallIcon,
   EnvelopeIcon,
 } from '../../icons'
@@ -29,6 +26,10 @@ export const QuickApplyModal: React.FC<QuickApplyModalProps> = ({
   onApplied,
 }) => {
   const { user, isEmailVerified, resendVerificationEmail } = useAuth()
+  const firstName: string = user?.user_metadata?.first_name ?? ''
+  const lastName: string = user?.user_metadata?.last_name ?? ''
+  const workerName = firstName ? `${firstName} ${lastName}`.trim() : ''
+  const workerInitials = firstName ? `${firstName[0]}${lastName[0] ?? ''}`.toUpperCase() : ''
   const [coverNote, setCoverNote] = useState('')
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -277,16 +278,11 @@ export const QuickApplyModal: React.FC<QuickApplyModalProps> = ({
 
           {/* Worker Info */}
           <div className={styles.workerRow}>
-            <div className={styles.workerAvatar}>{currentWorker.initials}</div>
+            <div className={styles.workerAvatar}>{workerInitials}</div>
             <div className={styles.workerInfo}>
-              <div className={styles.workerName}>{currentWorker.name}</div>
-              <div className={styles.workerHeadline}>{currentWorker.headline}</div>
+              <div className={styles.workerName}>{workerName}</div>
             </div>
-            {currentWorker.isRegulixReady && (
-              <span className={styles.readyBadge}>
-                <CheckIcon size={12} /> Regulix Ready
-              </span>
-            )}
+            {/* Regulix Ready badge — not yet built */}
           </div>
 
           {/* Cover Note */}

@@ -143,9 +143,9 @@ INSERT INTO user_roles (id, role) VALUES
   ('b0000000-0000-0000-0000-000000000005','company');
 
 -- ── Worker profiles ───────────────────────────────────────
-INSERT INTO worker_profiles (id, full_name, city, region, phone, primary_trade, bio, is_regulix_ready, performance_score, profile_complete_pct, total_hours_worked, is_premium) VALUES
+INSERT INTO worker_profiles (id, first_name, last_name, city, region, phone, primary_trade, bio, is_regulix_ready, performance_score, profile_complete_pct, total_hours_worked, is_premium) VALUES
   ('a0000000-0000-0000-0000-000000000001',
-   'Marcus T.', 'Phoenix', 'AZ', '', 'Journeyman Carpenter · 8 yrs experience',
+   'Marcus', 'T.', 'Phoenix', 'AZ', '', 'Journeyman Carpenter · 8 yrs experience',
    'Experienced journeyman carpenter specializing in commercial framing. Safety-first mindset, OSHA 30 certified. Reliable, team-oriented, always on time.',
    TRUE, 4.8, 100, 14800, TRUE),
   ('a0000000-0000-0000-0000-000000000002',

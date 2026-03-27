@@ -3,8 +3,6 @@ import { Link } from 'react-router-dom'
 import { Badge, Button, Modal, Progress, Divider } from '../../components'
 import { StatCard } from '../components/StatCard/StatCard'
 import { RegulixBadge } from '../components/RegulixBadge/RegulixBadge'
-// TODO: replace mock fallback with real DB data once worker profile is complete
-import { currentWorker } from '../data/mock'
 import type { Application, ApplicationEvent, Job } from '../types'
 import { useAuth } from '../context/AuthContext'
 import {
@@ -69,28 +67,22 @@ export const WorkerDashboard: React.FC = () => {
     })
   }, [user])
 
-  // Overlay real profile data on top of mock defaults
   const worker = {
-    ...currentWorker,
-    ...(profile && {
-      name: profile.full_name || currentWorker.name,
-      initials: profile.full_name
-        ? profile.full_name
-            .split(' ')
-            .map((p) => p[0])
-            .join('')
-            .toUpperCase()
-            .slice(0, 2)
-        : currentWorker.initials,
-      location:
-        profile.city && profile.region
-          ? `${profile.city}, ${profile.region}`
-          : profile.city || profile.region || currentWorker.location,
-      isRegulixReady: profile.is_regulix_ready,
-      performanceScore: profile.performance_score ?? undefined,
-      profileCompletePct: profile.profile_complete_pct,
-      totalHoursWorked: profile.total_hours_worked ?? undefined,
-    }),
+    id: user?.id ?? '',
+    name: profile?.first_name ? `${profile.first_name} ${profile.last_name ?? ''}`.trim() : '',
+    initials: profile?.first_name
+      ? `${profile.first_name[0]}${profile.last_name?.[0] ?? ''}`.toUpperCase()
+      : '',
+    headline: profile?.primary_trade ?? '',
+    location:
+      profile?.city && profile?.region
+        ? `${profile.city}, ${profile.region}`
+        : profile?.city || profile?.region || '',
+    isRegulixReady: profile?.is_regulix_ready ?? false,
+    performanceScore: profile?.performance_score ?? undefined,
+    profileCompletePct: profile?.profile_complete_pct ?? 0,
+    totalHoursWorked: profile?.total_hours_worked ?? undefined,
+    skills: [] as { name: string }[],
   }
 
   const [applications, setApplications] = useState<Application[]>([])
@@ -129,7 +121,7 @@ export const WorkerDashboard: React.FC = () => {
   }, [user])
 
   const profileChecklist = [
-    { label: 'Basic Info', done: !!profile?.full_name },
+    { label: 'Basic Info', done: !!profile?.first_name },
     { label: 'Work Experience', done: false },
     { label: 'Skills', done: false },
     { label: 'Regulix Verified', done: worker.isRegulixReady },
@@ -227,51 +219,59 @@ export const WorkerDashboard: React.FC = () => {
       <div
         style={{
           background: 'var(--kt-surface)',
-          padding: '28px var(--kt-space-6)',
+          padding: '28px 0',
           borderBottom: '1px solid var(--kt-border)',
         }}
       >
-        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-            {/* Avatar */}
-            <div
-              style={{
-                width: 52,
-                height: 52,
-                borderRadius: '50%',
-                background: 'var(--kt-primary)',
-                color: 'var(--kt-primary-fg)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontWeight: 'var(--kt-weight-bold)',
-                fontSize: 'var(--kt-text-xl)',
-                border: '2px solid var(--kt-border)',
-              }}
-            >
-              {worker.initials}
-            </div>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                <h1
-                  style={{
-                    fontSize: 'var(--kt-text-xl)',
-                    fontWeight: 'var(--kt-weight-bold)',
-                    color: 'var(--kt-text)',
-                    margin: 0,
-                  }}
-                >
-                  Welcome back, {worker.name.split(' ')[0]}
-                </h1>
-                {worker.isRegulixReady && <RegulixBadge size="sm" />}
-              </div>
-              <p
-                style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text-muted)', margin: 0 }}
-              >
-                {worker.headline} · {worker.location}
-              </p>
-            </div>
+        <div
+          style={{
+            maxWidth: 'var(--kt-layout-max-width)',
+            margin: '0 auto',
+            padding: '0 var(--kt-space-6)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 14,
+          }}
+        >
+          {/* Avatar */}
+          <div
+            style={{
+              width: 52,
+              height: 52,
+              borderRadius: '50%',
+              background: 'var(--kt-primary)',
+              color: 'var(--kt-primary-fg)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: 'var(--kt-weight-bold)',
+              fontSize: 'var(--kt-text-xl)',
+              border: '2px solid var(--kt-border)',
+              flexShrink: 0,
+            }}
+          >
+            {worker.initials}
           </div>
+          {/* Name + subtitle */}
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+              <h1
+                style={{
+                  fontSize: 'var(--kt-text-xl)',
+                  fontWeight: 'var(--kt-weight-bold)',
+                  color: 'var(--kt-text)',
+                  margin: 0,
+                }}
+              >
+                Welcome back{worker.name ? `, ${worker.name.split(' ')[0]}` : ''}
+              </h1>
+              {worker.isRegulixReady && <RegulixBadge size="sm" />}
+            </div>
+            <p style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text-muted)', margin: 0 }}>
+              {[worker.headline, worker.location].filter(Boolean).join(' · ')}
+            </p>
+          </div>
+          {/* Actions */}
           <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
             <Link to="/site/profile/edit">
               <Button variant="outline" size="sm">
@@ -289,7 +289,7 @@ export const WorkerDashboard: React.FC = () => {
 
       <div
         style={{
-          maxWidth: 1200,
+          maxWidth: 'var(--kt-layout-max-width)',
           margin: '0 auto',
           padding: '28px var(--kt-space-6)',
           display: 'flex',
@@ -805,7 +805,7 @@ export const WorkerDashboard: React.FC = () => {
                     )}
                   </div>
                   <p style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text-muted)' }}>
-                    Based on {currentWorker.ratingCount} employer ratings
+                    Employer ratings
                     {worker.totalHoursWorked &&
                       ` · ${worker.totalHoursWorked.toLocaleString()} hours worked`}
                   </p>
@@ -819,105 +819,106 @@ export const WorkerDashboard: React.FC = () => {
         <div
           style={{ width: 260, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 16 }}
         >
-          {/* Profile Completion */}
-          <div
-            style={{
-              background: 'var(--kt-surface)',
-              border: '1px solid var(--kt-border)',
-              borderRadius: 'var(--kt-radius-lg)',
-              padding: 20,
-            }}
-          >
+          {/* Profile Completion — hidden once 100% */}
+          {worker.profileCompletePct < 100 && (
             <div
               style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: 12,
+                background: 'var(--kt-surface)',
+                border: '1px solid var(--kt-border)',
+                borderRadius: 'var(--kt-radius-lg)',
+                padding: 20,
               }}
             >
-              <h3
+              <div
                 style={{
-                  fontSize: 'var(--kt-text-sm)',
-                  fontWeight: 'var(--kt-weight-semibold)',
-                  color: 'var(--kt-text)',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: 12,
                 }}
               >
-                Profile Strength
-              </h3>
-              <span
-                style={{
-                  fontSize: 'var(--kt-text-sm)',
-                  fontWeight: 'var(--kt-weight-bold)',
-                  color: 'var(--kt-olive-700)',
-                }}
-              >
-                {worker.profileCompletePct}%
-              </span>
-            </div>
-            <Progress
-              value={worker.profileCompletePct}
-              color={
-                worker.profileCompletePct >= 90
-                  ? 'success'
-                  : worker.profileCompletePct >= 60
-                    ? 'warning'
-                    : 'danger'
-              }
-              size="sm"
-              style={{ marginBottom: 14 }}
-            />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {profileChecklist.map((item) => (
-                <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <div
-                    style={{
-                      width: 16,
-                      height: 16,
-                      borderRadius: '50%',
-                      background: item.done ? 'var(--kt-success)' : 'var(--kt-border)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
-                    }}
-                  >
-                    {item.done && (
-                      <svg
-                        width="9"
-                        height="7"
-                        viewBox="0 0 9 7"
-                        fill="none"
-                        stroke="white"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                      >
-                        <path d="M1 3.5l2.5 2.5 5-5" />
-                      </svg>
-                    )}
+                <h3
+                  style={{
+                    fontSize: 'var(--kt-text-sm)',
+                    fontWeight: 'var(--kt-weight-semibold)',
+                    color: 'var(--kt-text)',
+                  }}
+                >
+                  Profile Strength
+                </h3>
+                <span
+                  style={{
+                    fontSize: 'var(--kt-text-sm)',
+                    fontWeight: 'var(--kt-weight-bold)',
+                    color: 'var(--kt-olive-700)',
+                  }}
+                >
+                  {worker.profileCompletePct}%
+                </span>
+              </div>
+              <Progress
+                value={worker.profileCompletePct}
+                color={
+                  worker.profileCompletePct >= 90
+                    ? 'success'
+                    : worker.profileCompletePct >= 60
+                      ? 'warning'
+                      : 'danger'
+                }
+                size="sm"
+                style={{ marginBottom: 14 }}
+              />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {profileChecklist.map((item) => (
+                  <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div
+                      style={{
+                        width: 16,
+                        height: 16,
+                        borderRadius: '50%',
+                        background: item.done ? 'var(--kt-success)' : 'var(--kt-border)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                      }}
+                    >
+                      {item.done && (
+                        <svg
+                          width="9"
+                          height="7"
+                          viewBox="0 0 9 7"
+                          fill="none"
+                          stroke="white"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                        >
+                          <path d="M1 3.5l2.5 2.5 5-5" />
+                        </svg>
+                      )}
+                    </div>
+                    <span
+                      style={{
+                        fontSize: 'var(--kt-text-xs)',
+                        color: item.done ? 'var(--kt-text)' : 'var(--kt-text-muted)',
+                      }}
+                    >
+                      {item.label}
+                    </span>
                   </div>
-                  <span
-                    style={{
-                      fontSize: 'var(--kt-text-xs)',
-                      color: item.done ? 'var(--kt-text)' : 'var(--kt-text-muted)',
-                      textDecoration: item.done ? 'none' : 'none',
-                    }}
-                  >
-                    {item.label}
-                  </span>
-                </div>
-              ))}
+                ))}
+              </div>
+              <Divider style={{ margin: '14px 0' }} />
+              <Link
+                to={`/site/profile/${worker.id}`}
+                style={{ textDecoration: 'none', display: 'block' }}
+              >
+                <Button variant="outline" size="sm" style={{ width: '100%' }}>
+                  View My Profile
+                </Button>
+              </Link>
             </div>
-            <Divider style={{ margin: '14px 0' }} />
-            <Link
-              to={`/site/profile/${worker.id}`}
-              style={{ textDecoration: 'none', display: 'block' }}
-            >
-              <Button variant="outline" size="sm" style={{ width: '100%' }}>
-                View My Profile
-              </Button>
-            </Link>
-          </div>
+          )}
 
           {/* Quick Links */}
           <div
@@ -1036,15 +1037,8 @@ export const WorkerDashboard: React.FC = () => {
                     >
                       {skill.name}
                     </span>
-                    <span style={{ fontSize: 'var(--kt-text-xs)', color: 'var(--kt-text-muted)' }}>
-                      {skill.level}
-                    </span>
                   </div>
-                  <Progress
-                    value={skill.level === 'Expert' ? 95 : skill.level === 'Intermediate' ? 65 : 35}
-                    color={skill.level === 'Expert' ? 'success' : 'primary'}
-                    size="sm"
-                  />
+                  <Progress value={65} color="primary" size="sm" />
                 </div>
               ))}
             </div>

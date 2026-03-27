@@ -17,10 +17,15 @@ interface AuthState {
     email: string,
     password: string,
     persona: Persona,
-    displayName?: string
+    displayName?: string,
+    lastName?: string,
+    industry?: string,
+    companySize?: string
   ) => Promise<{ error: string | null; persona?: Persona }>
   logout: () => Promise<void>
   resendVerificationEmail: () => Promise<{ error: string | null }>
+  /** Initiates an email change — Supabase sends a confirmation link to the new address. */
+  updateEmail: (newEmail: string) => Promise<{ error: string | null }>
   /** Set persona without changing auth state (used on landing/signup choice screens) */
   setPersona: (p: Persona) => void
 }
@@ -36,6 +41,7 @@ const AuthContext = createContext<AuthState>({
   signUp: async () => ({ error: null, persona: undefined }),
   logout: async () => {},
   resendVerificationEmail: async () => ({ error: null }),
+  updateEmail: async () => ({ error: null }),
   setPersona: () => {},
 })
 
@@ -100,7 +106,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     email: string,
     password: string,
     role: Persona,
-    displayName = ''
+    displayName = '',
+    lastName = '',
+    industry = '',
+    companySize = ''
   ): Promise<{ error: string | null; persona?: Persona }> => {
     // Pass role + name in metadata — the handle_new_user trigger creates the rows
     const { data, error } = await supabase.auth.signUp({
@@ -109,8 +118,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       options: {
         data: {
           role,
-          full_name: role === 'worker' ? displayName : '',
+          first_name: role === 'worker' ? displayName : '',
+          last_name: role === 'worker' ? lastName : '',
           company_name: role === 'company' ? displayName : '',
+          industry: role === 'company' ? industry : '',
+          company_size: role === 'company' ? companySize : '',
         },
       },
     })
@@ -126,9 +138,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { error: null }
   }
 
+  const updateEmail = async (newEmail: string): Promise<{ error: string | null }> => {
+    const { error } = await supabase.auth.updateUser({ email: newEmail })
+    if (error) return { error: error.message }
+    return { error: null }
+  }
+
   const logout = async () => {
     await supabase.auth.signOut()
     setPersonaState(null)
+    localStorage.removeItem('kt_profile_edit_v6')
   }
 
   const setPersona = (p: Persona) => setPersonaState(p)
@@ -146,6 +165,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         signUp,
         logout,
         resendVerificationEmail,
+        updateEmail,
         setPersona,
       }}
     >
