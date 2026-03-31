@@ -44,6 +44,24 @@ with different dashboards, flows, and data access.
 - Mock data lives in `src/site/data/mock.ts` — replace with real service calls one file at a time
 - When replacing a mock import, add/update a function in `src/site/services/`
 
+## Services layer (current state — session 9)
+
+- `workerService.ts` — worker profile read/write, applications, events, saved count, recommended jobs, avatar/resume upload, `submitApplication()`
+- `jobService.ts` — `getJobs()`, `getJobById()`, `createJob()`, `updateJob()` (added session 9)
+- No service files yet for: company profile, messages, referrals, saved jobs, notifications
+
+## Screen completion status (session 9 — 2026-03-30)
+
+**Complete:** LandingPage, LoginPage, SignupRolePage, WorkerSignupPage, CompanySignupPage, PostJobPage (`/site/post-job`), EditJobPage (`/site/post-job/:id`), QuickApplyModal
+
+**In progress:** WorkerDashboard, WorkerProfileEditPage, WorkerProfilePage (public), JobsPage, JobDetailPage, CompanyDashboard
+
+**Stub / mock data only:** SavedJobsPage, MessagesPage, ReferralPage, CompanyProfilePage
+
+**Missing / not built:** Email verification landing, Company profile edit, Phone verification flow, Resume AI parsing (Vercel + Claude Haiku), Boost payment flow, Regulix connect/disconnect, Worker settings, Applicant detail view, 404 page, Post-apply confirmation screen
+
+**Journey map:** https://www.figma.com/design/dPKfI2yONW9L6wYs40HdWB (Drawbackwards team)
+
 ## Styling rules
 
 - CSS Modules for component-level scoping; inline styles for page-level layout
