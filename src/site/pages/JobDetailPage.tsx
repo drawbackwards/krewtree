@@ -1,15 +1,14 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { Badge, Button, Divider, Alert, Modal } from '../../components'
 import { RegulixBadge } from '../components/RegulixBadge/RegulixBadge'
 import { QuickApplyModal } from '../components/QuickApplyModal/QuickApplyModal'
-// TODO: replace with real Supabase query by job slug/id
-import { jobs, companyDetails } from '../data/mock'
+import { getJobById } from '../services/jobService'
+import type { Job } from '../types'
 import { useAuth } from '../context/AuthContext'
 import {
   CheckIcon,
   MapPinIcon,
-  ClockIcon,
   DollarIcon,
   UsersIcon,
   ShareIcon,
@@ -28,46 +27,11 @@ import {
   SearchIcon,
 } from '../icons'
 
-const preInterviewQuestions: Record<string, string[]> = {
-  j1: [
-    'How many years of commercial framing experience do you have?',
-    'Do you currently hold an OSHA 10 or OSHA 30 certification?',
-    'Do you have your own hand tools?',
-  ],
-  j2: [
-    'Are you able to lift 50 lbs repeatedly throughout a shift?',
-    'Do you have reliable transportation to the Glendale work site?',
-    'Are you available to start immediately?',
-  ],
-  j3: [
-    'Do you hold an active AZ CNA certification?',
-    'Are you CPR/BLS certified?',
-    "Do you have a valid driver's license and reliable vehicle?",
-  ],
-  j4: [
-    'Do you have experience with EMR software? Which systems?',
-    'How many years of medical office experience do you have?',
-  ],
-  j5: [
-    'Do you have 2+ years of kitchen experience?',
-    "Do you have an active AZ Food Handler's Card?",
-    'Are you available to work evenings and weekends?',
-  ],
-  j6: [
-    'Do you hold an active CDL-A license?',
-    'Is your DOT physical current?',
-    'How many years of Class A driving experience do you have?',
-  ],
-  j7: [
-    'Do you have prior landscaping or grounds maintenance experience?',
-    'Are you available for early morning start times (5:30 AM)?',
-    "Do you have a valid driver's license?",
-  ],
-  j8: [
-    'Do you have customer service experience in a food & beverage setting?',
-    'Are you available on weekends?',
-    "Do you have an AZ Food Handler's Card?",
-  ],
+const EXPERIENCE_LABELS: Record<string, string> = {
+  entry: 'Entry Level (0–1 yr)',
+  mid: 'Mid Level (1–3 yrs)',
+  senior: 'Senior (3–5 yrs)',
+  lead: 'Lead / Expert (5+ yrs)',
 }
 
 export const JobDetailPage: React.FC = () => {
@@ -83,11 +47,35 @@ export const JobDetailPage: React.FC = () => {
   const [manageOpen, setManageOpen] = useState(false)
   const [pauseDuration, setPauseDuration] = useState<'7d' | '30d' | 'indefinite'>('7d')
   const [manageAction, setManageAction] = useState<'pause' | 'archive'>('pause')
+  const [job, setJob] = useState<Job | null>(null)
+  const [jobLoading, setJobLoading] = useState(true)
+  const [jobError, setJobError] = useState<string | null>(null)
 
-  const job = jobs.find((j) => j.id === id)
-  const detail = job ? companyDetails.find((d) => d.companyId === job.companyId) : null
+  useEffect(() => {
+    if (!id) return
+    getJobById(id).then(({ data, error }) => {
+      setJob(data)
+      setJobError(error)
+      setJobLoading(false)
+    })
+  }, [id])
 
-  if (!job) {
+  if (jobLoading) {
+    return (
+      <div
+        style={{
+          minHeight: '60vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <p style={{ color: 'var(--kt-text-muted)', fontSize: 'var(--kt-text-sm)' }}>Loading…</p>
+      </div>
+    )
+  }
+
+  if (jobError || !job) {
     return (
       <div
         style={{
@@ -126,17 +114,13 @@ export const JobDetailPage: React.FC = () => {
     setTimeout(() => setCopied(false), 2000)
   }
 
-  const questions = preInterviewQuestions[job.id] ?? []
-  const postedLabel =
-    job.postedDaysAgo === 0
-      ? 'Today'
-      : job.postedDaysAgo === 1
-        ? 'Yesterday'
-        : `${job.postedDaysAgo} days ago`
-  const payLabel =
-    job.payType === 'hour'
+  const questions = job.preInterviewQuestions ?? []
+  const hasPayData = job.payMin > 0 && job.payMax > 0
+  const payLabel = hasPayData
+    ? job.payType === 'hour'
       ? `$${job.payMin}–$${job.payMax}/hr`
       : `$${((job.payMin * 2080) / 1000).toFixed(0)}K–$${((job.payMax * 2080) / 1000).toFixed(0)}K/yr`
+    : null
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--kt-bg)' }}>
@@ -280,9 +264,16 @@ export const JobDetailPage: React.FC = () => {
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16 }}>
                   {[
                     { icon: <MapPinIcon size={14} />, label: job.location },
-                    { icon: <DollarIcon size={14} />, label: payLabel },
-                    { icon: <ClockIcon size={14} />, label: `Posted ${postedLabel}` },
-                    ...(!isCompany
+                    ...(payLabel ? [{ icon: <DollarIcon size={14} />, label: payLabel }] : []),
+                    ...(job.experienceLevel && EXPERIENCE_LABELS[job.experienceLevel]
+                      ? [
+                          {
+                            icon: <StarIcon size={14} />,
+                            label: EXPERIENCE_LABELS[job.experienceLevel],
+                          },
+                        ]
+                      : []),
+                    ...(isCompany
                       ? [
                           {
                             icon: <UsersIcon size={14} />,
@@ -354,24 +345,26 @@ export const JobDetailPage: React.FC = () => {
             </div>
 
             {/* Skills */}
-            <div style={{ marginTop: 16, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-              {job.skills.map((s) => (
-                <span
-                  key={s}
-                  style={{
-                    padding: '4px 12px',
-                    borderRadius: 'var(--kt-radius-full)',
-                    background: 'var(--kt-primary-subtle)',
-                    color: 'var(--kt-primary)',
-                    fontSize: 'var(--kt-text-xs)',
-                    fontWeight: 'var(--kt-weight-medium)',
-                    border: '1px solid var(--kt-primary-subtle)',
-                  }}
-                >
-                  {s}
-                </span>
-              ))}
-            </div>
+            {job.skills.length > 0 && (
+              <div style={{ marginTop: 16, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {job.skills.map((s) => (
+                  <span
+                    key={s}
+                    style={{
+                      padding: '4px 12px',
+                      borderRadius: 'var(--kt-radius-full)',
+                      background: 'var(--kt-primary-subtle)',
+                      color: 'var(--kt-primary)',
+                      fontSize: 'var(--kt-text-xs)',
+                      fontWeight: 'var(--kt-weight-medium)',
+                      border: '1px solid var(--kt-primary-subtle)',
+                    }}
+                  >
+                    {s}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Regulix Ready Info Banner — worker view only; shown in sidebar for company */}
@@ -447,65 +440,67 @@ export const JobDetailPage: React.FC = () => {
           </div>
 
           {/* Requirements */}
-          <div
-            style={{
-              background: 'var(--kt-surface)',
-              border: '1px solid var(--kt-border)',
-              borderRadius: 'var(--kt-radius-lg)',
-              padding: 28,
-            }}
-          >
-            <h2
+          {job.requirements.length > 0 && (
+            <div
               style={{
-                fontSize: 'var(--kt-text-lg)',
-                fontWeight: 'var(--kt-weight-semibold)',
-                color: 'var(--kt-text)',
-                marginBottom: 16,
+                background: 'var(--kt-surface)',
+                border: '1px solid var(--kt-border)',
+                borderRadius: 'var(--kt-radius-lg)',
+                padding: 28,
               }}
             >
-              Requirements
-            </h2>
-            <ul
-              style={{
-                listStyle: 'none',
-                padding: 0,
-                margin: 0,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 10,
-              }}
-            >
-              {job.requirements.map((req, i) => (
-                <li key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                  <span
-                    style={{
-                      width: 20,
-                      height: 20,
-                      borderRadius: '50%',
-                      background: 'var(--kt-olive-100)',
-                      color: 'var(--kt-accent)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
-                      marginTop: 1,
-                    }}
-                  >
-                    <CheckIcon size={14} />
-                  </span>
-                  <span
-                    style={{
-                      fontSize: 'var(--kt-text-sm)',
-                      color: 'var(--kt-text)',
-                      lineHeight: 1.5,
-                    }}
-                  >
-                    {req}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
+              <h2
+                style={{
+                  fontSize: 'var(--kt-text-lg)',
+                  fontWeight: 'var(--kt-weight-semibold)',
+                  color: 'var(--kt-text)',
+                  marginBottom: 16,
+                }}
+              >
+                Requirements
+              </h2>
+              <ul
+                style={{
+                  listStyle: 'none',
+                  padding: 0,
+                  margin: 0,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 10,
+                }}
+              >
+                {job.requirements.map((req, i) => (
+                  <li key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                    <span
+                      style={{
+                        width: 20,
+                        height: 20,
+                        borderRadius: '50%',
+                        background: 'var(--kt-olive-100)',
+                        color: 'var(--kt-accent)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                        marginTop: 1,
+                      }}
+                    >
+                      <CheckIcon size={14} />
+                    </span>
+                    <span
+                      style={{
+                        fontSize: 'var(--kt-text-sm)',
+                        color: 'var(--kt-text)',
+                        lineHeight: 1.5,
+                      }}
+                    >
+                      {req}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           {/* Pre-Interview Questions Preview */}
           {questions.length > 0 && (
@@ -614,7 +609,7 @@ export const JobDetailPage: React.FC = () => {
               }}
             >
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <Link to="/site/post-job" style={{ textDecoration: 'none' }}>
+                <Link to={`/site/post-job/${job.id}`} style={{ textDecoration: 'none' }}>
                   <Button variant="primary" style={{ width: '100%' }}>
                     Edit Job
                   </Button>
@@ -988,7 +983,7 @@ export const JobDetailPage: React.FC = () => {
               ))}
             </div>
 
-            {detail && (
+            {job.company.reviewCount != null && job.company.reviewCount > 0 && (
               <div
                 style={{
                   padding: '10px 12px',
@@ -1007,7 +1002,7 @@ export const JobDetailPage: React.FC = () => {
                         key={i}
                         size={11}
                         color={
-                          i <= Math.round(detail.avgRating)
+                          i <= Math.round(job.company.avgRating ?? 0)
                             ? 'var(--kt-rating)'
                             : 'var(--kt-border-strong)'
                         }
@@ -1015,7 +1010,7 @@ export const JobDetailPage: React.FC = () => {
                     ))}
                   </div>
                   <span style={{ fontSize: 'var(--kt-text-xs)', color: 'var(--kt-text-muted)' }}>
-                    {detail.reviewCount} reviews
+                    {job.company.reviewCount} reviews
                   </span>
                 </div>
                 <Link
@@ -1077,37 +1072,34 @@ export const JobDetailPage: React.FC = () => {
               Similar Jobs
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {jobs
-                .filter((j) => j.industrySlug === job.industrySlug && j.id !== job.id)
-                .slice(0, 3)
-                .map((j) => (
-                  <Link
-                    key={j.id}
-                    to={`/site/jobs/${j.id}`}
+              {([] as Job[]).map((j) => (
+                <Link
+                  key={j.id}
+                  to={`/site/jobs/${j.id}`}
+                  style={{
+                    textDecoration: 'none',
+                    display: 'block',
+                    padding: '10px 12px',
+                    borderRadius: 'var(--kt-radius-md)',
+                    border: '1px solid var(--kt-border)',
+                    background: 'var(--kt-bg)',
+                  }}
+                >
+                  <p
                     style={{
-                      textDecoration: 'none',
-                      display: 'block',
-                      padding: '10px 12px',
-                      borderRadius: 'var(--kt-radius-md)',
-                      border: '1px solid var(--kt-border)',
-                      background: 'var(--kt-bg)',
+                      fontSize: 'var(--kt-text-sm)',
+                      fontWeight: 'var(--kt-weight-medium)',
+                      color: 'var(--kt-text)',
+                      marginBottom: 3,
                     }}
                   >
-                    <p
-                      style={{
-                        fontSize: 'var(--kt-text-sm)',
-                        fontWeight: 'var(--kt-weight-medium)',
-                        color: 'var(--kt-text)',
-                        marginBottom: 3,
-                      }}
-                    >
-                      {j.title}
-                    </p>
-                    <p style={{ fontSize: 'var(--kt-text-xs)', color: 'var(--kt-text-muted)' }}>
-                      {j.company.name} · ${j.payMin}–${j.payMax}/hr
-                    </p>
-                  </Link>
-                ))}
+                    {j.title}
+                  </p>
+                  <p style={{ fontSize: 'var(--kt-text-xs)', color: 'var(--kt-text-muted)' }}>
+                    {j.company.name} · ${j.payMin}–${j.payMax}/hr
+                  </p>
+                </Link>
+              ))}
             </div>
           </div>
         </div>

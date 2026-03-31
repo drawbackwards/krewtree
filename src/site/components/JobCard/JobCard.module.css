@@ -45,21 +45,22 @@
 
 .header {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: flex-start;
   gap: var(--kt-space-3);
 }
 
 .companyLogo {
-  width: 48px;
-  height: 48px;
+  width: 64px;
+  min-height: 64px;
+  align-self: stretch;
   border-radius: var(--kt-radius-md);
   background-color: var(--kt-grey-100);
   color: var(--kt-grey-700);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: var(--kt-text-md);
+  font-size: var(--kt-text-xl);
   font-weight: var(--kt-weight-bold);
   flex-shrink: 0;
   font-family: var(--kt-font-sans);
@@ -69,6 +70,9 @@
 .headerText {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .jobTitle {
@@ -76,7 +80,6 @@
   font-weight: var(--kt-weight-semibold);
   color: var(--kt-grey-900);
   line-height: var(--kt-leading-tight);
-  margin-bottom: 4px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -85,7 +88,8 @@
 
 .companyName {
   font-size: var(--kt-text-sm);
-  color: var(--kt-text-muted);
+  font-weight: var(--kt-weight-semibold);
+  color: var(--kt-grey-800);
   display: flex;
   align-items: center;
   gap: 5px;
@@ -98,9 +102,18 @@
 
 .meta {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--kt-space-2);
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--kt-space-1) var(--kt-space-3);
+}
+
+.postedDate {
+  font-size: var(--kt-text-xs);
+  color: var(--kt-text-placeholder);
+  white-space: nowrap;
+  flex-shrink: 0;
+  padding-top: 2px;
 }
 
 .metaItem {
@@ -115,6 +128,16 @@
   display: flex;
   opacity: 0.5;
   flex-shrink: 0;
+}
+
+.description {
+  font-size: var(--kt-text-sm);
+  color: var(--kt-text-muted);
+  line-height: var(--kt-leading-relaxed);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .skills {
@@ -133,14 +156,43 @@
   border: 1px solid var(--kt-navy-100);
 }
 
+.skillMore {
+  font-size: var(--kt-text-xs);
+  font-weight: var(--kt-weight-medium);
+  color: var(--kt-text-muted);
+  padding: 4px 6px;
+  align-self: center;
+}
+
 .footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--kt-space-3);
-  padding-top: var(--kt-space-4);
+  padding-top: var(--kt-space-3);
   border-top: 1px solid var(--kt-border);
-  flex-wrap: wrap;
+}
+
+.quickApplyBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  background: var(--kt-olive-700);
+  color: white;
+  border: none;
+  border-radius: var(--kt-radius-md);
+  font-size: var(--kt-text-sm);
+  font-weight: var(--kt-weight-semibold);
+  cursor: pointer;
+  font-family: var(--kt-font-sans);
+  white-space: nowrap;
+  transition: background var(--kt-duration-fast) var(--kt-ease);
+  flex-shrink: 0;
+}
+
+.quickApplyBtn:hover {
+  background: var(--kt-olive-800);
 }
 
 .pay {

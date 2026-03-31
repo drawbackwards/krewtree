@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import { Input, Textarea, Select, Button, Badge, Alert, Switch, Divider } from '../../components'
 import { RegulixBadge } from '../components/RegulixBadge/RegulixBadge'
 import { RegulixMarkIcon, StarIcon, PlusIcon, CelebrationIcon, LightningIcon } from '../icons'
-// TODO: replace with real Supabase query for industries list
 import { industries } from '../data/mock'
+import { createJob } from '../services/jobService'
+import { useAuth } from '../context/AuthContext'
 
 // ── Suggested skills by industry ────────────────────────────────────────────
 
@@ -162,7 +163,9 @@ const experienceOptions = [
 
 export const PostJobPage: React.FC = () => {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [submitted, setSubmitted] = useState(false)
+  const [submitError, setSubmitError] = useState('')
 
   // Form state
   const [title, setTitle] = useState('')
@@ -226,11 +229,39 @@ export const PostJobPage: React.FC = () => {
     return Object.keys(e).length === 0
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!validate()) return
+    if (!user) return
+    setSubmitError('')
+
+    const selectedIndustry = industries.find((ind) => ind.slug === industry)
+    const { data, error } = await createJob({
+      companyId: user.id,
+      title: title.trim(),
+      industry: selectedIndustry?.name ?? industry,
+      industrySlug: industry,
+      type: jobType as 'Full-time' | 'Part-time' | 'Contract' | 'Temporary',
+      location: location.trim(),
+      payMin: payMin ? Number(payMin) : null,
+      payMax: payMax ? Number(payMax) : null,
+      payType: payType as 'hour' | 'salary',
+      description: description.trim(),
+      requirements: requirements
+        .split('\n')
+        .map((r) => r.trim())
+        .filter(Boolean),
+      skills: parsedSkills,
+      isSponsored: sponsorMode === 'on',
+    })
+
+    if (error) {
+      setSubmitError(error)
+      return
+    }
+
     setSubmitted(true)
-    setTimeout(() => navigate('/site/jobs/j1'), 2500)
+    setTimeout(() => navigate(`/site/jobs/${data?.id ?? ''}`), 2500)
   }
 
   if (submitted) {
@@ -330,6 +361,7 @@ export const PostJobPage: React.FC = () => {
           {Object.keys(errors).length > 0 && (
             <Alert variant="danger">Please fix the errors below before submitting.</Alert>
           )}
+          {submitError && <Alert variant="danger">{submitError}</Alert>}
 
           {/* Basic Info */}
           <Section

@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { Modal } from '../../../components'
 import type { Job } from '../../types'
 import { useAuth } from '../../context/AuthContext'
+import { submitApplication } from '../../services/jobService'
 import {
   HourglassIcon,
   RocketIcon,
@@ -38,6 +39,7 @@ export const QuickApplyModal: React.FC<QuickApplyModalProps> = ({
   const [resendLoading, setResendLoading] = useState(false)
   const [resendSent, setResendSent] = useState(false)
   const [resendError, setResendError] = useState('')
+  const [submitError, setSubmitError] = useState('')
 
   const handleResend = async () => {
     setResendLoading(true)
@@ -51,14 +53,20 @@ export const QuickApplyModal: React.FC<QuickApplyModalProps> = ({
     }
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    if (!job || !user) return
     setLoading(true)
+    setSubmitError('')
     setSubmittedWithBoost(wantBoost)
-    setTimeout(() => {
-      setLoading(false)
-      setSubmitted(true)
-      onApplied?.(job?.id ?? '')
-    }, 900)
+    const { error } = await submitApplication(job.id, user.id, coverNote, wantBoost)
+    setLoading(false)
+    if (error) {
+      setSubmitError(error)
+      setSubmittedWithBoost(false)
+      return
+    }
+    setSubmitted(true)
+    onApplied?.(job.id)
   }
 
   const handleClose = () => {
@@ -69,6 +77,7 @@ export const QuickApplyModal: React.FC<QuickApplyModalProps> = ({
       setCoverNote('')
       setWantBoost(false)
       setSubmittedWithBoost(false)
+      setSubmitError('')
     }, 300)
   }
 
@@ -321,6 +330,17 @@ export const QuickApplyModal: React.FC<QuickApplyModalProps> = ({
               Your full profile, work history, and Regulix verification are included automatically.
             </div>
           </div>
+
+          {submitError && (
+            <p
+              style={{
+                fontSize: 'var(--kt-text-sm)',
+                color: 'var(--kt-error, #c0392b)',
+              }}
+            >
+              {submitError}
+            </p>
+          )}
 
           {/* Boost toggle */}
           <div

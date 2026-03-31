@@ -22,6 +22,8 @@ export type Company = {
   description: string
   size: string
   website: string
+  avgRating?: number
+  reviewCount?: number
 }
 
 export type WorkerSkill = { name: string; level: 'Beginner' | 'Intermediate' | 'Expert' }
@@ -74,6 +76,9 @@ export type Job = {
   totalApplicants: number
   postedDaysAgo: number
   status: 'active' | 'paused' | 'closed'
+  experienceLevel?: string | null
+  preInterviewQuestions?: string[]
+  autoPauseLimit?: number | null
 }
 
 export type Application = {
