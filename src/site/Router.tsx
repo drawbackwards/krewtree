@@ -89,6 +89,7 @@ export const SiteRouter: React.FC = () => (
         <Route element={<RequireAuth persona="company" />}>
           <Route path="/site/dashboard/company" element={<CompanyDashboard />} />
           <Route path="/site/post-job" element={<PostJobPage />} />
+          <Route path="/site/post-job/:id" element={<PostJobPage />} />
         </Route>
 
         {/* Requires auth (any persona) */}

@@ -1,17 +1,13 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Input, Badge } from '../../components'
 import { JobCard } from '../components/JobCard/JobCard'
 import { QuickApplyModal } from '../components/QuickApplyModal/QuickApplyModal'
 import type { SavedSearch, Job } from '../types'
-// TODO: replace with real Supabase queries (jobs list, industries, locations, saved searches)
-import {
-  jobs,
-  industries,
-  locationRegions,
-  savedSearches as initialSavedSearches,
-} from '../data/mock'
-import { LocationIcon, SearchIcon, LightningIcon } from '../icons'
+import { getJobs } from '../services/jobService'
+// TODO: replace with real Supabase queries (industries, locations, saved searches)
+import { industries, locationRegions, savedSearches as initialSavedSearches } from '../data/mock'
+import { LocationIcon, SearchIcon } from '../icons'
 
 const TYPES = ['Full-time', 'Part-time', 'Contract', 'Temporary']
 const PAY_RANGES = [
@@ -124,6 +120,20 @@ export const JobsPage: React.FC = () => {
   const sortBy = (searchParams.get('sort') ?? 'recent') as 'recent' | 'pay' | 'applicants'
   const page = Number(searchParams.get('page') ?? '1')
 
+  // ---- Jobs data (Supabase) ----
+  const [allJobs, setAllJobs] = useState<Job[]>([])
+  const [jobsLoading, setJobsLoading] = useState(true)
+  const [jobsError, setJobsError] = useState<string | null>(null)
+
+  useEffect(() => {
+    setJobsLoading(true)
+    getJobs().then(({ data, error }) => {
+      if (error) setJobsError(error)
+      else setAllJobs(data)
+      setJobsLoading(false)
+    })
+  }, [])
+
   // ---- Local UI state (not URL-syncable) ----
   const [locationView, setLocationView] = useState(false)
   const [quickApplyJob, setQuickApplyJob] = useState<Job | null>(null)
@@ -168,7 +178,7 @@ export const JobsPage: React.FC = () => {
   }
 
   const filtered = useMemo(() => {
-    let list = [...jobs]
+    let list = [...allJobs]
     if (searchQ.trim()) {
       const q = searchQ.toLowerCase()
       list = list.filter(
@@ -193,7 +203,16 @@ export const JobsPage: React.FC = () => {
       return b.totalApplicants - a.totalApplicants
     })
     return list
-  }, [searchQ, selectedIndustries, selectedTypes, regulixOnly, sponsoredOnly, payRangeIdx, sortBy])
+  }, [
+    allJobs,
+    searchQ,
+    selectedIndustries,
+    selectedTypes,
+    regulixOnly,
+    sponsoredOnly,
+    payRangeIdx,
+    sortBy,
+  ])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
@@ -869,7 +888,21 @@ export const JobsPage: React.FC = () => {
                 </div>
               </div>
 
-              {filtered.length === 0 ? (
+              {jobsLoading ? (
+                <div
+                  style={{ textAlign: 'center', padding: '60px 0', color: 'var(--kt-text-muted)' }}
+                >
+                  <p style={{ fontSize: 'var(--kt-text-sm)' }}>Loading jobs…</p>
+                </div>
+              ) : jobsError ? (
+                <div
+                  style={{ textAlign: 'center', padding: '60px 0', color: 'var(--kt-text-muted)' }}
+                >
+                  <p style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-danger)' }}>
+                    {jobsError}
+                  </p>
+                </div>
+              ) : filtered.length === 0 ? (
                 <div
                   style={{ textAlign: 'center', padding: '60px 0', color: 'var(--kt-text-muted)' }}
                 >
@@ -893,44 +926,7 @@ export const JobsPage: React.FC = () => {
                 <>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                     {paginated.map((job) => (
-                      <div key={job.id} style={{ position: 'relative' }}>
-                        <JobCard job={job} />
-                        <div
-                          style={{
-                            position: 'absolute',
-                            bottom: 16,
-                            right: 16,
-                          }}
-                        >
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setQuickApplyJob(job)
-                            }}
-                            style={{
-                              padding: '6px 14px',
-                              background: 'var(--kt-olive-700)',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: 'var(--kt-radius-md)',
-                              fontSize: 'var(--kt-text-xs)',
-                              fontWeight: 'var(--kt-weight-semibold)',
-                              cursor: 'pointer',
-                              fontFamily: 'var(--kt-font-sans)',
-                              whiteSpace: 'nowrap',
-                              transition: 'background 0.15s',
-                            }}
-                            onMouseEnter={(e) =>
-                              (e.currentTarget.style.background = 'var(--kt-olive-800)')
-                            }
-                            onMouseLeave={(e) =>
-                              (e.currentTarget.style.background = 'var(--kt-olive-700)')
-                            }
-                          >
-                            <LightningIcon size={12} /> Quick Apply
-                          </button>
-                        </div>
-                      </div>
+                      <JobCard key={job.id} job={job} onQuickApply={() => setQuickApplyJob(job)} />
                     ))}
                   </div>
 

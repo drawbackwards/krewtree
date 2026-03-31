@@ -1,8 +1,10 @@
-import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Input, Textarea, Select, Button, Badge, Alert, Switch, Divider } from '../../components'
+import React, { useState, useEffect } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import { Input, Textarea, Select, Button, Badge, Switch, Divider } from '../../components'
 import { RegulixBadge } from '../components/RegulixBadge/RegulixBadge'
 import { RegulixMarkIcon, StarIcon, PlusIcon, CelebrationIcon, LightningIcon } from '../icons'
+import { useAuth } from '../context/AuthContext'
+import { createJob, updateJob, getJobById } from '../services/jobService'
 // TODO: replace with real Supabase query for industries list
 import { industries } from '../data/mock'
 
@@ -162,7 +164,12 @@ const experienceOptions = [
 
 export const PostJobPage: React.FC = () => {
   const navigate = useNavigate()
+  const { id: editId } = useParams<{ id?: string }>()
+  const isEdit = !!editId
+  const { user } = useAuth()
   const [submitted, setSubmitted] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
+  const [loadingEdit, setLoadingEdit] = useState(isEdit)
 
   // Form state
   const [title, setTitle] = useState('')
@@ -182,12 +189,43 @@ export const PostJobPage: React.FC = () => {
   const [appLimit, setAppLimit] = useState('50')
   const [urgentHiring, setUrgentHiring] = useState(false)
   const [regulixPreferred, setRegulixPreferred] = useState(false)
+  const [autoPauseEnabled, setAutoPauseEnabled] = useState(false)
+  const [autoPauseLimit, setAutoPauseLimit] = useState('50')
   const [questions, setQuestions] = useState<string[]>([''])
 
   const estimatedCost =
     stopMode === 'limit' ? `$${(Number(appLimit) * 38).toLocaleString()}` : 'pay-per-application'
 
   const [errors, setErrors] = useState<Record<string, string>>({})
+
+  // Pre-fill form when editing an existing job
+  useEffect(() => {
+    if (!editId) return
+    getJobById(editId).then(({ data }) => {
+      if (data) {
+        setTitle(data.title)
+        setIndustry(data.industrySlug)
+        setJobType(data.type)
+        setLocation(data.location)
+        setPayMin(data.payMin > 0 ? String(data.payMin) : '')
+        setPayMax(data.payMax > 0 ? String(data.payMax) : '')
+        setPayType(data.payType)
+        setDescription(data.description)
+        setRequirements(data.requirements.join('\n'))
+        setParsedSkills(data.skills)
+        setSponsorMode(data.isSponsored ? 'on' : 'off')
+        if (data.experienceLevel) setExperience(data.experienceLevel)
+        if (data.preInterviewQuestions && data.preInterviewQuestions.length > 0) {
+          setQuestions(data.preInterviewQuestions)
+        }
+        if (data.autoPauseLimit != null) {
+          setAutoPauseEnabled(true)
+          setAutoPauseLimit(String(data.autoPauseLimit))
+        }
+      }
+      setLoadingEdit(false)
+    })
+  }, [editId, user])
 
   // Skills
   const addSkill = (skill?: string) => {
@@ -226,11 +264,69 @@ export const PostJobPage: React.FC = () => {
     return Object.keys(e).length === 0
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!validate()) return
-    setSubmitted(true)
-    setTimeout(() => navigate('/site/jobs/j1'), 2500)
+    if (!user) return
+
+    setSubmitError(null)
+
+    const industryName = industries.find((i) => i.slug === industry)?.name ?? industry
+    const jobPayload = {
+      company_id: user.id,
+      title: title.trim(),
+      industry: industryName,
+      industry_slug: industry,
+      type: jobType as 'Full-time' | 'Part-time' | 'Contract' | 'Temporary',
+      location: location.trim(),
+      pay_min: payMin ? Number(payMin) : null,
+      pay_max: payMax ? Number(payMax) : null,
+      pay_type: payType as 'hour' | 'salary',
+      description: description.trim(),
+      requirements: requirements
+        .split('\n')
+        .map((r) => r.trim())
+        .filter(Boolean),
+      skills: parsedSkills,
+      is_sponsored: sponsorMode === 'on',
+      status: 'active' as const,
+      pre_interview_questions: questions.filter((q) => q.trim()),
+      auto_pause_limit: autoPauseEnabled ? Number(autoPauseLimit) || null : null,
+      experience_level: experience || null,
+    }
+
+    if (isEdit && editId) {
+      const { error } = await updateJob(editId, jobPayload)
+      if (error) {
+        setSubmitError(error)
+        return
+      }
+      setSubmitted(true)
+      setTimeout(() => navigate(`/site/jobs/${editId}`), 2500)
+    } else {
+      const { id, error } = await createJob(jobPayload)
+      if (error || !id) {
+        setSubmitError(error ?? 'Something went wrong. Please try again.')
+        return
+      }
+      setSubmitted(true)
+      setTimeout(() => navigate(`/site/jobs/${id}`), 2500)
+    }
+  }
+
+  if (loadingEdit) {
+    return (
+      <div
+        style={{
+          minHeight: '60vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <p style={{ color: 'var(--kt-text-muted)', fontSize: 'var(--kt-text-sm)' }}>Loading job…</p>
+      </div>
+    )
   }
 
   if (submitted) {
@@ -307,10 +403,12 @@ export const PostJobPage: React.FC = () => {
               letterSpacing: '-0.02em',
             }}
           >
-            Post a Job
+            {isEdit ? 'Edit Job' : 'Post a Job'}
           </h1>
           <p style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text-muted)' }}>
-            Fill in the details below to publish your job listing to thousands of qualified workers.
+            {isEdit
+              ? 'Update your job listing details below.'
+              : 'Fill in the details below to publish your job listing to thousands of qualified workers.'}
           </p>
         </div>
       </div>
@@ -327,10 +425,6 @@ export const PostJobPage: React.FC = () => {
             gap: 20,
           }}
         >
-          {Object.keys(errors).length > 0 && (
-            <Alert variant="danger">Please fix the errors below before submitting.</Alert>
-          )}
-
           {/* Basic Info */}
           <Section
             title="Basic Information"
@@ -665,7 +759,94 @@ export const PostJobPage: React.FC = () => {
             title="Listing Options"
             subtitle="Boost your listing's visibility and attract hire-ready candidates."
           >
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {/* Auto-pause on application limit */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  justifyContent: 'space-between',
+                  gap: 16,
+                  padding: '16px 18px',
+                  background: autoPauseEnabled ? 'rgba(109, 117, 49, 0.07)' : 'var(--kt-bg)',
+                  border: `1px solid ${autoPauseEnabled ? 'var(--kt-accent)' : 'var(--kt-border)'}`,
+                  borderRadius: 'var(--kt-radius-md)',
+                  transition: 'all var(--kt-duration-fast)',
+                }}
+              >
+                <div style={{ flex: 1 }}>
+                  <p
+                    style={{
+                      fontSize: 'var(--kt-text-sm)',
+                      fontWeight: 'var(--kt-weight-semibold)',
+                      color: 'var(--kt-text)',
+                      marginBottom: 3,
+                    }}
+                  >
+                    Auto-pause on application limit
+                  </p>
+                  <p
+                    style={{
+                      fontSize: 'var(--kt-text-xs)',
+                      color: 'var(--kt-text-muted)',
+                      lineHeight: 1.5,
+                      marginBottom: autoPauseEnabled ? 12 : 0,
+                    }}
+                  >
+                    Automatically pause this listing once a set number of applications have been
+                    received. You can reactivate it at any time.
+                  </p>
+                  {autoPauseEnabled && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <p
+                        style={{
+                          fontSize: 'var(--kt-text-sm)',
+                          color: 'var(--kt-text)',
+                          margin: 0,
+                        }}
+                      >
+                        Pause after
+                      </p>
+                      <input
+                        type="number"
+                        min="1"
+                        max="9999"
+                        value={autoPauseLimit}
+                        onChange={(e) => setAutoPauseLimit(e.target.value)}
+                        style={{
+                          width: 72,
+                          padding: '4px 8px',
+                          border: '1px solid var(--kt-border-strong)',
+                          borderRadius: 'var(--kt-radius-sm)',
+                          fontSize: 'var(--kt-text-sm)',
+                          color: 'var(--kt-text)',
+                          background: 'var(--kt-surface)',
+                          fontFamily: 'var(--kt-font-sans)',
+                          outline: 'none',
+                          textAlign: 'center',
+                        }}
+                        onFocus={(e) => (e.target.style.borderColor = 'var(--kt-accent)')}
+                        onBlur={(e) => (e.target.style.borderColor = 'var(--kt-border-strong)')}
+                      />
+                      <p
+                        style={{
+                          fontSize: 'var(--kt-text-sm)',
+                          color: 'var(--kt-text)',
+                          margin: 0,
+                        }}
+                      >
+                        applications
+                      </p>
+                    </div>
+                  )}
+                </div>
+                <Switch
+                  checked={autoPauseEnabled}
+                  onChange={(e) => setAutoPauseEnabled(e.target.checked)}
+                  aria-label="Auto-pause listing"
+                />
+              </div>
+
               {/* Regulix Preferred */}
               <div
                 style={{
@@ -1033,21 +1214,55 @@ export const PostJobPage: React.FC = () => {
           </Section>
 
           {/* Submit */}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, paddingBottom: 40 }}>
-            <Button
-              type="button"
-              variant="ghost"
-              size="lg"
-              onClick={() => navigate('/site/dashboard/company')}
-            >
-              Cancel
-            </Button>
-            <Button type="button" variant="outline" size="lg" onClick={() => {}}>
-              Save Draft
-            </Button>
-            <Button type="submit" variant="primary" size="lg">
-              Publish Job
-            </Button>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'flex-end',
+              gap: 10,
+              paddingBottom: 40,
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
+              <Button
+                type="button"
+                variant="ghost"
+                size="lg"
+                onClick={() => navigate('/site/dashboard/company')}
+              >
+                Cancel
+              </Button>
+              <Button type="button" variant="outline" size="lg" onClick={() => {}}>
+                Save Draft
+              </Button>
+              <Button type="submit" variant="primary" size="lg">
+                {isEdit ? 'Save Changes' : 'Publish Job'}
+              </Button>
+            </div>
+            {Object.keys(errors).length > 0 && (
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: 'var(--kt-text-sm)',
+                  color: 'var(--kt-danger)',
+                  textAlign: 'right',
+                }}
+              >
+                Please fix the errors above before publishing.
+              </p>
+            )}
+            {submitError && (
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: 'var(--kt-text-sm)',
+                  color: 'var(--kt-danger)',
+                  textAlign: 'right',
+                }}
+              >
+                {submitError}
+              </p>
+            )}
           </div>
         </div>
       </form>

@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { Modal } from '../../../components'
 import type { Job } from '../../types'
 import { useAuth } from '../../context/AuthContext'
+import { submitApplication } from '../../services/workerService'
 import {
   HourglassIcon,
   RocketIcon,
@@ -35,6 +36,7 @@ export const QuickApplyModal: React.FC<QuickApplyModalProps> = ({
   const [loading, setLoading] = useState(false)
   const [wantBoost, setWantBoost] = useState(false)
   const [submittedWithBoost, setSubmittedWithBoost] = useState(false)
+  const [applyError, setApplyError] = useState<string | null>(null)
   const [resendLoading, setResendLoading] = useState(false)
   const [resendSent, setResendSent] = useState(false)
   const [resendError, setResendError] = useState('')
@@ -51,14 +53,19 @@ export const QuickApplyModal: React.FC<QuickApplyModalProps> = ({
     }
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    if (!user || !job) return
     setLoading(true)
+    setApplyError(null)
     setSubmittedWithBoost(wantBoost)
-    setTimeout(() => {
-      setLoading(false)
-      setSubmitted(true)
-      onApplied?.(job?.id ?? '')
-    }, 900)
+    const { error } = await submitApplication(user.id, job.id, coverNote, wantBoost)
+    setLoading(false)
+    if (error) {
+      setApplyError(error)
+      return
+    }
+    setSubmitted(true)
+    onApplied?.(job.id)
   }
 
   const handleClose = () => {
@@ -69,6 +76,7 @@ export const QuickApplyModal: React.FC<QuickApplyModalProps> = ({
       setCoverNote('')
       setWantBoost(false)
       setSubmittedWithBoost(false)
+      setApplyError(null)
     }, 300)
   }
 
@@ -126,58 +134,72 @@ export const QuickApplyModal: React.FC<QuickApplyModalProps> = ({
             Done
           </button>
         ) : (
-          <div style={{ display: 'flex', gap: 'var(--kt-space-3)' }}>
-            <button
-              onClick={handleClose}
-              style={{
-                flex: 1,
-                padding: 'var(--kt-space-3)',
-                background: 'transparent',
-                color: 'var(--kt-text)',
-                border: '1px solid var(--kt-border)',
-                borderRadius: 'var(--kt-radius-md)',
-                fontSize: 'var(--kt-text-sm)',
-                fontWeight: 'var(--kt-weight-medium)',
-                cursor: 'pointer',
-                fontFamily: 'var(--kt-font-sans)',
-              }}
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleSubmit}
-              disabled={loading}
-              style={{
-                flex: 2,
-                padding: 'var(--kt-space-3)',
-                background: loading ? 'var(--kt-border)' : 'var(--kt-primary)',
-                color: 'var(--kt-text-on-primary)',
-                border: 'none',
-                borderRadius: 'var(--kt-radius-md)',
-                fontSize: 'var(--kt-text-sm)',
-                fontWeight: 'var(--kt-weight-semibold)',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                fontFamily: 'var(--kt-font-sans)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 'var(--kt-space-2)',
-              }}
-            >
-              {loading ? (
-                <>
-                  <HourglassIcon size={14} /> Submitting...
-                </>
-              ) : wantBoost ? (
-                <>
-                  <RocketIcon size={14} /> Apply + Boost — $9.99
-                </>
-              ) : (
-                <>
-                  <LightningIcon size={14} /> Submit Application
-                </>
-              )}
-            </button>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--kt-space-2)' }}>
+            {applyError && (
+              <p
+                style={{
+                  fontSize: 'var(--kt-text-xs)',
+                  color: 'var(--kt-danger)',
+                  textAlign: 'right',
+                  margin: 0,
+                }}
+              >
+                {applyError}
+              </p>
+            )}
+            <div style={{ display: 'flex', gap: 'var(--kt-space-3)' }}>
+              <button
+                onClick={handleClose}
+                style={{
+                  flex: 1,
+                  padding: 'var(--kt-space-3)',
+                  background: 'transparent',
+                  color: 'var(--kt-text)',
+                  border: '1px solid var(--kt-border)',
+                  borderRadius: 'var(--kt-radius-md)',
+                  fontSize: 'var(--kt-text-sm)',
+                  fontWeight: 'var(--kt-weight-medium)',
+                  cursor: 'pointer',
+                  fontFamily: 'var(--kt-font-sans)',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSubmit}
+                disabled={loading}
+                style={{
+                  flex: 2,
+                  padding: 'var(--kt-space-3)',
+                  background: loading ? 'var(--kt-border)' : 'var(--kt-primary)',
+                  color: 'var(--kt-text-on-primary)',
+                  border: 'none',
+                  borderRadius: 'var(--kt-radius-md)',
+                  fontSize: 'var(--kt-text-sm)',
+                  fontWeight: 'var(--kt-weight-semibold)',
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  fontFamily: 'var(--kt-font-sans)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 'var(--kt-space-2)',
+                }}
+              >
+                {loading ? (
+                  <>
+                    <HourglassIcon size={14} /> Submitting...
+                  </>
+                ) : wantBoost ? (
+                  <>
+                    <RocketIcon size={14} /> Apply + Boost — $9.99
+                  </>
+                ) : (
+                  <>
+                    <LightningIcon size={14} /> Submit Application
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         )
       }

@@ -74,6 +74,9 @@ export type Job = {
   totalApplicants: number
   postedDaysAgo: number
   status: 'active' | 'paused' | 'closed'
+  preInterviewQuestions?: string[]
+  autoPauseLimit?: number | null
+  experienceLevel?: string | null
 }
 
 export type Application = {

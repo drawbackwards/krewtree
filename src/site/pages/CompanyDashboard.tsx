@@ -11,7 +11,6 @@ import {
   UsersIcon,
   CheckCircleIcon,
   EyeIcon,
-  VerifiedBadgeIcon,
   RocketIcon,
   ChartBarIcon,
   FolderIcon,
@@ -19,18 +18,14 @@ import {
   CheckIcon,
   ChevronUpIcon,
 } from '../icons'
-// TODO: replace with real Supabase queries (company profile, jobs, applicants)
-import {
-  currentCompany,
-  companyJobs,
-  recentApplicants,
-  workers,
-  kanbanApplicants,
-  jobAnalytics,
-} from '../data/mock'
+import { useAuth } from '../context/AuthContext'
+import type { Job, Worker, KanbanApplicant, JobAnalytics } from '../types'
 
-const totalApplicants = companyJobs.reduce((sum, j) => sum + j.totalApplicants, 0)
-const totalRegulixApplicants = companyJobs.reduce((sum, j) => sum + j.regulixReadyApplicants, 0)
+// TODO: replace with real Supabase service calls
+const companyJobs: Job[] = []
+const recentApplicants: Worker[] = []
+const kanbanApplicants: KanbanApplicant[] = []
+const jobAnalytics: JobAnalytics[] = []
 
 const boostTiers = [
   { days: 7, price: 35 },
@@ -39,9 +34,17 @@ const boostTiers = [
 ] as const
 
 export const CompanyDashboard: React.FC = () => {
+  const { user } = useAuth()
+  const companyName: string = user?.user_metadata?.company_name ?? ''
+  const companyIndustry: string = user?.user_metadata?.industry ?? ''
+  const companySize: string = user?.user_metadata?.company_size ?? ''
+
+  const totalApplicants = 0
+  const totalRegulixApplicants = 0
+  const savedWorkers: Worker[] = []
+
   const [activeTab, setActiveTab] = useState<'applicants' | 'pipeline' | 'saved'>('applicants')
   const [expandedAnalyticsId, setExpandedAnalyticsId] = useState<string | null>(null)
-  const savedWorkers = workers.filter((w) => w.isRegulixReady).slice(0, 2)
 
   const [boostJobId, setBoostJobId] = useState<string | null>(null)
   const [boostDuration, setBoostDuration] = useState<7 | 14 | 30>(7)
@@ -138,7 +141,7 @@ export const CompanyDashboard: React.FC = () => {
                 border: '1px solid var(--kt-border)',
               }}
             >
-              {currentCompany.name.charAt(0)}
+              {companyName.charAt(0)}
             </div>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
@@ -150,17 +153,15 @@ export const CompanyDashboard: React.FC = () => {
                     margin: 0,
                   }}
                 >
-                  {currentCompany.name}
+                  {companyName}
                 </h1>
-                {currentCompany.isVerified && (
-                  <VerifiedBadgeIcon size={13} color="var(--kt-accent)" />
-                )}
               </div>
               <p
                 style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text-muted)', margin: 0 }}
               >
-                {currentCompany.industry} · {currentCompany.location} · {currentCompany.size}{' '}
-                employees
+                {[companyIndustry, companySize ? `${companySize} employees` : '']
+                  .filter(Boolean)
+                  .join(' · ')}
               </p>
             </div>
           </div>
@@ -287,6 +288,24 @@ export const CompanyDashboard: React.FC = () => {
               ))}
             </div>
 
+            {companyJobs.length === 0 && (
+              <div
+                style={{
+                  padding: '40px 24px',
+                  textAlign: 'center',
+                  color: 'var(--kt-text-muted)',
+                }}
+              >
+                <p style={{ fontSize: 'var(--kt-text-sm)', marginBottom: 12 }}>
+                  No active job postings yet.
+                </p>
+                <Link to="/site/post-job" style={{ textDecoration: 'none' }}>
+                  <Button variant="accent" size="sm">
+                    + Post your first job
+                  </Button>
+                </Link>
+              </div>
+            )}
             {companyJobs.map((job, i) => {
               const isLast = i === companyJobs.length - 1
               const analytics = jobAnalytics.find((a) => a.jobId === job.id)
@@ -462,6 +481,19 @@ export const CompanyDashboard: React.FC = () => {
             <div style={{ padding: 24 }}>
               {activeTab === 'applicants' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                  {recentApplicants.length === 0 && (
+                    <div
+                      style={{
+                        textAlign: 'center',
+                        padding: '40px 0',
+                        color: 'var(--kt-text-muted)',
+                      }}
+                    >
+                      <p style={{ fontSize: 'var(--kt-text-sm)' }}>
+                        No applicants yet. Post a job to start receiving applications.
+                      </p>
+                    </div>
+                  )}
                   {recentApplicants.map((worker, i) => (
                     <div
                       key={i}
@@ -615,43 +647,34 @@ export const CompanyDashboard: React.FC = () => {
             >
               Company
             </h3>
-            <p
-              style={{
-                fontSize: 'var(--kt-text-sm)',
-                color: 'var(--kt-text)',
-                lineHeight: 1.6,
-                marginBottom: 12,
-              }}
-            >
-              {currentCompany.description}
-            </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {[
-                { label: 'Location', value: currentCompany.location },
-                { label: 'Size', value: `${currentCompany.size} employees` },
-                { label: 'Website', value: currentCompany.website },
-              ].map((row) => (
-                <div
-                  key={row.label}
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    fontSize: 'var(--kt-text-xs)',
-                    gap: 8,
-                  }}
-                >
-                  <span style={{ color: 'var(--kt-text-muted)' }}>{row.label}</span>
-                  <span
+                { label: 'Industry', value: companyIndustry },
+                { label: 'Size', value: companySize ? `${companySize} employees` : '' },
+              ]
+                .filter((row) => row.value)
+                .map((row) => (
+                  <div
+                    key={row.label}
                     style={{
-                      color: 'var(--kt-text)',
-                      fontWeight: 'var(--kt-weight-medium)',
-                      textAlign: 'right',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      fontSize: 'var(--kt-text-xs)',
+                      gap: 8,
                     }}
                   >
-                    {row.value}
-                  </span>
-                </div>
-              ))}
+                    <span style={{ color: 'var(--kt-text-muted)' }}>{row.label}</span>
+                    <span
+                      style={{
+                        color: 'var(--kt-text)',
+                        fontWeight: 'var(--kt-weight-medium)',
+                        textAlign: 'right',
+                      }}
+                    >
+                      {row.value}
+                    </span>
+                  </div>
+                ))}
             </div>
           </div>
 

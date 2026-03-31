@@ -133,6 +133,30 @@ export async function getApplicationEvents(
   }
 }
 
+// ── Submit Application ─────────────────────────────────────────────────────────
+
+export async function submitApplication(
+  workerId: string,
+  jobId: string,
+  notes: string,
+  isBoosted: boolean
+): Promise<{ id: string | null; error: string | null }> {
+  const { data, error } = await supabase
+    .from('applications')
+    .insert({
+      worker_id: workerId,
+      job_id: jobId,
+      notes,
+      is_boosted: isBoosted,
+      status: 'Applied',
+    })
+    .select('id')
+    .single()
+
+  if (error) return { id: null, error: error.message }
+  return { id: data.id, error: null }
+}
+
 // ── Saved Jobs ─────────────────────────────────────────────────────────────────
 
 export async function getSavedJobsCount(
@@ -330,8 +354,8 @@ export async function getFullWorkerProfile(
         id: r.id,
         employerName: r.employer_name,
         roleTitle: r.role_title,
-        startDate: r.start_date,
-        endDate: r.end_date,
+        startDate: r.start_date ? r.start_date.slice(0, 7) : null,
+        endDate: r.end_date ? r.end_date.slice(0, 7) : null,
         isCurrent: r.is_current,
         contractType: r.contract_type,
         industryId: r.industry_id,

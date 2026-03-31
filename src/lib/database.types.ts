@@ -383,6 +383,9 @@ export type Database = {
           regulix_ready_applicants: number
           total_applicants: number
           status: 'active' | 'paused' | 'closed'
+          pre_interview_questions: string[]
+          auto_pause_limit: number | null
+          experience_level: string | null
           created_at: string
           updated_at: string
         }
@@ -404,6 +407,9 @@ export type Database = {
           regulix_ready_applicants?: number
           total_applicants?: number
           status?: 'active' | 'paused' | 'closed'
+          pre_interview_questions?: string[]
+          auto_pause_limit?: number | null
+          experience_level?: string | null
           created_at?: string
           updated_at?: string
         }

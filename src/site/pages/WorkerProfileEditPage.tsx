@@ -86,6 +86,7 @@ type SectionCardProps = {
   isCreate?: boolean
   cardRef: (el: HTMLDivElement | null) => void
   children: React.ReactNode
+  error?: string | null
 }
 
 const SectionCard: React.FC<SectionCardProps> = ({
@@ -99,6 +100,7 @@ const SectionCard: React.FC<SectionCardProps> = ({
   isCreate = false,
   cardRef,
   children,
+  error,
 }) => {
   const isComplete = stepState === 'complete-filled' || stepState === 'complete-skipped'
   return (
@@ -156,27 +158,47 @@ const SectionCard: React.FC<SectionCardProps> = ({
           padding: '16px 24px',
           borderTop: '1px solid var(--kt-border)',
           display: 'flex',
-          justifyContent: 'flex-end',
-          alignItems: 'center',
-          gap: 12,
+          flexDirection: 'column',
+          alignItems: 'flex-end',
+          gap: 8,
         }}
       >
-        {isSaved && (
-          <span
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {isSaved && (
+            <span
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+                fontSize: 'var(--kt-text-xs)',
+                color: 'var(--kt-success)',
+              }}
+            >
+              <CheckCircleIcon /> Saved
+            </span>
+          )}
+          <Button variant="primary" size="md" onClick={onSave} disabled={isSaving}>
+            {isSaving
+              ? 'Saving…'
+              : isLast
+                ? isCreate
+                  ? 'Publish profile'
+                  : 'Save changes'
+                : 'Save'}
+          </Button>
+        </div>
+        {error && (
+          <p
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 4,
-              fontSize: 'var(--kt-text-xs)',
-              color: 'var(--kt-success)',
+              margin: 0,
+              fontSize: 'var(--kt-text-sm)',
+              color: 'var(--kt-danger)',
+              textAlign: 'right',
             }}
           >
-            <CheckCircleIcon /> Saved
-          </span>
+            {error}
+          </p>
         )}
-        <Button variant="primary" size="md" onClick={onSave} disabled={isSaving}>
-          {isSaving ? 'Saving…' : isLast ? (isCreate ? 'Publish profile' : 'Save changes') : 'Save'}
-        </Button>
       </div>
     </div>
   )
@@ -194,6 +216,7 @@ export const WorkerProfileEditPage: React.FC = () => {
   const [activeSection, setActiveSection] = useState(1)
   const [savedStep, setSavedStep] = useState<number | null>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [saveErrorStep, setSaveErrorStep] = useState<number | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [isDirty, setIsDirty] = useState(false)
   const [profileCompletePct, setProfileCompletePct] = useState(0)
@@ -330,6 +353,7 @@ export const WorkerProfileEditPage: React.FC = () => {
 
   const saveSection = async (stepNum: number) => {
     setSaveError(null)
+    setSaveErrorStep(null)
 
     if (user) {
       setIsSaving(true)
@@ -392,6 +416,7 @@ export const WorkerProfileEditPage: React.FC = () => {
 
       if (error) {
         setSaveError(error)
+        setSaveErrorStep(stepNum)
         return
       }
     }
@@ -518,21 +543,6 @@ export const WorkerProfileEditPage: React.FC = () => {
 
           {/* Right: all sections stacked */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-            {saveError && (
-              <p
-                style={{
-                  fontSize: 'var(--kt-text-sm)',
-                  color: 'var(--kt-danger)',
-                  margin: 0,
-                  padding: '10px 14px',
-                  background: 'var(--kt-danger-subtle)',
-                  borderRadius: 'var(--kt-radius-md)',
-                }}
-              >
-                {saveError}
-              </p>
-            )}
-
             <SectionCard
               stepNum={1}
               title={STEP_TITLES[1]}
@@ -541,6 +551,7 @@ export const WorkerProfileEditPage: React.FC = () => {
               isSaving={isSaving}
               onSave={() => saveSection(1)}
               isCreate={isCreate}
+              error={saveErrorStep === 1 ? saveError : null}
               cardRef={(el) => {
                 sectionRefs.current[1] = el
               }}
@@ -559,6 +570,7 @@ export const WorkerProfileEditPage: React.FC = () => {
               isSaving={isSaving}
               onSave={() => saveSection(2)}
               isCreate={isCreate}
+              error={saveErrorStep === 2 ? saveError : null}
               cardRef={(el) => {
                 sectionRefs.current[2] = el
               }}
@@ -577,6 +589,7 @@ export const WorkerProfileEditPage: React.FC = () => {
               isSaving={isSaving}
               onSave={() => saveSection(3)}
               isCreate={isCreate}
+              error={saveErrorStep === 3 ? saveError : null}
               cardRef={(el) => {
                 sectionRefs.current[3] = el
               }}
@@ -599,6 +612,7 @@ export const WorkerProfileEditPage: React.FC = () => {
               onSave={() => saveSection(4)}
               isCreate={isCreate}
               isLast
+              error={saveErrorStep === 4 ? saveError : null}
               cardRef={(el) => {
                 sectionRefs.current[4] = el
               }}
