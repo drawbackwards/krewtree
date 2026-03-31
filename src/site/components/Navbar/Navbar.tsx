@@ -76,9 +76,20 @@ export const Navbar: React.FC = () => {
   const firstName: string = user?.user_metadata?.first_name ?? ''
   const lastName: string = user?.user_metadata?.last_name ?? ''
   const companyName: string = user?.user_metadata?.company_name ?? ''
-  const userInitials = firstName
-    ? `${firstName[0]}${lastName[0] ?? ''}`.toUpperCase()
-    : (user?.email?.[0]?.toUpperCase() ?? '')
+  const userInitials =
+    persona === 'company'
+      ? companyName
+        ? companyName
+            .trim()
+            .split(/\s+/)
+            .slice(0, 2)
+            .map((w) => w[0])
+            .join('')
+            .toUpperCase()
+        : (user?.email?.[0]?.toUpperCase() ?? '')
+      : firstName
+        ? `${firstName[0]}${lastName[0] ?? ''}`.toUpperCase()
+        : (user?.email?.[0]?.toUpperCase() ?? '')
   const displayName =
     persona === 'worker'
       ? ((`${firstName} ${lastName}`.trim() || user?.email) ?? '')
