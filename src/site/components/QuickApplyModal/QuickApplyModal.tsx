@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { Modal } from '../../../components'
 import type { Job } from '../../types'
 import { useAuth } from '../../context/AuthContext'
-import { submitApplication } from '../../services/workerService'
+import { submitApplication } from '../../services/jobService'
 import {
   HourglassIcon,
   RocketIcon,
@@ -36,10 +36,10 @@ export const QuickApplyModal: React.FC<QuickApplyModalProps> = ({
   const [loading, setLoading] = useState(false)
   const [wantBoost, setWantBoost] = useState(false)
   const [submittedWithBoost, setSubmittedWithBoost] = useState(false)
-  const [applyError, setApplyError] = useState<string | null>(null)
   const [resendLoading, setResendLoading] = useState(false)
   const [resendSent, setResendSent] = useState(false)
   const [resendError, setResendError] = useState('')
+  const [submitError, setSubmitError] = useState('')
 
   const handleResend = async () => {
     setResendLoading(true)
@@ -54,14 +54,15 @@ export const QuickApplyModal: React.FC<QuickApplyModalProps> = ({
   }
 
   const handleSubmit = async () => {
-    if (!user || !job) return
+    if (!job || !user) return
     setLoading(true)
-    setApplyError(null)
+    setSubmitError('')
     setSubmittedWithBoost(wantBoost)
-    const { error } = await submitApplication(user.id, job.id, coverNote, wantBoost)
+    const { error } = await submitApplication(job.id, user.id, coverNote, wantBoost)
     setLoading(false)
     if (error) {
-      setApplyError(error)
+      setSubmitError(error)
+      setSubmittedWithBoost(false)
       return
     }
     setSubmitted(true)
@@ -76,7 +77,7 @@ export const QuickApplyModal: React.FC<QuickApplyModalProps> = ({
       setCoverNote('')
       setWantBoost(false)
       setSubmittedWithBoost(false)
-      setApplyError(null)
+      setSubmitError('')
     }, 300)
   }
 
@@ -135,18 +136,6 @@ export const QuickApplyModal: React.FC<QuickApplyModalProps> = ({
           </button>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--kt-space-2)' }}>
-            {applyError && (
-              <p
-                style={{
-                  fontSize: 'var(--kt-text-xs)',
-                  color: 'var(--kt-danger)',
-                  textAlign: 'right',
-                  margin: 0,
-                }}
-              >
-                {applyError}
-              </p>
-            )}
             <div style={{ display: 'flex', gap: 'var(--kt-space-3)' }}>
               <button
                 onClick={handleClose}
@@ -343,6 +332,17 @@ export const QuickApplyModal: React.FC<QuickApplyModalProps> = ({
               Your full profile, work history, and Regulix verification are included automatically.
             </div>
           </div>
+
+          {submitError && (
+            <p
+              style={{
+                fontSize: 'var(--kt-text-sm)',
+                color: 'var(--kt-error, #c0392b)',
+              }}
+            >
+              {submitError}
+            </p>
+          )}
 
           {/* Boost toggle */}
           <div

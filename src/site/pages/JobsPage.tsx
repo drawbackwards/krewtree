@@ -4,9 +4,8 @@ import { Input, Badge } from '../../components'
 import { JobCard } from '../components/JobCard/JobCard'
 import { QuickApplyModal } from '../components/QuickApplyModal/QuickApplyModal'
 import type { SavedSearch, Job } from '../types'
-import { getJobs } from '../services/jobService'
-// TODO: replace with real Supabase queries (industries, locations, saved searches)
 import { industries, locationRegions, savedSearches as initialSavedSearches } from '../data/mock'
+import { getJobs } from '../services/jobService'
 import { LocationIcon, SearchIcon } from '../icons'
 
 const TYPES = ['Full-time', 'Part-time', 'Contract', 'Temporary']
@@ -120,16 +119,15 @@ export const JobsPage: React.FC = () => {
   const sortBy = (searchParams.get('sort') ?? 'recent') as 'recent' | 'pay' | 'applicants'
   const page = Number(searchParams.get('page') ?? '1')
 
-  // ---- Jobs data (Supabase) ----
-  const [allJobs, setAllJobs] = useState<Job[]>([])
+  // ---- Jobs data ----
+  const [jobsList, setJobsList] = useState<Job[]>([])
   const [jobsLoading, setJobsLoading] = useState(true)
   const [jobsError, setJobsError] = useState<string | null>(null)
 
   useEffect(() => {
-    setJobsLoading(true)
     getJobs().then(({ data, error }) => {
-      if (error) setJobsError(error)
-      else setAllJobs(data)
+      setJobsList(data)
+      setJobsError(error)
       setJobsLoading(false)
     })
   }, [])
@@ -178,7 +176,7 @@ export const JobsPage: React.FC = () => {
   }
 
   const filtered = useMemo(() => {
-    let list = [...allJobs]
+    let list = [...jobsList]
     if (searchQ.trim()) {
       const q = searchQ.toLowerCase()
       list = list.filter(
@@ -204,7 +202,7 @@ export const JobsPage: React.FC = () => {
     })
     return list
   }, [
-    allJobs,
+    jobsList,
     searchQ,
     selectedIndustries,
     selectedTypes,
@@ -898,9 +896,16 @@ export const JobsPage: React.FC = () => {
                 <div
                   style={{ textAlign: 'center', padding: '60px 0', color: 'var(--kt-text-muted)' }}
                 >
-                  <p style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-danger)' }}>
-                    {jobsError}
+                  <p
+                    style={{
+                      fontWeight: 'var(--kt-weight-semibold)',
+                      fontSize: 'var(--kt-text-lg)',
+                      marginBottom: 8,
+                    }}
+                  >
+                    Could not load jobs
                   </p>
+                  <p style={{ fontSize: 'var(--kt-text-sm)' }}>{jobsError}</p>
                 </div>
               ) : filtered.length === 0 ? (
                 <div
@@ -926,7 +931,9 @@ export const JobsPage: React.FC = () => {
                 <>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                     {paginated.map((job) => (
-                      <JobCard key={job.id} job={job} onQuickApply={() => setQuickApplyJob(job)} />
+                      <div key={job.id} style={{ position: 'relative' }}>
+                        <JobCard job={job} onQuickApply={() => setQuickApplyJob(job)} />
+                      </div>
                     ))}
                   </div>
 

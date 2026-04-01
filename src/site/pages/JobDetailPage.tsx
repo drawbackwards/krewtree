@@ -3,14 +3,12 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import { Badge, Button, Divider, Alert, Modal } from '../../components'
 import { RegulixBadge } from '../components/RegulixBadge/RegulixBadge'
 import { QuickApplyModal } from '../components/QuickApplyModal/QuickApplyModal'
-import { jobs, companyDetails } from '../data/mock'
-import { useAuth } from '../context/AuthContext'
 import { getJobById } from '../services/jobService'
 import type { Job } from '../types'
+import { useAuth } from '../context/AuthContext'
 import {
   CheckIcon,
   MapPinIcon,
-  ClockIcon,
   DollarIcon,
   UsersIcon,
   ShareIcon,
@@ -36,12 +34,10 @@ const EXPERIENCE_LABELS: Record<string, string> = {
   lead: 'Lead / Expert (5+ yrs)',
 }
 
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-
 export const JobDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { persona, user } = useAuth()
+  const { persona } = useAuth()
   const isCompany = persona === 'company'
   const [applied, setApplied] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -51,26 +47,20 @@ export const JobDetailPage: React.FC = () => {
   const [manageOpen, setManageOpen] = useState(false)
   const [pauseDuration, setPauseDuration] = useState<'7d' | '30d' | 'indefinite'>('7d')
   const [manageAction, setManageAction] = useState<'pause' | 'archive'>('pause')
-  const [job, setJob] = useState<Job | null | undefined>(undefined)
-  const [detail, setDetail] = useState<ReturnType<typeof companyDetails.find>>(undefined)
+  const [job, setJob] = useState<Job | null>(null)
+  const [jobLoading, setJobLoading] = useState(true)
+  const [jobError, setJobError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!id) {
-      setJob(null)
-      return
-    }
+    if (!id) return
+    getJobById(id).then(({ data, error }) => {
+      setJob(data)
+      setJobError(error)
+      setJobLoading(false)
+    })
+  }, [id])
 
-    if (UUID_RE.test(id)) {
-      getJobById(id).then(({ data }) => setJob(data))
-    } else {
-      const mockJob = jobs.find((j) => j.id === id) ?? null
-      setJob(mockJob)
-      setDetail(mockJob ? companyDetails.find((d) => d.companyId === mockJob.companyId) : undefined)
-    }
-  }, [id, user])
-
-  // Loading state
-  if (job === undefined) {
+  if (jobLoading) {
     return (
       <div
         style={{
@@ -85,7 +75,7 @@ export const JobDetailPage: React.FC = () => {
     )
   }
 
-  if (!job) {
+  if (jobError || !job) {
     return (
       <div
         style={{
@@ -125,12 +115,6 @@ export const JobDetailPage: React.FC = () => {
   }
 
   const questions = job.preInterviewQuestions ?? []
-  const postedLabel =
-    job.postedDaysAgo === 0
-      ? 'Today'
-      : job.postedDaysAgo === 1
-        ? 'Yesterday'
-        : `${job.postedDaysAgo} days ago`
   const hasPayData = job.payMin > 0 && job.payMax > 0
   const payLabel = hasPayData
     ? job.payType === 'hour'
@@ -289,7 +273,6 @@ export const JobDetailPage: React.FC = () => {
                           },
                         ]
                       : []),
-                    { icon: <ClockIcon size={14} />, label: `Posted ${postedLabel}` },
                     ...(isCompany
                       ? [
                           {
@@ -1000,7 +983,7 @@ export const JobDetailPage: React.FC = () => {
               ))}
             </div>
 
-            {detail && (
+            {job.company.reviewCount != null && job.company.reviewCount > 0 && (
               <div
                 style={{
                   padding: '10px 12px',
@@ -1019,7 +1002,7 @@ export const JobDetailPage: React.FC = () => {
                         key={i}
                         size={11}
                         color={
-                          i <= Math.round(detail.avgRating)
+                          i <= Math.round(job.company.avgRating ?? 0)
                             ? 'var(--kt-rating)'
                             : 'var(--kt-border-strong)'
                         }
@@ -1027,7 +1010,7 @@ export const JobDetailPage: React.FC = () => {
                     ))}
                   </div>
                   <span style={{ fontSize: 'var(--kt-text-xs)', color: 'var(--kt-text-muted)' }}>
-                    {detail.reviewCount} reviews
+                    {job.company.reviewCount} reviews
                   </span>
                 </div>
                 <Link
@@ -1089,37 +1072,34 @@ export const JobDetailPage: React.FC = () => {
               Similar Jobs
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {jobs
-                .filter((j) => j.industrySlug === job.industrySlug && j.id !== job.id)
-                .slice(0, 3)
-                .map((j) => (
-                  <Link
-                    key={j.id}
-                    to={`/site/jobs/${j.id}`}
+              {([] as Job[]).map((j) => (
+                <Link
+                  key={j.id}
+                  to={`/site/jobs/${j.id}`}
+                  style={{
+                    textDecoration: 'none',
+                    display: 'block',
+                    padding: '10px 12px',
+                    borderRadius: 'var(--kt-radius-md)',
+                    border: '1px solid var(--kt-border)',
+                    background: 'var(--kt-bg)',
+                  }}
+                >
+                  <p
                     style={{
-                      textDecoration: 'none',
-                      display: 'block',
-                      padding: '10px 12px',
-                      borderRadius: 'var(--kt-radius-md)',
-                      border: '1px solid var(--kt-border)',
-                      background: 'var(--kt-bg)',
+                      fontSize: 'var(--kt-text-sm)',
+                      fontWeight: 'var(--kt-weight-medium)',
+                      color: 'var(--kt-text)',
+                      marginBottom: 3,
                     }}
                   >
-                    <p
-                      style={{
-                        fontSize: 'var(--kt-text-sm)',
-                        fontWeight: 'var(--kt-weight-medium)',
-                        color: 'var(--kt-text)',
-                        marginBottom: 3,
-                      }}
-                    >
-                      {j.title}
-                    </p>
-                    <p style={{ fontSize: 'var(--kt-text-xs)', color: 'var(--kt-text-muted)' }}>
-                      {j.company.name} · ${j.payMin}–${j.payMax}/hr
-                    </p>
-                  </Link>
-                ))}
+                    {j.title}
+                  </p>
+                  <p style={{ fontSize: 'var(--kt-text-xs)', color: 'var(--kt-text-muted)' }}>
+                    {j.company.name} · ${j.payMin}–${j.payMax}/hr
+                  </p>
+                </Link>
+              ))}
             </div>
           </div>
         </div>
