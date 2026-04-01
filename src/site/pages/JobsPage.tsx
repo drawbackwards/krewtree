@@ -4,8 +4,13 @@ import { Input, Badge } from '../../components'
 import { JobCard } from '../components/JobCard/JobCard'
 import { QuickApplyModal } from '../components/QuickApplyModal/QuickApplyModal'
 import type { SavedSearch, Job } from '../types'
-import { industries, locationRegions, savedSearches as initialSavedSearches } from '../data/mock'
+import { industries, locationRegions } from '../data/mock'
 import { getJobs, getAppliedJobIds } from '../services/jobService'
+import {
+  getSavedSearches,
+  createSavedSearch,
+  deleteSavedSearch,
+} from '../services/savedSearchService'
 import { useAuth } from '../context/AuthContext'
 import { LocationIcon, SearchIcon, SlidersIcon, SortIcon, CloseIcon, ListIcon } from '../icons'
 import styles from './JobsPage.module.css'
@@ -143,6 +148,13 @@ export const JobsPage: React.FC = () => {
     })
   }, [user])
 
+  useEffect(() => {
+    if (!user) return
+    getSavedSearches(user.id).then(({ data }) => {
+      setMySearches(data)
+    })
+  }, [user])
+
   // ---- Local UI state (not URL-syncable) ----
   const [locationView, setLocationView] = useState(false)
   const [quickApplyJob, setQuickApplyJob] = useState<Job | null>(null)
@@ -157,8 +169,25 @@ export const JobsPage: React.FC = () => {
 
   const handleResetFilters = () => setSearchParams({}, { replace: true })
 
-  // Saved searches
-  const [mySearches, setMySearches] = useState<SavedSearch[]>(initialSavedSearches)
+  // ---- Live industry + type counts from real job data ----
+  const industryCounts = useMemo(() => {
+    const counts: Record<string, number> = {}
+    jobsList.forEach((j) => {
+      counts[j.industrySlug] = (counts[j.industrySlug] ?? 0) + 1
+    })
+    return counts
+  }, [jobsList])
+
+  const typeCounts = useMemo(() => {
+    const counts: Record<string, number> = {}
+    jobsList.forEach((j) => {
+      counts[j.type] = (counts[j.type] ?? 0) + 1
+    })
+    return counts
+  }, [jobsList])
+
+  // ---- Saved searches ----
+  const [mySearches, setMySearches] = useState<SavedSearch[]>([])
   const [showSaveForm, setShowSaveForm] = useState(false)
   const [saveLabel, setSaveLabel] = useState('')
   const [saveAlerts, setSaveAlerts] = useState(true)
@@ -236,21 +265,21 @@ export const JobsPage: React.FC = () => {
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
-  const handleSaveSearch = () => {
-    if (!saveLabel.trim()) return
-    const newSearch: SavedSearch = {
-      id: `ss-${Date.now()}`,
+  const handleSaveSearch = async () => {
+    if (!saveLabel.trim() || !user) return
+    const params = {
       label: saveLabel,
       query: searchQ,
       industrySlug: selectedIndustries[0] ?? null,
       types: selectedTypes,
       payRangeIdx,
       regulixOnly,
-      createdDaysAgo: 0,
       alertEnabled: saveAlerts,
-      newMatchesCount: filtered.length,
     }
-    setMySearches((prev) => [newSearch, ...prev])
+    const { data } = await createSavedSearch(user.id, params)
+    if (data) {
+      setMySearches((prev) => [{ ...data, newMatchesCount: filtered.length }, ...prev])
+    }
     setSaveLabel('')
     setShowSaveForm(false)
   }
@@ -275,8 +304,9 @@ export const JobsPage: React.FC = () => {
     )
   }
 
-  const handleDeleteSearch = (id: string) => {
+  const handleDeleteSearch = async (id: string) => {
     setMySearches((prev) => prev.filter((s) => s.id !== id))
+    await deleteSavedSearch(id)
   }
 
   return (
@@ -633,7 +663,7 @@ export const JobsPage: React.FC = () => {
                   <CheckFilter
                     key={ind.id}
                     label={ind.name}
-                    count={ind.jobCount}
+                    count={industryCounts[ind.slug] ?? 0}
                     checked={selectedIndustries.includes(ind.slug)}
                     onChange={() => {
                       const next = toggleSet(selectedIndustries, ind.slug)
@@ -650,6 +680,7 @@ export const JobsPage: React.FC = () => {
                   <CheckFilter
                     key={t}
                     label={t}
+                    count={typeCounts[t] ?? 0}
                     checked={selectedTypes.includes(t)}
                     onChange={() => {
                       const next = toggleSet(selectedTypes, t)
@@ -1167,7 +1198,7 @@ export const JobsPage: React.FC = () => {
                   <CheckFilter
                     key={ind.id}
                     label={ind.name}
-                    count={ind.jobCount}
+                    count={industryCounts[ind.slug] ?? 0}
                     checked={selectedIndustries.includes(ind.slug)}
                     onChange={() => {
                       const next = toggleSet(selectedIndustries, ind.slug)
@@ -1185,6 +1216,7 @@ export const JobsPage: React.FC = () => {
                   <CheckFilter
                     key={t}
                     label={t}
+                    count={typeCounts[t] ?? 0}
                     checked={selectedTypes.includes(t)}
                     onChange={() => {
                       const next = toggleSet(selectedTypes, t)
