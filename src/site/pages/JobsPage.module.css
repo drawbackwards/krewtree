@@ -1,0 +1,253 @@
+.header {
+  background: var(--kt-bg);
+  padding: 48px 0 36px;
+  border-bottom: 1px solid var(--kt-border);
+}
+
+.headerInner {
+  max-width: var(--kt-layout-max-width);
+  margin: 0 auto;
+  padding: 0 var(--kt-space-6);
+}
+
+.layout {
+  max-width: var(--kt-layout-max-width);
+  margin: 0 auto;
+  padding: 32px var(--kt-space-6);
+  display: flex;
+  gap: 32px;
+  align-items: flex-start;
+}
+
+.sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.results {
+  flex: 1;
+  min-width: 0;
+}
+
+.sortBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.sortButtons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Mobile-only toolbar — hidden on desktop */
+.mobileToolbar {
+  display: none;
+}
+
+/* Bottom drawer — always in DOM for CSS transitions */
+.drawerOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 200;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.drawerOverlay.drawerVisible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.drawer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--kt-bg);
+  border-radius: 20px 20px 0 0;
+  z-index: 201;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  transform: translateY(100%);
+  transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.drawer.drawerVisible {
+  transform: translateY(0);
+}
+
+.drawerHandle {
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--kt-border-strong);
+  margin: 12px auto 0;
+  flex-shrink: 0;
+}
+
+.drawerHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px 14px;
+  border-bottom: 1px solid var(--kt-border);
+  flex-shrink: 0;
+}
+
+.drawerTitle {
+  font-size: var(--kt-text-md);
+  font-weight: var(--kt-weight-bold);
+  color: var(--kt-text);
+}
+
+.drawerCloseBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: var(--kt-grey-100);
+  border: none;
+  border-radius: 50%;
+  color: var(--kt-text);
+  cursor: pointer;
+}
+
+.drawerResetBtn {
+  background: none;
+  border: none;
+  font-size: var(--kt-text-sm);
+  font-weight: var(--kt-weight-semibold);
+  color: var(--kt-primary);
+  cursor: pointer;
+  font-family: var(--kt-font-sans);
+  padding: 0;
+}
+
+.drawerBody {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.drawerFooter {
+  padding: 16px 20px;
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+  border-top: 1px solid var(--kt-border);
+  flex-shrink: 0;
+}
+
+.drawerCTA {
+  width: 100%;
+  padding: 15px;
+  background: var(--kt-primary);
+  color: var(--kt-primary-fg);
+  border: none;
+  border-radius: var(--kt-radius-full);
+  font-size: var(--kt-text-md);
+  font-weight: var(--kt-weight-semibold);
+  font-family: var(--kt-font-sans);
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.drawerCTA:hover {
+  opacity: 0.9;
+}
+
+/* Sort option pills inside drawer */
+.sortOption {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 16px;
+  border: 1.5px solid var(--kt-border);
+  border-radius: var(--kt-radius-md);
+  background: var(--kt-surface);
+  color: var(--kt-text);
+  font-size: var(--kt-text-sm);
+  font-weight: var(--kt-weight-medium);
+  font-family: var(--kt-font-sans);
+  cursor: pointer;
+  text-align: left;
+  margin-bottom: 8px;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
+}
+
+.sortOption.sortActive {
+  border-color: var(--kt-primary);
+  background: var(--kt-primary-subtle);
+  color: var(--kt-primary);
+  font-weight: var(--kt-weight-semibold);
+}
+
+@media (max-width: 640px) {
+  .header {
+    padding: 24px 0 20px;
+  }
+
+  .layout {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 16px var(--kt-space-4);
+    gap: 0;
+  }
+
+  /* Sidebar always hidden on mobile — content lives in the drawer */
+  .sidebar {
+    display: none;
+  }
+
+  /* Hide sort buttons on mobile — sort is in the drawer */
+  .sortButtons {
+    display: none;
+  }
+
+  /* Show mobile toolbar */
+  .mobileToolbar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .mobileToolbarBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    flex: 1;
+    padding: 10px 12px;
+    background: var(--kt-surface);
+    border: 1px solid var(--kt-border);
+    border-radius: var(--kt-radius-md);
+    font-size: var(--kt-text-sm);
+    font-weight: var(--kt-weight-semibold);
+    color: var(--kt-text);
+    font-family: var(--kt-font-sans);
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+
+  .mobileToolbarBtn.active {
+    border-color: var(--kt-primary);
+    color: var(--kt-primary);
+  }
+}

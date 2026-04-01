@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useRef, useLayoutEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { Job } from '../../types'
 import {
@@ -40,6 +40,44 @@ interface JobCardProps {
 
 export const JobCard: React.FC<JobCardProps> = ({ job, compact = false, onQuickApply }) => {
   const navigate = useNavigate()
+
+  // Measure how many skill pills fit fully — never show a partially clipped pill
+  const skillsRef = useRef<HTMLDivElement>(null)
+  const [visibleCount, setVisibleCount] = useState<number | null>(null)
+
+  useLayoutEffect(() => {
+    const container = skillsRef.current
+    if (!container || compact || job.skills.length === 0) {
+      setVisibleCount(null)
+      return
+    }
+
+    const containerWidth = container.clientWidth
+    const BADGE_RESERVE = 42 // approx px width of "+N" badge
+
+    // We always render all pills (with overflow:hidden) so we can measure their positions.
+    // Force a measurement against all data-skill-tag nodes currently in the DOM.
+    const tags = container.querySelectorAll<HTMLElement>('[data-skill-tag]')
+
+    // First pass: check if any pill overflows at all
+    let anyOverflow = false
+    tags.forEach((tag) => {
+      if (tag.offsetLeft + tag.offsetWidth > containerWidth) anyOverflow = true
+    })
+
+    if (!anyOverflow) {
+      setVisibleCount(job.skills.length)
+      return
+    }
+
+    // Second pass: count pills that fit completely once we reserve badge space
+    let count = 0
+    tags.forEach((tag) => {
+      if (tag.offsetLeft + tag.offsetWidth <= containerWidth - BADGE_RESERVE) count++
+    })
+    setVisibleCount(count)
+  }, [job.skills, compact])
+
   const companyInitials = job.company.name
     .split(' ')
     .map((w) => w[0])
@@ -112,14 +150,14 @@ export const JobCard: React.FC<JobCardProps> = ({ job, compact = false, onQuickA
       {hasFooter && (
         <div className={styles.footer}>
           {!compact && job.skills.length > 0 ? (
-            <div className={styles.skills}>
-              {job.skills.slice(0, 3).map((s) => (
-                <span key={s} className={styles.skillTag}>
+            <div ref={skillsRef} className={styles.skills}>
+              {(visibleCount === null ? job.skills : job.skills.slice(0, visibleCount)).map((s) => (
+                <span key={s} data-skill-tag="" className={styles.skillTag}>
                   {s}
                 </span>
               ))}
-              {job.skills.length > 3 && (
-                <span className={styles.skillMore}>+{job.skills.length - 3}</span>
+              {visibleCount !== null && visibleCount < job.skills.length && (
+                <span className={styles.skillMore}>+{job.skills.length - visibleCount}</span>
               )}
             </div>
           ) : (

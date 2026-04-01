@@ -1260,6 +1260,58 @@ export const PhoneIcon: React.FC<{ size?: number; color?: string }> = ({
  * This is a brand asset but lives here because it's an inline SVG icon
  * (not a full logo lockup like the Regulix wordmark in sections.tsx).
  */
+export const SlidersIcon: React.FC<{ size?: number; color?: string }> = ({
+  size = 16,
+  color = 'currentColor',
+}) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" aria-hidden="true">
+    <line x1="2" y1="4" x2="14" y2="4" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+    <circle cx="5" cy="4" r="1.5" fill={color} />
+    <line x1="2" y1="8" x2="14" y2="8" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+    <circle cx="11" cy="8" r="1.5" fill={color} />
+    <line x1="2" y1="12" x2="14" y2="12" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+    <circle cx="7" cy="12" r="1.5" fill={color} />
+  </svg>
+)
+
+export const SortIcon: React.FC<{ size?: number; color?: string }> = ({
+  size = 16,
+  color = 'currentColor',
+}) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" aria-hidden="true">
+    {/* Up arrow — left column */}
+    <polyline
+      points="4,9 4,3"
+      stroke={color}
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <polyline
+      points="2,5 4,3 6,5"
+      stroke={color}
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    {/* Down arrow — right column */}
+    <polyline
+      points="12,7 12,13"
+      stroke={color}
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <polyline
+      points="10,11 12,13 14,11"
+      stroke={color}
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+)
+
 export const RegulixMarkIcon: React.FC<{ size?: number }> = ({ size = 24 }) => {
   const h = Math.round((size * 699.83) / 600)
   return (

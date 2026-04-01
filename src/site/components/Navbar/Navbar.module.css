@@ -314,3 +314,42 @@
 .postJobBtn:hover {
   background-color: var(--kt-accent-hover);
 }
+
+@media (max-width: 640px) {
+  .inner {
+    height: auto;
+    flex-wrap: wrap;
+    padding: 0 var(--kt-space-4);
+    gap: 0;
+  }
+
+  .logo {
+    height: 48px;
+  }
+
+  .links {
+    order: 3;
+    flex: 0 0 100%;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    gap: 0;
+    padding: 0 0 6px;
+    scrollbar-width: none;
+    border-top: 1px solid var(--kt-border);
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .links::-webkit-scrollbar {
+    display: none;
+  }
+
+  .link {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .right {
+    height: 48px;
+    margin-left: auto;
+  }
+}

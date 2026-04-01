@@ -6,7 +6,8 @@ import { QuickApplyModal } from '../components/QuickApplyModal/QuickApplyModal'
 import type { SavedSearch, Job } from '../types'
 import { industries, locationRegions, savedSearches as initialSavedSearches } from '../data/mock'
 import { getJobs } from '../services/jobService'
-import { LocationIcon, SearchIcon } from '../icons'
+import { LocationIcon, SearchIcon, SlidersIcon, SortIcon, CloseIcon } from '../icons'
+import styles from './JobsPage.module.css'
 
 const TYPES = ['Full-time', 'Part-time', 'Contract', 'Temporary']
 const PAY_RANGES = [
@@ -135,6 +136,16 @@ export const JobsPage: React.FC = () => {
   // ---- Local UI state (not URL-syncable) ----
   const [locationView, setLocationView] = useState(false)
   const [quickApplyJob, setQuickApplyJob] = useState<Job | null>(null)
+  const [drawerType, setDrawerType] = useState<'filter' | 'sort' | null>(null)
+
+  const activeFilterCount =
+    selectedIndustries.length +
+    selectedTypes.length +
+    (regulixOnly ? 1 : 0) +
+    (sponsoredOnly ? 1 : 0) +
+    (payRangeIdx > 0 ? 1 : 0)
+
+  const handleResetFilters = () => setSearchParams({}, { replace: true })
 
   // Saved searches
   const [mySearches, setMySearches] = useState<SavedSearch[]>(initialSavedSearches)
@@ -265,20 +276,8 @@ export const JobsPage: React.FC = () => {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--kt-bg)' }}>
       {/* Page header */}
-      <div
-        style={{
-          background: 'var(--kt-bg)',
-          padding: '48px 0 36px',
-          borderBottom: '1px solid var(--kt-border)',
-        }}
-      >
-        <div
-          style={{
-            maxWidth: 'var(--kt-layout-max-width)',
-            margin: '0 auto',
-            padding: '0 var(--kt-space-6)',
-          }}
-        >
+      <div className={styles.header}>
+        <div className={styles.headerInner}>
           <div
             style={{
               display: 'flex',
@@ -374,29 +373,10 @@ export const JobsPage: React.FC = () => {
         </div>
       </div>
 
-      <div
-        style={{
-          maxWidth: 'var(--kt-layout-max-width)',
-          margin: '0 auto',
-          padding: '32px var(--kt-space-6)',
-          display: 'flex',
-          gap: 32,
-          alignItems: 'flex-start',
-        }}
-      >
-        {/* ---- Sidebar ---- */}
+      <div className={styles.layout}>
+        {/* ---- Sidebar (desktop only — mobile uses bottom drawer) ---- */}
         {!locationView && (
-          <aside
-            style={{
-              width: 240,
-              flexShrink: 0,
-              position: 'sticky',
-              top: 80,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 16,
-            }}
-          >
+          <aside className={styles.sidebar}>
             {/* Saved Searches */}
             <div
               style={{
@@ -406,38 +386,16 @@ export const JobsPage: React.FC = () => {
                 padding: 18,
               }}
             >
-              <div
+              <p
                 style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
+                  fontSize: 'var(--kt-text-lg)',
+                  fontWeight: 'var(--kt-weight-bold)',
+                  color: 'var(--kt-text)',
                   marginBottom: 12,
                 }}
               >
-                <span
-                  style={{
-                    fontSize: 'var(--kt-text-sm)',
-                    fontWeight: 'var(--kt-weight-semibold)',
-                    color: 'var(--kt-text)',
-                  }}
-                >
-                  Saved Searches
-                </span>
-                <button
-                  onClick={() => setShowSaveForm((v) => !v)}
-                  style={{
-                    fontSize: 'var(--kt-text-xs)',
-                    color: 'var(--kt-primary)',
-                    background: 'transparent',
-                    border: 'none',
-                    cursor: 'pointer',
-                    fontFamily: 'var(--kt-font-sans)',
-                    fontWeight: 'var(--kt-weight-medium)',
-                  }}
-                >
-                  {showSaveForm ? 'Cancel' : '+ Save'}
-                </button>
-              </div>
+                {mySearches.length} Saved Searches
+              </p>
 
               {showSaveForm && (
                 <div
@@ -464,6 +422,7 @@ export const JobsPage: React.FC = () => {
                       fontFamily: 'var(--kt-font-sans)',
                       fontSize: 'var(--kt-text-xs)',
                       outline: 'none',
+                      boxSizing: 'border-box',
                     }}
                   />
                   <label
@@ -489,12 +448,12 @@ export const JobsPage: React.FC = () => {
                     disabled={!saveLabel.trim()}
                     style={{
                       width: '100%',
-                      padding: '6px',
+                      padding: '8px',
                       background: 'var(--kt-primary)',
                       color: 'var(--kt-primary-fg)',
                       border: 'none',
                       borderRadius: 'var(--kt-radius-sm)',
-                      fontSize: 'var(--kt-text-xs)',
+                      fontSize: 'var(--kt-text-sm)',
                       fontWeight: 'var(--kt-weight-semibold)',
                       cursor: 'pointer',
                       fontFamily: 'var(--kt-font-sans)',
@@ -573,6 +532,51 @@ export const JobsPage: React.FC = () => {
                   No saved searches yet
                 </p>
               )}
+
+              {/* Save Current Search button */}
+              {!showSaveForm && (
+                <button
+                  onClick={() => setShowSaveForm(true)}
+                  style={{
+                    width: '100%',
+                    marginTop: 10,
+                    padding: '9px',
+                    background: 'transparent',
+                    color: 'var(--kt-primary)',
+                    border: `1.5px solid var(--kt-primary)`,
+                    borderRadius: 'var(--kt-radius-md)',
+                    fontSize: 'var(--kt-text-sm)',
+                    fontWeight: 'var(--kt-weight-semibold)',
+                    cursor: 'pointer',
+                    fontFamily: 'var(--kt-font-sans)',
+                  }}
+                >
+                  Save Current Search
+                </button>
+              )}
+              {showSaveForm && (
+                <button
+                  onClick={() => {
+                    setShowSaveForm(false)
+                    setSaveLabel('')
+                  }}
+                  style={{
+                    width: '100%',
+                    marginTop: 8,
+                    padding: '9px',
+                    background: 'transparent',
+                    color: 'var(--kt-text-muted)',
+                    border: `1px solid var(--kt-border)`,
+                    borderRadius: 'var(--kt-radius-md)',
+                    fontSize: 'var(--kt-text-sm)',
+                    fontWeight: 'var(--kt-weight-medium)',
+                    cursor: 'pointer',
+                    fontFamily: 'var(--kt-font-sans)',
+                  }}
+                >
+                  Cancel
+                </button>
+              )}
             </div>
 
             {/* Filters */}
@@ -594,9 +598,9 @@ export const JobsPage: React.FC = () => {
               >
                 <p
                   style={{
-                    fontWeight: 'var(--kt-weight-semibold)',
+                    fontWeight: 'var(--kt-weight-bold)',
                     color: 'var(--kt-text)',
-                    fontSize: 'var(--kt-text-md)',
+                    fontSize: 'var(--kt-text-lg)',
                   }}
                 >
                   Filters
@@ -723,7 +727,7 @@ export const JobsPage: React.FC = () => {
         )}
 
         {/* ---- Results ---- */}
-        <div style={{ flex: 1, minWidth: 0 }}>
+        <div className={styles.results}>
           {/* Location Grid View */}
           {locationView ? (
             <>
@@ -827,17 +831,30 @@ export const JobsPage: React.FC = () => {
             </>
           ) : (
             <>
-              {/* Toolbar */}
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginBottom: 20,
-                  flexWrap: 'wrap',
-                  gap: 12,
-                }}
-              >
+              {/* Mobile filter + sort toolbar */}
+              <div className={styles.mobileToolbar}>
+                <button
+                  className={[styles.mobileToolbarBtn, activeFilterCount > 0 ? styles.active : '']
+                    .filter(Boolean)
+                    .join(' ')}
+                  onClick={() => setDrawerType('filter')}
+                >
+                  <SlidersIcon size={15} />
+                  Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
+                </button>
+                <button
+                  className={[styles.mobileToolbarBtn, sortBy !== 'recent' ? styles.active : '']
+                    .filter(Boolean)
+                    .join(' ')}
+                  onClick={() => setDrawerType('sort')}
+                >
+                  <SortIcon size={15} />
+                  Sort{sortBy !== 'recent' ? `: ${sortBy === 'pay' ? 'Pay' : 'Applied'}` : ''}
+                </button>
+              </div>
+
+              {/* Desktop toolbar */}
+              <div className={styles.sortBar}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <span
                     style={{
@@ -854,7 +871,7 @@ export const JobsPage: React.FC = () => {
                     </Badge>
                   )}
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div className={styles.sortButtons}>
                   <span style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text-muted)' }}>
                     Sort:
                   </span>
@@ -1019,6 +1036,270 @@ export const JobsPage: React.FC = () => {
               )}
             </>
           )}
+        </div>
+      </div>
+
+      {/* Bottom drawer — filter & sort (mobile) */}
+      <div
+        className={[styles.drawerOverlay, drawerType ? styles.drawerVisible : '']
+          .filter(Boolean)
+          .join(' ')}
+        onClick={() => setDrawerType(null)}
+      />
+      <div
+        className={[styles.drawer, drawerType ? styles.drawerVisible : '']
+          .filter(Boolean)
+          .join(' ')}
+        role="dialog"
+        aria-modal="true"
+        aria-label={drawerType === 'filter' ? 'Filters' : 'Sort'}
+      >
+        <div className={styles.drawerHandle} />
+        <div className={styles.drawerHeader}>
+          <button
+            className={styles.drawerCloseBtn}
+            onClick={() => setDrawerType(null)}
+            aria-label="Close"
+          >
+            <CloseIcon size={16} />
+          </button>
+          <span className={styles.drawerTitle}>{drawerType === 'filter' ? 'Filters' : 'Sort'}</span>
+          <button
+            className={styles.drawerResetBtn}
+            onClick={() => {
+              if (drawerType === 'filter') handleResetFilters()
+              else updateFilters({ sort: null })
+            }}
+          >
+            Reset
+          </button>
+        </div>
+
+        <div className={styles.drawerBody}>
+          {drawerType === 'filter' && (
+            <>
+              {/* Saved Searches in drawer */}
+              <div style={{ marginBottom: 24 }}>
+                <p
+                  style={{
+                    fontSize: 'var(--kt-text-md)',
+                    fontWeight: 'var(--kt-weight-bold)',
+                    color: 'var(--kt-text)',
+                    marginBottom: 12,
+                  }}
+                >
+                  {mySearches.length} Saved Searches
+                </p>
+                {mySearches.length > 0 && (
+                  <div
+                    style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 10 }}
+                  >
+                    {mySearches.map((s) => (
+                      <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <button
+                          onClick={() => {
+                            handleLoadSearch(s)
+                            setDrawerType(null)
+                          }}
+                          style={{
+                            flex: 1,
+                            textAlign: 'left',
+                            padding: '7px 10px',
+                            borderRadius: 'var(--kt-radius-sm)',
+                            border: '1px solid var(--kt-border)',
+                            background: 'transparent',
+                            color: 'var(--kt-text)',
+                            fontSize: 'var(--kt-text-sm)',
+                            cursor: 'pointer',
+                            fontFamily: 'var(--kt-font-sans)',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                          }}
+                        >
+                          <span>{s.label}</span>
+                          {s.alertEnabled && s.newMatchesCount > 0 && (
+                            <span
+                              style={{
+                                fontSize: '10px',
+                                background: 'var(--kt-primary)',
+                                color: 'var(--kt-primary-fg)',
+                                borderRadius: 'var(--kt-radius-full)',
+                                padding: '1px 5px',
+                                fontWeight: 'var(--kt-weight-bold)',
+                              }}
+                            >
+                              {s.newMatchesCount}
+                            </span>
+                          )}
+                        </button>
+                        <button
+                          onClick={() => handleDeleteSearch(s.id)}
+                          style={{
+                            padding: '4px 6px',
+                            background: 'transparent',
+                            border: 'none',
+                            color: 'var(--kt-text-muted)',
+                            cursor: 'pointer',
+                            fontSize: '12px',
+                          }}
+                          title="Remove"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div style={{ height: 1, background: 'var(--kt-border)', marginBottom: 24 }} />
+
+              {/* Industry */}
+              <FilterSection title="Industry">
+                {industries.map((ind) => (
+                  <CheckFilter
+                    key={ind.id}
+                    label={ind.name}
+                    count={ind.jobCount}
+                    checked={selectedIndustries.includes(ind.slug)}
+                    onChange={() => {
+                      const next = toggleSet(selectedIndustries, ind.slug)
+                      updateFilters({ industry: next.join(',') || null })
+                    }}
+                  />
+                ))}
+              </FilterSection>
+
+              <div style={{ height: 1, background: 'var(--kt-border)', margin: '16px 0' }} />
+
+              {/* Job Type */}
+              <FilterSection title="Job Type">
+                {TYPES.map((t) => (
+                  <CheckFilter
+                    key={t}
+                    label={t}
+                    checked={selectedTypes.includes(t)}
+                    onChange={() => {
+                      const next = toggleSet(selectedTypes, t)
+                      updateFilters({ type: next.join(',') || null })
+                    }}
+                  />
+                ))}
+              </FilterSection>
+
+              <div style={{ height: 1, background: 'var(--kt-border)', margin: '16px 0' }} />
+
+              {/* Pay Range */}
+              <FilterSection title="Pay Range">
+                {PAY_RANGES.map((pr, i) => (
+                  <label
+                    key={pr.label}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      padding: '5px 0',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: 16,
+                        height: 16,
+                        borderRadius: '50%',
+                        border: `2px solid ${payRangeIdx === i ? 'var(--kt-accent)' : 'var(--kt-border-strong)'}`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      {payRangeIdx === i && (
+                        <div
+                          style={{
+                            width: 7,
+                            height: 7,
+                            borderRadius: '50%',
+                            background: 'var(--kt-accent)',
+                          }}
+                        />
+                      )}
+                    </div>
+                    <input
+                      type="radio"
+                      checked={payRangeIdx === i}
+                      onChange={() => updateFilters({ pay: i === 0 ? null : String(i) })}
+                      style={{ display: 'none' }}
+                    />
+                    <span style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text)' }}>
+                      {pr.label}
+                    </span>
+                  </label>
+                ))}
+              </FilterSection>
+
+              <div style={{ height: 1, background: 'var(--kt-border)', margin: '16px 0' }} />
+
+              {/* Special */}
+              <FilterSection title="Special">
+                <CheckFilter
+                  label="Regulix Ready Applicants"
+                  checked={regulixOnly}
+                  onChange={(v) => updateFilters({ regulix: v ? '1' : null })}
+                />
+                <CheckFilter
+                  label="Featured / Sponsored"
+                  checked={sponsoredOnly}
+                  onChange={(v) => updateFilters({ sponsored: v ? '1' : null })}
+                />
+              </FilterSection>
+            </>
+          )}
+
+          {drawerType === 'sort' && (
+            <div style={{ paddingTop: 4 }}>
+              {(['recent', 'pay', 'applicants'] as const).map((s) => (
+                <button
+                  key={s}
+                  className={[styles.sortOption, sortBy === s ? styles.sortActive : '']
+                    .filter(Boolean)
+                    .join(' ')}
+                  onClick={() => updateFilters({ sort: s === 'recent' ? null : s })}
+                >
+                  <div
+                    style={{
+                      width: 18,
+                      height: 18,
+                      borderRadius: '50%',
+                      border: `2px solid ${sortBy === s ? 'var(--kt-primary)' : 'var(--kt-border-strong)'}`,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                    }}
+                  >
+                    {sortBy === s && (
+                      <div
+                        style={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: '50%',
+                          background: 'var(--kt-primary)',
+                        }}
+                      />
+                    )}
+                  </div>
+                  {s === 'recent' ? 'Most Recent' : s === 'pay' ? 'Highest Pay' : 'Most Applied'}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className={styles.drawerFooter}>
+          <button className={styles.drawerCTA} onClick={() => setDrawerType(null)}>
+            {drawerType === 'sort' ? 'Sort Results' : `Show Results (${filtered.length})`}
+          </button>
         </div>
       </div>
 
