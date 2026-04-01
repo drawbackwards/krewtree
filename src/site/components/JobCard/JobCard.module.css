@@ -205,6 +205,16 @@
   background: var(--kt-olive-800);
 }
 
+.appliedBtn {
+  background: var(--kt-surface-raised);
+  color: var(--kt-text-muted);
+  cursor: default;
+}
+
+.appliedBtn:hover {
+  background: var(--kt-surface-raised);
+}
+
 @media (max-width: 640px) {
   .footer {
     flex-direction: column;

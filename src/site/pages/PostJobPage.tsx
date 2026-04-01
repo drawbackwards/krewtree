@@ -1,10 +1,10 @@
-import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import React, { useState, useEffect } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import { Input, Textarea, Select, Button, Badge, Alert, Switch, Divider } from '../../components'
 import { RegulixBadge } from '../components/RegulixBadge/RegulixBadge'
 import { RegulixMarkIcon, StarIcon, PlusIcon, CelebrationIcon, LightningIcon } from '../icons'
 import { industries } from '../data/mock'
-import { createJob } from '../services/jobService'
+import { createJob, updateJob, getJobById } from '../services/jobService'
 import { useAuth } from '../context/AuthContext'
 
 // ── Suggested skills by industry ────────────────────────────────────────────
@@ -163,9 +163,12 @@ const experienceOptions = [
 
 export const PostJobPage: React.FC = () => {
   const navigate = useNavigate()
+  const { id: editId } = useParams<{ id: string }>()
+  const isEditMode = !!editId
   const { user } = useAuth()
   const [submitted, setSubmitted] = useState(false)
   const [submitError, setSubmitError] = useState('')
+  const [loadError, setLoadError] = useState('')
 
   // Form state
   const [title, setTitle] = useState('')
@@ -186,6 +189,36 @@ export const PostJobPage: React.FC = () => {
   const [urgentHiring, setUrgentHiring] = useState(false)
   const [regulixPreferred, setRegulixPreferred] = useState(false)
   const [questions, setQuestions] = useState<string[]>([''])
+
+  // Load existing job when editing
+  useEffect(() => {
+    if (!editId) return
+    getJobById(editId).then(({ data, error }) => {
+      if (error || !data) {
+        setLoadError(error ?? 'Job not found')
+        return
+      }
+      setTitle(data.title)
+      setIndustry(data.industrySlug)
+      setJobType(data.type)
+      setLocation(data.location)
+      setPayMin(data.payMin ? String(data.payMin) : '')
+      setPayMax(data.payMax ? String(data.payMax) : '')
+      setPayType(data.payType)
+      setExperience(data.experienceLevel ?? 'mid')
+      setDescription(data.description)
+      setRequirements(data.requirements.join('\n'))
+      setParsedSkills(data.skills)
+      setSponsorMode(data.isSponsored ? 'on' : 'off')
+      setUrgentHiring(data.urgentHiring ?? false)
+      setRegulixPreferred(data.regulixPreferred ?? false)
+      setQuestions(data.preInterviewQuestions?.length ? data.preInterviewQuestions : [''])
+      if (data.autoPauseLimit) {
+        setStopMode('limit')
+        setAppLimit(String(data.autoPauseLimit))
+      }
+    })
+  }, [editId])
 
   const estimatedCost =
     stopMode === 'limit' ? `$${(Number(appLimit) * 38).toLocaleString()}` : 'pay-per-application'
@@ -236,8 +269,7 @@ export const PostJobPage: React.FC = () => {
     setSubmitError('')
 
     const selectedIndustry = industries.find((ind) => ind.slug === industry)
-    const { data, error } = await createJob({
-      companyId: user.id,
+    const jobFields = {
       title: title.trim(),
       industry: selectedIndustry?.name ?? industry,
       industrySlug: industry,
@@ -253,15 +285,30 @@ export const PostJobPage: React.FC = () => {
         .filter(Boolean),
       skills: parsedSkills,
       isSponsored: sponsorMode === 'on',
-    })
-
-    if (error) {
-      setSubmitError(error)
-      return
+      experienceLevel: experience || null,
+      preInterviewQuestions: questions.filter(Boolean),
+      urgentHiring,
+      regulixPreferred,
+      autoPauseLimit: stopMode === 'limit' && appLimit ? Number(appLimit) : null,
     }
 
-    setSubmitted(true)
-    setTimeout(() => navigate(`/site/jobs/${data?.id ?? ''}`), 2500)
+    if (isEditMode && editId) {
+      const { error } = await updateJob(editId, jobFields)
+      if (error) {
+        setSubmitError(error)
+        return
+      }
+      setSubmitted(true)
+      setTimeout(() => navigate(`/site/jobs/${editId}`), 2500)
+    } else {
+      const { data, error } = await createJob({ companyId: user.id, ...jobFields })
+      if (error) {
+        setSubmitError(error)
+        return
+      }
+      setSubmitted(true)
+      setTimeout(() => navigate(`/site/jobs/${data?.id ?? ''}`), 2500)
+    }
   }
 
   if (submitted) {
@@ -288,7 +335,7 @@ export const PostJobPage: React.FC = () => {
             textAlign: 'center',
           }}
         >
-          Job Posted Successfully!
+          {isEditMode ? 'Job Updated!' : 'Job Posted Successfully!'}
         </h1>
         <p
           style={{
@@ -298,7 +345,9 @@ export const PostJobPage: React.FC = () => {
             maxWidth: 400,
           }}
         >
-          Your job listing is now live. Redirecting you to your posting…
+          {isEditMode
+            ? 'Your changes have been saved. Redirecting you to your posting…'
+            : 'Your job listing is now live. Redirecting you to your posting…'}
         </p>
         {regulixPreferred && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -314,6 +363,14 @@ export const PostJobPage: React.FC = () => {
             </span>
           </div>
         )}
+      </div>
+    )
+  }
+
+  if (loadError) {
+    return (
+      <div style={{ padding: 40, textAlign: 'center' }}>
+        <Alert variant="danger">{loadError}</Alert>
       </div>
     )
   }
@@ -338,10 +395,12 @@ export const PostJobPage: React.FC = () => {
               letterSpacing: '-0.02em',
             }}
           >
-            Post a Job
+            {isEditMode ? 'Edit Job' : 'Post a Job'}
           </h1>
           <p style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text-muted)' }}>
-            Fill in the details below to publish your job listing to thousands of qualified workers.
+            {isEditMode
+              ? 'Update the details below to edit your job listing.'
+              : 'Fill in the details below to publish your job listing to thousands of qualified workers.'}
           </p>
         </div>
       </div>
@@ -617,6 +676,7 @@ export const PostJobPage: React.FC = () => {
           >
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {questions.map((q, i) => (
+                // eslint-disable-next-line react/no-array-index-key
                 <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-end' }}>
                   <div style={{ flex: 1 }}>
                     <Input
@@ -1078,7 +1138,7 @@ export const PostJobPage: React.FC = () => {
               Save Draft
             </Button>
             <Button type="submit" variant="primary" size="lg">
-              Publish Job
+              {isEditMode ? 'Save Changes' : 'Publish Job'}
             </Button>
           </div>
         </div>
