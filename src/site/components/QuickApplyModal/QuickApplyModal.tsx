@@ -135,58 +135,60 @@ export const QuickApplyModal: React.FC<QuickApplyModalProps> = ({
             Done
           </button>
         ) : (
-          <div style={{ display: 'flex', gap: 'var(--kt-space-3)' }}>
-            <button
-              onClick={handleClose}
-              style={{
-                flex: 1,
-                padding: 'var(--kt-space-3)',
-                background: 'transparent',
-                color: 'var(--kt-text)',
-                border: '1px solid var(--kt-border)',
-                borderRadius: 'var(--kt-radius-md)',
-                fontSize: 'var(--kt-text-sm)',
-                fontWeight: 'var(--kt-weight-medium)',
-                cursor: 'pointer',
-                fontFamily: 'var(--kt-font-sans)',
-              }}
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleSubmit}
-              disabled={loading}
-              style={{
-                flex: 2,
-                padding: 'var(--kt-space-3)',
-                background: loading ? 'var(--kt-border)' : 'var(--kt-primary)',
-                color: 'var(--kt-text-on-primary)',
-                border: 'none',
-                borderRadius: 'var(--kt-radius-md)',
-                fontSize: 'var(--kt-text-sm)',
-                fontWeight: 'var(--kt-weight-semibold)',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                fontFamily: 'var(--kt-font-sans)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 'var(--kt-space-2)',
-              }}
-            >
-              {loading ? (
-                <>
-                  <HourglassIcon size={14} /> Submitting...
-                </>
-              ) : wantBoost ? (
-                <>
-                  <RocketIcon size={14} /> Apply + Boost — $9.99
-                </>
-              ) : (
-                <>
-                  <LightningIcon size={14} /> Submit Application
-                </>
-              )}
-            </button>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--kt-space-2)' }}>
+            <div style={{ display: 'flex', gap: 'var(--kt-space-3)' }}>
+              <button
+                onClick={handleClose}
+                style={{
+                  flex: 1,
+                  padding: 'var(--kt-space-3)',
+                  background: 'transparent',
+                  color: 'var(--kt-text)',
+                  border: '1px solid var(--kt-border)',
+                  borderRadius: 'var(--kt-radius-md)',
+                  fontSize: 'var(--kt-text-sm)',
+                  fontWeight: 'var(--kt-weight-medium)',
+                  cursor: 'pointer',
+                  fontFamily: 'var(--kt-font-sans)',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSubmit}
+                disabled={loading}
+                style={{
+                  flex: 2,
+                  padding: 'var(--kt-space-3)',
+                  background: loading ? 'var(--kt-border)' : 'var(--kt-primary)',
+                  color: 'var(--kt-text-on-primary)',
+                  border: 'none',
+                  borderRadius: 'var(--kt-radius-md)',
+                  fontSize: 'var(--kt-text-sm)',
+                  fontWeight: 'var(--kt-weight-semibold)',
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  fontFamily: 'var(--kt-font-sans)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 'var(--kt-space-2)',
+                }}
+              >
+                {loading ? (
+                  <>
+                    <HourglassIcon size={14} /> Submitting...
+                  </>
+                ) : wantBoost ? (
+                  <>
+                    <RocketIcon size={14} /> Apply + Boost — $9.99
+                  </>
+                ) : (
+                  <>
+                    <LightningIcon size={14} /> Submit Application
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         )
       }
