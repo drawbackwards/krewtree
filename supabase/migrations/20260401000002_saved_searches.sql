@@ -17,7 +17,15 @@ CREATE INDEX IF NOT EXISTS idx_saved_searches_worker ON saved_searches(worker_id
 
 ALTER TABLE saved_searches ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "worker_own_saved_searches" ON saved_searches
-  FOR ALL
-  USING  (worker_id = auth.uid())
-  WITH CHECK (worker_id = auth.uid());
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE tablename = 'saved_searches' AND policyname = 'worker_own_saved_searches'
+  ) THEN
+    CREATE POLICY "worker_own_saved_searches" ON saved_searches
+      FOR ALL
+      USING  (worker_id = auth.uid())
+      WITH CHECK (worker_id = auth.uid());
+  END IF;
+END $$;
