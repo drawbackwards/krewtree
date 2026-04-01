@@ -5,7 +5,7 @@
   padding: var(--kt-space-6);
   display: flex;
   flex-direction: column;
-  gap: var(--kt-space-4);
+  gap: var(--kt-space-5);
   transition:
     box-shadow var(--kt-duration-base) var(--kt-ease),
     border-color var(--kt-duration-base) var(--kt-ease),
@@ -142,8 +142,11 @@
 
 .skills {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 6px;
+  overflow: hidden;
+  position: relative;
+  max-width: 60%;
 }
 
 .skillTag {
@@ -154,14 +157,21 @@
   padding: 4px 10px;
   border-radius: var(--kt-radius-full);
   border: 1px solid var(--kt-navy-100);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .skillMore {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
   font-size: var(--kt-text-xs);
   font-weight: var(--kt-weight-medium);
   color: var(--kt-text-muted);
-  padding: 4px 6px;
-  align-self: center;
+  background: var(--kt-white);
+  padding: 4px 2px 4px 6px;
+  white-space: nowrap;
 }
 
 .footer {
@@ -193,6 +203,29 @@
 
 .quickApplyBtn:hover {
   background: var(--kt-olive-800);
+}
+
+@media (max-width: 640px) {
+  .footer {
+    flex-direction: column;
+    align-items: stretch;
+    border-top: none;
+    padding-top: 0;
+    gap: var(--kt-space-4);
+  }
+
+  .skills {
+    max-width: 100%;
+  }
+
+  .skillMore {
+    display: none;
+  }
+
+  .quickApplyBtn {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 .pay {
