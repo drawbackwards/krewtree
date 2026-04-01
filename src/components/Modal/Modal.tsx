@@ -13,6 +13,7 @@ export interface ModalProps {
   description?: string
   showClose?: boolean
   closeOnOverlay?: boolean
+  mobileDrawer?: boolean
   children?: React.ReactNode
   footer?: React.ReactNode
 }
@@ -25,6 +26,7 @@ export const Modal: React.FC<ModalProps> = ({
   description,
   showClose = true,
   closeOnOverlay = true,
+  mobileDrawer = false,
   children,
   footer,
 }) => {
@@ -49,7 +51,9 @@ export const Modal: React.FC<ModalProps> = ({
 
   return createPortal(
     <div
-      className={styles.overlay}
+      className={[styles.overlay, mobileDrawer ? styles.mobileDrawer : '']
+        .filter(Boolean)
+        .join(' ')}
       onClick={closeOnOverlay ? onClose : undefined}
       role="dialog"
       aria-modal="true"

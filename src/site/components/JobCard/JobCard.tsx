@@ -8,6 +8,7 @@ import {
   LightningIcon,
   StarIcon,
   DollarIcon,
+  CheckIcon,
 } from '../../icons'
 import styles from './JobCard.module.css'
 
@@ -35,10 +36,16 @@ const EXPERIENCE_LABELS: Record<string, string> = {
 interface JobCardProps {
   job: Job
   compact?: boolean
+  applied?: boolean
   onQuickApply?: () => void
 }
 
-export const JobCard: React.FC<JobCardProps> = ({ job, compact = false, onQuickApply }) => {
+export const JobCard: React.FC<JobCardProps> = ({
+  job,
+  compact = false,
+  applied = false,
+  onQuickApply,
+}) => {
   const navigate = useNavigate()
 
   // Measure how many skill pills fit fully — never show a partially clipped pill
@@ -165,14 +172,26 @@ export const JobCard: React.FC<JobCardProps> = ({ job, compact = false, onQuickA
           )}
           {onQuickApply && (
             <button
-              className={styles.quickApplyBtn}
+              className={[styles.quickApplyBtn, applied ? styles.appliedBtn : '']
+                .filter(Boolean)
+                .join(' ')}
+              disabled={applied}
               onClick={(e) => {
                 e.stopPropagation()
-                onQuickApply()
+                if (!applied) onQuickApply()
               }}
             >
-              <LightningIcon size={14} />
-              Quick Apply
+              {applied ? (
+                <>
+                  <CheckIcon size={14} />
+                  Applied!
+                </>
+              ) : (
+                <>
+                  <LightningIcon size={14} />
+                  Quick Apply
+                </>
+              )}
             </button>
           )}
         </div>

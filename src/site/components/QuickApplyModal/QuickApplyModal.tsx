@@ -27,12 +27,9 @@ export const QuickApplyModal: React.FC<QuickApplyModalProps> = ({
   onApplied,
 }) => {
   const { user, isEmailVerified, resendVerificationEmail } = useAuth()
-  const firstName: string = user?.user_metadata?.first_name ?? ''
-  const lastName: string = user?.user_metadata?.last_name ?? ''
-  const workerName = firstName ? `${firstName} ${lastName}`.trim() : ''
-  const workerInitials = firstName ? `${firstName[0]}${lastName[0] ?? ''}`.toUpperCase() : ''
   const [coverNote, setCoverNote] = useState('')
   const [submitted, setSubmitted] = useState(false)
+  const [alreadyApplied, setAlreadyApplied] = useState(false)
   const [loading, setLoading] = useState(false)
   const [wantBoost, setWantBoost] = useState(false)
   const [submittedWithBoost, setSubmittedWithBoost] = useState(false)
@@ -60,6 +57,13 @@ export const QuickApplyModal: React.FC<QuickApplyModalProps> = ({
     setSubmittedWithBoost(wantBoost)
     const { error } = await submitApplication(job.id, user.id, coverNote, wantBoost)
     setLoading(false)
+    if (error === 'already_applied') {
+      setSubmittedWithBoost(false)
+      setAlreadyApplied(true)
+      setSubmitted(true)
+      onApplied?.(job.id)
+      return
+    }
     if (error) {
       setSubmitError(error)
       setSubmittedWithBoost(false)
@@ -74,6 +78,7 @@ export const QuickApplyModal: React.FC<QuickApplyModalProps> = ({
     // Reset after animation
     setTimeout(() => {
       setSubmitted(false)
+      setAlreadyApplied(false)
       setCoverNote('')
       setWantBoost(false)
       setSubmittedWithBoost(false)
@@ -95,6 +100,7 @@ export const QuickApplyModal: React.FC<QuickApplyModalProps> = ({
       open={open}
       onClose={handleClose}
       size="md"
+      mobileDrawer
       title={!isEmailVerified ? 'Verify your email' : submitted ? undefined : 'Quick Apply'}
       showClose={!submitted}
       footer={
@@ -135,45 +141,12 @@ export const QuickApplyModal: React.FC<QuickApplyModalProps> = ({
             Done
           </button>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--kt-space-2)' }}>
-            <div style={{ display: 'flex', gap: 'var(--kt-space-3)' }}>
-              <button
-                onClick={handleClose}
-                style={{
-                  flex: 1,
-                  padding: 'var(--kt-space-3)',
-                  background: 'transparent',
-                  color: 'var(--kt-text)',
-                  border: '1px solid var(--kt-border)',
-                  borderRadius: 'var(--kt-radius-md)',
-                  fontSize: 'var(--kt-text-sm)',
-                  fontWeight: 'var(--kt-weight-medium)',
-                  cursor: 'pointer',
-                  fontFamily: 'var(--kt-font-sans)',
-                }}
-              >
+          <div className={styles.footerActions}>
+            <div className={styles.footerRow}>
+              <button className={styles.cancelBtn} onClick={handleClose}>
                 Cancel
               </button>
-              <button
-                onClick={handleSubmit}
-                disabled={loading}
-                style={{
-                  flex: 2,
-                  padding: 'var(--kt-space-3)',
-                  background: loading ? 'var(--kt-border)' : 'var(--kt-primary)',
-                  color: 'var(--kt-text-on-primary)',
-                  border: 'none',
-                  borderRadius: 'var(--kt-radius-md)',
-                  fontSize: 'var(--kt-text-sm)',
-                  fontWeight: 'var(--kt-weight-semibold)',
-                  cursor: loading ? 'not-allowed' : 'pointer',
-                  fontFamily: 'var(--kt-font-sans)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 'var(--kt-space-2)',
-                }}
-              >
+              <button className={styles.submitBtn} onClick={handleSubmit} disabled={loading}>
                 {loading ? (
                   <>
                     <HourglassIcon size={14} /> Submitting...
@@ -253,11 +226,16 @@ export const QuickApplyModal: React.FC<QuickApplyModalProps> = ({
             {submittedWithBoost ? <RocketIcon size={48} /> : <CelebrationIcon size={48} />}
           </div>
           <div className={styles.successTitle}>
-            {submittedWithBoost ? 'Application Sent + Boosted!' : 'Application Sent!'}
+            {alreadyApplied
+              ? 'Already Applied'
+              : submittedWithBoost
+                ? 'Application Sent + Boosted!'
+                : 'Application Sent!'}
           </div>
           <p className={styles.successBody}>
-            Your application for <strong>{job.title}</strong> at <strong>{job.company.name}</strong>{' '}
-            has been submitted. You'll be notified when they view your profile.
+            {alreadyApplied
+              ? `You've already applied for ${job.title} at ${job.company.name}. We'll notify you when they view your profile.`
+              : `Your application for ${job.title} at ${job.company.name} has been submitted. You'll be notified when they view your profile.`}
           </p>
           {submittedWithBoost && (
             <p
@@ -277,23 +255,21 @@ export const QuickApplyModal: React.FC<QuickApplyModalProps> = ({
       ) : (
         <>
           {/* Job Header */}
-          <div className={styles.jobHeader}>
-            <div className={styles.logoCircle}>{companyInitials}</div>
-            <div>
-              <div className={styles.jobTitle}>{job.title}</div>
-              <div className={styles.jobMeta}>
-                {job.company.name} · {job.location} · {job.type}
+          <div className={styles.jobHeaderWrap}>
+            <div className={styles.sectionLabel}>You're applying for</div>
+            <div className={styles.jobHeader}>
+              <div className={styles.logoCircle}>{companyInitials}</div>
+              <div>
+                <div className={styles.jobTitle}>{job.title}</div>
+                <div className={styles.jobMeta}>
+                  {job.company.name} · {job.location} · {job.type}
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Worker Info */}
-          <div className={styles.workerRow}>
-            <div className={styles.workerAvatar}>{workerInitials}</div>
-            <div className={styles.workerInfo}>
-              <div className={styles.workerName}>{workerName}</div>
-            </div>
-            {/* Regulix Ready badge — not yet built */}
+          <div className={styles.tip} style={{ marginBottom: 'var(--kt-space-5)' }}>
+            Your full profile, work history, and Regulix verification are included automatically.
           </div>
 
           {/* Cover Note */}
@@ -328,9 +304,6 @@ export const QuickApplyModal: React.FC<QuickApplyModalProps> = ({
                 e.target.style.borderColor = 'var(--kt-border)'
               }}
             />
-            <div className={styles.tip}>
-              Your full profile, work history, and Regulix verification are included automatically.
-            </div>
           </div>
 
           {submitError && (
@@ -366,7 +339,7 @@ export const QuickApplyModal: React.FC<QuickApplyModalProps> = ({
             <div
               style={{
                 display: 'flex',
-                alignItems: 'center',
+                alignItems: 'flex-start',
                 justifyContent: 'space-between',
                 gap: 12,
               }}

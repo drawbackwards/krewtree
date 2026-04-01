@@ -78,6 +78,8 @@ export type Job = {
   status: 'active' | 'paused' | 'closed'
   experienceLevel?: string | null
   preInterviewQuestions?: string[]
+  urgentHiring?: boolean
+  regulixPreferred?: boolean
   autoPauseLimit?: number | null
 }
 

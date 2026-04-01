@@ -23,6 +23,11 @@ type DbJob = {
   total_applicants: number
   status: string
   created_at: string
+  experience_level: string | null
+  pre_interview_questions: string[]
+  urgent_hiring: boolean
+  regulix_preferred: boolean
+  auto_pause_limit: number | null
   company_profiles: {
     id: string
     name: string
@@ -52,6 +57,11 @@ export type CreateJobParams = {
   requirements: string[]
   skills: string[]
   isSponsored: boolean
+  experienceLevel: string | null
+  preInterviewQuestions: string[]
+  urgentHiring: boolean
+  regulixPreferred: boolean
+  autoPauseLimit: number | null
 }
 
 export type UpdateJobParams = Partial<Omit<CreateJobParams, 'companyId'>> & {
@@ -64,6 +74,7 @@ const JOB_SELECT = `
   id, company_id, title, industry, industry_slug, type, location,
   pay_min, pay_max, pay_type, description, requirements, skills,
   is_sponsored, regulix_ready_applicants, total_applicants, status, created_at,
+  experience_level, pre_interview_questions, urgent_hiring, regulix_preferred, auto_pause_limit,
   company_profiles(id, name, logo_url, location, industry, is_verified, description, size, website, avg_rating, review_count)
 `
 
@@ -101,6 +112,11 @@ function mapJob(j: DbJob): Job {
     totalApplicants: j.total_applicants,
     postedDaysAgo: daysSince(j.created_at),
     status: j.status as Job['status'],
+    experienceLevel: j.experience_level ?? null,
+    preInterviewQuestions: j.pre_interview_questions ?? [],
+    urgentHiring: j.urgent_hiring ?? false,
+    regulixPreferred: j.regulix_preferred ?? false,
+    autoPauseLimit: j.auto_pause_limit ?? null,
   }
 }
 
@@ -130,6 +146,18 @@ export async function getJobById(id: string): Promise<{ data: Job | null; error:
 
 // ── Mutations ──────────────────────────────────────────────────────────────────
 
+export async function getAppliedJobIds(
+  workerId: string
+): Promise<{ data: string[]; error: string | null }> {
+  const { data, error } = await supabase
+    .from('applications')
+    .select('job_id')
+    .eq('worker_id', workerId)
+
+  if (error) return { data: [], error: error.message }
+  return { data: (data ?? []).map((r) => r.job_id as string), error: null }
+}
+
 export async function submitApplication(
   jobId: string,
   workerId: string,
@@ -144,7 +172,10 @@ export async function submitApplication(
     status: 'Applied',
   })
 
-  if (error) return { error: error.message }
+  if (error) {
+    if (error.code === '23505') return { error: 'already_applied' }
+    return { error: error.message }
+  }
   return { error: null }
 }
 
@@ -167,6 +198,11 @@ export async function createJob(
       requirements: params.requirements,
       skills: params.skills,
       is_sponsored: params.isSponsored,
+      experience_level: params.experienceLevel,
+      pre_interview_questions: params.preInterviewQuestions,
+      urgent_hiring: params.urgentHiring,
+      regulix_preferred: params.regulixPreferred,
+      auto_pause_limit: params.autoPauseLimit,
       status: 'active',
     })
     .select('id')
@@ -193,6 +229,12 @@ export async function updateJob(
   if (params.requirements !== undefined) patch.requirements = params.requirements
   if (params.skills !== undefined) patch.skills = params.skills
   if (params.isSponsored !== undefined) patch.is_sponsored = params.isSponsored
+  if (params.experienceLevel !== undefined) patch.experience_level = params.experienceLevel
+  if (params.preInterviewQuestions !== undefined)
+    patch.pre_interview_questions = params.preInterviewQuestions
+  if (params.urgentHiring !== undefined) patch.urgent_hiring = params.urgentHiring
+  if (params.regulixPreferred !== undefined) patch.regulix_preferred = params.regulixPreferred
+  if (params.autoPauseLimit !== undefined) patch.auto_pause_limit = params.autoPauseLimit
   if (params.status !== undefined) patch.status = params.status
 
   const { error } = await supabase.from('jobs').update(patch).eq('id', id)

@@ -5,8 +5,9 @@ import { JobCard } from '../components/JobCard/JobCard'
 import { QuickApplyModal } from '../components/QuickApplyModal/QuickApplyModal'
 import type { SavedSearch, Job } from '../types'
 import { industries, locationRegions, savedSearches as initialSavedSearches } from '../data/mock'
-import { getJobs } from '../services/jobService'
-import { LocationIcon, SearchIcon, SlidersIcon, SortIcon, CloseIcon } from '../icons'
+import { getJobs, getAppliedJobIds } from '../services/jobService'
+import { useAuth } from '../context/AuthContext'
+import { LocationIcon, SearchIcon, SlidersIcon, SortIcon, CloseIcon, ListIcon } from '../icons'
 import styles from './JobsPage.module.css'
 
 const TYPES = ['Full-time', 'Part-time', 'Contract', 'Temporary']
@@ -101,6 +102,7 @@ const CheckFilter = ({
 )
 
 export const JobsPage: React.FC = () => {
+  const { user } = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
 
   // ---- All filter state derived from URL params ----
@@ -124,6 +126,7 @@ export const JobsPage: React.FC = () => {
   const [jobsList, setJobsList] = useState<Job[]>([])
   const [jobsLoading, setJobsLoading] = useState(true)
   const [jobsError, setJobsError] = useState<string | null>(null)
+  const [appliedJobIds, setAppliedJobIds] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     getJobs().then(({ data, error }) => {
@@ -132,6 +135,13 @@ export const JobsPage: React.FC = () => {
       setJobsLoading(false)
     })
   }, [])
+
+  useEffect(() => {
+    if (!user) return
+    getAppliedJobIds(user.id).then(({ data }) => {
+      setAppliedJobIds(new Set(data))
+    })
+  }, [user])
 
   // ---- Local UI state (not URL-syncable) ----
   const [locationView, setLocationView] = useState(false)
@@ -226,10 +236,6 @@ export const JobsPage: React.FC = () => {
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
-  const handleSearch = () => {
-    updateFilters({ q: searchQ || null })
-  }
-
   const handleSaveSearch = () => {
     if (!saveLabel.trim()) return
     const newSearch: SavedSearch = {
@@ -278,63 +284,24 @@ export const JobsPage: React.FC = () => {
       {/* Page header */}
       <div className={styles.header}>
         <div className={styles.headerInner}>
-          <div
+          <h1
             style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'flex-start',
+              fontSize: 'var(--kt-text-3xl)',
+              fontWeight: 'var(--kt-weight-display)',
+              color: 'var(--kt-text)',
+              letterSpacing: '-0.03em',
               marginBottom: 20,
-              flexWrap: 'wrap',
-              gap: 12,
             }}
           >
-            <h1
-              style={{
-                fontSize: 'var(--kt-text-3xl)',
-                fontWeight: 'var(--kt-weight-display)',
-                color: 'var(--kt-text)',
-                letterSpacing: '-0.03em',
-              }}
-            >
-              Browse Jobs
-            </h1>
-            <button
-              onClick={() => {
-                setLocationView((v) => !v)
-                goToPage(1)
-              }}
-              style={{
-                padding: '8px 16px',
-                borderRadius: 'var(--kt-radius-md)',
-                border: `1.5px solid ${locationView ? 'var(--kt-primary)' : 'var(--kt-border)'}`,
-                background: locationView
-                  ? 'color-mix(in srgb, var(--kt-primary) 8%, transparent)'
-                  : 'transparent',
-                color: locationView ? 'var(--kt-primary)' : 'var(--kt-text-muted)',
-                fontSize: 'var(--kt-text-sm)',
-                fontWeight: 'var(--kt-weight-semibold)',
-                cursor: 'pointer',
-                fontFamily: 'var(--kt-font-sans)',
-                transition: 'all 0.15s',
-              }}
-            >
-              {locationView ? (
-                '← List View'
-              ) : (
-                <>
-                  <LocationIcon size={14} /> Browse by Location
-                </>
-              )}
-            </button>
-          </div>
-          {/* Search bar */}
-          <div style={{ display: 'flex', gap: 12, maxWidth: 700, flexWrap: 'wrap' }}>
-            <div style={{ flex: 1, minWidth: 200 }}>
+            Browse Jobs
+          </h1>
+          {/* Search bar + view toggle */}
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center', maxWidth: 700 }}>
+            <div style={{ flex: 1 }}>
               <Input
                 placeholder="Job title, skill, or keyword..."
                 value={searchQ}
                 onChange={(e) => updateFilters({ q: e.target.value || null })}
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                 style={{ background: 'white' }}
                 leadingIcon={
                   <svg
@@ -352,23 +319,58 @@ export const JobsPage: React.FC = () => {
                 }
               />
             </div>
-            <button
-              onClick={handleSearch}
+            <div
               style={{
-                background: 'var(--kt-accent)',
-                color: 'white',
-                border: 'none',
+                display: 'flex',
+                border: '1.5px solid var(--kt-border)',
                 borderRadius: 'var(--kt-radius-md)',
-                padding: '0 24px',
-                fontWeight: 'var(--kt-weight-semibold)',
-                fontSize: 'var(--kt-text-md)',
-                cursor: 'pointer',
-                fontFamily: 'var(--kt-font-sans)',
+                overflow: 'hidden',
+                flexShrink: 0,
                 height: 40,
               }}
             >
-              Search
-            </button>
+              <button
+                aria-label="List view"
+                onClick={() => {
+                  setLocationView(false)
+                  goToPage(1)
+                }}
+                style={{
+                  width: 40,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: !locationView ? 'var(--kt-primary)' : 'var(--kt-surface)',
+                  color: !locationView ? 'var(--kt-text-on-primary)' : 'var(--kt-text-muted)',
+                  border: 'none',
+                  borderRight: '1.5px solid var(--kt-border)',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s',
+                }}
+              >
+                <ListIcon size={15} />
+              </button>
+              <button
+                aria-label="Map view"
+                onClick={() => {
+                  setLocationView(true)
+                  goToPage(1)
+                }}
+                style={{
+                  width: 40,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: locationView ? 'var(--kt-primary)' : 'var(--kt-surface)',
+                  color: locationView ? 'var(--kt-text-on-primary)' : 'var(--kt-text-muted)',
+                  border: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s',
+                }}
+              >
+                <LocationIcon size={15} />
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -949,7 +951,11 @@ export const JobsPage: React.FC = () => {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                     {paginated.map((job) => (
                       <div key={job.id} style={{ position: 'relative' }}>
-                        <JobCard job={job} onQuickApply={() => setQuickApplyJob(job)} />
+                        <JobCard
+                          job={job}
+                          applied={appliedJobIds.has(job.id)}
+                          onQuickApply={() => setQuickApplyJob(job)}
+                        />
                       </div>
                     ))}
                   </div>
@@ -1309,7 +1315,10 @@ export const JobsPage: React.FC = () => {
           job={quickApplyJob}
           open={!!quickApplyJob}
           onClose={() => setQuickApplyJob(null)}
-          onApplied={() => setQuickApplyJob(null)}
+          onApplied={(jobId) => {
+            setAppliedJobIds((prev) => new Set(prev).add(jobId))
+            setQuickApplyJob(null)
+          }}
         />
       )}
     </div>

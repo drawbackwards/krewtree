@@ -168,6 +168,26 @@ export const MapPinIcon: React.FC<{ size?: number; color?: string }> = (props) =
   <LocationIcon {...props} />
 )
 
+export const ListIcon: React.FC<{ size?: number; color?: string }> = ({
+  size = 16,
+  color = 'currentColor',
+}) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 16 16"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <line x1="5" y1="4" x2="14" y2="4" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+    <line x1="5" y1="8" x2="14" y2="8" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+    <line x1="5" y1="12" x2="14" y2="12" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+    <circle cx="2.5" cy="4" r="1" fill={color} />
+    <circle cx="2.5" cy="8" r="1" fill={color} />
+    <circle cx="2.5" cy="12" r="1" fill={color} />
+  </svg>
+)
+
 export const GlobeIcon: React.FC<{ size?: number; color?: string }> = ({
   size = 16,
   color = 'currentColor',
