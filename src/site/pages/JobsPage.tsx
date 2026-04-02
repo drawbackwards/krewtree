@@ -882,7 +882,7 @@ export const JobsPage: React.FC = () => {
                   onClick={() => setDrawerType('sort')}
                 >
                   <SortIcon size={15} />
-                  Sort{sortBy !== 'recent' ? `: ${sortBy === 'pay' ? 'Pay' : 'Applied'}` : ''}
+                  Sort{sortBy !== 'recent' ? `: ${sortBy === 'pay' ? 'Pay' : 'Popular'}` : ''}
                 </button>
               </div>
 
@@ -926,11 +926,7 @@ export const JobsPage: React.FC = () => {
                         transition: 'all var(--kt-duration-fast)',
                       }}
                     >
-                      {s === 'recent'
-                        ? 'Most Recent'
-                        : s === 'pay'
-                          ? 'Highest Pay'
-                          : 'Most Applied'}
+                      {s === 'recent' ? 'Most Recent' : s === 'pay' ? 'Highest Pay' : 'Popular'}
                     </button>
                   ))}
                 </div>
@@ -1349,7 +1345,6 @@ export const JobsPage: React.FC = () => {
           onClose={() => setQuickApplyJob(null)}
           onApplied={(jobId) => {
             setAppliedJobIds((prev) => new Set(prev).add(jobId))
-            setQuickApplyJob(null)
           }}
         />
       )}

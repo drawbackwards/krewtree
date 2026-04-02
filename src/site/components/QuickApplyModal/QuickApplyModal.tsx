@@ -1,4 +1,5 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Modal } from '../../../components'
 import type { Job } from '../../types'
 import { useAuth } from '../../context/AuthContext'
@@ -10,6 +11,10 @@ import {
   LightningIcon,
   CheckSmallIcon,
   EnvelopeIcon,
+  BriefcaseIcon,
+  BellIcon,
+  MessageIcon,
+  CheckCircleIcon,
 } from '../../icons'
 import styles from './QuickApplyModal.module.css'
 
@@ -27,7 +32,9 @@ export const QuickApplyModal: React.FC<QuickApplyModalProps> = ({
   onApplied,
 }) => {
   const { user, isEmailVerified, resendVerificationEmail } = useAuth()
+  const navigate = useNavigate()
   const [coverNote, setCoverNote] = useState('')
+  const [questionAnswers, setQuestionAnswers] = useState<string[]>([])
   const [submitted, setSubmitted] = useState(false)
   const [alreadyApplied, setAlreadyApplied] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -37,6 +44,10 @@ export const QuickApplyModal: React.FC<QuickApplyModalProps> = ({
   const [resendSent, setResendSent] = useState(false)
   const [resendError, setResendError] = useState('')
   const [submitError, setSubmitError] = useState('')
+
+  useEffect(() => {
+    setQuestionAnswers(job?.preInterviewQuestions?.map(() => '') ?? [])
+  }, [job?.id])
 
   const handleResend = async () => {
     setResendLoading(true)
@@ -55,7 +66,11 @@ export const QuickApplyModal: React.FC<QuickApplyModalProps> = ({
     setLoading(true)
     setSubmitError('')
     setSubmittedWithBoost(wantBoost)
-    const { error } = await submitApplication(job.id, user.id, coverNote, wantBoost)
+    const answers = (job.preInterviewQuestions ?? []).map((question, i) => ({
+      question,
+      answer: questionAnswers[i] ?? '',
+    }))
+    const { error } = await submitApplication(job.id, user.id, coverNote, wantBoost, answers)
     setLoading(false)
     if (error === 'already_applied') {
       setSubmittedWithBoost(false)
@@ -80,6 +95,7 @@ export const QuickApplyModal: React.FC<QuickApplyModalProps> = ({
       setSubmitted(false)
       setAlreadyApplied(false)
       setCoverNote('')
+      setQuestionAnswers(job?.preInterviewQuestions?.map(() => '') ?? [])
       setWantBoost(false)
       setSubmittedWithBoost(false)
       setSubmitError('')
@@ -123,23 +139,22 @@ export const QuickApplyModal: React.FC<QuickApplyModalProps> = ({
             Close
           </button>
         ) : submitted ? (
-          <button
-            onClick={handleClose}
-            style={{
-              width: '100%',
-              padding: 'var(--kt-space-3)',
-              background: 'var(--kt-primary)',
-              color: 'var(--kt-text-on-primary)',
-              border: 'none',
-              borderRadius: 'var(--kt-radius-md)',
-              fontSize: 'var(--kt-text-sm)',
-              fontWeight: 'var(--kt-weight-semibold)',
-              cursor: 'pointer',
-              fontFamily: 'var(--kt-font-sans)',
-            }}
-          >
-            Done
-          </button>
+          <div className={styles.footerRow}>
+            {!alreadyApplied && (
+              <button
+                className={styles.cancelBtn}
+                onClick={() => {
+                  handleClose()
+                  navigate('/site/jobs')
+                }}
+              >
+                Browse Jobs
+              </button>
+            )}
+            <button className={styles.submitBtn} onClick={handleClose}>
+              Done
+            </button>
+          </div>
         ) : (
           <div className={styles.footerActions}>
             <div className={styles.footerRow}>
@@ -221,37 +236,73 @@ export const QuickApplyModal: React.FC<QuickApplyModalProps> = ({
           )}
         </div>
       ) : submitted ? (
-        <div className={styles.successState}>
-          <div className={styles.successIcon}>
-            {submittedWithBoost ? <RocketIcon size={48} /> : <CelebrationIcon size={48} />}
-          </div>
-          <div className={styles.successTitle}>
-            {alreadyApplied
-              ? 'Already Applied'
-              : submittedWithBoost
-                ? 'Application Sent + Boosted!'
-                : 'Application Sent!'}
-          </div>
-          <p className={styles.successBody}>
-            {alreadyApplied
-              ? `You've already applied for ${job.title} at ${job.company.name}. We'll notify you when they view your profile.`
-              : `Your application for ${job.title} at ${job.company.name} has been submitted. You'll be notified when they view your profile.`}
-          </p>
-          {submittedWithBoost && (
-            <p
-              style={{
-                marginTop: 10,
-                fontSize: 'var(--kt-text-xs)',
-                color: 'var(--kt-olive-700)',
-                fontWeight: 'var(--kt-weight-medium)',
-                lineHeight: 1.5,
-              }}
-            >
-              <RocketIcon size={14} /> Your application has been moved to the top of the employer's
-              applicant list.
+        alreadyApplied ? (
+          <div className={styles.successState}>
+            <div className={styles.successIcon}>
+              <CelebrationIcon size={48} />
+            </div>
+            <div className={styles.successTitle}>Already Applied</div>
+            <p className={styles.successBody}>
+              {`You've already applied for ${job.title} at ${job.company.name}. We'll notify you when they view your profile.`}
             </p>
-          )}
-        </div>
+          </div>
+        ) : (
+          <div className={styles.confirmState}>
+            <div className={styles.confirmIconWrap}>
+              {submittedWithBoost ? (
+                <RocketIcon size={40} color="var(--kt-olive-700)" />
+              ) : (
+                <CelebrationIcon size={40} color="var(--kt-primary)" />
+              )}
+            </div>
+            <div className={styles.confirmTitle}>
+              {submittedWithBoost ? 'Application Sent + Boosted!' : 'Application Sent!'}
+            </div>
+            <p className={styles.confirmSubtitle}>
+              {submittedWithBoost
+                ? 'Your application has been moved to the top of the employer\u2019s list.'
+                : 'Your application is on its way. Here\u2019s what to expect next.'}
+            </p>
+            <div className={styles.confirmJobCard}>
+              <div className={styles.logoCircle}>{companyInitials}</div>
+              <div className={styles.confirmJobInfo}>
+                <div className={styles.jobTitle}>{job.title}</div>
+                <div className={styles.jobMeta}>
+                  {job.company.name} · {job.location}
+                </div>
+              </div>
+              <CheckCircleIcon size={18} color="var(--kt-success, #2d7a4f)" />
+            </div>
+            <div className={styles.confirmSteps}>
+              <div className={styles.sectionLabel}>What happens next</div>
+              {[
+                {
+                  icon: <BriefcaseIcon size={16} />,
+                  label: 'Employer reviews your profile',
+                  body: 'Your full profile, work history, and Regulix verification are visible to the hiring manager.',
+                },
+                {
+                  icon: <BellIcon size={16} />,
+                  label: "You're notified when they view it",
+                  body: "We'll send you a notification as soon as they open your application.",
+                },
+                {
+                  icon: <MessageIcon size={16} />,
+                  label: 'They reach out if interested',
+                  body: 'If selected, the employer will message you through krewtree to set up next steps.',
+                },
+              ].map((step, i) => (
+                <div key={i} className={styles.confirmStep}>
+                  <div className={styles.confirmStepIcon}>{step.icon}</div>
+                  <div>
+                    <div className={styles.confirmStepLabel}>{step.label}</div>
+                    <div className={styles.confirmStepBody}>{step.body}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )
       ) : (
         <>
           {/* Job Header */}
@@ -266,10 +317,6 @@ export const QuickApplyModal: React.FC<QuickApplyModalProps> = ({
                 </div>
               </div>
             </div>
-          </div>
-
-          <div className={styles.tip} style={{ marginBottom: 'var(--kt-space-5)' }}>
-            Your full profile, work history, and Regulix verification are included automatically.
           </div>
 
           {/* Cover Note */}
@@ -305,6 +352,52 @@ export const QuickApplyModal: React.FC<QuickApplyModalProps> = ({
               }}
             />
           </div>
+
+          <div className={styles.tip} style={{ marginBottom: 'var(--kt-space-5)' }}>
+            Your full profile, work history, and Regulix verification are included automatically.
+          </div>
+
+          {/* Pre-interview questions */}
+          {job.preInterviewQuestions && job.preInterviewQuestions.length > 0 && (
+            <div className={styles.questionsSection}>
+              <div className={styles.sectionLabel}>Questions from the employer</div>
+              {job.preInterviewQuestions.map((question, i) => (
+                <div key={i} className={styles.questionItem}>
+                  <label className={styles.questionLabel}>{question}</label>
+                  <textarea
+                    value={questionAnswers[i] ?? ''}
+                    onChange={(e) => {
+                      const next = [...questionAnswers]
+                      next[i] = e.target.value
+                      setQuestionAnswers(next)
+                    }}
+                    placeholder="Your answer"
+                    rows={3}
+                    style={{
+                      width: '100%',
+                      padding: 'var(--kt-space-3)',
+                      border: '1px solid var(--kt-border)',
+                      borderRadius: 'var(--kt-radius-md)',
+                      fontSize: 'var(--kt-text-sm)',
+                      color: 'var(--kt-text)',
+                      background: 'var(--kt-bg)',
+                      fontFamily: 'var(--kt-font-sans)',
+                      resize: 'vertical',
+                      boxSizing: 'border-box',
+                      lineHeight: 'var(--kt-leading-normal)',
+                      outline: 'none',
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.borderColor = 'var(--kt-primary)'
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = 'var(--kt-border)'
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
 
           {submitError && (
             <p

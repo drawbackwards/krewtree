@@ -144,9 +144,7 @@
   display: flex;
   flex-wrap: nowrap;
   gap: 6px;
-  overflow: hidden;
-  position: relative;
-  max-width: 60%;
+  align-items: center;
 }
 
 .skillTag {
@@ -161,17 +159,56 @@
   flex-shrink: 0;
 }
 
+.skillMoreWrapper {
+  position: relative;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+}
+
 .skillMore {
-  position: absolute;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
   font-size: var(--kt-text-xs);
   font-weight: var(--kt-weight-medium);
   color: var(--kt-text-muted);
-  background: var(--kt-white);
-  padding: 4px 2px 4px 6px;
   white-space: nowrap;
+  cursor: default;
+}
+
+.skillTooltip {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--kt-grey-900);
+  color: var(--kt-white);
+  border-radius: var(--kt-radius-md);
+  padding: var(--kt-space-2) var(--kt-space-3);
+  min-width: 120px;
+  z-index: 10;
+  flex-direction: column;
+  gap: var(--kt-space-1);
+  pointer-events: none;
+}
+
+.skillTooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: var(--kt-grey-900);
+}
+
+.skillMoreWrapper:hover .skillTooltip {
+  display: flex;
+}
+
+.skillTooltipItem {
+  font-size: var(--kt-text-xs);
+  white-space: nowrap;
+  line-height: var(--kt-leading-normal);
 }
 
 .footer {
@@ -222,14 +259,6 @@
     border-top: none;
     padding-top: 0;
     gap: var(--kt-space-4);
-  }
-
-  .skills {
-    max-width: 100%;
-  }
-
-  .skillMore {
-    display: none;
   }
 
   .quickApplyBtn {
