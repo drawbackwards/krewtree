@@ -165,17 +165,20 @@ export async function submitApplication(
   isBoosted: boolean,
   questionAnswers: Array<{ question: string; answer: string }> = []
 ): Promise<{ error: string | null }> {
-  const payload: Record<string, unknown> = {
+  const base = {
     job_id: jobId,
     worker_id: workerId,
     notes: coverNote,
     is_boosted: isBoosted,
-    status: 'Applied',
+    status: 'Applied' as const,
   }
-  if (questionAnswers.length > 0) {
-    payload.interview_answers = questionAnswers
-  }
-  const { error } = await supabase.from('applications').insert(payload)
+  const { error } = await supabase
+    .from('applications')
+    .insert(
+      questionAnswers.length > 0
+        ? ({ ...base, interview_answers: questionAnswers } as typeof base)
+        : base
+    )
 
   if (error) {
     if (error.code === '23505') return { error: 'already_applied' }
