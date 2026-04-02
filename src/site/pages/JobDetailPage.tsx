@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { Badge, Button, Divider, Alert, Modal } from '../../components'
+import { Badge, Button, Divider, Modal } from '../../components'
 import { RegulixBadge } from '../components/RegulixBadge/RegulixBadge'
 import { QuickApplyModal } from '../components/QuickApplyModal/QuickApplyModal'
 import { getJobById, getAppliedJobIds } from '../services/jobService'
@@ -39,7 +39,7 @@ export const JobDetailPage: React.FC = () => {
   const navigate = useNavigate()
   const { persona, user } = useAuth()
   const isCompany = persona === 'company'
-  const [applied, setApplied] = useState(false)
+  const [appliedAt, setAppliedAt] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
   const [quickApplyOpen, setQuickApplyOpen] = useState(false)
   const [shareOpen, setShareOpen] = useState(false)
@@ -63,7 +63,8 @@ export const JobDetailPage: React.FC = () => {
   useEffect(() => {
     if (!user?.id || !id) return
     getAppliedJobIds(user.id).then(({ data }) => {
-      if (data.includes(id)) setApplied(true)
+      const match = data.find((r) => r.jobId === id)
+      if (match) setAppliedAt(match.appliedAt)
     })
   }, [user?.id, id])
 
@@ -805,21 +806,19 @@ export const JobDetailPage: React.FC = () => {
                 padding: 20,
               }}
             >
-              {applied ? (
-                <Alert variant="success" style={{ marginBottom: 12 }}>
-                  Application submitted! The employer will be in touch.
-                </Alert>
-              ) : null}
-
               <Button
-                variant={applied ? 'secondary' : 'primary'}
+                variant={appliedAt ? 'secondary' : 'primary'}
                 style={{ width: '100%', marginBottom: 8 }}
                 onClick={() => setQuickApplyOpen(true)}
-                disabled={applied}
+                disabled={!!appliedAt}
               >
-                {applied ? (
+                {appliedAt ? (
                   <>
-                    <CheckIcon size={12} /> Applied
+                    <CheckIcon size={12} /> Applied{' '}
+                    {new Date(appliedAt).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                    })}
                   </>
                 ) : (
                   <>
@@ -1116,7 +1115,7 @@ export const JobDetailPage: React.FC = () => {
         job={job}
         open={quickApplyOpen}
         onClose={() => setQuickApplyOpen(false)}
-        onApplied={() => setApplied(true)}
+        onApplied={() => setAppliedAt(new Date().toISOString())}
       />
 
       {/* Manage Listing modal */}

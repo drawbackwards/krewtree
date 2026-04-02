@@ -131,7 +131,7 @@ export const JobsPage: React.FC = () => {
   const [jobsList, setJobsList] = useState<Job[]>([])
   const [jobsLoading, setJobsLoading] = useState(true)
   const [jobsError, setJobsError] = useState<string | null>(null)
-  const [appliedJobIds, setAppliedJobIds] = useState<Set<string>>(new Set())
+  const [appliedDates, setAppliedDates] = useState<Map<string, string>>(new Map())
 
   useEffect(() => {
     getJobs().then(({ data, error }) => {
@@ -144,7 +144,7 @@ export const JobsPage: React.FC = () => {
   useEffect(() => {
     if (!user) return
     getAppliedJobIds(user.id).then(({ data }) => {
-      setAppliedJobIds(new Set(data))
+      setAppliedDates(new Map(data.map((r) => [r.jobId, r.appliedAt])))
     })
   }, [user])
 
@@ -980,7 +980,7 @@ export const JobsPage: React.FC = () => {
                       <div key={job.id} style={{ position: 'relative' }}>
                         <JobCard
                           job={job}
-                          applied={appliedJobIds.has(job.id)}
+                          appliedAt={appliedDates.get(job.id) ?? null}
                           onQuickApply={() => setQuickApplyJob(job)}
                         />
                       </div>
@@ -1344,7 +1344,7 @@ export const JobsPage: React.FC = () => {
           open={!!quickApplyJob}
           onClose={() => setQuickApplyJob(null)}
           onApplied={(jobId) => {
-            setAppliedJobIds((prev) => new Set(prev).add(jobId))
+            setAppliedDates((prev) => new Map(prev).set(jobId, new Date().toISOString()))
           }}
         />
       )}

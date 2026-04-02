@@ -36,18 +36,22 @@ const EXPERIENCE_LABELS: Record<string, string> = {
 interface JobCardProps {
   job: Job
   compact?: boolean
-  applied?: boolean
+  appliedAt?: string | null
   onQuickApply?: () => void
 }
 
 export const JobCard: React.FC<JobCardProps> = ({
   job,
   compact = false,
-  applied = false,
+  appliedAt = null,
   onQuickApply,
 }) => {
   const navigate = useNavigate()
   const SKILL_LIMIT = 3
+  const applied = !!appliedAt
+  const appliedLabel = appliedAt
+    ? `Applied ${new Date(appliedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+    : 'Applied'
 
   const companyInitials = job.company.name
     .split(' ')
@@ -157,7 +161,7 @@ export const JobCard: React.FC<JobCardProps> = ({
               {applied ? (
                 <>
                   <CheckIcon size={14} />
-                  Applied!
+                  {appliedLabel}
                 </>
               ) : (
                 <>

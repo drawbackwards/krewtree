@@ -148,14 +148,20 @@ export async function getJobById(id: string): Promise<{ data: Job | null; error:
 
 export async function getAppliedJobIds(
   workerId: string
-): Promise<{ data: string[]; error: string | null }> {
+): Promise<{ data: Array<{ jobId: string; appliedAt: string }>; error: string | null }> {
   const { data, error } = await supabase
     .from('applications')
-    .select('job_id')
+    .select('job_id, created_at')
     .eq('worker_id', workerId)
 
   if (error) return { data: [], error: error.message }
-  return { data: (data ?? []).map((r) => r.job_id as string), error: null }
+  return {
+    data: (data ?? []).map((r) => ({
+      jobId: r.job_id as string,
+      appliedAt: r.created_at as string,
+    })),
+    error: null,
+  }
 }
 
 export async function submitApplication(
