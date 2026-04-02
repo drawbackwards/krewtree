@@ -50,7 +50,7 @@ export const JobCard: React.FC<JobCardProps> = ({
   const SKILL_LIMIT = 3
   const applied = !!appliedAt
   const appliedLabel = appliedAt
-    ? `Applied ${new Date(appliedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+    ? `Applied on: ${new Date(appliedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
     : 'Applied'
 
   const companyInitials = job.company.name

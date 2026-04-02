@@ -814,7 +814,7 @@ export const JobDetailPage: React.FC = () => {
               >
                 {appliedAt ? (
                   <>
-                    <CheckIcon size={12} /> Applied{' '}
+                    <CheckIcon size={12} /> Applied on:{' '}
                     {new Date(appliedAt).toLocaleDateString('en-US', {
                       month: 'short',
                       day: 'numeric',
