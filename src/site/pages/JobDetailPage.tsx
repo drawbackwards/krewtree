@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import { Badge, Button, Divider, Alert, Modal } from '../../components'
 import { RegulixBadge } from '../components/RegulixBadge/RegulixBadge'
 import { QuickApplyModal } from '../components/QuickApplyModal/QuickApplyModal'
-import { getJobById } from '../services/jobService'
+import { getJobById, getAppliedJobIds } from '../services/jobService'
 import type { Job } from '../types'
 import { useAuth } from '../context/AuthContext'
 import {
@@ -37,7 +37,7 @@ const EXPERIENCE_LABELS: Record<string, string> = {
 export const JobDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { persona } = useAuth()
+  const { persona, user } = useAuth()
   const isCompany = persona === 'company'
   const [applied, setApplied] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -59,6 +59,13 @@ export const JobDetailPage: React.FC = () => {
       setJobLoading(false)
     })
   }, [id])
+
+  useEffect(() => {
+    if (!user?.id || !id) return
+    getAppliedJobIds(user.id).then(({ data }) => {
+      if (data.includes(id)) setApplied(true)
+    })
+  }, [user?.id, id])
 
   if (jobLoading) {
     return (
