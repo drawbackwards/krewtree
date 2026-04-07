@@ -1,0 +1,108 @@
+.pageHeaderInner {
+  max-width: var(--kt-layout-max-width);
+  margin: 0 auto;
+  padding: 0 var(--kt-space-6);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.pageBody {
+  max-width: var(--kt-layout-max-width);
+  margin: 0 auto;
+  padding: 40px var(--kt-space-6) 48px;
+}
+
+.grid {
+  display: grid;
+  gap: 40px;
+  align-items: start;
+}
+
+.gridWithStepper {
+  grid-template-columns: 220px 1fr;
+}
+
+.gridNoStepper {
+  grid-template-columns: 1fr;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.stepperWrap {
+  position: sticky;
+  top: 84px;
+}
+
+.cardHeader {
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--kt-border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cardBody {
+  padding: 24px;
+}
+
+.cardFooter {
+  padding: 16px 24px;
+  border-top: 1px solid var(--kt-border);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.saveRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+@media (max-width: 640px) {
+  .pageHeaderInner {
+    padding: 0 var(--kt-space-4);
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .pageBody {
+    padding: 20px var(--kt-space-4) 32px;
+  }
+
+  .gridWithStepper {
+    grid-template-columns: 1fr;
+  }
+
+  .stepperWrap {
+    display: none;
+  }
+
+  .cardHeader {
+    padding: 12px 16px;
+  }
+
+  .cardBody {
+    padding: 16px;
+  }
+
+  .cardFooter {
+    padding: 12px 16px;
+  }
+
+  .pageHeaderInner > button {
+    width: 100%;
+  }
+
+  .saveRow {
+    width: 100%;
+  }
+
+  .saveRow > button {
+    flex: 1;
+  }
+}

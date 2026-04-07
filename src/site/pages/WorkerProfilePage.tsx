@@ -18,6 +18,7 @@ import {
 import { getFullWorkerProfile } from '../services/workerService'
 import type { FullWorkerProfile } from '../services/workerService'
 import { INDUSTRIES } from '../data/industries'
+import styles from './WorkerProfilePage.module.css'
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -160,21 +161,8 @@ export const WorkerProfilePage: React.FC = () => {
       {/* ── Hero ─────────────────────────────────────────────────────────────── */}
       <div style={{ background: 'var(--kt-surface)' }}>
         {/* Profile row */}
-        <div
-          style={{
-            maxWidth: 900,
-            margin: '0 auto',
-            padding: '32px var(--kt-space-6) 0',
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              gap: 20,
-              alignItems: 'center',
-              flexWrap: 'wrap',
-            }}
-          >
+        <div className={styles.heroInner}>
+          <div className={styles.profileRow}>
             {/* Avatar */}
             <div
               style={{
@@ -247,7 +235,7 @@ export const WorkerProfilePage: React.FC = () => {
             </div>
 
             {/* Actions */}
-            <div style={{ display: 'flex', gap: 8, flexShrink: 0, paddingBottom: 4 }}>
+            <div className={styles.profileActions}>
               {isOwnProfile ? (
                 <Button variant="primary" size="md" onClick={() => navigate('/site/profile/edit')}>
                   Edit profile
@@ -337,18 +325,9 @@ export const WorkerProfilePage: React.FC = () => {
       </div>
 
       {/* ── Body ─────────────────────────────────────────────────────────────── */}
-      <div
-        style={{
-          maxWidth: 900,
-          margin: '0 auto',
-          padding: '20px var(--kt-space-6)',
-          display: 'flex',
-          gap: 24,
-          alignItems: 'flex-start',
-        }}
-      >
+      <div className={styles.body}>
         {/* ── Main column ── */}
-        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <div className={styles.main}>
           {/* About */}
           {(() => {
             const hasSocials = profile.socialLinks.some((l) => l.url)
@@ -724,16 +703,8 @@ export const WorkerProfilePage: React.FC = () => {
 
         {/* ── Sidebar ── */}
         <div
-          style={{
-            width: 240,
-            flexShrink: 0,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 16,
-            position: 'sticky',
-            top: 80,
-            alignSelf: !hasContent ? 'stretch' : 'flex-start',
-          }}
+          className={styles.sidebar}
+          style={{ alignSelf: !hasContent ? 'stretch' : 'flex-start' }}
         >
           {/* Regulix status */}
           <div
