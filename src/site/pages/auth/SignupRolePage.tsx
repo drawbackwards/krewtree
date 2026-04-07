@@ -1,7 +1,9 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
+import { Badge } from '../../../components'
 import { KrewtreeLogo } from '../../components/Logo'
 import { CheckIcon } from '../../icons'
+import styles from './SignupRolePage.module.css'
 
 export const SignupRolePage: React.FC = () => {
   return (
@@ -16,11 +18,11 @@ export const SignupRolePage: React.FC = () => {
     >
       {/* ── Top bar ────────────────────────────────────────────────── */}
       <div
+        className={styles.topBar}
         style={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          padding: '22px 52px',
         }}
       >
         {/* Logo */}
@@ -29,12 +31,15 @@ export const SignupRolePage: React.FC = () => {
           style={{ display: 'inline-flex', lineHeight: 0 }}
           aria-label="krewtree home"
         >
-          <KrewtreeLogo height={34} onDark={false} />
+          <KrewtreeLogo height={30} onDark={false} />
         </Link>
 
         {/* Sign in */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text-muted)' }}>
+          <span
+            className={styles.alreadyLabel}
+            style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text-muted)' }}
+          >
             Already have an account?
           </span>
           <Link
@@ -44,7 +49,7 @@ export const SignupRolePage: React.FC = () => {
               color: 'var(--kt-text)',
               border: '1px solid var(--kt-border)',
               borderRadius: 'var(--kt-radius-full)',
-              padding: '7px 18px',
+              padding: '6px 16px',
               fontSize: 'var(--kt-text-sm)',
               fontWeight: 'var(--kt-weight-medium)',
               textDecoration: 'none',
@@ -64,13 +69,13 @@ export const SignupRolePage: React.FC = () => {
 
       {/* ── Main content ───────────────────────────────────────────── */}
       <div
+        className={styles.mainContent}
         style={{
           flex: 1,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: '40px 52px 60px',
         }}
       >
         {/* Heading */}
@@ -101,31 +106,19 @@ export const SignupRolePage: React.FC = () => {
         </div>
 
         {/* Two track cards */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: 16,
-            width: '100%',
-            maxWidth: 820,
-          }}
-        >
+        <div className={styles.cardGrid}>
           {/* Worker track */}
           <Link
             to="/site/signup/worker"
+            className={styles.card}
             style={{
               background: 'var(--kt-navy-900)',
               border: '1px solid rgba(229,218,195,0.1)',
               borderRadius: 'var(--kt-radius-xl)',
-              padding: '48px 44px',
-              textAlign: 'left',
               cursor: 'pointer',
               fontFamily: 'var(--kt-font-sans)',
               transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 20,
-              textDecoration: 'none',
+              textAlign: 'left',
             }}
             onMouseOver={(e) => {
               e.currentTarget.style.transform = 'translateY(-4px)'
@@ -136,61 +129,51 @@ export const SignupRolePage: React.FC = () => {
               e.currentTarget.style.boxShadow = 'none'
             }}
           >
-            <img
-              src="/icon-worker.png"
-              alt=""
-              aria-hidden="true"
-              style={{ width: 80, height: 80, objectFit: 'contain' }}
-            />
-            <div>
-              <div
+            <div className={styles.cardTop}>
+              <Badge
+                className={styles.cardBadge}
+                variant="accent"
+                size="sm"
                 style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 5,
                   background: 'var(--kt-badge-worker-bg)',
+                  color: 'rgba(229,218,195,0.85)',
                   border: 'none',
-                  borderRadius: 'var(--kt-radius-full)',
-                  padding: '3px 10px',
-                  marginBottom: 14,
                 }}
               >
-                <span
+                For Workers
+              </Badge>
+              <div className={styles.cardIconHeadline}>
+                <img
+                  src="/icon-worker.png"
+                  alt=""
+                  aria-hidden="true"
+                  style={{ width: 80, height: 80, objectFit: 'contain', flexShrink: 0 }}
+                />
+                <h2
+                  className={styles.cardHeadline}
                   style={{
-                    fontSize: 11,
-                    fontWeight: 700,
-                    color: 'rgba(229,218,195,0.85)',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.06em',
+                    fontWeight: 'var(--kt-weight-bold)',
+                    color: 'white',
+                    lineHeight: 1.0,
+                    letterSpacing: '-0.5px',
                   }}
                 >
-                  For Workers
-                </span>
+                  I'm looking
+                  <br />
+                  for work
+                </h2>
               </div>
-              <h2
-                style={{
-                  fontSize: 'var(--kt-text-4xl)',
-                  fontWeight: 'var(--kt-weight-bold)',
-                  color: 'var(--kt-sand-300)',
-                  lineHeight: 1.0,
-                  marginBottom: 14,
-                  letterSpacing: '-0.5px',
-                }}
-              >
-                I'm looking
-                <br />
-                for work
-              </h2>
-              <p
-                style={{
-                  fontSize: 'var(--kt-text-md)',
-                  color: 'rgba(229,218,195,0.5)',
-                  lineHeight: 1.6,
-                }}
-              >
-                Browse jobs, build a verified profile, and get hired faster with Regulix.
-              </p>
             </div>
+            <p
+              style={{
+                fontSize: 'var(--kt-text-md)',
+                color: 'rgba(255,255,255,0.65)',
+                lineHeight: 1.6,
+                maxWidth: 340,
+              }}
+            >
+              Browse jobs, build a verified profile, and get hired faster with Regulix.
+            </p>
             <ul
               style={{
                 listStyle: 'none',
@@ -213,17 +196,17 @@ export const SignupRolePage: React.FC = () => {
                     alignItems: 'center',
                     gap: 10,
                     fontSize: 'var(--kt-text-sm)',
-                    color: 'rgba(229,218,195,0.65)',
+                    color: 'rgba(255,255,255,0.65)',
                   }}
                 >
-                  <CheckIcon size={14} color="var(--kt-accent)" />
+                  <CheckIcon size={14} color="rgba(255,255,255,0.9)" />
                   {item}
                 </li>
               ))}
             </ul>
             <span
+              className={styles.cardCta}
               style={{
-                alignSelf: 'flex-start',
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 8,
@@ -242,19 +225,15 @@ export const SignupRolePage: React.FC = () => {
           {/* Company track */}
           <Link
             to="/site/signup/company"
+            className={styles.card}
             style={{
               background: 'var(--kt-olive-700)',
               border: '1px solid rgba(255,255,255,0.15)',
               borderRadius: 'var(--kt-radius-xl)',
-              padding: '48px 44px',
-              textAlign: 'left',
               cursor: 'pointer',
               fontFamily: 'var(--kt-font-sans)',
               transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 20,
-              textDecoration: 'none',
+              textAlign: 'left',
             }}
             onMouseOver={(e) => {
               e.currentTarget.style.transform = 'translateY(-4px)'
@@ -265,61 +244,51 @@ export const SignupRolePage: React.FC = () => {
               e.currentTarget.style.boxShadow = 'none'
             }}
           >
-            <img
-              src="/icon-company.png"
-              alt=""
-              aria-hidden="true"
-              style={{ width: 80, height: 80, objectFit: 'contain' }}
-            />
-            <div>
-              <div
+            <div className={styles.cardTop}>
+              <Badge
+                className={styles.cardBadge}
+                variant="secondary"
+                size="sm"
                 style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 5,
                   background: 'rgba(255,255,255,0.18)',
+                  color: 'white',
                   border: 'none',
-                  borderRadius: 'var(--kt-radius-full)',
-                  padding: '3px 10px',
-                  marginBottom: 14,
                 }}
               >
-                <span
+                For Companies
+              </Badge>
+              <div className={styles.cardIconHeadline}>
+                <img
+                  src="/icon-company.png"
+                  alt=""
+                  aria-hidden="true"
+                  style={{ width: 80, height: 80, objectFit: 'contain', flexShrink: 0 }}
+                />
+                <h2
+                  className={styles.cardHeadline}
                   style={{
-                    fontSize: 11,
-                    fontWeight: 700,
+                    fontWeight: 'var(--kt-weight-bold)',
                     color: 'white',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.06em',
+                    lineHeight: 1.0,
+                    letterSpacing: '-0.5px',
                   }}
                 >
-                  For Companies
-                </span>
+                  I'm looking
+                  <br />
+                  to hire
+                </h2>
               </div>
-              <h2
-                style={{
-                  fontSize: 'var(--kt-text-4xl)',
-                  fontWeight: 'var(--kt-weight-bold)',
-                  color: 'white',
-                  lineHeight: 1.0,
-                  marginBottom: 14,
-                  letterSpacing: '-0.5px',
-                }}
-              >
-                I'm looking
-                <br />
-                to hire
-              </h2>
-              <p
-                style={{
-                  fontSize: 'var(--kt-text-md)',
-                  color: 'rgba(255,255,255,0.65)',
-                  lineHeight: 1.6,
-                }}
-              >
-                Post jobs and find Regulix Ready workers who can start the day they're hired.
-              </p>
             </div>
+            <p
+              style={{
+                fontSize: 'var(--kt-text-md)',
+                color: 'rgba(255,255,255,0.65)',
+                lineHeight: 1.6,
+                maxWidth: 340,
+              }}
+            >
+              Post jobs and find Regulix Ready workers who can start the day they're hired.
+            </p>
             <ul
               style={{
                 listStyle: 'none',
@@ -351,8 +320,8 @@ export const SignupRolePage: React.FC = () => {
               ))}
             </ul>
             <span
+              className={styles.cardCta}
               style={{
-                alignSelf: 'flex-start',
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 8,

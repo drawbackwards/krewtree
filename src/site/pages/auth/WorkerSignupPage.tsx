@@ -6,6 +6,7 @@ import { industries } from '../../data/mock'
 import { KrewtreeLogo, KrewtreeBgMark } from '../../components/Logo'
 import { useAuth } from '../../context/AuthContext'
 import { BriefcaseIcon, ShieldCheckIcon, LightningIcon, SparkleIcon } from '../../icons'
+import styles from './WorkerSignupPage.module.css'
 
 const BENEFITS: { icon: React.ReactNode; label: string }[] = [
   { icon: <BriefcaseIcon size={15} />, label: 'Browse 12,400+ jobs across 8 industries' },
@@ -95,13 +96,13 @@ export const WorkerSignupPage: React.FC = () => {
 
       {/* ── Top bar ────────────────────────────────────────────────── */}
       <div
+        className={styles.topBar}
         style={{
           position: 'relative',
           zIndex: 10,
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          padding: '22px 52px',
         }}
       >
         <Link
@@ -109,10 +110,13 @@ export const WorkerSignupPage: React.FC = () => {
           style={{ display: 'inline-flex', lineHeight: 0 }}
           aria-label="krewtree home"
         >
-          <KrewtreeLogo height={34} onDark accentColor="white" />
+          <KrewtreeLogo height={30} onDark accentColor="white" />
         </Link>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={{ fontSize: 'var(--kt-text-sm)', color: 'rgba(255,255,255,0.7)' }}>
+          <span
+            className={styles.alreadyLabel}
+            style={{ fontSize: 'var(--kt-text-sm)', color: 'rgba(255,255,255,0.7)' }}
+          >
             Already have an account?
           </span>
           <Link
@@ -122,7 +126,7 @@ export const WorkerSignupPage: React.FC = () => {
               color: 'var(--kt-sand-300)',
               border: '1px solid rgba(229,218,195,0.2)',
               borderRadius: 'var(--kt-radius-full)',
-              padding: '7px 18px',
+              padding: '6px 16px',
               fontSize: 'var(--kt-text-sm)',
               fontWeight: 'var(--kt-weight-medium)',
               textDecoration: 'none',
@@ -142,6 +146,7 @@ export const WorkerSignupPage: React.FC = () => {
 
       {/* ── Main content ───────────────────────────────────────────── */}
       <div
+        className={styles.mainContent}
         style={{
           position: 'relative',
           zIndex: 1,
@@ -152,23 +157,16 @@ export const WorkerSignupPage: React.FC = () => {
         }}
       >
         <div
+          className={styles.contentRow}
           style={{
             display: 'flex',
             alignItems: 'flex-start',
-            gap: 56,
             width: '100%',
             maxWidth: 1060,
           }}
         >
           {/* Left — brand text (sticky) */}
-          <div
-            style={{
-              flex: 1,
-              minWidth: 0,
-              position: 'sticky',
-              top: 48,
-            }}
-          >
+          <div className={styles.brandPanel}>
             <h1
               style={{
                 fontSize: 'clamp(28px, 3vw, 44px)',
@@ -182,6 +180,7 @@ export const WorkerSignupPage: React.FC = () => {
               Find work faster.
             </h1>
             <p
+              className={styles.brandSubhead}
               style={{
                 fontSize: 'var(--kt-text-md)',
                 color: 'rgba(255,255,255,0.85)',
@@ -192,7 +191,7 @@ export const WorkerSignupPage: React.FC = () => {
             >
               Create a free profile and get connected to employers across every industry.
             </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div className={styles.benefitsList}>
               {BENEFITS.map(({ icon, label }) => (
                 <div key={label} style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
                   <div
@@ -229,10 +228,9 @@ export const WorkerSignupPage: React.FC = () => {
 
             {/* Social proof tile */}
             <div
+              className={styles.socialProof}
               style={{
                 marginTop: 40,
-                display: 'inline-flex',
-                flexDirection: 'column',
                 padding: '16px 20px 16px 0',
               }}
             >
@@ -261,13 +259,9 @@ export const WorkerSignupPage: React.FC = () => {
 
           {/* Right — white card */}
           <div
+            className={styles.formCard}
             style={{
               background: 'white',
-              borderRadius: 20,
-              padding: '40px 44px 48px',
-              width: 480,
-              flexShrink: 0,
-              boxShadow: '0 24px 64px rgba(0,0,0,0.45), 0 2px 8px rgba(0,0,0,0.2)',
             }}
           >
             <span
@@ -309,7 +303,7 @@ export const WorkerSignupPage: React.FC = () => {
               onSubmit={handleSubmit}
               style={{ display: 'flex', flexDirection: 'column', gap: 18 }}
             >
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+              <div className={styles.nameGrid}>
                 <Input
                   label="First name"
                   type="text"
@@ -337,7 +331,7 @@ export const WorkerSignupPage: React.FC = () => {
                 required
               />
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+              <div className={styles.passwordGrid}>
                 <Input
                   label="Password"
                   type="password"
