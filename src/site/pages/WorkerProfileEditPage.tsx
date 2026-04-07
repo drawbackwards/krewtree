@@ -11,6 +11,7 @@ import { Step2Section } from './WorkerProfileEdit/Step2Section'
 import { Step3Section } from './WorkerProfileEdit/Step3Section'
 import { CheckCircleIcon } from './WorkerProfileEdit/icons'
 import type { EditState, Step2Data, WorkEntry } from './WorkerProfileEdit/types'
+import styles from './WorkerProfileEditPage.module.css'
 
 // ── localStorage ───────────────────────────────────────────────────────────────
 
@@ -113,15 +114,7 @@ const SectionCard: React.FC<SectionCardProps> = ({
         scrollMarginTop: 84,
       }}
     >
-      <div
-        style={{
-          padding: '16px 24px',
-          borderBottom: '1px solid var(--kt-border)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 10,
-        }}
-      >
+      <div className={styles.cardHeader}>
         <div
           style={{
             width: 28,
@@ -151,19 +144,10 @@ const SectionCard: React.FC<SectionCardProps> = ({
         </h2>
       </div>
 
-      <div style={{ padding: 24 }}>{children}</div>
+      <div className={styles.cardBody}>{children}</div>
 
-      <div
-        style={{
-          padding: '16px 24px',
-          borderTop: '1px solid var(--kt-border)',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'flex-end',
-          gap: 8,
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div className={styles.cardFooter}>
+        <div className={styles.saveRow}>
           {isSaved && (
             <span
               style={{
@@ -473,15 +457,8 @@ export const WorkerProfileEditPage: React.FC = () => {
         }}
       >
         <div
-          style={{
-            maxWidth: profileCompletePct >= 100 ? 900 : 'var(--kt-layout-max-width)',
-            margin: '0 auto',
-            padding: '0 var(--kt-space-6)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 16,
-          }}
+          className={styles.pageHeaderInner}
+          style={{ maxWidth: profileCompletePct >= 100 ? 900 : undefined }}
         >
           <div>
             <h1
@@ -503,7 +480,7 @@ export const WorkerProfileEditPage: React.FC = () => {
           {!isCreate && user && (
             <Button
               variant="outline"
-              size="sm"
+              size="md"
               onClick={() => safeNavigate(`/site/profile/${user.id}`)}
             >
               View Profile
@@ -512,26 +489,13 @@ export const WorkerProfileEditPage: React.FC = () => {
         </div>
       </div>
 
-      <div
-        style={{
-          maxWidth: 'var(--kt-layout-max-width)',
-          margin: '0 auto',
-          padding: '40px var(--kt-space-6) 48px',
-        }}
-      >
+      <div className={styles.pageBody}>
         <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: profileCompletePct < 100 ? '220px 1fr' : '1fr',
-            gap: 40,
-            alignItems: 'start',
-            maxWidth: profileCompletePct >= 100 ? 900 : undefined,
-            margin: profileCompletePct >= 100 ? '0 auto' : undefined,
-          }}
+          className={`${styles.grid} ${profileCompletePct < 100 ? styles.gridWithStepper : styles.gridNoStepper}`}
         >
           {/* Left: sticky vertical stepper — hidden once profile is 100% */}
           {profileCompletePct < 100 && (
-            <div style={{ position: 'sticky', top: 84 }}>
+            <div className={styles.stepperWrap}>
               <Stepper
                 vertical
                 steps={STEPS}
@@ -542,7 +506,7 @@ export const WorkerProfileEditPage: React.FC = () => {
           )}
 
           {/* Right: all sections stacked */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 20, minWidth: 0 }}>
             <SectionCard
               stepNum={1}
               title={STEP_TITLES[1]}

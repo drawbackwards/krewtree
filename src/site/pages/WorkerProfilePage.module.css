@@ -1,0 +1,71 @@
+.heroInner {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 32px var(--kt-space-6) 0;
+}
+
+.profileRow {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.profileActions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+  padding-bottom: 4px;
+}
+
+.body {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px var(--kt-space-6);
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: sticky;
+  top: 80px;
+}
+
+@media (max-width: 640px) {
+  .heroInner {
+    padding: 16px var(--kt-space-4) 0;
+  }
+
+  .profileActions {
+    width: 100%;
+  }
+
+  .profileActions > * {
+    flex: 1;
+  }
+
+  .body {
+    flex-direction: column;
+    padding: 16px var(--kt-space-4) 24px;
+    gap: 16px;
+  }
+
+  .sidebar {
+    width: 100%;
+    position: static;
+  }
+}

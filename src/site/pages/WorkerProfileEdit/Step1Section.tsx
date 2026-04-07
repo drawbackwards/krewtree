@@ -4,6 +4,7 @@ import type { Step1Data } from './types'
 import { useAuth } from '../../context/AuthContext'
 import { uploadWorkerAvatar, updateWorkerAvatarUrl } from '../../services/workerService'
 import { CheckCircleIcon } from '../../icons'
+import styles from './Step1Section.module.css'
 
 export const Step1Section: React.FC<{ data: Step1Data; onChange: (d: Step1Data) => void }> = ({
   data,
@@ -141,7 +142,7 @@ export const Step1Section: React.FC<{ data: Step1Data; onChange: (d: Step1Data) 
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
+      <div className={styles.formGrid}>
         <Input
           label="First name"
           value={data.firstName}
@@ -294,7 +295,7 @@ export const Step1Section: React.FC<{ data: Step1Data; onChange: (d: Step1Data) 
                 color: 'var(--kt-text)',
               }}
             >
-              Phone number
+              Phone
             </label>
             <button
               type="button"

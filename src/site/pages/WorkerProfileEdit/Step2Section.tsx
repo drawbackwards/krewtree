@@ -4,6 +4,7 @@ import { INDUSTRIES, searchSkills, getSkillsByIndustry } from '../../data/indust
 import type { SkillTag } from '../../data/industries'
 import { PlusIcon, XIcon } from './icons'
 import type { ProfileSkill, ProfileCert, Step2Data } from './types'
+import styles from './Step2Section.module.css'
 
 // ── Skill search input ────────────────────────────────────────────────────────
 
@@ -292,7 +293,7 @@ const IndustrySkillsCard: React.FC<{
               >
                 Your skills ({data.skills.length})
               </p>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+              <div className={styles.skillsGrid}>
                 {data.skills.map((skill) => (
                   <div
                     key={skill.id}
@@ -307,26 +308,25 @@ const IndustrySkillsCard: React.FC<{
                     }}
                   >
                     <span
-                      style={{ flex: 1, fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text)' }}
+                      style={{
+                        flex: 1,
+                        minWidth: 0,
+                        fontSize: 'var(--kt-text-sm)',
+                        color: 'var(--kt-text)',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
                     >
                       {skill.name}
-                      {skill.source === 'custom' && (
-                        <span
-                          style={{
-                            fontSize: 'var(--kt-text-xs)',
-                            color: 'var(--kt-text-muted)',
-                            marginLeft: 6,
-                          }}
-                        >
-                          (custom)
-                        </span>
-                      )}
                     </span>
                     <label
                       style={{
                         fontSize: 'var(--kt-text-xs)',
                         color: 'var(--kt-text-muted)',
                         whiteSpace: 'nowrap',
+                        flexShrink: 0,
+                        width: 44,
                       }}
                     >
                       Yrs exp
@@ -339,7 +339,8 @@ const IndustrySkillsCard: React.FC<{
                       value={skill.yearsExp === null ? '' : skill.yearsExp}
                       onChange={(e) => updateSkillYears(skill.id, e.target.value)}
                       style={{
-                        width: 52,
+                        width: 48,
+                        flexShrink: 0,
                         padding: '4px 8px',
                         borderRadius: 'var(--kt-radius-sm)',
                         border: '1px solid var(--kt-border)',
@@ -391,30 +392,16 @@ const IndustrySkillsCard: React.FC<{
 
         {/* Certifications */}
         <div>
-          <div
+          <h4
             style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: 4,
+              fontSize: 'var(--kt-text-sm)',
+              fontWeight: 'var(--kt-weight-semibold)',
+              color: 'var(--kt-text)',
+              margin: '0 0 4px',
             }}
           >
-            <h4
-              style={{
-                fontSize: 'var(--kt-text-sm)',
-                fontWeight: 'var(--kt-weight-semibold)',
-                color: 'var(--kt-text)',
-                margin: 0,
-              }}
-            >
-              Certifications
-            </h4>
-            {data.certifications.length > 0 && (
-              <Button size="sm" variant="outline" onClick={addCert}>
-                <PlusIcon /> Add certification
-              </Button>
-            )}
-          </div>
+            Certifications
+          </h4>
           <p
             style={{
               fontSize: 'var(--kt-text-sm)',
@@ -424,6 +411,13 @@ const IndustrySkillsCard: React.FC<{
           >
             Self-reported. Add the cert name, issuing body, and expiry date.
           </p>
+          {data.certifications.length > 0 && (
+            <div style={{ marginBottom: 10 }}>
+              <Button size="sm" variant="outline" onClick={addCert}>
+                <PlusIcon /> Add certification
+              </Button>
+            </div>
+          )}
 
           {data.certifications.length === 0 && (
             <div
@@ -488,15 +482,13 @@ const IndustrySkillsCard: React.FC<{
                     <XIcon />
                   </button>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                  <div style={{ gridColumn: '1 / -1' }}>
-                    <Input
-                      label="Certification name"
-                      value={cert.certName}
-                      onChange={(e) => updateCert(cert.id, 'certName', e.target.value)}
-                      placeholder="e.g. OSHA 30, CPR/AED"
-                    />
-                  </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <Input
+                    label="Certification name"
+                    value={cert.certName}
+                    onChange={(e) => updateCert(cert.id, 'certName', e.target.value)}
+                    placeholder="e.g. OSHA 30, CPR/AED"
+                  />
                   <Input
                     label="Issuing body"
                     value={cert.issuingBody}

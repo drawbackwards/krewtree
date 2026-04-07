@@ -13,6 +13,7 @@ import {
 } from './icons'
 import type { WorkEntry, Step3Data } from './types'
 import { uploadWorkerResume } from '../../services/workerService'
+import styles from './Step3Section.module.css'
 
 // ── Collapsible work entry card ───────────────────────────────────────────────
 
@@ -46,8 +47,9 @@ const WorkEntryCard: React.FC<{
           background: 'var(--kt-surface)',
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'center',
+          alignItems: 'flex-start',
           cursor: 'pointer',
+          gap: 8,
         }}
         onClick={onToggle}
       >
@@ -60,17 +62,33 @@ const WorkEntryCard: React.FC<{
               color: 'var(--kt-text)',
             }}
           >
-            {entry.employerName || 'Untitled position'}{' '}
-            {entry.roleTitle ? `· ${entry.roleTitle}` : ''}
+            {entry.employerName || 'Untitled position'}
           </p>
+          {entry.roleTitle && (
+            <p
+              style={{
+                margin: '2px 0 0',
+                fontSize: 'var(--kt-text-xs)',
+                color: 'var(--kt-text-muted)',
+              }}
+            >
+              {entry.roleTitle}
+            </p>
+          )}
           {(entry.startDate || entry.isCurrent) && (
-            <p style={{ margin: 0, fontSize: 'var(--kt-text-xs)', color: 'var(--kt-text-muted)' }}>
+            <p
+              style={{
+                margin: '2px 0 0',
+                fontSize: 'var(--kt-text-xs)',
+                color: 'var(--kt-text-muted)',
+              }}
+            >
               {formatMonthDate(entry.startDate)} —{' '}
               {entry.isCurrent ? 'Present' : formatMonthDate(entry.endDate)}
             </p>
           )}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
           <button
             type="button"
             onClick={(e) => {
@@ -145,7 +163,7 @@ const WorkEntryCard: React.FC<{
         </div>
       </div>
       <div style={{ padding: 16 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <div className={styles.workEntryGrid}>
           <Input
             label="Employer name"
             value={entry.employerName}
@@ -479,39 +497,32 @@ export const Step3Section: React.FC<{
 
       {/* Work History */}
       <div>
-        <div
+        <h3
           style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'flex-start',
-            marginBottom: 4,
+            fontSize: 'var(--kt-text-md)',
+            fontWeight: 'var(--kt-weight-semibold)',
+            color: 'var(--kt-text)',
+            margin: '0 0 4px',
           }}
         >
-          <h3
-            style={{
-              fontSize: 'var(--kt-text-md)',
-              fontWeight: 'var(--kt-weight-semibold)',
-              color: 'var(--kt-text)',
-              margin: 0,
-            }}
-          >
-            Work History
-          </h3>
-          {data.workHistory.length > 0 && (
-            <Button size="sm" variant="outline" onClick={addEntry}>
-              <PlusIcon /> Add experience
-            </Button>
-          )}
-        </div>
+          Work History
+        </h3>
         <p
           style={{
             fontSize: 'var(--kt-text-sm)',
             color: 'var(--kt-text-muted)',
-            margin: '0 0 14px',
+            margin: '0 0 12px',
           }}
         >
           New to the industry? No problem — add experience as you go, or skip this step.
         </p>
+        {data.workHistory.length > 0 && (
+          <div style={{ marginBottom: 12 }}>
+            <Button size="sm" variant="outline" onClick={addEntry}>
+              <PlusIcon /> Add experience
+            </Button>
+          </div>
+        )}
 
         {data.workHistory.length === 0 && (
           <div
