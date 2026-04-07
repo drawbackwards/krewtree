@@ -146,6 +146,22 @@ export async function getJobById(id: string): Promise<{ data: Job | null; error:
 
 // ── Mutations ──────────────────────────────────────────────────────────────────
 
+export async function getSimilarJobs(
+  jobId: string,
+  industry: string
+): Promise<{ data: Job[]; error: string | null }> {
+  const { data, error } = await supabase
+    .from('jobs')
+    .select(JOB_SELECT)
+    .eq('status', 'active')
+    .eq('industry', industry)
+    .neq('id', jobId)
+    .limit(4)
+
+  if (error) return { data: [], error: error.message }
+  return { data: (data ?? []).map((j) => mapJob(j as unknown as DbJob)), error: null }
+}
+
 export async function getAppliedJobIds(
   workerId: string
 ): Promise<{ data: Array<{ jobId: string; appliedAt: string }>; error: string | null }> {

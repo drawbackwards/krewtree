@@ -1,0 +1,146 @@
+/* ── Page wrapper ── */
+.page {
+  min-height: 100vh;
+  background: var(--kt-bg);
+}
+
+/* ── Breadcrumb inner container ── */
+.breadcrumbInner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 12px var(--kt-space-6);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  /* Prevent overflow on narrow screens */
+  min-width: 0;
+}
+
+.breadcrumbTitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+/* ── Two-column layout ── */
+.layout {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 32px var(--kt-space-6);
+  display: flex;
+  gap: 28px;
+  align-items: flex-start;
+}
+
+/* ── Main content column ── */
+.main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── Sidebar column ── */
+.sidebar {
+  width: 300px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: sticky;
+  top: 80px;
+}
+
+/* ── Section cards — large padding on desktop, tighter on mobile ── */
+.sectionCard {
+  padding: 28px;
+}
+
+/* ── Header save/share actions — visible on desktop, hidden on mobile ── */
+.headerActions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* ── Meta row — below logo/title, full width ── */
+.metaRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 14px;
+}
+
+/* ── Sidebar action buttons — visible on desktop, hidden on mobile ── */
+.sidebarActions {
+  display: block;
+}
+
+/* ── Sticky footer — hidden on desktop, shown on mobile ── */
+.stickyApplyBar {
+  display: none;
+}
+
+/* ────────────────────────────── Mobile ────────────────────────────── */
+
+@media (max-width: 640px) {
+  .breadcrumbInner {
+    padding: 10px var(--kt-space-4);
+  }
+
+  .layout {
+    padding: 16px var(--kt-space-4) 0;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .main {
+    width: 100%;
+    gap: 12px;
+  }
+
+  .sidebar {
+    width: 100%;
+    position: static;
+    margin-top: 12px;
+  }
+
+  .sectionCard {
+    padding: 20px;
+  }
+
+  .headerActions {
+    display: none;
+  }
+
+  .metaRow {
+    gap: 12px;
+    margin-top: 12px;
+  }
+
+  .sidebarActions {
+    display: none;
+  }
+
+  /* Space for sticky footer */
+  .page {
+    padding-bottom: 76px;
+  }
+
+  .stickyApplyBar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 12px 16px;
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+    background: var(--kt-bg);
+    border-top: 1px solid var(--kt-border);
+    z-index: 100;
+  }
+}

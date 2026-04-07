@@ -4,7 +4,7 @@
     {
       "name": "krewtree-ui",
       "runtimeExecutable": "/Users/coriehowell/.nvm/versions/node/v24.14.0/bin/node",
-      "runtimeArgs": ["/Users/coriehowell/Desktop/krewtree/node_modules/.bin/vite", "/Users/coriehowell/Desktop/krewtree/.claude/worktrees/hardcore-feistel"],
+      "runtimeArgs": ["/Users/coriehowell/Desktop/krewtree/node_modules/.bin/vite", "/Users/coriehowell/Desktop/krewtree"],
       "port": 5173,
       "autoPort": true
     }

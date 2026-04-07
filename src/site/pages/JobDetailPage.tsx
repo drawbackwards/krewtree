@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { Badge, Button, Divider, Modal } from '../../components'
+import styles from './JobDetailPage.module.css'
 import { RegulixBadge } from '../components/RegulixBadge/RegulixBadge'
 import { QuickApplyModal } from '../components/QuickApplyModal/QuickApplyModal'
-import { getJobById, getAppliedJobIds } from '../services/jobService'
+import { getJobById, getAppliedJobIds, getSimilarJobs } from '../services/jobService'
 import type { Job } from '../types'
 import { useAuth } from '../context/AuthContext'
 import {
@@ -50,6 +51,7 @@ export const JobDetailPage: React.FC = () => {
   const [job, setJob] = useState<Job | null>(null)
   const [jobLoading, setJobLoading] = useState(true)
   const [jobError, setJobError] = useState<string | null>(null)
+  const [similarJobs, setSimilarJobs] = useState<Job[]>([])
 
   useEffect(() => {
     if (!id) return
@@ -57,6 +59,11 @@ export const JobDetailPage: React.FC = () => {
       setJob(data)
       setJobError(error)
       setJobLoading(false)
+      if (data) {
+        getSimilarJobs(data.id, data.industry).then(({ data: similar }) => {
+          setSimilarJobs(similar)
+        })
+      }
     })
   }, [id])
 
@@ -126,44 +133,51 @@ export const JobDetailPage: React.FC = () => {
   const hasPayData = job.payMin > 0 && job.payMax > 0
   const payLabel = hasPayData
     ? job.payType === 'hour'
-      ? `$${job.payMin}–$${job.payMax}/hr`
-      : `$${((job.payMin * 2080) / 1000).toFixed(0)}K–$${((job.payMax * 2080) / 1000).toFixed(0)}K/yr`
+      ? `${job.payMin}–${job.payMax}/hr`
+      : `${((job.payMin * 2080) / 1000).toFixed(0)}K–${((job.payMax * 2080) / 1000).toFixed(0)}K/yr`
     : null
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--kt-bg)' }}>
+    <div className={styles.page}>
       {/* Header breadcrumb */}
-      <div style={{ background: 'var(--kt-surface)', borderBottom: '1px solid var(--kt-border)' }}>
-        <div
-          style={{
-            maxWidth: 1100,
-            margin: '0 auto',
-            padding: '12px var(--kt-space-6)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-          }}
-        >
+      <div style={{ background: 'var(--kt-surface)' }}>
+        <div className={styles.breadcrumbInner}>
           <Link
             to="/site/jobs"
             style={{
               color: 'var(--kt-text-muted)',
               fontSize: 'var(--kt-text-sm)',
               textDecoration: 'none',
+              flexShrink: 0,
             }}
           >
             Jobs
           </Link>
-          <span style={{ color: 'var(--kt-text-placeholder)', fontSize: 'var(--kt-text-sm)' }}>
-            ›
-          </span>
-          <span style={{ color: 'var(--kt-text-muted)', fontSize: 'var(--kt-text-sm)' }}>
-            {job.industry}
-          </span>
-          <span style={{ color: 'var(--kt-text-placeholder)', fontSize: 'var(--kt-text-sm)' }}>
+          <span
+            style={{
+              color: 'var(--kt-text-placeholder)',
+              fontSize: 'var(--kt-text-sm)',
+              flexShrink: 0,
+            }}
+          >
             ›
           </span>
           <span
+            style={{ color: 'var(--kt-text-muted)', fontSize: 'var(--kt-text-sm)', flexShrink: 0 }}
+          >
+            {job.industry}
+          </span>
+          <span
+            style={{
+              color: 'var(--kt-text-placeholder)',
+              fontSize: 'var(--kt-text-sm)',
+              flexShrink: 0,
+            }}
+          >
+            ›
+          </span>
+          <span
+            className={styles.breadcrumbTitle}
             style={{
               color: 'var(--kt-text)',
               fontSize: 'var(--kt-text-sm)',
@@ -175,20 +189,12 @@ export const JobDetailPage: React.FC = () => {
         </div>
       </div>
 
-      <div
-        style={{
-          maxWidth: 1100,
-          margin: '0 auto',
-          padding: '32px var(--kt-space-6)',
-          display: 'flex',
-          gap: 28,
-          alignItems: 'flex-start',
-        }}
-      >
+      <div className={styles.layout}>
         {/* ---- Main Content ---- */}
-        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <div className={styles.main}>
           {/* Job Header Card */}
           <div
+            className={styles.sectionCard}
             style={{
               background:
                 !isCompany && job.isSponsored
@@ -196,7 +202,6 @@ export const JobDetailPage: React.FC = () => {
                   : 'var(--kt-surface)',
               border: `1px solid ${!isCompany && job.isSponsored ? 'var(--kt-olive-200)' : 'var(--kt-border)'}`,
               borderRadius: 'var(--kt-radius-lg)',
-              padding: 28,
             }}
           >
             {job.isSponsored && (
@@ -207,6 +212,7 @@ export const JobDetailPage: React.FC = () => {
               </div>
             )}
 
+            {/* Logo + title row */}
             <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
               {/* Company logo */}
               <div
@@ -228,7 +234,7 @@ export const JobDetailPage: React.FC = () => {
                 {job.company.name.charAt(0)}
               </div>
 
-              <div style={{ flex: 1 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <h1
                   style={{
                     fontSize: 'var(--kt-text-2xl)',
@@ -244,7 +250,6 @@ export const JobDetailPage: React.FC = () => {
                     display: 'flex',
                     alignItems: 'center',
                     gap: 6,
-                    marginBottom: 14,
                     flexWrap: 'wrap',
                   }}
                 >
@@ -267,48 +272,10 @@ export const JobDetailPage: React.FC = () => {
                     {job.type}
                   </Badge>
                 </div>
-
-                {/* Meta row */}
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16 }}>
-                  {[
-                    { icon: <MapPinIcon size={14} />, label: job.location },
-                    ...(payLabel ? [{ icon: <DollarIcon size={14} />, label: payLabel }] : []),
-                    ...(job.experienceLevel && EXPERIENCE_LABELS[job.experienceLevel]
-                      ? [
-                          {
-                            icon: <StarIcon size={14} />,
-                            label: EXPERIENCE_LABELS[job.experienceLevel],
-                          },
-                        ]
-                      : []),
-                    ...(isCompany
-                      ? [
-                          {
-                            icon: <UsersIcon size={14} />,
-                            label: `${job.totalApplicants} applicants`,
-                          },
-                        ]
-                      : []),
-                  ].map(({ icon, label }) => (
-                    <div
-                      key={label}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 5,
-                        color: 'var(--kt-text-muted)',
-                        fontSize: 'var(--kt-text-sm)',
-                      }}
-                    >
-                      {icon}
-                      <span>{label}</span>
-                    </div>
-                  ))}
-                </div>
               </div>
 
-              {/* Save / Share */}
-              <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+              {/* Save / Share — desktop only (hidden on mobile via CSS; footer handles mobile) */}
+              <div className={styles.headerActions}>
                 {!isCompany && (
                   <button
                     onClick={() => setSaved((s) => !s)}
@@ -350,6 +317,39 @@ export const JobDetailPage: React.FC = () => {
                   <ShareIcon size={16} />
                 </button>
               </div>
+            </div>
+
+            {/* Meta row — own row, full width on mobile */}
+            <div className={styles.metaRow}>
+              {[
+                { icon: <MapPinIcon size={14} />, label: job.location },
+                ...(payLabel ? [{ icon: <DollarIcon size={14} />, label: payLabel }] : []),
+                ...(job.experienceLevel && EXPERIENCE_LABELS[job.experienceLevel]
+                  ? [
+                      {
+                        icon: <StarIcon size={14} />,
+                        label: EXPERIENCE_LABELS[job.experienceLevel],
+                      },
+                    ]
+                  : []),
+                ...(isCompany
+                  ? [{ icon: <UsersIcon size={14} />, label: `${job.totalApplicants} applicants` }]
+                  : []),
+              ].map(({ icon, label }) => (
+                <div
+                  key={label}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 5,
+                    color: 'var(--kt-text-muted)',
+                    fontSize: 'var(--kt-text-sm)',
+                  }}
+                >
+                  {icon}
+                  <span>{label}</span>
+                </div>
+              ))}
             </div>
 
             {/* Skills */}
@@ -418,11 +418,11 @@ export const JobDetailPage: React.FC = () => {
 
           {/* Description */}
           <div
+            className={styles.sectionCard}
             style={{
               background: 'var(--kt-surface)',
               border: '1px solid var(--kt-border)',
               borderRadius: 'var(--kt-radius-lg)',
-              padding: 28,
             }}
           >
             <h2
@@ -450,11 +450,11 @@ export const JobDetailPage: React.FC = () => {
           {/* Requirements */}
           {job.requirements.length > 0 && (
             <div
+              className={styles.sectionCard}
               style={{
                 background: 'var(--kt-surface)',
                 border: '1px solid var(--kt-border)',
                 borderRadius: 'var(--kt-radius-lg)',
-                padding: 28,
               }}
             >
               <h2
@@ -513,11 +513,11 @@ export const JobDetailPage: React.FC = () => {
           {/* Pre-Interview Questions Preview */}
           {questions.length > 0 && (
             <div
+              className={styles.sectionCard}
               style={{
                 background: 'var(--kt-surface)',
                 border: '1px solid var(--kt-border)',
                 borderRadius: 'var(--kt-radius-lg)',
-                padding: 28,
               }}
             >
               <div
@@ -595,17 +595,7 @@ export const JobDetailPage: React.FC = () => {
         </div>
 
         {/* ---- Sidebar ---- */}
-        <div
-          style={{
-            width: 300,
-            flexShrink: 0,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 16,
-            position: 'sticky',
-            top: 80,
-          }}
-        >
+        <div className={styles.sidebar}>
           {isCompany ? (
             /* ── Company: manage listing + Regulix applicants ── */
             <div
@@ -797,59 +787,60 @@ export const JobDetailPage: React.FC = () => {
               )}
             </div>
           ) : (
-            /* ── Worker: quick apply + save + Regulix upsell ── */
-            <div
-              style={{
-                background: 'var(--kt-surface)',
-                border: '1px solid var(--kt-border)',
-                borderRadius: 'var(--kt-radius-lg)',
-                padding: 20,
-              }}
-            >
-              <Button
-                variant={appliedAt ? 'secondary' : 'primary'}
-                style={{ width: '100%', marginBottom: 8 }}
-                onClick={() => setQuickApplyOpen(true)}
-                disabled={!!appliedAt}
-              >
-                {appliedAt ? (
-                  <>
-                    <CheckIcon size={12} /> Applied on:{' '}
-                    {new Date(appliedAt).toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                    })}
-                  </>
-                ) : (
-                  <>
-                    <LightningIcon size={14} /> Quick Apply
-                  </>
-                )}
-              </Button>
+            <>
+              {/* ── Worker: quick apply + save (desktop only) ── */}
+              <div className={styles.sidebarActions}>
+                <div
+                  style={{
+                    background: 'var(--kt-surface)',
+                    border: '1px solid var(--kt-border)',
+                    borderRadius: 'var(--kt-radius-lg)',
+                    padding: 20,
+                  }}
+                >
+                  <Button
+                    variant={appliedAt ? 'secondary' : 'primary'}
+                    style={{ width: '100%', marginBottom: 8 }}
+                    onClick={() => setQuickApplyOpen(true)}
+                    disabled={!!appliedAt}
+                  >
+                    {appliedAt ? (
+                      <>
+                        <CheckIcon size={12} /> Applied on:{' '}
+                        {new Date(appliedAt).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                        })}
+                      </>
+                    ) : (
+                      <>
+                        <LightningIcon size={14} /> Quick Apply
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    style={{ width: '100%' }}
+                    onClick={() => setSaved((s) => !s)}
+                  >
+                    {saved ? (
+                      <>
+                        <CheckIcon size={12} /> Saved
+                      </>
+                    ) : (
+                      'Save Job'
+                    )}
+                  </Button>
+                </div>
+              </div>
 
-              <Button
-                variant="outline"
-                style={{ width: '100%' }}
-                onClick={() => setSaved((s) => !s)}
-              >
-                {saved ? (
-                  <>
-                    <CheckIcon size={12} /> Saved
-                  </>
-                ) : (
-                  'Save Job'
-                )}
-              </Button>
-
-              <Divider style={{ margin: '16px 0' }} />
-
-              {/* Regulix upsell */}
+              {/* Regulix upsell — own card, full width on mobile */}
               <div
                 style={{
                   background: 'rgba(109, 117, 49, 0.07)',
                   border: '1px solid var(--kt-olive-200)',
-                  borderRadius: 'var(--kt-radius-md)',
-                  padding: '14px 16px',
+                  borderRadius: 'var(--kt-radius-lg)',
+                  padding: '16px 20px',
                 }}
               >
                 <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 8 }}>
@@ -892,7 +883,7 @@ export const JobDetailPage: React.FC = () => {
                   Get Regulix Ready →
                 </button>
               </div>
-            </div>
+            </>
           )}
 
           {/* Company Info Card */}
@@ -1078,38 +1069,153 @@ export const JobDetailPage: React.FC = () => {
               Similar Jobs
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {([] as Job[]).map((j) => (
-                <Link
-                  key={j.id}
-                  to={`/site/jobs/${j.id}`}
-                  style={{
-                    textDecoration: 'none',
-                    display: 'block',
-                    padding: '10px 12px',
-                    borderRadius: 'var(--kt-radius-md)',
-                    border: '1px solid var(--kt-border)',
-                    background: 'var(--kt-bg)',
-                  }}
-                >
-                  <p
+              {similarJobs.length === 0 ? (
+                <p style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text-muted)' }}>
+                  No similar jobs right now.
+                </p>
+              ) : (
+                similarJobs.map((j) => (
+                  <Link
+                    key={j.id}
+                    to={`/site/jobs/${j.id}`}
                     style={{
-                      fontSize: 'var(--kt-text-sm)',
-                      fontWeight: 'var(--kt-weight-medium)',
-                      color: 'var(--kt-text)',
-                      marginBottom: 3,
+                      textDecoration: 'none',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 10,
+                      padding: '10px 12px',
+                      borderRadius: 'var(--kt-radius-md)',
+                      border: '1px solid var(--kt-border)',
+                      background: 'var(--kt-bg)',
                     }}
                   >
-                    {j.title}
-                  </p>
-                  <p style={{ fontSize: 'var(--kt-text-xs)', color: 'var(--kt-text-muted)' }}>
-                    {j.company.name} · ${j.payMin}–${j.payMax}/hr
-                  </p>
-                </Link>
-              ))}
+                    {/* Company logo */}
+                    <div
+                      style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: 'var(--kt-radius-sm)',
+                        border: '1px solid var(--kt-border)',
+                        background: 'var(--kt-surface)',
+                        flexShrink: 0,
+                        overflow: 'hidden',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: 'var(--kt-text-sm)',
+                        fontWeight: 'var(--kt-weight-semibold)',
+                        color: 'var(--kt-text-muted)',
+                      }}
+                    >
+                      {j.company.logo ? (
+                        <img
+                          src={j.company.logo}
+                          alt={j.company.name}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
+                      ) : (
+                        j.company.name.charAt(0).toUpperCase()
+                      )}
+                    </div>
+                    <div style={{ minWidth: 0 }}>
+                      <p
+                        style={{
+                          fontSize: 'var(--kt-text-sm)',
+                          fontWeight: 'var(--kt-weight-medium)',
+                          color: 'var(--kt-text)',
+                          marginBottom: 2,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {j.title}
+                      </p>
+                      <p
+                        style={{
+                          fontSize: 'var(--kt-text-xs)',
+                          color: 'var(--kt-text-muted)',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {j.company.name} · {j.location}
+                      </p>
+                    </div>
+                  </Link>
+                ))
+              )}
             </div>
           </div>
         </div>
       </div>
+
+      {/* Sticky action footer — worker view only */}
+      {!isCompany && (
+        <div className={styles.stickyApplyBar}>
+          <Button
+            variant={appliedAt ? 'secondary' : 'primary'}
+            onClick={() => !appliedAt && setQuickApplyOpen(true)}
+            disabled={!!appliedAt}
+            style={{ flex: 1 }}
+          >
+            {appliedAt ? (
+              <>
+                <CheckIcon size={12} /> Applied on:{' '}
+                {new Date(appliedAt).toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                })}
+              </>
+            ) : (
+              <>
+                <LightningIcon size={14} /> Quick Apply
+              </>
+            )}
+          </Button>
+          <button
+            onClick={() => setSaved((s) => !s)}
+            title={saved ? 'Saved' : 'Save job'}
+            style={{
+              width: 44,
+              height: 44,
+              flexShrink: 0,
+              borderRadius: 'var(--kt-radius-md)',
+              border: '1px solid var(--kt-border)',
+              background: saved ? 'var(--kt-primary-subtle)' : 'transparent',
+              color: saved ? 'var(--kt-primary)' : 'var(--kt-text-muted)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all var(--kt-duration-fast)',
+            }}
+          >
+            <BookmarkIcon size={18} />
+          </button>
+          <button
+            onClick={() => setShareOpen(true)}
+            title="Share"
+            style={{
+              width: 44,
+              height: 44,
+              flexShrink: 0,
+              borderRadius: 'var(--kt-radius-md)',
+              border: '1px solid var(--kt-border)',
+              background: 'transparent',
+              color: 'var(--kt-text-muted)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all var(--kt-duration-fast)',
+            }}
+          >
+            <ShareIcon size={18} />
+          </button>
+        </div>
+      )}
 
       <QuickApplyModal
         job={job}
