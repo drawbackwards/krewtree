@@ -1,0 +1,99 @@
+/* Defaults (desktop) */
+.featuredGrid {
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+}
+
+.industriesGrid {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.connector {
+  width: 64px;
+  height: 2px;
+  margin-top: 25px;
+}
+
+/* Mobile-only overrides (≤640px) */
+@media (max-width: 640px) {
+  /* Featured Jobs */
+  .featuredHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .featuredBrowseBtn {
+    width: 100%;
+  }
+
+  .featuredGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .featuredGrid > * {
+    min-width: 0;
+    width: 100%;
+  }
+
+  /* How It Works */
+  .stepsRow {
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+
+  .connector {
+    width: 2px;
+    height: 40px;
+    margin: 12px 0;
+    align-self: center;
+  }
+
+  /* Industries */
+  .industriesGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* Regulix CTA */
+  .regulixCta {
+    width: 100%;
+  }
+
+  /* Ready to build your krew — keep buttons side by side */
+  .ctaButtons {
+    flex-wrap: nowrap;
+  }
+
+  .ctaButtons > * {
+    flex: 1;
+    min-width: 0;
+    font-size: var(--kt-text-base) !important;
+    font-weight: var(--kt-weight-bold) !important;
+  }
+
+  /* Footer */
+  .footer {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .footerBrand {
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .footerLinks {
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .footerCopyright {
+    order: 99;
+    width: 100%;
+    text-align: center;
+    margin-top: 8px;
+  }
+}

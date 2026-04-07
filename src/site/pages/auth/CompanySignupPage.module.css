@@ -1,0 +1,105 @@
+/* Desktop defaults */
+
+.topBar {
+  height: 60px;
+  padding: 0 var(--kt-space-6);
+}
+
+.alreadyLabel {
+  /* visible on desktop */
+}
+
+.mainContent {
+  /* desktop padding set inline */
+}
+
+.contentRow {
+  gap: 56px;
+}
+
+.brandPanel {
+  flex: 1;
+  min-width: 0;
+  position: sticky;
+  top: 48px;
+}
+
+.socialProof {
+  display: inline-flex;
+  flex-direction: column;
+}
+
+.benefitsList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.brandSubhead {
+  /* desktop margin set inline */
+}
+
+.formCard {
+  width: 480px;
+  flex-shrink: 0;
+  padding: 40px 44px 48px;
+  box-shadow:
+    0 24px 64px rgba(0, 0, 0, 0.45),
+    0 2px 8px rgba(0, 0, 0, 0.2);
+  border-radius: 20px;
+}
+
+.passwordGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+/* ── Mobile (≤640px) ──────────────────────────────────────────────────────── */
+
+@media (max-width: 640px) {
+  .topBar {
+    height: 48px;
+    padding: 0 var(--kt-space-4);
+  }
+
+  .mainContent {
+    padding: 24px 16px 48px !important;
+  }
+
+  .alreadyLabel {
+    display: none;
+  }
+
+  .contentRow {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .brandPanel {
+    position: static;
+  }
+
+  .socialProof {
+    display: none;
+  }
+
+  .benefitsList {
+    display: none;
+  }
+
+  .brandSubhead {
+    margin-bottom: 0 !important;
+  }
+
+  .formCard {
+    width: 100%;
+    padding: 32px 24px 40px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+    border-radius: 16px;
+  }
+
+  .passwordGrid {
+    grid-template-columns: 1fr;
+  }
+}

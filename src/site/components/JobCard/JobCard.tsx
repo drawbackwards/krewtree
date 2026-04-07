@@ -86,38 +86,39 @@ export const JobCard: React.FC<JobCardProps> = ({
               </span>
             )}
           </span>
-          <div className={styles.meta}>
-            <span className={styles.metaItem}>
-              <span className={styles.metaIcon}>
-                <LocationIcon size={13} />
-              </span>
-              {job.location}
-            </span>
-            <span className={styles.metaItem}>
-              <span className={styles.metaIcon}>
-                <BriefcaseIcon size={13} />
-              </span>
-              {job.type}
-            </span>
-            {payLabel && (
-              <span className={styles.metaItem}>
-                <span className={styles.metaIcon}>
-                  <DollarIcon size={13} />
-                </span>
-                {payLabel}
-              </span>
-            )}
-            {job.experienceLevel && EXPERIENCE_LABELS[job.experienceLevel] && (
-              <span className={styles.metaItem}>
-                <span className={styles.metaIcon}>
-                  <StarIcon size={13} />
-                </span>
-                {EXPERIENCE_LABELS[job.experienceLevel]}
-              </span>
-            )}
-          </div>
         </div>
         <span className={styles.postedDate}>{postedLabel(job.postedDaysAgo)}</span>
+      </div>
+
+      <div className={styles.meta}>
+        <span className={styles.metaItem}>
+          <span className={styles.metaIcon}>
+            <LocationIcon size={13} />
+          </span>
+          {job.location}
+        </span>
+        <span className={styles.metaItem}>
+          <span className={styles.metaIcon}>
+            <BriefcaseIcon size={13} />
+          </span>
+          {job.type}
+        </span>
+        {payLabel && (
+          <span className={styles.metaItem}>
+            <span className={styles.metaIcon}>
+              <DollarIcon size={13} />
+            </span>
+            {payLabel}
+          </span>
+        )}
+        {job.experienceLevel && EXPERIENCE_LABELS[job.experienceLevel] && (
+          <span className={styles.metaItem}>
+            <span className={styles.metaIcon}>
+              <StarIcon size={13} />
+            </span>
+            {EXPERIENCE_LABELS[job.experienceLevel]}
+          </span>
+        )}
       </div>
 
       {job.description && <p className={styles.description}>{job.description}</p>}

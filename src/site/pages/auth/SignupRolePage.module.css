@@ -1,0 +1,104 @@
+/* Desktop defaults */
+
+.topBar {
+  height: 60px;
+  padding: 0 var(--kt-space-6);
+}
+
+.alreadyLabel {
+  /* visible on desktop */
+}
+
+.mainContent {
+  padding: 40px 52px 60px;
+}
+
+.cardGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  width: 100%;
+  max-width: 1100px;
+}
+
+.card {
+  padding: 48px 44px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  text-decoration: none;
+}
+
+/* Card internals — mirrors LandingHero.module.css */
+
+.cardTop {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.cardBadge {
+  order: 2;
+  align-self: flex-start;
+}
+
+.cardIconHeadline {
+  order: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.cardHeadline {
+  font-size: var(--kt-text-4xl);
+}
+
+.cardCta {
+  align-self: flex-start;
+}
+
+/* ── Mobile (≤640px) ──────────────────────────────────────────────────────── */
+
+@media (max-width: 640px) {
+  .topBar {
+    height: 48px;
+    padding: 0 var(--kt-space-4);
+  }
+
+  .alreadyLabel {
+    display: none;
+  }
+
+  .mainContent {
+    padding: 28px 16px 48px;
+  }
+
+  .cardGrid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .card {
+    padding: 28px 24px;
+  }
+
+  .cardHeadline {
+    font-size: var(--kt-text-2xl);
+  }
+
+  .cardBadge {
+    order: 1;
+  }
+
+  .cardIconHeadline {
+    order: 2;
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .cardCta {
+    align-self: stretch;
+    justify-content: center;
+  }
+}

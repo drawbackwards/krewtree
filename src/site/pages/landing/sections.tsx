@@ -6,6 +6,7 @@ import { industries, jobs } from '../../data/mock'
 import { JobCard } from '../../components/JobCard/JobCard'
 import { CheckIcon } from '../../icons'
 import regulixStyles from './RegulixBanner.module.css'
+import s from './sections.module.css'
 
 // ── shared styles ─────────────────────────────────────────────────────────────
 const S = {
@@ -40,6 +41,7 @@ export const FeaturedJobsSection = () => {
     <section style={{ ...S.section('var(--kt-bg-subtle)') }}>
       <div style={S.inner()}>
         <div
+          className={s.featuredHeader}
           style={{
             display: 'flex',
             justifyContent: 'space-between',
@@ -51,14 +53,18 @@ export const FeaturedJobsSection = () => {
             <h2 style={S.sectionTitle()}>Featured Jobs</h2>
             <p style={S.sectionSubtitle()}>Hand-picked opportunities from verified employers.</p>
           </div>
-          <Button variant="outline" onClick={() => navigate('/site/jobs')}>
+          <Button
+            className={s.featuredBrowseBtn}
+            variant="outline"
+            onClick={() => navigate('/site/jobs')}
+          >
             Browse All Jobs →
           </Button>
         </div>
         <div
+          className={s.featuredGrid}
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
             gap: 20,
           }}
         >
@@ -81,7 +87,10 @@ export const HowItWorksSection = () => (
           Three steps to your next job or your next great hire.
         </p>
       </div>
-      <div style={{ display: 'flex', alignItems: 'flex-start', maxWidth: 900, margin: '0 auto' }}>
+      <div
+        className={s.stepsRow}
+        style={{ display: 'flex', alignItems: 'flex-start', maxWidth: 900, margin: '0 auto' }}
+      >
         {[
           {
             num: '01',
@@ -152,11 +161,9 @@ export const HowItWorksSection = () => (
             </div>
             {i < arr.length - 1 && (
               <div
+                className={s.connector}
                 style={{
-                  width: 64,
-                  height: 2,
                   background: 'var(--kt-border)',
-                  marginTop: 25,
                   flexShrink: 0,
                 }}
               />
@@ -259,9 +266,9 @@ export const IndustriesSection = () => {
           </p>
         </div>
         <div
+          className={s.industriesGrid}
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(4, 1fr)',
             gap: 12,
             maxWidth: 760,
             margin: '0 auto',
@@ -541,6 +548,7 @@ export const RegulixBannerSection = () => (
       {/* Footer CTA */}
       <div style={{ textAlign: 'center', marginTop: 36 }}>
         <Button
+          className={s.regulixCta}
           as="a"
           variant="secondary"
           size="lg"
@@ -590,7 +598,10 @@ export const CTASection = () => {
           Join thousands of workers and employers already using krewtree to find faster, better
           matches.
         </p>
-        <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
+        <div
+          className={s.ctaButtons}
+          style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}
+        >
           <Button variant="secondary" size="xl" onClick={() => navigate('/site/signup/worker')}>
             Find Jobs Now
           </Button>
@@ -606,6 +617,7 @@ export const CTASection = () => {
 // ── Footer ────────────────────────────────────────────────────────────────────
 export const FooterSection = () => (
   <footer
+    className={s.footer}
     style={{
       background: 'var(--kt-navy-950)',
       padding: '40px var(--kt-space-6)',
@@ -616,7 +628,7 @@ export const FooterSection = () => (
       gap: 16,
     }}
   >
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+    <div className={s.footerBrand} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
       <span
         style={{
           fontSize: 'var(--kt-text-xl)',
@@ -627,10 +639,11 @@ export const FooterSection = () => (
         krewtree
       </span>
       <span style={{ color: 'rgba(229,218,195,0.3)', fontSize: 'var(--kt-text-sm)' }}>
-        · A Regulix Partner Platform
+        A Regulix Partner Platform
       </span>
     </div>
     <div
+      className={s.footerLinks}
       style={{
         display: 'flex',
         gap: 24,
@@ -650,7 +663,10 @@ export const FooterSection = () => (
         </a>
       ))}
     </div>
-    <span style={{ fontSize: 'var(--kt-text-sm)', color: 'rgba(229,218,195,0.25)' }}>
+    <span
+      className={s.footerCopyright}
+      style={{ fontSize: 'var(--kt-text-sm)', color: 'rgba(229,218,195,0.25)' }}
+    >
       © 2026 krewtree. All rights reserved.
     </span>
   </footer>

@@ -253,6 +253,12 @@
 }
 
 @media (max-width: 640px) {
+  .meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--kt-space-2);
+  }
+
   .footer {
     flex-direction: column;
     align-items: stretch;
