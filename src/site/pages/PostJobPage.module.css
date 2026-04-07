@@ -1,0 +1,105 @@
+/* ── Page shell ──────────────────────────────────────────── */
+.page {
+  min-height: 100vh;
+  background: var(--kt-bg);
+}
+
+/* ── Header ──────────────────────────────────────────────── */
+.header {
+  background: var(--kt-surface);
+  padding: 36px var(--kt-space-6) 28px;
+  border-bottom: 1px solid var(--kt-border);
+}
+
+.headerInner {
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+/* ── Form container ──────────────────────────────────────── */
+.formOuter {
+  padding: 0 var(--kt-space-6);
+}
+
+.formInner {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 28px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── Section card ────────────────────────────────────────── */
+.section {
+  background: var(--kt-surface);
+  border: 1px solid var(--kt-border);
+  border-radius: var(--kt-radius-lg);
+  padding: 28px;
+}
+
+/* ── 2-column field row ──────────────────────────────────── */
+.fieldRow {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+/* ── Submit bar ──────────────────────────────────────────── */
+.submitRow {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-bottom: 40px;
+}
+
+/* ── Success state ───────────────────────────────────────── */
+.successWrapper {
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 40px var(--kt-space-6);
+}
+
+/* ── Mobile ≤ 640px ──────────────────────────────────────── */
+@media (max-width: 640px) {
+  .header {
+    padding: 20px var(--kt-space-4) 16px;
+  }
+
+  .formOuter {
+    padding: 0 var(--kt-space-4);
+  }
+
+  .formInner {
+    padding: 20px 0;
+    gap: 16px;
+  }
+
+  .section {
+    padding: 20px;
+  }
+
+  .fieldRow {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .submitRow {
+    flex-direction: column-reverse;
+    gap: 8px;
+    padding-bottom: 32px;
+  }
+
+  .submitRow > * {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .successWrapper {
+    padding: 40px var(--kt-space-4);
+  }
+}

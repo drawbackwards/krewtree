@@ -160,7 +160,7 @@ export const Navbar: React.FC = () => {
                   to="/site/jobs"
                   className={[styles.link, isActive('/site/jobs')].filter(Boolean).join(' ')}
                 >
-                  Manage Jobs
+                  Jobs
                 </Link>
                 <Link
                   to="/site/pipeline"
@@ -214,7 +214,7 @@ export const Navbar: React.FC = () => {
             <>
               {persona === 'company' && (
                 <Link to="/site/post-job" className={styles.postJobBtn}>
-                  + Post a Job
+                  +<span className={styles.postJobLabel}>&nbsp;Post a Job</span>
                 </Link>
               )}
 

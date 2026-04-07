@@ -271,3 +271,16 @@ export async function updateJob(
   if (error) return { error: error.message }
   return { error: null }
 }
+
+export async function getCompanyIndustry(
+  companyId: string
+): Promise<{ data: string | null; error: string | null }> {
+  const { data, error } = await supabase
+    .from('company_profiles')
+    .select('industry')
+    .eq('id', companyId)
+    .maybeSingle()
+
+  if (error) return { data: null, error: error.message }
+  return { data: (data?.industry as string | null) ?? null, error: null }
+}

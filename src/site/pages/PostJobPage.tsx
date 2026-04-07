@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Input, Textarea, Select, Button, Badge, Alert, Switch, Divider } from '../../components'
+import styles from './PostJobPage.module.css'
 import { RegulixBadge } from '../components/RegulixBadge/RegulixBadge'
 import { RegulixMarkIcon, StarIcon, PlusIcon, CelebrationIcon, LightningIcon } from '../icons'
 import { industries } from '../data/mock'
-import { createJob, updateJob, getJobById } from '../services/jobService'
+import { createJob, updateJob, getJobById, getCompanyIndustry } from '../services/jobService'
 import { useAuth } from '../context/AuthContext'
 
 // ── Suggested skills by industry ────────────────────────────────────────────
@@ -105,14 +106,7 @@ const Section = ({
   subtitle?: string
   children: React.ReactNode
 }) => (
-  <div
-    style={{
-      background: 'var(--kt-surface)',
-      border: '1px solid var(--kt-border)',
-      borderRadius: 'var(--kt-radius-lg)',
-      padding: 28,
-    }}
-  >
+  <div className={styles.section}>
     <div style={{ marginBottom: 20 }}>
       <h2
         style={{
@@ -132,10 +126,8 @@ const Section = ({
   </div>
 )
 
-const FieldRow = ({ children, columns = 2 }: { children: React.ReactNode; columns?: number }) => (
-  <div style={{ display: 'grid', gridTemplateColumns: `repeat(${columns}, 1fr)`, gap: 16 }}>
-    {children}
-  </div>
+const FieldRow = ({ children }: { children: React.ReactNode }) => (
+  <div className={styles.fieldRow}>{children}</div>
 )
 
 // ── Select options ───────────────────────────────────────────────────────────
@@ -189,6 +181,16 @@ export const PostJobPage: React.FC = () => {
   const [urgentHiring, setUrgentHiring] = useState(false)
   const [regulixPreferred, setRegulixPreferred] = useState(false)
   const [questions, setQuestions] = useState<string[]>([''])
+
+  // Pre-fill industry from company profile when creating a new job
+  useEffect(() => {
+    if (editId || !user) return
+    getCompanyIndustry(user.id).then(({ data }) => {
+      if (!data) return
+      const match = industries.find((i) => i.name.toLowerCase() === data.toLowerCase())
+      if (match) setIndustry(match.slug)
+    })
+  }, [editId, user])
 
   // Load existing job when editing
   useEffect(() => {
@@ -313,17 +315,7 @@ export const PostJobPage: React.FC = () => {
 
   if (submitted) {
     return (
-      <div
-        style={{
-          minHeight: '60vh',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 20,
-          padding: '40px var(--kt-space-6)',
-        }}
-      >
+      <div className={styles.successWrapper}>
         <div>
           <CelebrationIcon size={64} />
         </div>
@@ -376,16 +368,10 @@ export const PostJobPage: React.FC = () => {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--kt-bg)' }}>
+    <div className={styles.page}>
       {/* Page Header */}
-      <div
-        style={{
-          background: 'var(--kt-surface)',
-          padding: '36px var(--kt-space-6) 28px',
-          borderBottom: '1px solid var(--kt-border)',
-        }}
-      >
-        <div style={{ maxWidth: 860, margin: '0 auto' }}>
+      <div className={styles.header}>
+        <div className={styles.headerInner}>
           <h1
             style={{
               fontSize: 'var(--kt-text-2xl)',
@@ -405,18 +391,9 @@ export const PostJobPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Form — outer padding matches the header's container padding */}
-      <form onSubmit={handleSubmit} noValidate style={{ padding: '0 var(--kt-space-6)' }}>
-        <div
-          style={{
-            maxWidth: 860,
-            margin: '0 auto',
-            padding: '28px 0',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 20,
-          }}
-        >
+      {/* Form */}
+      <form onSubmit={handleSubmit} noValidate className={styles.formOuter}>
+        <div className={styles.formInner}>
           {Object.keys(errors).length > 0 && (
             <Alert variant="danger">Please fix the errors below before submitting.</Alert>
           )}
@@ -828,7 +805,7 @@ export const PostJobPage: React.FC = () => {
                 <div
                   style={{
                     display: 'flex',
-                    alignItems: 'center',
+                    alignItems: 'flex-start',
                     justifyContent: 'space-between',
                     gap: 16,
                     padding: '16px 18px',
@@ -879,41 +856,19 @@ export const PostJobPage: React.FC = () => {
                       >
                         Pinned to the top of search results with a "Featured" banner. Only pay when
                         someone applies. Sponsored jobs get <strong>5× more views</strong> on
-                        average.
+                        average.{' '}
+                        <strong style={{ color: 'var(--kt-text)' }}>$38.00 per application.</strong>
                       </p>
                     </div>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexShrink: 0 }}>
-                    <div style={{ textAlign: 'right' }}>
-                      <p
-                        style={{
-                          fontSize: 'var(--kt-text-xl)',
-                          fontWeight: 'var(--kt-weight-bold)',
-                          color: 'var(--kt-text)',
-                          lineHeight: 1,
-                        }}
-                      >
-                        $38.00
-                      </p>
-                      <p
-                        style={{
-                          fontSize: 'var(--kt-text-xs)',
-                          color: 'var(--kt-text-muted)',
-                          marginTop: 2,
-                        }}
-                      >
-                        per application
-                      </p>
-                    </div>
-                    <Switch
-                      checked={sponsorMode === 'on'}
-                      onChange={(e) => {
-                        setSponsorMode(e.target.checked ? 'on' : 'off')
-                        if (!e.target.checked) setUrgentHiring(false)
-                      }}
-                      size="md"
-                    />
-                  </div>
+                  <Switch
+                    checked={sponsorMode === 'on'}
+                    onChange={(e) => {
+                      setSponsorMode(e.target.checked ? 'on' : 'off')
+                      if (!e.target.checked) setUrgentHiring(false)
+                    }}
+                    size="md"
+                  />
                 </div>
 
                 {sponsorMode === 'on' && (
@@ -1125,7 +1080,7 @@ export const PostJobPage: React.FC = () => {
           </Section>
 
           {/* Submit */}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, paddingBottom: 40 }}>
+          <div className={styles.submitRow}>
             <Button
               type="button"
               variant="ghost"
