@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Badge } from '../../components'
 import { useAuth } from '../context/AuthContext'
 import { CheckIcon } from '../icons'
+import styles from './landing/LandingHero.module.css'
 import {
   FeaturedJobsSection,
   HowItWorksSection,
@@ -22,7 +23,10 @@ const HeroDefault = () => {
   return (
     <section style={{ background: 'var(--kt-bg)', borderBottom: '1px solid var(--kt-border)' }}>
       {/* Centered header */}
-      <div style={{ textAlign: 'center', padding: '80px var(--kt-space-6) 52px' }}>
+      <div
+        className={styles.heroHeader}
+        style={{ textAlign: 'center', padding: '80px var(--kt-space-6) 52px' }}
+      >
         <h1
           style={{
             fontSize: 'clamp(32px, 5vw, 58px)',
@@ -50,12 +54,12 @@ const HeroDefault = () => {
 
       {/* Two track cards */}
       <div
+        className={styles.heroGrid}
         style={{
           maxWidth: 1100,
           margin: '0 auto',
           padding: '0 var(--kt-space-6) 64px',
           display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
           gap: 20,
         }}
       >
@@ -87,18 +91,12 @@ const HeroDefault = () => {
             e.currentTarget.style.boxShadow = 'none'
           }}
         >
-          <img
-            src="/icon-worker.png"
-            alt=""
-            aria-hidden="true"
-            style={{ width: 80, height: 80, objectFit: 'contain' }}
-          />
-          <div>
+          <div className={styles.cardTop}>
             <Badge
+              className={styles.cardBadge}
               variant="accent"
               size="sm"
               style={{
-                marginBottom: 14,
                 background: 'var(--kt-badge-worker-bg)',
                 color: 'rgba(229,218,195,0.85)',
                 border: 'none',
@@ -106,32 +104,39 @@ const HeroDefault = () => {
             >
               For Workers
             </Badge>
-            <h2
-              style={{
-                fontSize: 'var(--kt-text-4xl)',
-                fontWeight: 'var(--kt-weight-bold)',
-                color: 'white',
-                lineHeight: 1.0,
-                marginBottom: 14,
-                letterSpacing: '-0.5px',
-              }}
-            >
-              I'm looking
-              <br />
-              for work
-            </h2>
-            <p
-              style={{
-                fontSize: 'var(--kt-text-md)',
-                color: 'rgba(255,255,255,0.65)',
-                lineHeight: 1.6,
-                maxWidth: 340,
-              }}
-            >
-              Find jobs across every industry, build a verified profile, and get hired faster with
-              Regulix.
-            </p>
+            <div className={styles.cardIconHeadline}>
+              <img
+                src="/icon-worker.png"
+                alt=""
+                aria-hidden="true"
+                style={{ width: 80, height: 80, objectFit: 'contain', flexShrink: 0 }}
+              />
+              <h2
+                className={styles.cardHeadline}
+                style={{
+                  fontWeight: 'var(--kt-weight-bold)',
+                  color: 'white',
+                  lineHeight: 1.0,
+                  letterSpacing: '-0.5px',
+                }}
+              >
+                I'm looking
+                <br />
+                for work
+              </h2>
+            </div>
           </div>
+          <p
+            style={{
+              fontSize: 'var(--kt-text-md)',
+              color: 'rgba(255,255,255,0.65)',
+              lineHeight: 1.6,
+              maxWidth: 340,
+            }}
+          >
+            Find jobs across every industry, build a verified profile, and get hired faster with
+            Regulix.
+          </p>
           <ul
             style={{
               listStyle: 'none',
@@ -162,8 +167,8 @@ const HeroDefault = () => {
             ))}
           </ul>
           <span
+            className={styles.cardCta}
             style={{
-              alignSelf: 'flex-start',
               display: 'inline-flex',
               alignItems: 'center',
               gap: 8,
@@ -173,7 +178,6 @@ const HeroDefault = () => {
               borderRadius: 'var(--kt-radius-lg)',
               fontWeight: 'var(--kt-weight-semibold)',
               fontSize: 'var(--kt-text-md)',
-              marginTop: 'auto',
             }}
           >
             Browse Jobs →
@@ -208,18 +212,12 @@ const HeroDefault = () => {
             e.currentTarget.style.boxShadow = 'none'
           }}
         >
-          <img
-            src="/icon-company.png"
-            alt=""
-            aria-hidden="true"
-            style={{ width: 80, height: 80, objectFit: 'contain' }}
-          />
-          <div>
+          <div className={styles.cardTop}>
             <Badge
+              className={styles.cardBadge}
               variant="secondary"
               size="sm"
               style={{
-                marginBottom: 14,
                 background: 'rgba(255,255,255,0.18)',
                 color: 'white',
                 border: 'none',
@@ -227,32 +225,39 @@ const HeroDefault = () => {
             >
               For Companies
             </Badge>
-            <h2
-              style={{
-                fontSize: 'var(--kt-text-4xl)',
-                fontWeight: 'var(--kt-weight-bold)',
-                color: 'white',
-                lineHeight: 1.0,
-                marginBottom: 14,
-                letterSpacing: '-0.5px',
-              }}
-            >
-              I'm looking
-              <br />
-              to hire
-            </h2>
-            <p
-              style={{
-                fontSize: 'var(--kt-text-md)',
-                color: 'rgba(255,255,255,0.65)',
-                lineHeight: 1.6,
-                maxWidth: 340,
-              }}
-            >
-              Post jobs, find verified workers, and hire people who can start tomorrow — paperwork
-              already done.
-            </p>
+            <div className={styles.cardIconHeadline}>
+              <img
+                src="/icon-company.png"
+                alt=""
+                aria-hidden="true"
+                style={{ width: 80, height: 80, objectFit: 'contain', flexShrink: 0 }}
+              />
+              <h2
+                className={styles.cardHeadline}
+                style={{
+                  fontWeight: 'var(--kt-weight-bold)',
+                  color: 'white',
+                  lineHeight: 1.0,
+                  letterSpacing: '-0.5px',
+                }}
+              >
+                I'm looking
+                <br />
+                to hire
+              </h2>
+            </div>
           </div>
+          <p
+            style={{
+              fontSize: 'var(--kt-text-md)',
+              color: 'rgba(255,255,255,0.65)',
+              lineHeight: 1.6,
+              maxWidth: 340,
+            }}
+          >
+            Post jobs, find verified workers, and hire people who can start tomorrow — paperwork
+            already done.
+          </p>
           <ul
             style={{
               listStyle: 'none',
@@ -283,8 +288,8 @@ const HeroDefault = () => {
             ))}
           </ul>
           <span
+            className={styles.cardCta}
             style={{
-              alignSelf: 'flex-start',
               display: 'inline-flex',
               alignItems: 'center',
               gap: 8,
@@ -294,7 +299,6 @@ const HeroDefault = () => {
               borderRadius: 'var(--kt-radius-lg)',
               fontWeight: 'var(--kt-weight-semibold)',
               fontSize: 'var(--kt-text-md)',
-              marginTop: 'auto',
             }}
           >
             Post a Job →
@@ -305,12 +309,12 @@ const HeroDefault = () => {
       {/* Stats */}
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 var(--kt-space-6) 72px' }}>
         <div
+          className={styles.statsGrid}
           style={{
             display: 'flex',
             justifyContent: 'center',
             gap: 0,
             paddingTop: 40,
-            borderTop: '1px solid var(--kt-border)',
             flexWrap: 'wrap',
           }}
         >
@@ -322,6 +326,7 @@ const HeroDefault = () => {
           ].map((s, i, arr) => (
             <div
               key={s.num}
+              className={styles.statItem}
               style={{
                 flex: '1 0 120px',
                 textAlign: 'center',

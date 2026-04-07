@@ -1,0 +1,50 @@
+/* Mobile-only overrides (≤640px) */
+
+.topBar {
+  height: 60px;
+  padding: 0 var(--kt-space-6);
+}
+
+.newToLabel {
+  /* visible on desktop */
+}
+
+.brandPanel {
+  /* visible on desktop */
+}
+
+.formCard {
+  width: 420px;
+  flex-shrink: 0;
+}
+
+.contentRow {
+  gap: 72px;
+}
+
+@media (max-width: 640px) {
+  .topBar {
+    height: 48px;
+    padding: 0 var(--kt-space-4);
+  }
+
+  .newToLabel {
+    display: none;
+  }
+
+  .brandPanel {
+    display: none;
+  }
+
+  .contentRow {
+    gap: 0;
+  }
+
+  .formCard {
+    width: 100%;
+    padding: 32px 24px;
+    box-shadow: none;
+    border: none;
+    background: transparent;
+  }
+}

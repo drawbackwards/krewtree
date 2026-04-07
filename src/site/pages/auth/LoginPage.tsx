@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Button, Input } from '../../../components'
 import { KrewtreeLogo, KrewtreeBgMark } from '../../components/Logo'
 import { useAuth } from '../../context/AuthContext'
+import styles from './LoginPage.module.css'
 
 // ── SVG stat icons ─────────────────────────────────────────────────────────────
 const StatIcon = ({ icon }: { icon: string }) => {
@@ -92,13 +93,13 @@ export const LoginPage: React.FC = () => {
     >
       {/* ── Top bar ────────────────────────────────────────────────── */}
       <div
+        className={styles.topBar}
         style={{
           position: 'relative',
           zIndex: 10,
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          padding: '22px 52px',
         }}
       >
         <Link
@@ -106,10 +107,13 @@ export const LoginPage: React.FC = () => {
           style={{ display: 'inline-flex', lineHeight: 0 }}
           aria-label="krewtree home"
         >
-          <KrewtreeLogo height={34} onDark={false} />
+          <KrewtreeLogo height={30} onDark={false} />
         </Link>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text-muted)' }}>
+          <span
+            className={styles.newToLabel}
+            style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text-muted)' }}
+          >
             New to krewtree?
           </span>
           <Link
@@ -118,9 +122,9 @@ export const LoginPage: React.FC = () => {
               background: 'var(--kt-navy-900)',
               color: 'white',
               borderRadius: 'var(--kt-radius-full)',
-              padding: '7px 18px',
+              padding: '6px 16px',
               fontSize: 'var(--kt-text-sm)',
-              fontWeight: 'var(--kt-weight-medium)',
+              fontWeight: 'var(--kt-weight-semibold)',
               textDecoration: 'none',
               transition: 'opacity 0.15s ease',
             }}
@@ -147,16 +151,16 @@ export const LoginPage: React.FC = () => {
       >
         <KrewtreeBgMark style={{ color: 'var(--kt-grey-900)', opacity: 0.045 }} />
         <div
+          className={styles.contentRow}
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: 72,
             width: '100%',
             maxWidth: 960,
           }}
         >
           {/* Left — brand text */}
-          <div style={{ flex: 1, minWidth: 0 }}>
+          <div className={styles.brandPanel} style={{ flex: 1, minWidth: 0 }}>
             <h1
               style={{
                 fontSize: 'clamp(28px, 3vw, 46px)',
@@ -216,12 +220,11 @@ export const LoginPage: React.FC = () => {
 
           {/* Right — form card */}
           <div
+            className={styles.formCard}
             style={{
               background: 'var(--kt-white)',
               borderRadius: 16,
               padding: '44px 48px',
-              width: 420,
-              flexShrink: 0,
               border: '1px solid var(--kt-border)',
               boxShadow: 'var(--kt-shadow-md)',
             }}
@@ -322,42 +325,6 @@ export const LoginPage: React.FC = () => {
                 </Button>
               </div>
             </form>
-
-            {/* Divider */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '24px 0' }}>
-              <div style={{ flex: 1, height: 1, background: 'var(--kt-border)' }} />
-              <span
-                style={{
-                  fontSize: 11,
-                  color: 'var(--kt-text-placeholder)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.06em',
-                }}
-              >
-                or
-              </span>
-              <div style={{ flex: 1, height: 1, background: 'var(--kt-border)' }} />
-            </div>
-
-            <p
-              style={{
-                textAlign: 'center',
-                fontSize: 'var(--kt-text-sm)',
-                color: 'var(--kt-text-muted)',
-              }}
-            >
-              New to krewtree?{' '}
-              <Link
-                to="/site/signup"
-                style={{
-                  color: 'var(--kt-accent)',
-                  fontWeight: 'var(--kt-weight-semibold)',
-                  textDecoration: 'none',
-                }}
-              >
-                Create a free account →
-              </Link>
-            </p>
           </div>
         </div>
       </div>

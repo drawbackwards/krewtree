@@ -1,0 +1,72 @@
+/* Defaults (desktop) */
+.heroGrid {
+  grid-template-columns: 1fr 1fr;
+}
+
+.cardHeadline {
+  font-size: var(--kt-text-4xl);
+}
+
+.cardTop {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.cardBadge {
+  order: 2;
+  align-self: flex-start;
+}
+
+.cardIconHeadline {
+  order: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.cardCta {
+  align-self: flex-start;
+}
+
+/* Mobile-only overrides (≤640px) */
+@media (max-width: 640px) {
+  .heroHeader {
+    padding: 40px var(--kt-space-4) 32px;
+  }
+
+  .heroGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .cardHeadline {
+    font-size: var(--kt-text-2xl);
+  }
+
+  .cardBadge {
+    order: 1;
+  }
+
+  .cardIconHeadline {
+    order: 2;
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .cardCta {
+    align-self: stretch;
+    justify-content: center;
+  }
+
+  .statsGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px 0;
+  }
+
+  .statItem {
+    border-right: none !important;
+    padding: 0 16px;
+  }
+}
