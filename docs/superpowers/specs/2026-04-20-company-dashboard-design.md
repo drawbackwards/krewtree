@@ -131,12 +131,12 @@ List of company jobs with boost, pause, close, duplicate, edit. No structural ch
 
 #### Stages (keep existing model)
 
-`new · reviewed · interview · offer · hired · rejected`. The `hired` action triggers the Regulix hire handoff (§3.7). `KanbanBoard` component is retained and becomes an optional **view toggle** in the list pane (for recruiters who prefer the visual pipeline for a small active set) but is **not** the primary view.
+`new · reviewed · interview · offer · hired · rejected`. Marking an applicant hired changes only the pipeline stage — it is not tied to any HR software integration. The separate "Start Regulix onboarding" action (visible only when the company has linked Regulix) calls `submitHireHandoff` and is the actual handoff trigger. Future HR integrations (ADP, Gusto, BambooHR) can slot in as additional conditional actions. See [applicant management redesign spec](./2026-04-20-applicant-management-redesign-design.md) for full detail. `KanbanBoard` component is retained and becomes an optional **view toggle** in the list pane (for recruiters who prefer the visual pipeline for a small active set) but is **not** the primary view.
 
 #### What the detail panel shows
 
 - Header: name, job applied to, date, status badges (Regulix Ready / Onboarded / Immediate Hire).
-- Action row: Shortlist · Advance · Reject · Hire · Save to talent pool.
+- Action row: Shortlist · Advance · Reject · Hire · Save to talent pool · Start Regulix onboarding (conditional on company Regulix link).
 - **Rank breakdown** — component scores with weights (40/30/20/10) so the recruiter knows why this rank.
 - Skills, resume preview, endorsements from Regulix (stubbed until API exists), past work history summary (no PII).
 - Notes (internal, company-scoped).
@@ -250,6 +250,9 @@ hasRegulixAccount(workerId: string): { data: boolean, error }
 submitHireHandoff(params: {
   companyId, workerId, jobId, hireDate, payRate
 }): { data: { regulixHireId }, error }
+// Invoked by the dedicated "Start Regulix onboarding" action in the
+// applicant detail panel, NOT by the `hired` pipeline transition.
+// Pipeline stages remain HR-integration-agnostic.
 
 linkCompanyAccount(companyId: string, regulixCompanyId: string): { data, error }
 
