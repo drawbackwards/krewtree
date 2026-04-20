@@ -6,6 +6,7 @@ import {
   getPastHires,
   hasRegulixAccount,
   submitHireHandoff,
+  linkCompanyAccount,
 } from '../regulixService'
 
 describe('getRegulixStatus', () => {
@@ -117,5 +118,22 @@ describe('submitHireHandoff', () => {
     const a = await submitHireHandoff(params)
     const b = await submitHireHandoff(params)
     expect(a.data?.regulixHireId).not.toBe(b.data?.regulixHireId)
+  })
+})
+
+describe('linkCompanyAccount', () => {
+  it('returns success for valid company ids', async () => {
+    const { error } = await linkCompanyAccount('c1', 'regulix-company-123')
+    expect(error).toBeNull()
+  })
+
+  it('returns an error when companyId is empty', async () => {
+    const { error } = await linkCompanyAccount('', 'regulix-company-123')
+    expect(error).toBe('companyId is required')
+  })
+
+  it('returns an error when regulixCompanyId is empty', async () => {
+    const { error } = await linkCompanyAccount('c1', '')
+    expect(error).toBe('regulixCompanyId is required')
   })
 })

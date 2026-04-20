@@ -83,3 +83,13 @@ export async function submitHireHandoff(
   void params // keep param reference so linters don't flag it; real impl will use it
   return { data: { regulixHireId }, error: null }
 }
+
+export async function linkCompanyAccount(
+  companyId: string,
+  regulixCompanyId: string
+): Promise<{ error: string | null }> {
+  if (!companyId) return { error: 'companyId is required' }
+  if (!regulixCompanyId) return { error: 'regulixCompanyId is required' }
+  // v1 no-op. v2 will persist the link in Supabase and notify Regulix.
+  return { error: null }
+}
