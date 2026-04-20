@@ -309,7 +309,7 @@ export type VerifiedWorkHistoryEntry = {
   role: string
   startDate: string // ISO
   endDate: string | null // null if current
-  verified: true
+  verified: true // literal: this endpoint only returns verified entries; unverified are excluded server-side
 }
 
 export type PastHire = {
