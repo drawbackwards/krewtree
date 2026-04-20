@@ -61,12 +61,15 @@ SMB trades recruiter / hiring manager. Typically handles 1–5 active jobs at a 
 | `/site/dashboard/applicants`            | Applicant management (redesigned) | Redesign |
 | `/site/dashboard/applicants/:jobId`     | Applicants filtered to one job    | New      |
 | `/site/dashboard/talent-pool`           | Cross-job talent pool             | New      |
+| `/site/messages`                        | Messages (separate spec)          | Stub     |
 | `/site/dashboard/company-profile/edit`  | Company profile editor            | New      |
 | `/site/post-job` · `/site/post-job/:id` | Post / edit job                   | Built    |
 
 ### 2.2 Navigation
 
-Sidebar (or top nav tabs, depending on existing Navbar pattern): **Overview · Jobs · Applicants · Talent Pool · Company Profile**. The sidebar's current Quick Actions + Regulix Ready callout remain.
+Top-level nav: **Overview · Jobs · Applicants · Talent Pool · Messages · Company Profile**. The sidebar's current Quick Actions + Regulix Ready callout remain.
+
+**Messages** appears in the nav as a top-level destination even though the messaging feature lives in its own spec. The nav entry is added as part of this dashboard work; the page content is owned by the separate messaging spec.
 
 ---
 
@@ -178,9 +181,16 @@ Top tabs (counts per tab):
 
 Below tabs: worker cards (grid) with name, role applied for, source tag, Regulix Ready badge, last interaction date. Actions per card: **View profile · Invite to apply**.
 
-#### Invite to apply
+#### Invite to apply (dual channel)
 
-Click → modal → choose which of this company's active jobs → send notification. In v1, this sends an email (via Supabase) and creates a row in a `talent_pool_invitations` table. When Regulix API is live, this becomes a Regulix-routed notification (worker sees it in their Regulix dashboard).
+Click → modal → choose which of this company's active jobs → send notification.
+
+The service checks the worker's Regulix identity and routes the invite accordingly (resolved in §6.2):
+
+- **Worker has Regulix account** → invite delivered through Regulix (`inviteWorker` in `regulixService`). Worker sees it in their Regulix dashboard.
+- **Worker is krewtree-only** → invite delivered via krewtree: email + in-app notification when the worker next logs in.
+
+Either path creates a row in `talent_pool_invitations` (shared table, with a `channel` column recording which path was used). The modal confirmation surfaces the channel so the recruiter knows how the worker will receive it.
 
 #### Data model
 
@@ -191,7 +201,9 @@ New table `company_favorites`:
 
 Past hires tab queries the Regulix API; stub returns mock data for v1.
 
-### 3.6 Company profile editor (new, MVP)
+### 3.6 Company profile editor (new, MVP — fast-follow, not this sprint)
+
+> **Sprint scope note:** This feature is defined here for completeness but is **not part of the current dashboard sprint**. It ships as a fast-follow immediately after the dashboard sprint. Sections 3.1–3.5 and 3.7 are the sprint scope.
 
 **Route:** `/site/dashboard/company-profile/edit`.
 
@@ -208,7 +220,7 @@ Past hires tab queries the Regulix API; stub returns mock data for v1.
 
 Matches the polish of the worker profile editor (single-page form, save button, localStorage draft). No steps.
 
-**Data model extension.** The `company_profiles` table (or the `user_metadata` blob currently in use — confirm during implementation) gets the additional fields if missing. Design schema with nullable columns for v2 fields (§4.4) so adding them later doesn't require a migration.
+**Data model.** Promote company fields from `user_metadata` to a new dedicated `company_profiles` table (resolved in §6.2). Schema designed with nullable columns for v2 rich-editor fields (§4.4) so adding them later doesn't require a migration.
 
 ### 3.7 Regulix integration architecture (new)
 
@@ -229,6 +241,10 @@ getVerifiedWorkHistory(workerId: string): { data: WorkHistoryEntry[], error }
 
 getPastHires(companyId: string): { data: PastHire[], error }
 // PastHire = { workerId, lastHiredAt, jobTitle, rehireable: boolean }
+
+hasRegulixAccount(workerId: string): { data: boolean, error }
+// Used by the dual-channel "invite to apply" flow (§3.5) to decide
+// whether to route via Regulix or fall back to krewtree email.
 
 // Actions — write
 submitHireHandoff(params: {
@@ -294,7 +310,7 @@ Google / Outlook calendar integration, booking links, availability windows. Tier
 
 ### 5.3 Messaging
 
-Out of scope entirely. Will be a separate spec with its own design doc.
+Feature implementation is **out of scope** for this doc — will have its own spec. However, **the `/site/messages` nav entry is added as part of this dashboard work** (§2.2) so the nav structure is complete by the end of this sprint.
 
 ---
 
@@ -302,30 +318,42 @@ Out of scope entirely. Will be a separate spec with its own design doc.
 
 ### 6.1 Data model additions
 
-| Table                                | Purpose                              | Notes                                                     |
-| ------------------------------------ | ------------------------------------ | --------------------------------------------------------- |
-| `company_favorites`                  | Talent pool saves (manual + derived) | `(company_id, worker_id, saved_at, source, notes)`        |
-| `talent_pool_invitations`            | Invite-to-apply tracking             | `(id, company_id, worker_id, job_id, invited_at, status)` |
-| `applicant_rank_snapshot` (optional) | Cached rank scores                   | Only if recompute-on-fetch becomes slow                   |
-| `company_profiles` extensions        | Editor fields                        | Nullable columns for v2 rich editor                       |
+| Table                                | Purpose                                       | Notes                                                                                                       |
+| ------------------------------------ | --------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `company_favorites`                  | Talent pool saves (manual + derived)          | `(company_id, worker_id, saved_at, source, notes)`                                                          |
+| `talent_pool_invitations`            | Invite-to-apply tracking                      | `(id, company_id, worker_id, job_id, invited_at, status, channel)` where `channel` ∈ `regulix` · `krewtree` |
+| `applicant_rank_snapshot` (optional) | Cached rank scores                            | Only if recompute-on-fetch becomes slow                                                                     |
+| `company_profiles` (new)             | Editor fields (promoted from `user_metadata`) | Nullable columns for v2 rich editor; landed in fast-follow sprint                                           |
 
 All tables get RLS policies consistent with existing patterns.
 
-### 6.2 Open questions
+### 6.2 Resolved decisions
+
+- **Account linking flow → explicit.** Companies complete a one-time linking flow to connect their krewtree account to their Regulix account. Not automatic, not inferred from email domain. UX for the linking flow itself is out of scope for this doc — lives in the Regulix integration sprint.
+- **"Invite to apply" delivery → dual channel.** Not every applicant will have a Regulix identity. The invite flow checks the worker's Regulix status and routes accordingly:
+  - Worker has Regulix account → notification delivered through Regulix (via `inviteWorker` in `regulixService`).
+  - Worker does not have Regulix account → notification delivered via krewtree (email + in-app notification when the worker next logs in).
+  - The UI shows the recruiter which channel the invite went through.
+- **Company profile data location → dedicated `company_profiles` table.** Promote from `user_metadata` for extensibility. Schema designed with nullable columns to accommodate the v2 rich editor fields (§4.4) without future migrations. Migration handled as part of the fast-follow company profile sprint (§3.6).
+
+### 6.3 Still-open questions
 
 - **Regulix API shape.** This doc assumes the interface in §3.7. Must be validated against Regulix team's actual API design before swap-in.
-- **Account linking flow.** Is the krewtree ↔ Regulix company account link automatic (same customer), explicit (one-time flow), or inferred from email domain?
 - **Rank score tuning.** V1 uses fixed weights 40/30/20/10. Gather real-world feedback from first 10 customers before deciding whether per-company tuning is needed.
-- **"Invite to apply" delivery.** V1 is email-based via Supabase. Does Regulix want to own all worker notifications once its API is live?
-- **Company profile data location.** Currently some company fields live in `user_metadata`. The editor forces a decision: promote to a dedicated `company_profiles` table or stay with metadata. Recommend the table approach for extensibility.
 
-### 6.3 Implementation order (suggested)
+### 6.4 Implementation order (suggested)
+
+**Dashboard sprint (this scope):**
 
 1. Regulix service stubs (unblocks everything else).
 2. Ranking score (small, self-contained).
 3. Applicant management redesign (biggest pre-launch surface).
 4. Talent pool.
-5. Company profile editor.
-6. Overview and job management enhancements.
+5. Overview and job management enhancements.
+6. Top-level `/site/messages` nav entry (page body owned by the messaging spec).
+
+**Fast follow (immediately after the dashboard sprint):**
+
+7. Company profile editor (§3.6) + `company_profiles` table migration.
 
 Each step becomes its own plan via `writing-plans`.
