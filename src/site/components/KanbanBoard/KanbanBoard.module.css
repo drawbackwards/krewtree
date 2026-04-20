@@ -39,16 +39,34 @@
   letter-spacing: 0.06em;
 }
 
-.columnHeader.new { background: color-mix(in srgb, var(--kt-info) 12%, transparent); color: var(--kt-info); }
-.columnHeader.screening { background: color-mix(in srgb, var(--kt-warning) 12%, transparent); color: var(--kt-warning); }
-.columnHeader.interview { background: color-mix(in srgb, var(--kt-primary) 12%, transparent); color: var(--kt-primary); }
-.columnHeader.offer { background: color-mix(in srgb, var(--kt-accent) 12%, transparent); color: var(--kt-accent); }
-.columnHeader.hired { background: color-mix(in srgb, var(--kt-success) 12%, transparent); color: var(--kt-success); }
-.columnHeader.rejected { background: color-mix(in srgb, var(--kt-danger) 12%, transparent); color: var(--kt-danger); }
+.columnHeader.new {
+  background: color-mix(in srgb, var(--kt-info) 12%, transparent);
+  color: var(--kt-info);
+}
+.columnHeader.reviewed {
+  background: color-mix(in srgb, var(--kt-teal) 14%, transparent);
+  color: var(--kt-teal);
+}
+.columnHeader.interview {
+  background: color-mix(in srgb, var(--kt-violet) 14%, transparent);
+  color: var(--kt-violet);
+}
+.columnHeader.offer {
+  background: color-mix(in srgb, var(--kt-warning) 12%, transparent);
+  color: var(--kt-warning);
+}
+.columnHeader.hired {
+  background: color-mix(in srgb, var(--kt-success) 12%, transparent);
+  color: var(--kt-success);
+}
+.columnHeader.rejected {
+  background: color-mix(in srgb, var(--kt-secondary) 60%, transparent);
+  color: var(--kt-text-muted);
+}
 
 .columnCount {
   font-size: var(--kt-text-xs);
-  background: rgba(255,255,255,0.5);
+  background: rgba(255, 255, 255, 0.5);
   border-radius: var(--kt-radius-full);
   padding: 1px 7px;
 }
@@ -57,7 +75,9 @@
   flex: 1;
   border: 2px dashed transparent;
   border-radius: var(--kt-radius-md);
-  transition: border-color var(--kt-duration-fast) var(--kt-ease), background var(--kt-duration-fast) var(--kt-ease);
+  transition:
+    border-color var(--kt-duration-fast) var(--kt-ease),
+    background var(--kt-duration-fast) var(--kt-ease);
   padding: var(--kt-space-1);
   display: flex;
   flex-direction: column;
@@ -86,7 +106,9 @@
   border-radius: var(--kt-radius-md);
   padding: var(--kt-space-3);
   cursor: grab;
-  transition: box-shadow var(--kt-duration-fast) var(--kt-ease), transform var(--kt-duration-fast) var(--kt-ease);
+  transition:
+    box-shadow var(--kt-duration-fast) var(--kt-ease),
+    transform var(--kt-duration-fast) var(--kt-ease);
   user-select: none;
 }
 

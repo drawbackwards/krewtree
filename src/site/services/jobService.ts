@@ -41,6 +41,8 @@ type DbJob = {
     avg_rating: number
     review_count: number
   } | null
+  job_analytics: { views_total: number } | null
+  applications: Array<{ id: string }>
 }
 
 export type CreateJobParams = {
@@ -75,7 +77,9 @@ const JOB_SELECT = `
   pay_min, pay_max, pay_type, description, requirements, skills,
   is_sponsored, regulix_ready_applicants, total_applicants, status, created_at,
   experience_level, pre_interview_questions, urgent_hiring, regulix_preferred, auto_pause_limit,
-  company_profiles(id, name, logo_url, location, industry, is_verified, description, size, website, avg_rating, review_count)
+  company_profiles(id, name, logo_url, location, industry, is_verified, description, size, website, avg_rating, review_count),
+  job_analytics(views_total),
+  applications(id)
 `
 
 function mapJob(j: DbJob): Job {
@@ -109,8 +113,10 @@ function mapJob(j: DbJob): Job {
     skills: j.skills ?? [],
     isSponsored: j.is_sponsored,
     regulixReadyApplicants: j.regulix_ready_applicants,
-    totalApplicants: j.total_applicants,
+    totalApplicants: Array.isArray(j.applications) ? j.applications.length : j.total_applicants,
+    viewCount: j.job_analytics?.views_total ?? 0,
     postedDaysAgo: daysSince(j.created_at),
+    createdAt: j.created_at,
     status: j.status as Job['status'],
     experienceLevel: j.experience_level ?? null,
     preInterviewQuestions: j.pre_interview_questions ?? [],
@@ -270,6 +276,21 @@ export async function updateJob(
   const { error } = await supabase.from('jobs').update(patch).eq('id', id)
   if (error) return { error: error.message }
   return { error: null }
+}
+
+export async function getCompanyJobs(
+  companyId: string
+): Promise<{ data: Job[]; error: string | null }> {
+  const { data, error } = await supabase
+    .from('jobs')
+    .select(JOB_SELECT)
+    .eq('company_id', companyId)
+    .order('created_at', { ascending: false })
+
+  if (error) return { data: [], error: error.message }
+  if (!data) return { data: [], error: null }
+
+  return { data: data.map((j) => mapJob(j as unknown as DbJob)), error: null }
 }
 
 export async function getCompanyIndustry(

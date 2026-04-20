@@ -23,34 +23,77 @@
   min-width: 0;
 }
 
-/* ── Two-column layout ── */
-.layout {
+/* ── Outer page wrapper — header row + two-column body ── */
+.layoutWrapper {
   max-width: 1100px;
   margin: 0 auto;
   padding: 32px var(--kt-space-6);
   display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* ── Full-width header row ── */
+.headerRow {
+  display: flex;
   gap: 28px;
-  align-items: flex-start;
+  align-items: stretch;
+}
+
+.headerContent {
+  flex: 1;
+  min-width: 0;
+  padding: 28px;
+  background: var(--kt-surface);
+  border-radius: var(--kt-radius-lg);
+}
+
+.headerButtons {
+  width: 300px;
+  flex-shrink: 0;
+  background: var(--kt-grey-50);
+  border-radius: var(--kt-radius-lg);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ── Two-column body grid ── */
+.body {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 28px;
+  align-items: start;
 }
 
 /* ── Main content column ── */
 .main {
-  flex: 1;
+  grid-column: 1;
+  grid-row: 1 / 3;
   min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
 
-/* ── Sidebar column ── */
-.sidebar {
-  width: 300px;
-  flex-shrink: 0;
+/* ── Sidebar top — applicants / regulix upsell ── */
+.sidebarTop {
+  grid-column: 2;
+  grid-row: 1;
   display: flex;
   flex-direction: column;
   gap: 16px;
-  position: sticky;
-  top: 80px;
+}
+
+/* ── Sidebar bottom — company info + similar jobs ── */
+.sidebarBottom {
+  grid-column: 2;
+  grid-row: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-self: start;
 }
 
 /* ── Section cards — large padding on desktop, tighter on mobile ── */
@@ -90,21 +133,47 @@
     padding: 10px var(--kt-space-4);
   }
 
-  .layout {
+  .layoutWrapper {
     padding: 16px var(--kt-space-4) 0;
+    gap: 12px;
+  }
+
+  .headerRow {
     flex-direction: column;
-    gap: 0;
+    gap: 12px;
+  }
+
+  .headerContent {
+    padding: 20px;
+  }
+
+  .headerButtons {
+    width: 100%;
+    border-radius: var(--kt-radius-lg);
+    margin: 0;
+  }
+
+  .body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .sidebarTop {
+    order: 1;
+    position: static;
+    width: 100%;
   }
 
   .main {
+    order: 2;
     width: 100%;
     gap: 12px;
   }
 
-  .sidebar {
+  .sidebarBottom {
+    order: 3;
     width: 100%;
-    position: static;
-    margin-top: 12px;
   }
 
   .sectionCard {

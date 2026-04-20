@@ -97,7 +97,9 @@ export async function getWorkerApplications(
         isSponsored: j?.is_sponsored ?? false,
         regulixReadyApplicants: 0,
         totalApplicants: 0,
+        viewCount: 0,
         postedDaysAgo: 0,
+        createdAt: a.created_at as string,
         status: 'active',
       },
     }
@@ -219,7 +221,9 @@ export async function getRecommendedJobs(
         isSponsored: j.is_sponsored,
         regulixReadyApplicants: 0,
         totalApplicants: 0,
+        viewCount: 0,
         postedDaysAgo: 0,
+        createdAt: new Date().toISOString(),
         status: 'active',
       }
     }),

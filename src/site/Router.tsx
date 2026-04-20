@@ -14,6 +14,8 @@ import {
   SavedJobsPage,
   MessagesPage,
   ReferralPage,
+  JobPostsPage,
+  AllApplicantsPage,
 } from './pages'
 import { LoginPage } from './pages/auth/LoginPage'
 import { SignupRolePage } from './pages/auth/SignupRolePage'
@@ -88,6 +90,8 @@ export const SiteRouter: React.FC = () => (
         {/* Company-only */}
         <Route element={<RequireAuth persona="company" />}>
           <Route path="/site/dashboard/company" element={<CompanyDashboard />} />
+          <Route path="/site/dashboard/jobs" element={<JobPostsPage />} />
+          <Route path="/site/dashboard/applicants" element={<AllApplicantsPage />} />
           <Route path="/site/post-job" element={<PostJobPage />} />
           <Route path="/site/post-job/:id" element={<PostJobPage />} />
         </Route>

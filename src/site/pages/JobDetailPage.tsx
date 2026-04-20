@@ -189,20 +189,20 @@ export const JobDetailPage: React.FC = () => {
         </div>
       </div>
 
-      <div className={styles.layout}>
-        {/* ---- Main Content ---- */}
-        <div className={styles.main}>
-          {/* Job Header Card */}
+      <div className={styles.layoutWrapper}>
+        {/* ---- Header Row ---- */}
+        <div className={styles.headerRow}>
+          {/* Job info */}
           <div
-            className={styles.sectionCard}
-            style={{
-              background:
-                !isCompany && job.isSponsored
-                  ? 'linear-gradient(135deg, var(--kt-olive-50) 0%, var(--kt-surface) 60%)'
-                  : 'var(--kt-surface)',
-              border: `1px solid ${!isCompany && job.isSponsored ? 'var(--kt-olive-200)' : 'var(--kt-border)'}`,
-              borderRadius: 'var(--kt-radius-lg)',
-            }}
+            className={styles.headerContent}
+            style={
+              !isCompany && job.isSponsored
+                ? {
+                    background:
+                      'linear-gradient(135deg, var(--kt-olive-50) 0%, var(--kt-surface) 60%)',
+                  }
+                : undefined
+            }
           >
             {job.isSponsored && (
               <div style={{ marginBottom: 14 }}>
@@ -228,7 +228,6 @@ export const JobDetailPage: React.FC = () => {
                   fontWeight: 'var(--kt-weight-bold)',
                   fontSize: 'var(--kt-text-xl)',
                   flexShrink: 0,
-                  border: '1px solid var(--kt-border)',
                 }}
               >
                 {job.company.name.charAt(0)}
@@ -274,29 +273,8 @@ export const JobDetailPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Save / Share — desktop only (hidden on mobile via CSS; footer handles mobile) */}
+              {/* Share — desktop only */}
               <div className={styles.headerActions}>
-                {!isCompany && (
-                  <button
-                    onClick={() => setSaved((s) => !s)}
-                    title={saved ? 'Saved' : 'Save job'}
-                    style={{
-                      width: 36,
-                      height: 36,
-                      borderRadius: 'var(--kt-radius-md)',
-                      border: '1px solid var(--kt-border)',
-                      background: saved ? 'var(--kt-primary-subtle)' : 'transparent',
-                      color: saved ? 'var(--kt-primary)' : 'var(--kt-text-muted)',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      transition: 'all var(--kt-duration-fast)',
-                    }}
-                  >
-                    <BookmarkIcon size={16} />
-                  </button>
-                )}
                 <button
                   title="Share"
                   onClick={() => setShareOpen(true)}
@@ -319,7 +297,7 @@ export const JobDetailPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Meta row — own row, full width on mobile */}
+            {/* Meta row */}
             <div className={styles.metaRow}>
               {[
                 { icon: <MapPinIcon size={14} />, label: job.location },
@@ -375,238 +353,10 @@ export const JobDetailPage: React.FC = () => {
             )}
           </div>
 
-          {/* Regulix Ready Info Banner — worker view only; shown in sidebar for company */}
-          {!isCompany && job.regulixReadyApplicants > 0 && (
-            <div
-              style={{
-                background: 'var(--kt-olive-100)',
-                border: '1px solid var(--kt-olive-200)',
-                borderRadius: 'var(--kt-radius-lg)',
-                padding: '16px 20px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 14,
-              }}
-            >
-              <RegulixBadge size="lg" pulse />
-              <div>
-                <p
-                  style={{
-                    fontWeight: 'var(--kt-weight-semibold)',
-                    color: 'var(--kt-navy-900)',
-                    fontSize: 'var(--kt-text-sm)',
-                    marginBottom: 2,
-                  }}
-                >
-                  {job.regulixReadyApplicants} Regulix Ready Applicants
-                </p>
-                <p style={{ fontSize: 'var(--kt-text-xs)', color: 'var(--kt-text-muted)' }}>
-                  These candidates have completed W-4, I-9, direct deposit setup, and drug screening
-                  — ready to start Day 1.
-                </p>
-              </div>
-              <Link
-                to="/site/dashboard/company"
-                style={{ marginLeft: 'auto', textDecoration: 'none', flexShrink: 0 }}
-              >
-                <Button variant="accent" size="sm">
-                  View Candidates
-                </Button>
-              </Link>
-            </div>
-          )}
-
-          {/* Description */}
-          <div
-            className={styles.sectionCard}
-            style={{
-              background: 'var(--kt-surface)',
-              border: '1px solid var(--kt-border)',
-              borderRadius: 'var(--kt-radius-lg)',
-            }}
-          >
-            <h2
-              style={{
-                fontSize: 'var(--kt-text-lg)',
-                fontWeight: 'var(--kt-weight-semibold)',
-                color: 'var(--kt-text)',
-                marginBottom: 14,
-              }}
-            >
-              About the Role
-            </h2>
-            <p
-              style={{
-                fontSize: 'var(--kt-text-sm)',
-                color: 'var(--kt-text)',
-                lineHeight: 1.7,
-                marginBottom: 0,
-              }}
-            >
-              {job.description}
-            </p>
-          </div>
-
-          {/* Requirements */}
-          {job.requirements.length > 0 && (
-            <div
-              className={styles.sectionCard}
-              style={{
-                background: 'var(--kt-surface)',
-                border: '1px solid var(--kt-border)',
-                borderRadius: 'var(--kt-radius-lg)',
-              }}
-            >
-              <h2
-                style={{
-                  fontSize: 'var(--kt-text-lg)',
-                  fontWeight: 'var(--kt-weight-semibold)',
-                  color: 'var(--kt-text)',
-                  marginBottom: 16,
-                }}
-              >
-                Requirements
-              </h2>
-              <ul
-                style={{
-                  listStyle: 'none',
-                  padding: 0,
-                  margin: 0,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 10,
-                }}
-              >
-                {job.requirements.map((req, i) => (
-                  <li key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                    <span
-                      style={{
-                        width: 20,
-                        height: 20,
-                        borderRadius: '50%',
-                        background: 'var(--kt-olive-100)',
-                        color: 'var(--kt-accent)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0,
-                        marginTop: 1,
-                      }}
-                    >
-                      <CheckIcon size={14} />
-                    </span>
-                    <span
-                      style={{
-                        fontSize: 'var(--kt-text-sm)',
-                        color: 'var(--kt-text)',
-                        lineHeight: 1.5,
-                      }}
-                    >
-                      {req}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {/* Pre-Interview Questions Preview */}
-          {questions.length > 0 && (
-            <div
-              className={styles.sectionCard}
-              style={{
-                background: 'var(--kt-surface)',
-                border: '1px solid var(--kt-border)',
-                borderRadius: 'var(--kt-radius-lg)',
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'flex-start',
-                  marginBottom: 16,
-                  gap: 12,
-                }}
-              >
-                <div>
-                  <h2
-                    style={{
-                      fontSize: 'var(--kt-text-lg)',
-                      fontWeight: 'var(--kt-weight-semibold)',
-                      color: 'var(--kt-text)',
-                      marginBottom: 4,
-                    }}
-                  >
-                    Pre-Interview Questions
-                  </h2>
-                  <p style={{ fontSize: 'var(--kt-text-xs)', color: 'var(--kt-text-muted)' }}>
-                    Answering these questions will be part of your application.
-                  </p>
-                </div>
-                <Badge variant="info" size="sm">
-                  {questions.length} questions
-                </Badge>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {questions.map((q, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      display: 'flex',
-                      gap: 12,
-                      padding: '12px 14px',
-                      background: 'var(--kt-bg)',
-                      borderRadius: 'var(--kt-radius-md)',
-                      border: '1px solid var(--kt-border)',
-                    }}
-                  >
-                    <span
-                      style={{
-                        width: 22,
-                        height: 22,
-                        borderRadius: '50%',
-                        background: 'var(--kt-primary-subtle)',
-                        color: 'var(--kt-primary)',
-                        fontSize: 'var(--kt-text-xs)',
-                        fontWeight: 'var(--kt-weight-bold)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0,
-                      }}
-                    >
-                      {i + 1}
-                    </span>
-                    <span
-                      style={{
-                        fontSize: 'var(--kt-text-sm)',
-                        color: 'var(--kt-text)',
-                        lineHeight: 1.5,
-                      }}
-                    >
-                      {q}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* ---- Sidebar ---- */}
-        <div className={styles.sidebar}>
-          {isCompany ? (
-            /* ── Company: manage listing + Regulix applicants ── */
-            <div
-              style={{
-                background: 'var(--kt-surface)',
-                border: '1px solid var(--kt-border)',
-                borderRadius: 'var(--kt-radius-lg)',
-                padding: 20,
-              }}
-            >
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {/* Action buttons */}
+          <div className={styles.headerButtons}>
+            {isCompany ? (
+              <>
                 <Link to={`/site/post-job/${job.id}`} style={{ textDecoration: 'none' }}>
                   <Button variant="primary" style={{ width: '100%' }}>
                     Edit Job
@@ -624,19 +374,281 @@ export const JobDetailPage: React.FC = () => {
                     View Pipeline →
                   </Button>
                 </Link>
+              </>
+            ) : (
+              <>
+                <Button
+                  variant={appliedAt ? 'secondary' : 'primary'}
+                  style={{ width: '100%' }}
+                  onClick={() => setQuickApplyOpen(true)}
+                  disabled={!!appliedAt}
+                >
+                  {appliedAt ? (
+                    <>
+                      <CheckIcon size={12} /> Applied on:{' '}
+                      {new Date(appliedAt).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                      })}
+                    </>
+                  ) : (
+                    <>
+                      <LightningIcon size={14} /> Quick Apply
+                    </>
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  style={{ width: '100%' }}
+                  onClick={() => setSaved((s) => !s)}
+                >
+                  {saved ? (
+                    <>
+                      <CheckIcon size={12} /> Saved
+                    </>
+                  ) : (
+                    'Save Job'
+                  )}
+                </Button>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* ---- Body ---- */}
+        <div className={styles.body}>
+          {/* ---- Main Content ---- */}
+          <div className={styles.main}>
+            {/* Regulix Ready Info Banner — worker view only; shown in sidebar for company */}
+            {!isCompany && job.regulixReadyApplicants > 0 && (
+              <div
+                style={{
+                  background: 'var(--kt-olive-100)',
+                  border: '1px solid var(--kt-olive-200)',
+                  borderRadius: 'var(--kt-radius-lg)',
+                  padding: '16px 20px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 14,
+                }}
+              >
+                <RegulixBadge size="lg" pulse />
+                <div>
+                  <p
+                    style={{
+                      fontWeight: 'var(--kt-weight-semibold)',
+                      color: 'var(--kt-navy-900)',
+                      fontSize: 'var(--kt-text-sm)',
+                      marginBottom: 2,
+                    }}
+                  >
+                    {job.regulixReadyApplicants} Regulix Ready Applicants
+                  </p>
+                  <p style={{ fontSize: 'var(--kt-text-xs)', color: 'var(--kt-text-muted)' }}>
+                    These candidates have completed W-4, I-9, direct deposit setup, and drug
+                    screening — ready to start Day 1.
+                  </p>
+                </div>
+                <Link
+                  to="/site/dashboard/company"
+                  style={{ marginLeft: 'auto', textDecoration: 'none', flexShrink: 0 }}
+                >
+                  <Button variant="accent" size="sm">
+                    View Candidates
+                  </Button>
+                </Link>
               </div>
+            )}
 
-              {job.totalApplicants > 0 && (
-                <>
-                  <Divider style={{ margin: '16px 0' }} />
+            {/* Description */}
+            <div
+              className={styles.sectionCard}
+              style={{
+                background: 'var(--kt-surface)',
+                border: '1px solid var(--kt-border)',
+                borderRadius: 'var(--kt-radius-lg)',
+              }}
+            >
+              <h2
+                style={{
+                  fontSize: 'var(--kt-text-lg)',
+                  fontWeight: 'var(--kt-weight-semibold)',
+                  color: 'var(--kt-text)',
+                  marginBottom: 14,
+                }}
+              >
+                About the Role
+              </h2>
+              <p
+                style={{
+                  fontSize: 'var(--kt-text-sm)',
+                  color: 'var(--kt-text)',
+                  lineHeight: 1.7,
+                  marginBottom: 0,
+                }}
+              >
+                {job.description}
+              </p>
+            </div>
 
-                  {/* Applicant split — green wrapper card */}
+            {/* Requirements */}
+            {job.requirements.length > 0 && (
+              <div
+                className={styles.sectionCard}
+                style={{
+                  background: 'var(--kt-surface)',
+                  border: '1px solid var(--kt-border)',
+                  borderRadius: 'var(--kt-radius-lg)',
+                }}
+              >
+                <h2
+                  style={{
+                    fontSize: 'var(--kt-text-lg)',
+                    fontWeight: 'var(--kt-weight-semibold)',
+                    color: 'var(--kt-text)',
+                    marginBottom: 16,
+                  }}
+                >
+                  Requirements
+                </h2>
+                <ul
+                  style={{
+                    listStyle: 'none',
+                    padding: 0,
+                    margin: 0,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 10,
+                  }}
+                >
+                  {job.requirements.map((req, i) => (
+                    <li key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                      <span
+                        style={{
+                          width: 20,
+                          height: 20,
+                          borderRadius: '50%',
+                          background: 'var(--kt-olive-100)',
+                          color: 'var(--kt-accent)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                          marginTop: 1,
+                        }}
+                      >
+                        <CheckIcon size={14} />
+                      </span>
+                      <span
+                        style={{
+                          fontSize: 'var(--kt-text-sm)',
+                          color: 'var(--kt-text)',
+                          lineHeight: 1.5,
+                        }}
+                      >
+                        {req}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Pre-Interview Questions Preview */}
+            {questions.length > 0 && (
+              <div
+                className={styles.sectionCard}
+                style={{
+                  background: 'var(--kt-surface)',
+                  border: '1px solid var(--kt-border)',
+                  borderRadius: 'var(--kt-radius-lg)',
+                }}
+              >
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
+                    marginBottom: 16,
+                    gap: 12,
+                  }}
+                >
+                  <div>
+                    <h2
+                      style={{
+                        fontSize: 'var(--kt-text-lg)',
+                        fontWeight: 'var(--kt-weight-semibold)',
+                        color: 'var(--kt-text)',
+                        marginBottom: 4,
+                      }}
+                    >
+                      Pre-Interview Questions
+                    </h2>
+                    <p style={{ fontSize: 'var(--kt-text-xs)', color: 'var(--kt-text-muted)' }}>
+                      Answering these questions will be part of your application.
+                    </p>
+                  </div>
+                  <Badge variant="info" size="sm">
+                    {questions.length} questions
+                  </Badge>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {questions.map((q, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        display: 'flex',
+                        gap: 12,
+                        padding: '12px 14px',
+                        background: 'var(--kt-bg)',
+                        borderRadius: 'var(--kt-radius-md)',
+                        border: '1px solid var(--kt-border)',
+                      }}
+                    >
+                      <span
+                        style={{
+                          width: 22,
+                          height: 22,
+                          borderRadius: '50%',
+                          background: 'var(--kt-primary-subtle)',
+                          color: 'var(--kt-primary)',
+                          fontSize: 'var(--kt-text-xs)',
+                          fontWeight: 'var(--kt-weight-bold)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                        }}
+                      >
+                        {i + 1}
+                      </span>
+                      <span
+                        style={{
+                          fontSize: 'var(--kt-text-sm)',
+                          color: 'var(--kt-text)',
+                          lineHeight: 1.5,
+                        }}
+                      >
+                        {q}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* ---- Sidebar top ---- */}
+          <div className={styles.sidebarTop}>
+            {isCompany ? (
+              <>
+                {/* ── Company: job applicants ── */}
+                {job.totalApplicants > 0 && (
                   <div
                     style={{
-                      background: 'rgba(109, 117, 49, 0.07)',
-                      border: '1px solid var(--kt-olive-200)',
-                      borderRadius: 'var(--kt-radius-md)',
-                      padding: '12px',
+                      background: 'var(--kt-grey-50)',
+                      borderRadius: 'var(--kt-radius-lg)',
+                      padding: 20,
                     }}
                   >
                     <p
@@ -713,7 +725,6 @@ export const JobDetailPage: React.FC = () => {
                             height: 20,
                             borderRadius: '50%',
                             background: 'var(--kt-grey-100)',
-                            border: '1px solid var(--kt-border)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -783,369 +794,322 @@ export const JobDetailPage: React.FC = () => {
                       Learn more about Regulix →
                     </a>
                   </div>
-                </>
-              )}
-            </div>
-          ) : (
-            <>
-              {/* ── Worker: quick apply + save (desktop only) ── */}
-              <div className={styles.sidebarActions}>
+                )}
+              </>
+            ) : (
+              <>
+                {/* Regulix upsell */}
                 <div
                   style={{
-                    background: 'var(--kt-surface)',
-                    border: '1px solid var(--kt-border)',
+                    background: 'rgba(109, 117, 49, 0.07)',
+                    border: '1px solid var(--kt-olive-200)',
                     borderRadius: 'var(--kt-radius-lg)',
-                    padding: 20,
+                    padding: '16px 20px',
                   }}
                 >
-                  <Button
-                    variant={appliedAt ? 'secondary' : 'primary'}
-                    style={{ width: '100%', marginBottom: 8 }}
-                    onClick={() => setQuickApplyOpen(true)}
-                    disabled={!!appliedAt}
+                  <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 8 }}>
+                    <RegulixBadge size="md" />
+                    <span
+                      style={{
+                        fontSize: 'var(--kt-text-sm)',
+                        fontWeight: 'var(--kt-weight-semibold)',
+                        color: 'var(--kt-navy-900)',
+                      }}
+                    >
+                      Stand Out with Regulix
+                    </span>
+                  </div>
+                  <p
+                    style={{
+                      fontSize: 'var(--kt-text-xs)',
+                      color: 'var(--kt-text-muted)',
+                      lineHeight: 1.5,
+                      marginBottom: 10,
+                    }}
                   >
-                    {appliedAt ? (
-                      <>
-                        <CheckIcon size={12} /> Applied on:{' '}
-                        {new Date(appliedAt).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                        })}
-                      </>
-                    ) : (
-                      <>
-                        <LightningIcon size={14} /> Quick Apply
-                      </>
-                    )}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    style={{ width: '100%' }}
-                    onClick={() => setSaved((s) => !s)}
+                    Complete your Regulix profile to become hire-ready. Employers prioritize
+                    Regulix-verified candidates.
+                  </p>
+                  <button
+                    style={{
+                      width: '100%',
+                      padding: '7px 0',
+                      background: 'var(--kt-olive-700)',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: 'var(--kt-radius-md)',
+                      fontSize: 'var(--kt-text-xs)',
+                      fontWeight: 'var(--kt-weight-semibold)',
+                      cursor: 'pointer',
+                      fontFamily: 'var(--kt-font-sans)',
+                    }}
                   >
-                    {saved ? (
-                      <>
-                        <CheckIcon size={12} /> Saved
-                      </>
-                    ) : (
-                      'Save Job'
+                    Get Regulix Ready →
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* ---- Sidebar bottom ---- */}
+          <div className={styles.sidebarBottom}>
+            {/* Company Info Card */}
+            <div
+              style={{
+                background: 'var(--kt-grey-50)',
+                borderRadius: 'var(--kt-radius-lg)',
+                padding: 20,
+              }}
+            >
+              <h3
+                style={{
+                  fontSize: 'var(--kt-text-sm)',
+                  fontWeight: 'var(--kt-weight-semibold)',
+                  color: 'var(--kt-text)',
+                  marginBottom: 14,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                }}
+              >
+                About the Company
+              </h3>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+                <div
+                  style={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: 10,
+                    background: 'var(--kt-navy-900)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'var(--kt-sand-300)',
+                    fontWeight: 'var(--kt-weight-bold)',
+                    fontSize: 'var(--kt-text-lg)',
+                    flexShrink: 0,
+                  }}
+                >
+                  {job.company.name.charAt(0)}
+                </div>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <span
+                      style={{
+                        fontWeight: 'var(--kt-weight-semibold)',
+                        color: 'var(--kt-text)',
+                        fontSize: 'var(--kt-text-sm)',
+                      }}
+                    >
+                      {job.company.name}
+                    </span>
+                    {job.company.isVerified && (
+                      <VerifiedBadgeIcon size={14} color="var(--kt-accent)" />
                     )}
-                  </Button>
+                  </div>
+                  <span style={{ fontSize: 'var(--kt-text-xs)', color: 'var(--kt-text-muted)' }}>
+                    {job.company.industry}
+                  </span>
                 </div>
               </div>
 
-              {/* Regulix upsell — own card, full width on mobile */}
-              <div
+              <p
                 style={{
-                  background: 'rgba(109, 117, 49, 0.07)',
-                  border: '1px solid var(--kt-olive-200)',
-                  borderRadius: 'var(--kt-radius-lg)',
-                  padding: '16px 20px',
+                  fontSize: 'var(--kt-text-xs)',
+                  color: 'var(--kt-text-muted)',
+                  lineHeight: 1.6,
+                  marginBottom: 14,
                 }}
               >
-                <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 8 }}>
-                  <RegulixBadge size="md" />
-                  <span
+                {job.company.description}
+              </p>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 14 }}>
+                {[
+                  { icon: <MapPinIcon size={14} />, label: job.company.location },
+                  { icon: <BuildingIcon size={14} />, label: `${job.company.size} employees` },
+                  { icon: <GlobeIcon size={13} />, label: job.company.website },
+                ].map(({ icon, label }) => (
+                  <div
+                    key={label}
                     style={{
-                      fontSize: 'var(--kt-text-sm)',
-                      fontWeight: 'var(--kt-weight-semibold)',
-                      color: 'var(--kt-navy-900)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 7,
+                      color: 'var(--kt-text-muted)',
+                      fontSize: 'var(--kt-text-xs)',
                     }}
                   >
-                    Stand Out with Regulix
-                  </span>
-                </div>
-                <p
+                    {icon}
+                    <span>{label}</span>
+                  </div>
+                ))}
+              </div>
+
+              {job.company.reviewCount != null && job.company.reviewCount > 0 && (
+                <div
                   style={{
-                    fontSize: 'var(--kt-text-xs)',
-                    color: 'var(--kt-text-muted)',
-                    lineHeight: 1.5,
-                    marginBottom: 10,
+                    padding: '10px 12px',
+                    background: 'color-mix(in srgb, var(--kt-warning) 8%, transparent)',
+                    borderRadius: 'var(--kt-radius-md)',
+                    border: '1px solid color-mix(in srgb, var(--kt-warning) 20%, transparent)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
                   }}
                 >
-                  Complete your Regulix profile to become hire-ready. Employers prioritize
-                  Regulix-verified candidates.
-                </p>
+                  <div>
+                    <div style={{ display: 'flex', gap: 2, marginBottom: 2 }}>
+                      {[1, 2, 3, 4, 5].map((i) => (
+                        <StarIcon
+                          key={i}
+                          size={11}
+                          color={
+                            i <= Math.round(job.company.avgRating ?? 0)
+                              ? 'var(--kt-rating)'
+                              : 'var(--kt-border-strong)'
+                          }
+                        />
+                      ))}
+                    </div>
+                    <span style={{ fontSize: 'var(--kt-text-xs)', color: 'var(--kt-text-muted)' }}>
+                      {job.company.reviewCount} reviews
+                    </span>
+                  </div>
+                  <Link
+                    to={`/site/company/${job.companyId}`}
+                    style={{
+                      fontSize: 'var(--kt-text-xs)',
+                      color: 'var(--kt-primary)',
+                      textDecoration: 'none',
+                      fontWeight: 'var(--kt-weight-medium)',
+                    }}
+                  >
+                    See all →
+                  </Link>
+                </div>
+              )}
+
+              <Link
+                to={`/site/company/${job.companyId}`}
+                style={{ textDecoration: 'none', display: 'block', marginTop: 12 }}
+              >
                 <button
                   style={{
                     width: '100%',
-                    padding: '7px 0',
-                    background: 'var(--kt-olive-700)',
-                    color: 'white',
+                    padding: '8px 0',
+                    background: 'var(--kt-grey-100)',
                     border: 'none',
                     borderRadius: 'var(--kt-radius-md)',
                     fontSize: 'var(--kt-text-xs)',
-                    fontWeight: 'var(--kt-weight-semibold)',
+                    color: 'var(--kt-text-muted)',
                     cursor: 'pointer',
                     fontFamily: 'var(--kt-font-sans)',
-                  }}
-                >
-                  Get Regulix Ready →
-                </button>
-              </div>
-            </>
-          )}
-
-          {/* Company Info Card */}
-          <div
-            style={{
-              background: 'var(--kt-surface)',
-              border: '1px solid var(--kt-border)',
-              borderRadius: 'var(--kt-radius-lg)',
-              padding: 20,
-            }}
-          >
-            <h3
-              style={{
-                fontSize: 'var(--kt-text-sm)',
-                fontWeight: 'var(--kt-weight-semibold)',
-                color: 'var(--kt-text)',
-                marginBottom: 14,
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px',
-              }}
-            >
-              About the Company
-            </h3>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
-              <div
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 10,
-                  background: 'var(--kt-navy-900)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'var(--kt-sand-300)',
-                  fontWeight: 'var(--kt-weight-bold)',
-                  fontSize: 'var(--kt-text-lg)',
-                  flexShrink: 0,
-                }}
-              >
-                {job.company.name.charAt(0)}
-              </div>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                  <span
-                    style={{
-                      fontWeight: 'var(--kt-weight-semibold)',
-                      color: 'var(--kt-text)',
-                      fontSize: 'var(--kt-text-sm)',
-                    }}
-                  >
-                    {job.company.name}
-                  </span>
-                  {job.company.isVerified && (
-                    <VerifiedBadgeIcon size={14} color="var(--kt-accent)" />
-                  )}
-                </div>
-                <span style={{ fontSize: 'var(--kt-text-xs)', color: 'var(--kt-text-muted)' }}>
-                  {job.company.industry}
-                </span>
-              </div>
-            </div>
-
-            <p
-              style={{
-                fontSize: 'var(--kt-text-xs)',
-                color: 'var(--kt-text-muted)',
-                lineHeight: 1.6,
-                marginBottom: 14,
-              }}
-            >
-              {job.company.description}
-            </p>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 14 }}>
-              {[
-                { icon: <MapPinIcon size={14} />, label: job.company.location },
-                { icon: <BuildingIcon size={14} />, label: `${job.company.size} employees` },
-                { icon: <GlobeIcon size={13} />, label: job.company.website },
-              ].map(({ icon, label }) => (
-                <div
-                  key={label}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 7,
-                    color: 'var(--kt-text-muted)',
-                    fontSize: 'var(--kt-text-xs)',
-                  }}
-                >
-                  {icon}
-                  <span>{label}</span>
-                </div>
-              ))}
-            </div>
-
-            {job.company.reviewCount != null && job.company.reviewCount > 0 && (
-              <div
-                style={{
-                  padding: '10px 12px',
-                  background: 'color-mix(in srgb, var(--kt-warning) 8%, transparent)',
-                  borderRadius: 'var(--kt-radius-md)',
-                  border: '1px solid color-mix(in srgb, var(--kt-warning) 20%, transparent)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                }}
-              >
-                <div>
-                  <div style={{ display: 'flex', gap: 2, marginBottom: 2 }}>
-                    {[1, 2, 3, 4, 5].map((i) => (
-                      <StarIcon
-                        key={i}
-                        size={11}
-                        color={
-                          i <= Math.round(job.company.avgRating ?? 0)
-                            ? 'var(--kt-rating)'
-                            : 'var(--kt-border-strong)'
-                        }
-                      />
-                    ))}
-                  </div>
-                  <span style={{ fontSize: 'var(--kt-text-xs)', color: 'var(--kt-text-muted)' }}>
-                    {job.company.reviewCount} reviews
-                  </span>
-                </div>
-                <Link
-                  to={`/site/company/${job.companyId}`}
-                  style={{
-                    fontSize: 'var(--kt-text-xs)',
-                    color: 'var(--kt-primary)',
-                    textDecoration: 'none',
                     fontWeight: 'var(--kt-weight-medium)',
                   }}
                 >
-                  See all →
-                </Link>
-              </div>
-            )}
+                  View Company Profile →
+                </button>
+              </Link>
+            </div>
 
-            <Link
-              to={`/site/company/${job.companyId}`}
-              style={{ textDecoration: 'none', display: 'block', marginTop: 12 }}
-            >
-              <button
-                style={{
-                  width: '100%',
-                  padding: '8px 0',
-                  background: 'transparent',
-                  border: '1px solid var(--kt-border)',
-                  borderRadius: 'var(--kt-radius-md)',
-                  fontSize: 'var(--kt-text-xs)',
-                  color: 'var(--kt-text-muted)',
-                  cursor: 'pointer',
-                  fontFamily: 'var(--kt-font-sans)',
-                  fontWeight: 'var(--kt-weight-medium)',
-                }}
-              >
-                View Company Profile →
-              </button>
-            </Link>
-          </div>
-
-          {/* Similar Jobs */}
-          <div
-            style={{
-              background: 'var(--kt-surface)',
-              border: '1px solid var(--kt-border)',
-              borderRadius: 'var(--kt-radius-lg)',
-              padding: 20,
-            }}
-          >
-            <h3
+            {/* Similar Jobs */}
+            <div
               style={{
-                fontSize: 'var(--kt-text-sm)',
-                fontWeight: 'var(--kt-weight-semibold)',
-                color: 'var(--kt-text)',
-                marginBottom: 14,
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px',
+                background: 'var(--kt-grey-50)',
+                borderRadius: 'var(--kt-radius-lg)',
+                padding: 20,
               }}
             >
-              Similar Jobs
-            </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {similarJobs.length === 0 ? (
-                <p style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text-muted)' }}>
-                  No similar jobs right now.
-                </p>
-              ) : (
-                similarJobs.map((j) => (
-                  <Link
-                    key={j.id}
-                    to={`/site/jobs/${j.id}`}
-                    style={{
-                      textDecoration: 'none',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 10,
-                      padding: '10px 12px',
-                      borderRadius: 'var(--kt-radius-md)',
-                      border: '1px solid var(--kt-border)',
-                      background: 'var(--kt-bg)',
-                    }}
-                  >
-                    {/* Company logo */}
-                    <div
+              <h3
+                style={{
+                  fontSize: 'var(--kt-text-sm)',
+                  fontWeight: 'var(--kt-weight-semibold)',
+                  color: 'var(--kt-text)',
+                  marginBottom: 14,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                }}
+              >
+                Similar Jobs
+              </h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {similarJobs.length === 0 ? (
+                  <p style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text-muted)' }}>
+                    No similar jobs right now.
+                  </p>
+                ) : (
+                  similarJobs.map((j) => (
+                    <Link
+                      key={j.id}
+                      to={`/site/jobs/${j.id}`}
                       style={{
-                        width: 32,
-                        height: 32,
-                        borderRadius: 'var(--kt-radius-sm)',
-                        border: '1px solid var(--kt-border)',
-                        background: 'var(--kt-surface)',
-                        flexShrink: 0,
-                        overflow: 'hidden',
+                        textDecoration: 'none',
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: 'var(--kt-text-sm)',
-                        fontWeight: 'var(--kt-weight-semibold)',
-                        color: 'var(--kt-text-muted)',
+                        gap: 10,
+                        padding: '10px 12px',
+                        borderRadius: 'var(--kt-radius-md)',
+                        background: 'var(--kt-surface)',
                       }}
                     >
-                      {j.company.logo ? (
-                        <img
-                          src={j.company.logo}
-                          alt={j.company.name}
-                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                        />
-                      ) : (
-                        j.company.name.charAt(0).toUpperCase()
-                      )}
-                    </div>
-                    <div style={{ minWidth: 0 }}>
-                      <p
+                      {/* Company logo */}
+                      <div
                         style={{
+                          width: 32,
+                          height: 32,
+                          borderRadius: 'var(--kt-radius-sm)',
+                          background: 'var(--kt-grey-100)',
+                          flexShrink: 0,
+                          overflow: 'hidden',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
                           fontSize: 'var(--kt-text-sm)',
-                          fontWeight: 'var(--kt-weight-medium)',
-                          color: 'var(--kt-text)',
-                          marginBottom: 2,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        {j.title}
-                      </p>
-                      <p
-                        style={{
-                          fontSize: 'var(--kt-text-xs)',
+                          fontWeight: 'var(--kt-weight-semibold)',
                           color: 'var(--kt-text-muted)',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
                         }}
                       >
-                        {j.company.name} · {j.location}
-                      </p>
-                    </div>
-                  </Link>
-                ))
-              )}
+                        {j.company.logo ? (
+                          <img
+                            src={j.company.logo}
+                            alt={j.company.name}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          />
+                        ) : (
+                          j.company.name.charAt(0).toUpperCase()
+                        )}
+                      </div>
+                      <div style={{ minWidth: 0 }}>
+                        <p
+                          style={{
+                            fontSize: 'var(--kt-text-sm)',
+                            fontWeight: 'var(--kt-weight-medium)',
+                            color: 'var(--kt-text)',
+                            marginBottom: 2,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {j.title}
+                        </p>
+                        <p
+                          style={{
+                            fontSize: 'var(--kt-text-xs)',
+                            color: 'var(--kt-text-muted)',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {j.company.name} · {j.location}
+                        </p>
+                      </div>
+                    </Link>
+                  ))
+                )}
+              </div>
             </div>
           </div>
         </div>

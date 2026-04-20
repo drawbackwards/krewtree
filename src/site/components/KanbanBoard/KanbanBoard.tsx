@@ -10,7 +10,7 @@ interface KanbanBoardProps {
 
 const STAGES: { id: KanbanStage; label: string }[] = [
   { id: 'new', label: 'New' },
-  { id: 'screening', label: 'Screening' },
+  { id: 'reviewed', label: 'Reviewed' },
   { id: 'interview', label: 'Interview' },
   { id: 'offer', label: 'Offer' },
   { id: 'hired', label: 'Hired' },

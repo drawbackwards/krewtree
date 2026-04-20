@@ -74,7 +74,9 @@ export type Job = {
   isSponsored: boolean
   regulixReadyApplicants: number
   totalApplicants: number
+  viewCount: number
   postedDaysAgo: number
+  createdAt: string
   status: 'active' | 'paused' | 'closed'
   experienceLevel?: string | null
   preInterviewQuestions?: string[]
@@ -251,7 +253,7 @@ export type Notification = {
 }
 
 // ---- Kanban Applicant ----
-export type KanbanStage = 'new' | 'screening' | 'interview' | 'offer' | 'hired' | 'rejected'
+export type KanbanStage = 'new' | 'reviewed' | 'interview' | 'offer' | 'hired' | 'rejected'
 
 export type KanbanApplicant = {
   id: string
@@ -265,6 +267,38 @@ export type KanbanApplicant = {
   stage: KanbanStage
   appliedDaysAgo: number
   notes: string
+}
+
+// ---- Company Applicant (for cross-job pipeline views) ----
+// Richer applicant record used by the company dashboard widget and the
+// /site/dashboard/applicants page. Extends the kanban shape with fields the
+// pipeline views need: avatar, full name, match score, shortlist state, etc.
+export type CompanyApplicant = {
+  id: string // application id
+  workerId: string
+  workerFirstName: string
+  workerLastInitial: string // single character
+  workerFullName: string
+  workerAvatar: string // url or empty string (falls back to initials)
+  workerInitials: string
+  workerPrimaryTrade: string
+  workerLocation: string
+  workerAvailability: 'available' | 'limited' | 'unavailable'
+  workerTopSkills: string[] // max 5
+  workerCertifications: Array<{ name: string; issuer: string; expiresOn: string | null }>
+  workerJobHistory: Array<{ employer: string; title: string; duration: string }>
+  workerRating: number | null
+  workerRatingCount: number
+  jobId: string
+  jobTitle: string
+  jobStatus: Job['status']
+  stage: KanbanStage
+  matchScore: number // 0–100
+  matchBreakdown: { skills: number; location: number; availability: number }
+  isRegulixReady: boolean
+  isShortlisted: boolean
+  appliedAt: string // ISO
+  notes: string[]
 }
 
 // ---- Job Analytics ----

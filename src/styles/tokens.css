@@ -44,6 +44,22 @@
   --kt-olive-100: #f1f6da;
   --kt-olive-50: #f8fbee;
 
+  /* Teal — used for Reviewed pipeline stage */
+  --kt-teal-900: #063a3b;
+  --kt-teal-700: #0f5e60;
+  --kt-teal-500: #13888a;
+  --kt-teal-300: #7cc7c8;
+  --kt-teal-100: #d5ecec;
+  --kt-teal-50: #ecf7f7;
+
+  /* Violet — used for Interview pipeline stage */
+  --kt-violet-900: #2f1a56;
+  --kt-violet-700: #553d91;
+  --kt-violet-500: #7a5ac2;
+  --kt-violet-300: #b6a3df;
+  --kt-violet-100: #e7defa;
+  --kt-violet-50: #f3edfc;
+
   --kt-grey-900: #111218;
   --kt-grey-800: #1f2028;
   --kt-grey-700: #3d3e4a;
@@ -107,6 +123,12 @@
   --kt-info: var(--kt-navy-500);
   --kt-info-subtle: var(--kt-navy-50);
   --kt-info-fg: #ffffff;
+
+  /* Pipeline stage palette — semantic shortcuts */
+  --kt-teal: var(--kt-teal-700);
+  --kt-teal-subtle: var(--kt-teal-50);
+  --kt-violet: var(--kt-violet-700);
+  --kt-violet-subtle: var(--kt-violet-50);
 
   /* --- Spacing --- */
   --kt-space-1: 4px;
@@ -228,6 +250,11 @@
   --kt-danger-subtle: rgba(224, 82, 82, 0.12);
   --kt-info: var(--kt-navy-300);
   --kt-info-subtle: rgba(77, 160, 189, 0.12);
+
+  --kt-teal: var(--kt-teal-300);
+  --kt-teal-subtle: rgba(124, 199, 200, 0.14);
+  --kt-violet: var(--kt-violet-300);
+  --kt-violet-subtle: rgba(182, 163, 223, 0.14);
 
   --kt-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
   --kt-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);

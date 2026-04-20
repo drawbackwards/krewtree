@@ -74,13 +74,13 @@
 }
 
 .secondary {
-  background-color: var(--kt-secondary);
+  background-color: var(--kt-white);
   color: var(--kt-secondary-fg);
-  border-color: var(--kt-secondary);
+  border-color: var(--kt-border);
 }
 .secondary:hover:not(:disabled) {
-  background-color: var(--kt-secondary-hover);
-  border-color: var(--kt-secondary-hover);
+  background-color: var(--kt-grey-50);
+  border-color: var(--kt-border-strong);
   box-shadow: var(--kt-shadow-sm);
 }
 
@@ -144,10 +144,22 @@
 }
 
 /* ---- Icon only ---- */
-.iconOnly.sm  { width: 32px; padding: 0; }
-.iconOnly.md  { width: 40px; padding: 0; }
-.iconOnly.lg  { width: 48px; padding: 0; }
-.iconOnly.xl  { width: 56px; padding: 0; }
+.iconOnly.sm {
+  width: 32px;
+  padding: 0;
+}
+.iconOnly.md {
+  width: 40px;
+  padding: 0;
+}
+.iconOnly.lg {
+  width: 48px;
+  padding: 0;
+}
+.iconOnly.xl {
+  width: 56px;
+  padding: 0;
+}
 
 /* ---- Loading ---- */
 .loading {
@@ -165,5 +177,7 @@
 }
 
 @keyframes btn-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
