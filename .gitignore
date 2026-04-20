@@ -13,6 +13,10 @@ dist/
 # Claude Code — local permissions cache (machine-specific, not for version control)
 .claude/settings.local.json
 
+# Superpowers — isolated worktrees and brainstorm/scratch state
+.worktrees/
+.superpowers/
+
 # Playwright
 /test-results/
 /playwright-report/
