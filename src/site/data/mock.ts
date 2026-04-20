@@ -27,6 +27,10 @@ export type {
   KanbanStage,
   KanbanApplicant,
   JobAnalytics,
+  RegulixStatus,
+  RegulixEndorsement,
+  VerifiedWorkHistoryEntry,
+  PastHire,
 } from '../types'
 
 import type {
@@ -49,6 +53,10 @@ import type {
   Notification,
   KanbanApplicant,
   JobAnalytics,
+  RegulixStatus,
+  RegulixEndorsement,
+  VerifiedWorkHistoryEntry,
+  PastHire,
 } from '../types'
 
 // ---- Industries ----
@@ -1688,5 +1696,137 @@ export const jobAnalytics: JobAnalytics[] = [
     applicationsByDay: [4, 5, 5, 4, 5, 4, 4],
     conversionRate: 8.0,
     avgTimeToApplyHours: 1.5,
+  },
+]
+
+// ============================================================
+// REGULIX FIXTURES (v1 mock data for regulixService)
+// Replace with real Regulix API reads when available.
+// ============================================================
+
+// Worker-id → Regulix status. Missing keys mean the worker is NOT on Regulix.
+export const regulixStatuses: Record<string, RegulixStatus> = {
+  w1: { ready: true, onboarded: true, immediateHire: true },
+  w2: { ready: true, onboarded: true, immediateHire: false },
+  w3: { ready: true, onboarded: false, immediateHire: true },
+  w4: { ready: false, onboarded: false, immediateHire: false },
+  w5: { ready: true, onboarded: false, immediateHire: false },
+}
+
+// Workers whose id appears as a key in regulixStatuses have a Regulix account.
+// Separate lookup because the check is used frequently in the invite flow.
+export const regulixAccountMap: Record<string, boolean> = {
+  w1: true,
+  w2: true,
+  w3: true,
+  w4: false, // on krewtree but not Regulix yet
+  w5: true,
+  w6: false,
+  w7: false,
+}
+
+export const regulixEndorsements: RegulixEndorsement[] = [
+  {
+    id: 'end-1',
+    workerId: 'w1',
+    fromCompanyId: 'c2',
+    fromCompanyName: 'Desert Sun Construction',
+    role: 'Lead Carpenter',
+    rating: 5,
+    quote: 'Shows up early, leads the crew well, zero safety incidents.',
+    date: '2025-11-20',
+  },
+  {
+    id: 'end-2',
+    workerId: 'w1',
+    fromCompanyId: 'c3',
+    fromCompanyName: 'Pinnacle Builds',
+    role: 'Framing Carpenter',
+    rating: 5,
+    quote: 'Excellent blueprint reading. Would rehire.',
+    date: '2024-02-10',
+  },
+  {
+    id: 'end-3',
+    workerId: 'w2',
+    fromCompanyId: 'c4',
+    fromCompanyName: 'SunState Health',
+    role: 'CNA',
+    rating: 5,
+    quote: 'Patients ask for her by name. Dependable and kind.',
+    date: '2025-08-05',
+  },
+  {
+    id: 'end-4',
+    workerId: 'w3',
+    fromCompanyId: 'c5',
+    fromCompanyName: 'Swift Transport',
+    role: 'Regional Driver',
+    rating: 4,
+    quote: 'Clean DOT record, on-time deliveries.',
+    date: '2025-09-14',
+  },
+]
+
+export const regulixWorkHistory: VerifiedWorkHistoryEntry[] = [
+  {
+    id: 'wh-1',
+    workerId: 'w1',
+    companyName: 'Desert Sun Construction',
+    role: 'Lead Carpenter',
+    startDate: '2021-03-01',
+    endDate: null,
+    verified: true,
+  },
+  {
+    id: 'wh-2',
+    workerId: 'w1',
+    companyName: 'Pinnacle Builds',
+    role: 'Framing Carpenter',
+    startDate: '2018-06-01',
+    endDate: '2021-02-28',
+    verified: true,
+  },
+  {
+    id: 'wh-3',
+    workerId: 'w2',
+    companyName: 'SunState Health',
+    role: 'CNA',
+    startDate: '2020-01-01',
+    endDate: null,
+    verified: true,
+  },
+  {
+    id: 'wh-4',
+    workerId: 'w3',
+    companyName: 'Swift Transport',
+    role: 'Regional Driver',
+    startDate: '2022-01-01',
+    endDate: null,
+    verified: true,
+  },
+]
+
+export const regulixPastHires: PastHire[] = [
+  {
+    workerId: 'w1',
+    companyId: 'c1',
+    lastHiredAt: '2026-01-15',
+    jobTitle: 'Framing Carpenter',
+    rehireable: true,
+  },
+  {
+    workerId: 'w3',
+    companyId: 'c1',
+    lastHiredAt: '2025-11-02',
+    jobTitle: 'CDL-A Driver',
+    rehireable: true,
+  },
+  {
+    workerId: 'w5',
+    companyId: 'c1',
+    lastHiredAt: '2025-09-10',
+    jobTitle: 'Landscape Crew Leader',
+    rehireable: false,
   },
 ]
