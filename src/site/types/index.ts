@@ -277,3 +277,63 @@ export type JobAnalytics = {
   conversionRate: number
   avgTimeToApplyHours: number
 }
+
+// ============================================================
+// REGULIX INTEGRATION TYPES
+// Mirror the v1 regulixService interface (see docs/superpowers/specs
+// 2026-04-20-company-dashboard-design.md §3.7). Shapes are frozen now
+// so mock and real implementations stay swap-compatible.
+// ============================================================
+
+export type RegulixStatus = {
+  ready: boolean
+  onboarded: boolean
+  immediateHire: boolean
+}
+
+export type RegulixEndorsement = {
+  id: string
+  workerId: string
+  fromCompanyId: string
+  fromCompanyName: string
+  role: string
+  rating: number // 1-5
+  quote: string
+  date: string // ISO
+}
+
+export type VerifiedWorkHistoryEntry = {
+  id: string
+  workerId: string
+  companyName: string // may be anonymized as "Construction Co." if Regulix policy hides it
+  role: string
+  startDate: string // ISO
+  endDate: string | null // null if current
+  verified: true
+}
+
+export type PastHire = {
+  workerId: string
+  companyId: string
+  lastHiredAt: string // ISO
+  jobTitle: string
+  rehireable: boolean
+}
+
+export type HireHandoffParams = {
+  companyId: string
+  workerId: string
+  jobId: string
+  hireDate: string // ISO
+  payRate: number
+}
+
+export type HireHandoffResult = {
+  regulixHireId: string
+}
+
+export type RegulixInviteParams = {
+  companyId: string
+  workerId: string
+  jobId: string
+}
