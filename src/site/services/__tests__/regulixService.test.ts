@@ -7,6 +7,7 @@ import {
   hasRegulixAccount,
   submitHireHandoff,
   linkCompanyAccount,
+  inviteWorker,
 } from '../regulixService'
 
 describe('getRegulixStatus', () => {
@@ -135,5 +136,27 @@ describe('linkCompanyAccount', () => {
   it('returns an error when regulixCompanyId is empty', async () => {
     const { error } = await linkCompanyAccount('c1', '')
     expect(error).toBe('regulixCompanyId is required')
+  })
+})
+
+describe('inviteWorker', () => {
+  it('returns success when the worker has a Regulix account', async () => {
+    const { error } = await inviteWorker({
+      companyId: 'c1',
+      workerId: 'w1',
+      jobId: 'j1',
+    })
+    expect(error).toBeNull()
+  })
+
+  it('returns an error when the worker is not on Regulix', async () => {
+    // Callers should route krewtree-only workers through a different channel;
+    // this Regulix-side function refuses them explicitly.
+    const { error } = await inviteWorker({
+      companyId: 'c1',
+      workerId: 'w4', // in regulixAccountMap as false
+      jobId: 'j1',
+    })
+    expect(error).toBe('worker has no Regulix account')
   })
 })

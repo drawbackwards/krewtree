@@ -18,6 +18,7 @@ import type {
   PastHire,
   HireHandoffParams,
   HireHandoffResult,
+  RegulixInviteParams,
 } from '@site/types'
 import {
   regulixStatuses,
@@ -91,5 +92,16 @@ export async function linkCompanyAccount(
   if (!companyId) return { error: 'companyId is required' }
   if (!regulixCompanyId) return { error: 'regulixCompanyId is required' }
   // v1 no-op. v2 will persist the link in Supabase and notify Regulix.
+  return { error: null }
+}
+
+export async function inviteWorker(params: RegulixInviteParams): Promise<{ error: string | null }> {
+  // This is the Regulix-side channel of the dual-channel invite flow
+  // described in spec §3.5. The caller must check hasRegulixAccount first
+  // and fall back to the krewtree email channel for non-Regulix workers.
+  // Regulix-side function refuses non-Regulix workers explicitly.
+  if (regulixAccountMap[params.workerId] !== true) {
+    return { error: 'worker has no Regulix account' }
+  }
   return { error: null }
 }
