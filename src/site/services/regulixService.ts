@@ -76,32 +76,33 @@ export async function hasRegulixAccount(
 // ── Writes ─────────────────────────────────────────────────────────────────
 
 export async function submitHireHandoff(
-  params: HireHandoffParams
+  _params: HireHandoffParams
 ): Promise<{ data: HireHandoffResult | null; error: string | null }> {
   // v1 just returns a synthetic id. v2 will POST to Regulix and return the
-  // real hire id from the response.
+  // real hire id from the response. Param prefixed with _ to signal unused in v1.
   const regulixHireId = `mock-hire-${Date.now()}-${Math.floor(Math.random() * 1000)}`
-  void params // keep param reference so linters don't flag it; real impl will use it
   return { data: { regulixHireId }, error: null }
 }
 
 export async function linkCompanyAccount(
   companyId: string,
   regulixCompanyId: string
-): Promise<{ error: string | null }> {
-  if (!companyId) return { error: 'companyId is required' }
-  if (!regulixCompanyId) return { error: 'regulixCompanyId is required' }
+): Promise<{ data: null; error: string | null }> {
+  if (!companyId) return { data: null, error: 'companyId is required' }
+  if (!regulixCompanyId) return { data: null, error: 'regulixCompanyId is required' }
   // v1 no-op. v2 will persist the link in Supabase and notify Regulix.
-  return { error: null }
+  return { data: null, error: null }
 }
 
-export async function inviteWorker(params: RegulixInviteParams): Promise<{ error: string | null }> {
+export async function inviteWorker(
+  params: RegulixInviteParams
+): Promise<{ data: null; error: string | null }> {
   // This is the Regulix-side channel of the dual-channel invite flow
   // described in spec §3.5. The caller must check hasRegulixAccount first
   // and fall back to the krewtree email channel for non-Regulix workers.
   // Regulix-side function refuses non-Regulix workers explicitly.
   if (regulixAccountMap[params.workerId] !== true) {
-    return { error: 'worker has no Regulix account' }
+    return { data: null, error: 'worker has no Regulix account' }
   }
-  return { error: null }
+  return { data: null, error: null }
 }
