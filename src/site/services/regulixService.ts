@@ -19,6 +19,7 @@ import type {
 } from '@site/types'
 import {
   regulixStatuses,
+  regulixAccountMap,
   regulixEndorsements,
   regulixWorkHistory,
   regulixPastHires,
@@ -61,4 +62,10 @@ export async function getPastHires(
 ): Promise<{ data: PastHire[]; error: string | null }> {
   const data = regulixPastHires.filter((p) => p.companyId === companyId)
   return { data, error: null }
+}
+
+export async function hasRegulixAccount(
+  workerId: string
+): Promise<{ data: boolean; error: string | null }> {
+  return { data: regulixAccountMap[workerId] === true, error: null }
 }

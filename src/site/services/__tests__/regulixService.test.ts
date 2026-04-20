@@ -4,6 +4,7 @@ import {
   getEndorsements,
   getVerifiedWorkHistory,
   getPastHires,
+  hasRegulixAccount,
 } from '../regulixService'
 
 describe('getRegulixStatus', () => {
@@ -68,5 +69,25 @@ describe('getPastHires', () => {
     const { data, error } = await getPastHires('c-unknown')
     expect(error).toBeNull()
     expect(data).toEqual([])
+  })
+})
+
+describe('hasRegulixAccount', () => {
+  it('returns true for a worker on Regulix', async () => {
+    const { data, error } = await hasRegulixAccount('w1')
+    expect(error).toBeNull()
+    expect(data).toBe(true)
+  })
+
+  it('returns false for a krewtree-only worker', async () => {
+    const { data, error } = await hasRegulixAccount('w4')
+    expect(error).toBeNull()
+    expect(data).toBe(false)
+  })
+
+  it('returns false for an unknown worker', async () => {
+    const { data, error } = await hasRegulixAccount('w99')
+    expect(error).toBeNull()
+    expect(data).toBe(false)
   })
 })
