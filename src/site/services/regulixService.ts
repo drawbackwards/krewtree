@@ -11,8 +11,8 @@
 // outside krewtree's scope (see spec §1.2).
 // ============================================================
 
-import type { RegulixStatus } from '@site/types'
-import { regulixStatuses } from '@site/data/mock'
+import type { RegulixStatus, RegulixEndorsement } from '@site/types'
+import { regulixStatuses, regulixEndorsements } from '@site/data/mock'
 
 // ── Reads ──────────────────────────────────────────────────────────────────
 
@@ -21,4 +21,11 @@ export async function getRegulixStatus(
 ): Promise<{ data: RegulixStatus | null; error: string | null }> {
   const status = regulixStatuses[workerId] ?? null
   return { data: status, error: null }
+}
+
+export async function getEndorsements(
+  workerId: string
+): Promise<{ data: RegulixEndorsement[]; error: string | null }> {
+  const data = regulixEndorsements.filter((e) => e.workerId === workerId)
+  return { data, error: null }
 }
