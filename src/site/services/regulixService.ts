@@ -11,8 +11,8 @@
 // outside krewtree's scope (see spec §1.2).
 // ============================================================
 
-import type { RegulixStatus, RegulixEndorsement } from '@site/types'
-import { regulixStatuses, regulixEndorsements } from '@site/data/mock'
+import type { RegulixStatus, RegulixEndorsement, VerifiedWorkHistoryEntry } from '@site/types'
+import { regulixStatuses, regulixEndorsements, regulixWorkHistory } from '@site/data/mock'
 
 // ── Reads ──────────────────────────────────────────────────────────────────
 
@@ -28,4 +28,20 @@ export async function getEndorsements(
 ): Promise<{ data: RegulixEndorsement[]; error: string | null }> {
   const data = regulixEndorsements.filter((e) => e.workerId === workerId)
   return { data, error: null }
+}
+
+export async function getVerifiedWorkHistory(
+  workerId: string
+): Promise<{ data: VerifiedWorkHistoryEntry[]; error: string | null }> {
+  const entries = regulixWorkHistory
+    .filter((e) => e.workerId === workerId)
+    .slice()
+    .sort((a, b) => {
+      // null endDate (current job) sorts first; otherwise newest endDate first
+      if (a.endDate === null && b.endDate !== null) return -1
+      if (b.endDate === null && a.endDate !== null) return 1
+      if (a.endDate === null && b.endDate === null) return 0
+      return (b.endDate as string).localeCompare(a.endDate as string)
+    })
+  return { data: entries, error: null }
 }
