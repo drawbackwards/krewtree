@@ -5,6 +5,7 @@ import {
   getVerifiedWorkHistory,
   getPastHires,
   hasRegulixAccount,
+  submitHireHandoff,
 } from '../regulixService'
 
 describe('getRegulixStatus', () => {
@@ -89,5 +90,32 @@ describe('hasRegulixAccount', () => {
     const { data, error } = await hasRegulixAccount('w99')
     expect(error).toBeNull()
     expect(data).toBe(false)
+  })
+})
+
+describe('submitHireHandoff', () => {
+  it('returns a generated regulixHireId on success', async () => {
+    const { data, error } = await submitHireHandoff({
+      companyId: 'c1',
+      workerId: 'w1',
+      jobId: 'j1',
+      hireDate: '2026-04-21',
+      payRate: 32,
+    })
+    expect(error).toBeNull()
+    expect(data?.regulixHireId).toMatch(/^mock-hire-/)
+  })
+
+  it('generates a unique id per call', async () => {
+    const params = {
+      companyId: 'c1',
+      workerId: 'w1',
+      jobId: 'j1',
+      hireDate: '2026-04-21',
+      payRate: 32,
+    }
+    const a = await submitHireHandoff(params)
+    const b = await submitHireHandoff(params)
+    expect(a.data?.regulixHireId).not.toBe(b.data?.regulixHireId)
   })
 })

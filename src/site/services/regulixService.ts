@@ -16,6 +16,8 @@ import type {
   RegulixEndorsement,
   VerifiedWorkHistoryEntry,
   PastHire,
+  HireHandoffParams,
+  HireHandoffResult,
 } from '@site/types'
 import {
   regulixStatuses,
@@ -68,4 +70,16 @@ export async function hasRegulixAccount(
   workerId: string
 ): Promise<{ data: boolean; error: string | null }> {
   return { data: regulixAccountMap[workerId] === true, error: null }
+}
+
+// ── Writes ─────────────────────────────────────────────────────────────────
+
+export async function submitHireHandoff(
+  params: HireHandoffParams
+): Promise<{ data: HireHandoffResult | null; error: string | null }> {
+  // v1 just returns a synthetic id. v2 will POST to Regulix and return the
+  // real hire id from the response.
+  const regulixHireId = `mock-hire-${Date.now()}-${Math.floor(Math.random() * 1000)}`
+  void params // keep param reference so linters don't flag it; real impl will use it
+  return { data: { regulixHireId }, error: null }
 }
