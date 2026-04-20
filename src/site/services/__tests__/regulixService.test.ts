@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import { getRegulixStatus, getEndorsements, getVerifiedWorkHistory } from '../regulixService'
+import {
+  getRegulixStatus,
+  getEndorsements,
+  getVerifiedWorkHistory,
+  getPastHires,
+} from '../regulixService'
 
 describe('getRegulixStatus', () => {
   it('returns the status for a worker with a Regulix account', async () => {
@@ -46,6 +51,21 @@ describe('getVerifiedWorkHistory', () => {
 
   it('returns empty for a worker with no verified history', async () => {
     const { data, error } = await getVerifiedWorkHistory('w99')
+    expect(error).toBeNull()
+    expect(data).toEqual([])
+  })
+})
+
+describe('getPastHires', () => {
+  it('returns past hires for a company', async () => {
+    const { data, error } = await getPastHires('c1')
+    expect(error).toBeNull()
+    expect(data.length).toBeGreaterThan(0)
+    expect(data.every((p) => p.companyId === 'c1')).toBe(true)
+  })
+
+  it('returns empty for a company with no past hires', async () => {
+    const { data, error } = await getPastHires('c-unknown')
     expect(error).toBeNull()
     expect(data).toEqual([])
   })
