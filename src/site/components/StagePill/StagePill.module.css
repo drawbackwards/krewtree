@@ -1,0 +1,53 @@
+.pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--kt-radius-full);
+  font-family: var(--kt-font-sans);
+  font-weight: var(--kt-weight-semibold);
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.md {
+  font-size: 11px;
+  padding: 3px 10px;
+  height: 20px;
+}
+
+.sm {
+  font-size: 10px;
+  padding: 2px 8px;
+  height: 18px;
+}
+
+.new {
+  background: var(--kt-info-subtle);
+  color: var(--kt-info);
+}
+
+.reviewed {
+  background: var(--kt-teal-subtle);
+  color: var(--kt-teal);
+}
+
+.interview {
+  background: var(--kt-violet-subtle);
+  color: var(--kt-violet);
+}
+
+.offer {
+  background: var(--kt-warning-subtle);
+  color: var(--kt-warning);
+}
+
+.hired {
+  background: var(--kt-success-subtle);
+  color: var(--kt-success);
+}
+
+.rejected {
+  background: var(--kt-secondary);
+  color: var(--kt-text-muted);
+}

@@ -1,0 +1,254 @@
+.widget {
+  background: var(--kt-surface);
+  border: 1px solid var(--kt-border);
+  border-radius: var(--kt-radius-lg);
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--kt-border);
+}
+
+.titleWrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.title {
+  font-size: var(--kt-text-md);
+  font-weight: var(--kt-weight-semibold);
+  color: var(--kt-text);
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.newBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: var(--kt-radius-full);
+  font-size: 11px;
+  font-weight: var(--kt-weight-semibold);
+  background: var(--kt-info);
+  color: var(--kt-info-fg);
+  white-space: nowrap;
+}
+
+.viewAll {
+  font-size: var(--kt-text-sm);
+  color: var(--kt-primary);
+  text-decoration: none;
+  font-weight: var(--kt-weight-medium);
+}
+
+.viewAll:hover {
+  text-decoration: underline;
+}
+
+.empty {
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--kt-text-muted);
+}
+
+.empty p {
+  font-size: var(--kt-text-sm);
+  margin: 0;
+}
+
+.table {
+  display: flex;
+  flex-direction: column;
+}
+
+.row {
+  display: grid;
+  /* Applicant | Job title | Stage | Match | Regulix | Applied | Actions */
+  grid-template-columns: 26% 120px 88px 52px 56px 64px minmax(150px, 1fr);
+  align-items: center;
+  padding: 10px 24px;
+  border-bottom: 1px solid var(--kt-border);
+  column-gap: 10px;
+  min-height: 44px;
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.headerRow {
+  /* Match the Active Jobs header: padding 8px 0 inside a 24px-padded gutter */
+  padding-top: 8px;
+  padding-bottom: 8px;
+  min-height: 0;
+  background: var(--kt-grey-100);
+  font-size: 11px;
+  font-weight: var(--kt-weight-semibold);
+  color: var(--kt-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.alignRight {
+  text-align: right;
+  justify-self: end;
+}
+
+.alignCenter {
+  text-align: center;
+  justify-self: center;
+}
+
+.applicantCell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--kt-navy-800);
+  color: var(--kt-sand-300);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: var(--kt-weight-bold);
+  flex-shrink: 0;
+}
+
+.applicantName {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: var(--kt-font-sans);
+  font-size: 14px;
+  font-weight: var(--kt-weight-medium);
+  color: var(--kt-navy-500);
+  cursor: pointer;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.applicantName:hover {
+  text-decoration: underline;
+}
+
+.jobCell {
+  min-width: 0;
+}
+
+.jobLink {
+  font-size: 14px;
+  color: var(--kt-text-muted);
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: block;
+}
+
+.jobLink:hover {
+  color: var(--kt-text);
+  text-decoration: underline;
+}
+
+.matchCell {
+  font-size: 14px;
+  font-weight: var(--kt-weight-semibold);
+  color: var(--kt-text);
+}
+
+.dateCell {
+  font-size: 13px;
+  color: var(--kt-text-muted);
+}
+
+.actionsCell {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.primaryAction {
+  height: 27px;
+  padding: 0 10px;
+  border: 0.5px solid var(--kt-border);
+  border-radius: var(--kt-radius-md);
+  background: transparent;
+  cursor: pointer;
+  font-size: 11px;
+  font-family: var(--kt-font-sans);
+  font-weight: var(--kt-weight-medium);
+  color: var(--kt-text);
+  white-space: nowrap;
+}
+
+.primaryAction:hover {
+  background: var(--kt-secondary);
+}
+
+.overflowBtn {
+  width: 27px;
+  height: 27px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: var(--kt-radius-md);
+  background: transparent;
+  color: var(--kt-text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.overflowBtn:hover {
+  background: var(--kt-secondary);
+}
+
+.overflowMenu {
+  position: fixed;
+  background: var(--kt-surface);
+  border: 0.5px solid var(--kt-border);
+  border-radius: var(--kt-radius-md);
+  box-shadow: var(--kt-shadow-sm);
+  min-width: 160px;
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.overflowItem {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px 14px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  font-family: var(--kt-font-sans);
+  color: var(--kt-text);
+  font-weight: var(--kt-weight-medium);
+}
+
+.overflowItem:hover {
+  background: var(--kt-secondary);
+}
+
+.overflowItem.danger {
+  color: var(--kt-danger);
+}
