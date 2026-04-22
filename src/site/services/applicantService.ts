@@ -303,21 +303,25 @@ export async function getAllApplicants(
 export async function getJobFilterOptions(
   companyId: string
 ): Promise<{ data: Array<{ id: string; title: string }>; error: string | null }> {
+  // TODO: fetches one row per application to produce N distinct jobs — wasteful
+  // for companies with 1000s of applications. Move to an RPC or view
+  // (SELECT DISTINCT j.id, j.title FROM jobs j JOIN applications a ...) post-MVP.
   const { data, error } = await supabase
     .from('applications')
-    .select('jobs!inner(id, title, company_id)')
+    .select('jobs!inner(id, title)')
     .eq('jobs.company_id', companyId)
 
   if (error) return { data: [], error: error.message }
 
+  type JobFilterRow = { jobs: Pick<JobRow, 'id' | 'title'> }
   const seen = new Map<string, string>()
   for (const row of data ?? []) {
-    const job = (row as unknown as { jobs: { id: string; title: string } }).jobs
+    const job = (row as unknown as JobFilterRow).jobs
     if (job && !seen.has(job.id)) seen.set(job.id, job.title)
   }
   return {
     data: Array.from(seen, ([id, title]) => ({ id, title })).sort((a, b) =>
-      a.title.localeCompare(b.title)
+      a.title.localeCompare(b.title, undefined, { sensitivity: 'base' })
     ),
     error: null,
   }
