@@ -21,7 +21,7 @@ const STAGE_ORDER: KanbanStage[] = ['new', 'reviewed', 'interview', 'offer', 'hi
 // In-memory mutable store. Replaces the mock import once loaded so mutations
 // (advance/reject/shortlist/note) persist for the session. TODO: swap this
 // for a real Supabase-backed read+write layer before launch.
-let applicants: CompanyApplicant[] = initialApplicants.map((a) => ({ ...a }))
+const applicants: CompanyApplicant[] = initialApplicants.map((a) => ({ ...a }))
 
 // ── Types ─────────────────────────────────────────────────────────────────
 
@@ -100,11 +100,14 @@ function sortApplicants(
   return sorted
 }
 
-// Keep-alive: matchesFilters + sortApplicants are retained for the
-// mock-backed mutation helpers below until Tasks 9–11 replace them.
-// Once mutations are DB-backed these helpers (and this reference) go away.
+// Keep-alive: matchesFilters + sortApplicants + the `applicants` mutable
+// array are retained until Task 13 removes the mock-data plumbing entirely.
+// After Tasks 9–11 wired mutations to Supabase, nothing in this file reads
+// `applicants` anymore — these references exist solely to keep the import
+// and state graph intact until Task 13.
 void matchesFilters
 void sortApplicants
+void applicants
 
 type AppRow = Database['public']['Tables']['applications']['Row']
 type WorkerRow = Database['public']['Tables']['worker_profiles']['Row']
@@ -355,87 +358,101 @@ export async function getWorkerApplicationsAtCompany(
 export async function advanceApplicantStage(
   applicationId: string
 ): Promise<{ error: string | null }> {
-  const idx = applicants.findIndex((a) => a.id === applicationId)
-  if (idx < 0) return { error: 'not_found' }
-  const current = applicants[idx].stage
-  // Spec §9: Advance only applies to active stages (new/reviewed/interview/offer).
-  const activeIdx = STAGE_ORDER.indexOf(current)
-  if (activeIdx < 0 || current === 'hired' || current === 'rejected') {
+  const { data, error } = await supabase
+    .from('applications')
+    .select('kanban_stage')
+    .eq('id', applicationId)
+    .single()
+  if (error) return { error: error.message }
+
+  const current = data.kanban_stage as KanbanStage
+  const idx = STAGE_ORDER.indexOf(current)
+  if (idx < 0 || current === 'hired' || current === 'rejected') {
     return { error: 'cannot_advance' }
   }
-  const next = STAGE_ORDER[activeIdx + 1]
+  const next = STAGE_ORDER[idx + 1]
   if (!next) return { error: 'no_next_stage' }
-  applicants[idx] = { ...applicants[idx], stage: next }
-  return { error: null }
+
+  const { error: updErr } = await supabase
+    .from('applications')
+    .update({ kanban_stage: next })
+    .eq('id', applicationId)
+  return { error: updErr?.message ?? null }
 }
 
 export async function setApplicantStage(
   applicationId: string,
   stage: KanbanStage
 ): Promise<{ error: string | null }> {
-  const idx = applicants.findIndex((a) => a.id === applicationId)
-  if (idx < 0) return { error: 'not_found' }
-  applicants[idx] = { ...applicants[idx], stage }
-  return { error: null }
+  const { error } = await supabase
+    .from('applications')
+    .update({ kanban_stage: stage })
+    .eq('id', applicationId)
+  return { error: error?.message ?? null }
 }
 
 export async function rejectApplicant(applicationId: string): Promise<{ error: string | null }> {
-  const idx = applicants.findIndex((a) => a.id === applicationId)
-  if (idx < 0) return { error: 'not_found' }
-  applicants[idx] = { ...applicants[idx], stage: 'rejected' }
-  return { error: null }
+  const { error } = await supabase
+    .from('applications')
+    .update({ kanban_stage: 'rejected' })
+    .eq('id', applicationId)
+  return { error: error?.message ?? null }
 }
 
 export async function rejectApplicants(
   applicationIds: string[]
 ): Promise<{ affected: number; error: string | null }> {
-  let affected = 0
-  applicants = applicants.map((a) => {
-    if (!applicationIds.includes(a.id)) return a
-    if (a.stage === 'rejected') return a // skip already-rejected per spec §5.6
-    affected += 1
-    return { ...a, stage: 'rejected' }
-  })
-  return { affected, error: null }
+  const { data, error } = await supabase
+    .from('applications')
+    .update({ kanban_stage: 'rejected' })
+    .in('id', applicationIds)
+    .neq('kanban_stage', 'rejected')
+    .select('id')
+  if (error) return { affected: 0, error: error.message }
+  return { affected: data?.length ?? 0, error: null }
 }
 
 export async function advanceApplicants(
   applicationIds: string[]
 ): Promise<{ affected: number; error: string | null }> {
   let affected = 0
-  applicants = applicants.map((a) => {
-    if (!applicationIds.includes(a.id)) return a
-    const activeIdx = STAGE_ORDER.indexOf(a.stage)
-    if (a.stage === 'hired' || a.stage === 'rejected' || activeIdx < 0) return a
-    const next = STAGE_ORDER[activeIdx + 1]
-    if (!next) return a
-    affected += 1
-    return { ...a, stage: next }
-  })
+  for (const id of applicationIds) {
+    const { error } = await advanceApplicantStage(id)
+    if (!error) affected += 1
+  }
   return { affected, error: null }
 }
 
 export async function shortlistApplicant(
   applicationId: string
 ): Promise<{ isShortlisted: boolean; error: string | null }> {
-  const idx = applicants.findIndex((a) => a.id === applicationId)
-  if (idx < 0) return { isShortlisted: false, error: 'not_found' }
-  const next = !applicants[idx].isShortlisted
-  applicants[idx] = { ...applicants[idx], isShortlisted: next }
+  const { data, error } = await supabase
+    .from('applications')
+    .select('is_shortlisted')
+    .eq('id', applicationId)
+    .single()
+  if (error) return { isShortlisted: false, error: error.message }
+
+  const next = !data.is_shortlisted
+  const { error: updErr } = await supabase
+    .from('applications')
+    .update({ is_shortlisted: next })
+    .eq('id', applicationId)
+  if (updErr) return { isShortlisted: data.is_shortlisted, error: updErr.message }
   return { isShortlisted: next, error: null }
 }
 
 export async function shortlistApplicants(
   applicationIds: string[]
 ): Promise<{ affected: number; error: string | null }> {
-  let affected = 0
-  applicants = applicants.map((a) => {
-    if (!applicationIds.includes(a.id)) return a
-    if (a.isShortlisted) return a
-    affected += 1
-    return { ...a, isShortlisted: true }
-  })
-  return { affected, error: null }
+  const { data, error } = await supabase
+    .from('applications')
+    .update({ is_shortlisted: true })
+    .in('id', applicationIds)
+    .eq('is_shortlisted', false)
+    .select('id')
+  if (error) return { affected: 0, error: error.message }
+  return { affected: data?.length ?? 0, error: null }
 }
 
 export async function addApplicantNote(
@@ -445,11 +462,19 @@ export async function addApplicantNote(
 ): Promise<{ error: string | null }> {
   const trimmed = note.trim()
   if (!trimmed) return { error: 'empty_note' }
-  const idx = applicants.findIndex((a) => a.id === applicationId)
-  if (idx < 0) return { error: 'not_found' }
-  const entry = { text: trimmed, authorName, createdAt: new Date().toISOString() }
-  applicants[idx] = { ...applicants[idx], notes: [...applicants[idx].notes, entry] }
-  return { error: null }
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return { error: 'not_authenticated' }
+
+  const { error } = await supabase.from('application_notes').insert({
+    application_id: applicationId,
+    author_id: user.id,
+    author_name: authorName,
+    text: trimmed,
+  })
+  return { error: error?.message ?? null }
 }
 
 // ============================================================
