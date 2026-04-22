@@ -10,6 +10,8 @@
 
 import type { CompanyApplicant, KanbanStage } from '../types'
 import { companyApplicants as initialApplicants } from '../data/mock'
+import { supabase } from '../../lib/supabase'
+import type { Database } from '../../lib/database.types'
 
 // Active pipeline stages (exclude resolved/terminal).
 const ACTIVE_STAGES: KanbanStage[] = ['new', 'reviewed', 'interview', 'offer']
@@ -98,6 +100,90 @@ function sortApplicants(
   return sorted
 }
 
+// Keep-alive: matchesFilters + sortApplicants are retained for the
+// mock-backed mutation helpers below until Tasks 9–11 replace them.
+// Once mutations are DB-backed these helpers (and this reference) go away.
+void matchesFilters
+void sortApplicants
+
+type AppRow = Database['public']['Tables']['applications']['Row']
+type WorkerRow = Database['public']['Tables']['worker_profiles']['Row']
+type JobRow = Database['public']['Tables']['jobs']['Row']
+
+type JoinedApplicantRow = AppRow & {
+  worker_profiles: Pick<
+    WorkerRow,
+    'id' | 'first_name' | 'last_name' | 'avatar_url' | 'primary_trade' | 'city' | 'region'
+  >
+  jobs: Pick<JobRow, 'id' | 'title' | 'status'>
+  application_notes: Array<{
+    text: string
+    author_name: string
+    created_at: string
+  }>
+}
+
+/**
+ * Convert a joined Supabase row into the UI-shaped CompanyApplicant.
+ * Regulix ratings are null until the Regulix service is wired.
+ * Match breakdown doubles up match_score into both skills and location slots
+ * because the DB function stores only the aggregate — the UI still renders
+ * a value in both pillars. Revisit if we split the column later.
+ */
+function toCompanyApplicant(a: JoinedApplicantRow): CompanyApplicant {
+  const w = a.worker_profiles
+  const j = a.jobs
+  const first = w.first_name ?? ''
+  const last = w.last_name ?? ''
+  const fullName = `${first} ${last}`.trim() || 'Unknown'
+  const initials = (first[0] ?? '?') + (last[0] ?? '')
+  const answers = Array.isArray(a.interview_answers)
+    ? (a.interview_answers as Array<{ question: string; answer: string }>)
+    : []
+
+  return {
+    id: a.id,
+    workerId: w.id,
+    workerFirstName: first,
+    workerLastInitial: last[0] ?? '',
+    workerFullName: fullName,
+    workerAvatar: w.avatar_url ?? '',
+    workerInitials: initials.toUpperCase(),
+    workerPrimaryTrade: w.primary_trade ?? '',
+    workerLocation: [w.city, w.region].filter(Boolean).join(', '),
+    workerAvailability: 'available',
+    workerTopSkills: [],
+    workerCertifications: [],
+    workerJobHistory: [],
+    workerRating: null,
+    workerRatingCount: 0,
+    workerRegulixRating: null,
+    workerRegulixRatingCount: 0,
+    jobId: j.id,
+    jobTitle: j.title,
+    jobStatus: j.status as CompanyApplicant['jobStatus'],
+    stage: a.kanban_stage as CompanyApplicant['stage'],
+    matchScore: a.match_score,
+    matchBreakdown: { skills: a.match_score, location: a.match_score, availability: 0 },
+    isRegulixReady: false,
+    isShortlisted: a.is_shortlisted,
+    appliedAt: a.created_at,
+    notes: a.application_notes.map((n) => ({
+      text: n.text,
+      authorName: n.author_name,
+      createdAt: n.created_at,
+    })),
+    preInterviewAnswers: answers,
+  }
+}
+
+const APPLICANT_SELECT = `
+  *,
+  worker_profiles!inner(id, first_name, last_name, avatar_url, primary_trade, city, region),
+  jobs!inner(id, title, status, company_id),
+  application_notes(text, author_name, created_at)
+`
+
 // ── Queries ───────────────────────────────────────────────────────────────
 
 /**
@@ -105,14 +191,22 @@ function sortApplicants(
  * (excludes hired and rejected). Sorted newest-applied first.
  */
 export async function getRecentApplicants(
-  _companyId: string,
+  companyId: string,
   limit = 5
 ): Promise<{ data: CompanyApplicant[]; error: string | null }> {
-  // Note: mock store is already scoped to the current company (all entries
-  // belong to c1). Real impl will filter by company_id via a jobs!inner join.
-  const active = applicants.filter((a) => ACTIVE_STAGES.includes(a.stage))
-  const sorted = sortApplicants(active, { column: 'applied', direction: 'desc' })
-  return { data: sorted.slice(0, limit), error: null }
+  const { data, error } = await supabase
+    .from('applications')
+    .select(APPLICANT_SELECT)
+    .eq('jobs.company_id', companyId)
+    .in('kanban_stage', ACTIVE_STAGES)
+    .order('created_at', { ascending: false })
+    .limit(limit)
+
+  if (error) return { data: [], error: error.message }
+  return {
+    data: (data ?? []).map((row) => toCompanyApplicant(row as unknown as JoinedApplicantRow)),
+    error: null,
+  }
 }
 
 /**
@@ -137,24 +231,50 @@ export async function countNewApplicantsSince(
  * can render "N of M" and page controls.
  */
 export async function getAllApplicants(
-  _companyId: string,
+  companyId: string,
   params: GetAllParams = {}
-): Promise<{
-  data: CompanyApplicant[]
-  total: number
-  error: string | null
-}> {
+): Promise<{ data: CompanyApplicant[]; total: number; error: string | null }> {
   const filters = params.filters ?? DEFAULT_FILTERS
   const sort = params.sort ?? { column: 'applied' as const, direction: 'desc' as const }
   const page = Math.max(1, params.page ?? 1)
   const pageSize = params.pageSize ?? 25
 
-  const filtered = applicants.filter((a) => matchesFilters(a, filters))
-  const sorted = sortApplicants(filtered, sort)
-  const start = (page - 1) * pageSize
-  const slice = sorted.slice(start, start + pageSize)
+  let q = supabase
+    .from('applications')
+    .select(APPLICANT_SELECT, { count: 'exact' })
+    .eq('jobs.company_id', companyId)
 
-  return { data: slice, total: filtered.length, error: null }
+  if (filters.stage !== 'all') q = q.eq('kanban_stage', filters.stage)
+  if (filters.jobId !== 'all') q = q.eq('job_id', filters.jobId)
+  if (filters.appliedFrom) q = q.gte('created_at', filters.appliedFrom)
+  if (filters.appliedTo) q = q.lte('created_at', filters.appliedTo)
+
+  const sortCol =
+    sort.column === 'applied'
+      ? 'created_at'
+      : sort.column === 'match'
+        ? 'match_score'
+        : sort.column === 'job'
+          ? 'jobs.title'
+          : 'worker_profiles.first_name'
+  q = q.order(sortCol, { ascending: sort.direction === 'asc' })
+
+  const start = (page - 1) * pageSize
+  q = q.range(start, start + pageSize - 1)
+
+  const { data, error, count } = await q
+  if (error) return { data: [], total: 0, error: error.message }
+
+  let rows = (data ?? []).map((row) => toCompanyApplicant(row as unknown as JoinedApplicantRow))
+  if (filters.search) {
+    const s = filters.search.toLowerCase()
+    rows = rows.filter(
+      (r) => r.workerFullName.toLowerCase().includes(s) || r.jobTitle.toLowerCase().includes(s)
+    )
+  }
+  if (filters.regulixOnly) rows = rows.filter((r) => r.isRegulixReady)
+
+  return { data: rows, total: count ?? rows.length, error: null }
 }
 
 /**
@@ -174,6 +294,22 @@ export async function getJobFilterOptions(
   return { data, error: null }
 }
 
+/**
+ * Company applicant profile page: all applications a given worker has filed
+ * at this company, sorted newest-applied first. Used by the per-worker
+ * company view so the header strip can list every job this worker applied to.
+ */
+export async function getWorkerApplicationsAtCompany(
+  workerId: string,
+  _companyId: string
+): Promise<{ data: CompanyApplicant[]; error: string | null }> {
+  const matches = applicants.filter((a) => a.workerId === workerId)
+  const sorted = [...matches].sort(
+    (a, b) => new Date(b.appliedAt).getTime() - new Date(a.appliedAt).getTime()
+  )
+  return { data: sorted, error: null }
+}
+
 // ── Mutations ─────────────────────────────────────────────────────────────
 
 export async function advanceApplicantStage(
@@ -190,6 +326,16 @@ export async function advanceApplicantStage(
   const next = STAGE_ORDER[activeIdx + 1]
   if (!next) return { error: 'no_next_stage' }
   applicants[idx] = { ...applicants[idx], stage: next }
+  return { error: null }
+}
+
+export async function setApplicantStage(
+  applicationId: string,
+  stage: KanbanStage
+): Promise<{ error: string | null }> {
+  const idx = applicants.findIndex((a) => a.id === applicationId)
+  if (idx < 0) return { error: 'not_found' }
+  applicants[idx] = { ...applicants[idx], stage }
   return { error: null }
 }
 
@@ -254,13 +400,15 @@ export async function shortlistApplicants(
 
 export async function addApplicantNote(
   applicationId: string,
-  note: string
+  note: string,
+  authorName: string
 ): Promise<{ error: string | null }> {
   const trimmed = note.trim()
   if (!trimmed) return { error: 'empty_note' }
   const idx = applicants.findIndex((a) => a.id === applicationId)
   if (idx < 0) return { error: 'not_found' }
-  applicants[idx] = { ...applicants[idx], notes: [...applicants[idx].notes, trimmed] }
+  const entry = { text: trimmed, authorName, createdAt: new Date().toISOString() }
+  applicants[idx] = { ...applicants[idx], notes: [...applicants[idx].notes, entry] }
   return { error: null }
 }
 
