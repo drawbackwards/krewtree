@@ -447,8 +447,12 @@ export type Database = {
           job_id: string
           status: 'Applied' | 'Viewed' | 'Interviewing' | 'Offer' | 'Rejected'
           is_boosted: boolean
-          kanban_stage: 'new' | 'screening' | 'interview' | 'offer' | 'hired' | 'rejected'
+          kanban_stage: 'new' | 'reviewed' | 'interview' | 'offer' | 'hired' | 'rejected'
           notes: string
+          interview_answers: Json
+          is_shortlisted: boolean
+          match_score: number
+          status_updated_at: string
           created_at: string
           updated_at: string
         }
@@ -458,12 +462,36 @@ export type Database = {
           job_id: string
           status?: 'Applied' | 'Viewed' | 'Interviewing' | 'Offer' | 'Rejected'
           is_boosted?: boolean
-          kanban_stage?: 'new' | 'screening' | 'interview' | 'offer' | 'hired' | 'rejected'
+          kanban_stage?: 'new' | 'reviewed' | 'interview' | 'offer' | 'hired' | 'rejected'
           notes?: string
+          interview_answers?: Json
+          is_shortlisted?: boolean
+          match_score?: number
+          status_updated_at?: string
           created_at?: string
           updated_at?: string
         }
         Update: Partial<Database['public']['Tables']['applications']['Insert']>
+        Relationships: []
+      }
+      application_notes: {
+        Row: {
+          id: string
+          application_id: string
+          author_id: string
+          author_name: string
+          text: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          application_id: string
+          author_id: string
+          author_name: string
+          text: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['application_notes']['Insert']>
         Relationships: []
       }
       application_events: {
