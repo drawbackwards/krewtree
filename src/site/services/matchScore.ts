@@ -16,6 +16,11 @@ export interface MatchResult {
  * Skills pillar = % of job-required skills the worker has.
  * Location pillar = 100 if cities match case-insensitively, else 0.
  * Both pillars are integers 0-100. `total` is the integer average.
+ *
+ * Reference implementation — not called at runtime. The live match_score
+ * on `applications` is computed by the Postgres `compute_match_score`
+ * function (migration 20260422000004). Kept here as tested documentation
+ * of the canonical client-side formula for future use.
  */
 export function computeMatch({
   workerSkills,
