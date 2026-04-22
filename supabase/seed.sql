@@ -332,3 +332,44 @@ INSERT INTO applications (worker_id, job_id, status, is_boosted, kanban_stage) V
   ('a0000000-0000-0000-0000-000000000004','c0000000-0000-0000-0000-000000000005','Applied',    FALSE,'new'),
   ('a0000000-0000-0000-0000-000000000004','c0000000-0000-0000-0000-000000000008','Rejected',   FALSE,'rejected'),
   ('a0000000-0000-0000-0000-000000000005','c0000000-0000-0000-0000-000000000007','Applied',    FALSE,'new');
+
+-- ── Applicant demo data ────────────────────────────────────
+-- Requires the first worker (a0000000-0000-0000-0000-000000000001)
+-- and a real test company (use your own auth.users id in CI; this block
+-- is guarded so it no-ops when the company doesn't exist).
+
+DO $$
+DECLARE
+  v_company UUID;
+  v_job1 UUID;
+  v_job2 UUID;
+  v_worker UUID := 'a0000000-0000-0000-0000-000000000001';
+  v_app UUID;
+BEGIN
+  -- Use the first company in company_profiles as the demo target.
+  SELECT id INTO v_company FROM company_profiles ORDER BY created_at LIMIT 1;
+  IF v_company IS NULL THEN RETURN; END IF;
+
+  SELECT id INTO v_job1 FROM jobs WHERE company_id = v_company ORDER BY created_at LIMIT 1;
+  SELECT id INTO v_job2 FROM jobs WHERE company_id = v_company ORDER BY created_at OFFSET 1 LIMIT 1;
+  IF v_job1 IS NULL THEN RETURN; END IF;
+
+  -- Two applications for the same worker
+  INSERT INTO applications (worker_id, job_id, kanban_stage, is_shortlisted, interview_answers)
+  VALUES
+    (v_worker, v_job1, 'interview', TRUE, '[
+      {"question":"Do you have a valid drivers license?","answer":"Yes, Class C."},
+      {"question":"How soon can you start?","answer":"Two weeks notice."}
+    ]'::jsonb),
+    (v_worker, COALESCE(v_job2, v_job1), 'new', FALSE, '[]'::jsonb)
+  ON CONFLICT (worker_id, job_id) DO NOTHING;
+
+  -- One note on the interview-stage application
+  SELECT id INTO v_app FROM applications
+    WHERE worker_id = v_worker AND job_id = v_job1 LIMIT 1;
+  IF v_app IS NOT NULL THEN
+    INSERT INTO application_notes (application_id, author_id, author_name, text)
+    VALUES (v_app, v_company, 'Demo Company', 'Strong candidate - scheduled interview Tue.')
+    ON CONFLICT DO NOTHING;
+  END IF;
+END $$;
