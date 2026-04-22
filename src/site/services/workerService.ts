@@ -135,30 +135,6 @@ export async function getApplicationEvents(
   }
 }
 
-// ── Submit Application ─────────────────────────────────────────────────────────
-
-export async function submitApplication(
-  workerId: string,
-  jobId: string,
-  notes: string,
-  isBoosted: boolean
-): Promise<{ id: string | null; error: string | null }> {
-  const { data, error } = await supabase
-    .from('applications')
-    .insert({
-      worker_id: workerId,
-      job_id: jobId,
-      notes,
-      is_boosted: isBoosted,
-      status: 'Applied',
-    })
-    .select('id')
-    .single()
-
-  if (error) return { id: null, error: error.message }
-  return { id: data.id, error: null }
-}
-
 // ── Saved Jobs ─────────────────────────────────────────────────────────────────
 
 export async function getSavedJobsCount(
