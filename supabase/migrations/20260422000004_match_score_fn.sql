@@ -2,6 +2,10 @@
 -- For MVP we treat jobs.title x worker_profiles.primary_trade as the skill signal
 -- (there's no job_skills table yet) and jobs.location x worker_profiles.city for location.
 -- Keep this simple; revisit when a real job_skills table lands.
+--
+-- NOTE: worker_profiles and jobs store '' (not NULL) for missing text fields,
+-- so guards treat blank strings as missing. `position()` is used instead of LIKE
+-- so that special characters ('%', '_') in user-entered text can't forge matches.
 
 CREATE OR REPLACE FUNCTION compute_match_score(p_worker_id UUID, p_job_id UUID)
 RETURNS INTEGER LANGUAGE plpgsql STABLE AS $$
@@ -11,30 +15,33 @@ DECLARE
   v_job_location TEXT;
   v_job_title    TEXT;
   v_location_score INT;
-  v_skills_score   INT;
+  v_trade_score    INT;
 BEGIN
+  -- Assumption: worker_profiles.id == auth.users.id (signup trigger enforces this).
   SELECT city, primary_trade INTO v_worker_city, v_worker_trade
     FROM worker_profiles WHERE id = p_worker_id;
   SELECT location, title INTO v_job_location, v_job_title
     FROM jobs WHERE id = p_job_id;
 
-  IF v_worker_city IS NULL OR v_job_location IS NULL THEN
+  IF v_worker_city IS NULL OR btrim(v_worker_city) = ''
+     OR v_job_location IS NULL OR btrim(v_job_location) = '' THEN
     v_location_score := 0;
-  ELSIF lower(v_job_location) LIKE '%' || lower(v_worker_city) || '%' THEN
+  ELSIF position(lower(btrim(v_worker_city)) IN lower(v_job_location)) > 0 THEN
     v_location_score := 100;
   ELSE
     v_location_score := 0;
   END IF;
 
-  IF v_worker_trade IS NULL OR v_job_title IS NULL THEN
-    v_skills_score := 0;
-  ELSIF lower(v_job_title) LIKE '%' || lower(v_worker_trade) || '%' THEN
-    v_skills_score := 100;
+  IF v_worker_trade IS NULL OR btrim(v_worker_trade) = ''
+     OR v_job_title IS NULL OR btrim(v_job_title) = '' THEN
+    v_trade_score := 0;
+  ELSIF position(lower(btrim(v_worker_trade)) IN lower(v_job_title)) > 0 THEN
+    v_trade_score := 100;
   ELSE
-    v_skills_score := 50;  -- partial credit when we have both but no overlap
+    v_trade_score := 50;  -- partial credit when we have both but no overlap
   END IF;
 
-  RETURN (v_location_score + v_skills_score) / 2;
+  RETURN (v_location_score + v_trade_score) / 2;
 END $$;
 
 -- Populate match_score on insert
