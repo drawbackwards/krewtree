@@ -113,7 +113,14 @@ type JobRow = Database['public']['Tables']['jobs']['Row']
 type JoinedApplicantRow = AppRow & {
   worker_profiles: Pick<
     WorkerRow,
-    'id' | 'first_name' | 'last_name' | 'avatar_url' | 'primary_trade' | 'city' | 'region'
+    | 'id'
+    | 'first_name'
+    | 'last_name'
+    | 'avatar_url'
+    | 'primary_trade'
+    | 'city'
+    | 'region'
+    | 'is_regulix_ready'
   >
   jobs: Pick<JobRow, 'id' | 'title' | 'status'>
   application_notes: Array<{
@@ -165,7 +172,7 @@ function toCompanyApplicant(a: JoinedApplicantRow): CompanyApplicant {
     stage: a.kanban_stage as CompanyApplicant['stage'],
     matchScore: a.match_score,
     matchBreakdown: { skills: a.match_score, location: a.match_score, availability: 0 },
-    isRegulixReady: false,
+    isRegulixReady: w.is_regulix_ready,
     isShortlisted: a.is_shortlisted,
     appliedAt: a.created_at,
     notes: a.application_notes.map((n) => ({
@@ -179,7 +186,7 @@ function toCompanyApplicant(a: JoinedApplicantRow): CompanyApplicant {
 
 const APPLICANT_SELECT = `
   *,
-  worker_profiles!inner(id, first_name, last_name, avatar_url, primary_trade, city, region),
+  worker_profiles!inner(id, first_name, last_name, avatar_url, primary_trade, city, region, is_regulix_ready),
   jobs!inner(id, title, status, company_id),
   application_notes(text, author_name, created_at)
 `
@@ -248,16 +255,23 @@ export async function getAllApplicants(
   if (filters.jobId !== 'all') q = q.eq('job_id', filters.jobId)
   if (filters.appliedFrom) q = q.gte('created_at', filters.appliedFrom)
   if (filters.appliedTo) q = q.lte('created_at', filters.appliedTo)
+  if (filters.regulixOnly) q = q.eq('worker_profiles.is_regulix_ready', true)
 
-  const sortCol =
-    sort.column === 'applied'
-      ? 'created_at'
-      : sort.column === 'match'
-        ? 'match_score'
-        : sort.column === 'job'
-          ? 'jobs.title'
-          : 'worker_profiles.first_name'
-  q = q.order(sortCol, { ascending: sort.direction === 'asc' })
+  const ascending = sort.direction === 'asc'
+  switch (sort.column) {
+    case 'applied':
+      q = q.order('created_at', { ascending })
+      break
+    case 'match':
+      q = q.order('match_score', { ascending })
+      break
+    case 'job':
+      q = q.order('title', { referencedTable: 'jobs', ascending })
+      break
+    case 'applicant':
+      q = q.order('last_name', { referencedTable: 'worker_profiles', ascending })
+      break
+  }
 
   const start = (page - 1) * pageSize
   q = q.range(start, start + pageSize - 1)
@@ -266,13 +280,14 @@ export async function getAllApplicants(
   if (error) return { data: [], total: 0, error: error.message }
 
   let rows = (data ?? []).map((row) => toCompanyApplicant(row as unknown as JoinedApplicantRow))
+  // NOTE: `total` (from the server) is pre-search; UI "N of M" may overcount
+  // while a search term is active. TODO: push search server-side via .or(...).
   if (filters.search) {
     const s = filters.search.toLowerCase()
     rows = rows.filter(
       (r) => r.workerFullName.toLowerCase().includes(s) || r.jobTitle.toLowerCase().includes(s)
     )
   }
-  if (filters.regulixOnly) rows = rows.filter((r) => r.isRegulixReady)
 
   return { data: rows, total: count ?? rows.length, error: null }
 }
