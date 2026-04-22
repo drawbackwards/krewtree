@@ -223,13 +223,17 @@ export async function getRecentApplicants(
  * interview, etc.) still contribute to the "new" count.
  */
 export async function countNewApplicantsSince(
-  _companyId: string,
+  companyId: string,
   sinceIso: string | null
 ): Promise<{ count: number; error: string | null }> {
-  if (!sinceIso) return { count: applicants.length, error: null }
-  const since = new Date(sinceIso).getTime()
-  const count = applicants.filter((a) => new Date(a.appliedAt).getTime() > since).length
-  return { count, error: null }
+  let q = supabase
+    .from('applications')
+    .select('id, jobs!inner(company_id)', { count: 'exact', head: true })
+    .eq('jobs.company_id', companyId)
+  if (sinceIso) q = q.gt('created_at', sinceIso)
+  const { count, error } = await q
+  if (error) return { count: 0, error: error.message }
+  return { count: count ?? 0, error: null }
 }
 
 /**
@@ -297,16 +301,26 @@ export async function getAllApplicants(
  * populate the "Job" filter dropdown on the full page.
  */
 export async function getJobFilterOptions(
-  _companyId: string
+  companyId: string
 ): Promise<{ data: Array<{ id: string; title: string }>; error: string | null }> {
+  const { data, error } = await supabase
+    .from('applications')
+    .select('jobs!inner(id, title, company_id)')
+    .eq('jobs.company_id', companyId)
+
+  if (error) return { data: [], error: error.message }
+
   const seen = new Map<string, string>()
-  applicants.forEach((a) => {
-    if (!seen.has(a.jobId)) seen.set(a.jobId, a.jobTitle)
-  })
-  const data = Array.from(seen, ([id, title]) => ({ id, title })).sort((a, b) =>
-    a.title.localeCompare(b.title)
-  )
-  return { data, error: null }
+  for (const row of data ?? []) {
+    const job = (row as unknown as { jobs: { id: string; title: string } }).jobs
+    if (job && !seen.has(job.id)) seen.set(job.id, job.title)
+  }
+  return {
+    data: Array.from(seen, ([id, title]) => ({ id, title })).sort((a, b) =>
+      a.title.localeCompare(b.title)
+    ),
+    error: null,
+  }
 }
 
 /**
@@ -316,13 +330,20 @@ export async function getJobFilterOptions(
  */
 export async function getWorkerApplicationsAtCompany(
   workerId: string,
-  _companyId: string
+  companyId: string
 ): Promise<{ data: CompanyApplicant[]; error: string | null }> {
-  const matches = applicants.filter((a) => a.workerId === workerId)
-  const sorted = [...matches].sort(
-    (a, b) => new Date(b.appliedAt).getTime() - new Date(a.appliedAt).getTime()
-  )
-  return { data: sorted, error: null }
+  const { data, error } = await supabase
+    .from('applications')
+    .select(APPLICANT_SELECT)
+    .eq('worker_id', workerId)
+    .eq('jobs.company_id', companyId)
+    .order('created_at', { ascending: false })
+
+  if (error) return { data: [], error: error.message }
+  return {
+    data: (data ?? []).map((row) => toCompanyApplicant(row as unknown as JoinedApplicantRow)),
+    error: null,
+  }
 }
 
 // ── Mutations ─────────────────────────────────────────────────────────────
