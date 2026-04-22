@@ -412,15 +412,20 @@ export async function rejectApplicants(
   return { affected: data?.length ?? 0, error: null }
 }
 
+// N+1 round trips (1 SELECT + 1 UPDATE per id). Fine at current bulk sizes
+// (5-20). Post-MVP candidate for a Postgres RPC that advances via CASE in a
+// single statement.
 export async function advanceApplicants(
   applicationIds: string[]
-): Promise<{ affected: number; error: string | null }> {
+): Promise<{ affected: number; failed: string[]; error: string | null }> {
   let affected = 0
+  const failed: string[] = []
   for (const id of applicationIds) {
     const { error } = await advanceApplicantStage(id)
-    if (!error) affected += 1
+    if (error) failed.push(id)
+    else affected += 1
   }
-  return { affected, error: null }
+  return { affected, failed, error: failed.length > 0 ? 'partial_failure' : null }
 }
 
 export async function shortlistApplicant(
