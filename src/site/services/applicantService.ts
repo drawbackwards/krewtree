@@ -3,13 +3,13 @@
 // Company-side read/write API for the applicant pipeline
 // (dashboard widget + /site/dashboard/applicants page).
 //
-// Currently backed by mock data — see note at bottom of file for the
-// Supabase wiring plan. Service functions return `{ data, error }` so the
-// call sites can switch over without API changes.
+// All reads + mutations hit Supabase. RLS on `applications`,
+// `jobs`, and `application_notes` scopes per-company access.
+// Service functions return `{ data, error }` so callers can
+// handle both paths uniformly.
 // ============================================================
 
 import type { CompanyApplicant, KanbanStage } from '../types'
-import { companyApplicants as initialApplicants } from '../data/mock'
 import { supabase } from '../../lib/supabase'
 import type { Database } from '../../lib/database.types'
 
@@ -17,11 +17,6 @@ import type { Database } from '../../lib/database.types'
 const ACTIVE_STAGES: KanbanStage[] = ['new', 'reviewed', 'interview', 'offer']
 
 const STAGE_ORDER: KanbanStage[] = ['new', 'reviewed', 'interview', 'offer', 'hired', 'rejected']
-
-// In-memory mutable store. Replaces the mock import once loaded so mutations
-// (advance/reject/shortlist/note) persist for the session. TODO: swap this
-// for a real Supabase-backed read+write layer before launch.
-const applicants: CompanyApplicant[] = initialApplicants.map((a) => ({ ...a }))
 
 // ── Types ─────────────────────────────────────────────────────────────────
 
@@ -53,61 +48,6 @@ export type GetAllParams = {
 }
 
 // ── Internal helpers ──────────────────────────────────────────────────────
-
-function matchesFilters(a: CompanyApplicant, f: ApplicantFilters): boolean {
-  if (f.search.trim()) {
-    const q = f.search.trim().toLowerCase()
-    const hay =
-      `${a.workerFirstName} ${a.workerLastInitial} ${a.workerFullName} ${a.jobTitle}`.toLowerCase()
-    if (!hay.includes(q)) return false
-  }
-  if (f.stage !== 'all' && a.stage !== f.stage) return false
-  if (f.jobId !== 'all' && a.jobId !== f.jobId) return false
-  if (f.regulixOnly && !a.isRegulixReady) return false
-  if (f.appliedFrom && new Date(a.appliedAt) < new Date(f.appliedFrom)) return false
-  if (f.appliedTo) {
-    // Inclusive end of day.
-    const end = new Date(f.appliedTo)
-    end.setHours(23, 59, 59, 999)
-    if (new Date(a.appliedAt) > end) return false
-  }
-  return true
-}
-
-function sortApplicants(
-  list: CompanyApplicant[],
-  sort: { column: ApplicantSort; direction: 'asc' | 'desc' }
-): CompanyApplicant[] {
-  const dir = sort.direction === 'asc' ? 1 : -1
-  const sorted = [...list].sort((a, b) => {
-    switch (sort.column) {
-      case 'applicant': {
-        const cmp =
-          a.workerLastInitial.localeCompare(b.workerLastInitial, undefined, {
-            sensitivity: 'base',
-          }) ||
-          a.workerFirstName.localeCompare(b.workerFirstName, undefined, { sensitivity: 'base' })
-        return cmp * dir
-      }
-      case 'job':
-        return a.jobTitle.localeCompare(b.jobTitle, undefined, { sensitivity: 'base' }) * dir
-      case 'match':
-        return (a.matchScore - b.matchScore) * dir
-      case 'applied':
-        return (new Date(a.appliedAt).getTime() - new Date(b.appliedAt).getTime()) * dir
-    }
-  })
-  return sorted
-}
-
-// Keep-alive: matchesFilters + sortApplicants + the `applicants` mutable
-// array are retained until Task 13 removes the mock-data plumbing entirely.
-// After Tasks 9–11 wired mutations to Supabase, nothing in this file reads
-// `applicants` anymore — these references exist solely to keep the import
-// and state graph intact until Task 13.
-void matchesFilters
-void sortApplicants
-void applicants
 
 type AppRow = Database['public']['Tables']['applications']['Row']
 type WorkerRow = Database['public']['Tables']['worker_profiles']['Row']
@@ -481,18 +421,3 @@ export async function addApplicantNote(
   })
   return { error: error?.message ?? null }
 }
-
-// ============================================================
-// SUPABASE WIRING NOTE
-// ------------------------------------------------------------
-// When applications move to the DB:
-//   - getRecentApplicants / getAllApplicants: select from `applications`
-//     with `.select('*, worker_profiles!inner(...), jobs!inner(company_id, title, status)')`
-//     and filter `jobs.company_id = companyId`. Apply filters server-side.
-//   - advance/reject/shortlist: update the applications row's `stage`,
-//     `is_shortlisted` columns. Add a `status_updated_at` timestamp on change.
-//   - notes: insert into an `applicant_notes` table keyed on (application_id).
-//   - match_score: either store as a generated column on `applications` or
-//     compute client-side from worker + job skills/location/availability.
-//     Spec §7/§10.4: equal 33/33/33 weight as a starting point.
-// ============================================================
