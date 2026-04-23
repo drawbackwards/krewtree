@@ -11,6 +11,7 @@ import {
   advanceApplicants,
   rejectApplicant,
   rejectApplicants,
+  setApplicantStage,
   shortlistApplicant,
   shortlistApplicants,
   addApplicantNote,
@@ -27,7 +28,7 @@ import {
   SortIcon,
 } from '../icons'
 import { StagePill } from '../components/StagePill/StagePill'
-import { ApplicantSlideover } from '../components/ApplicantSlideover/ApplicantSlideover'
+import { ApplicantDetailPane } from '../components/ApplicantDetailPane/ApplicantDetailPane'
 import styles from './AllApplicantsPage.module.css'
 
 const STAGE_OPTIONS: Array<{ value: KanbanStage | 'all'; label: string }> = [
@@ -208,6 +209,11 @@ export const AllApplicantsPage: React.FC = () => {
     if (open?.id === id) setOpen(null)
     load()
   }
+  const handleSetStage = async (id: string, stage: KanbanStage) => {
+    await setApplicantStage(id, stage)
+    if (open?.id === id) setOpen({ ...open, stage })
+    load()
+  }
   const handleShortlist = async (id: string) => {
     await shortlistApplicant(id)
     load()
@@ -219,7 +225,10 @@ export const AllApplicantsPage: React.FC = () => {
   const handleAddNote = async (id: string) => {
     const text = window.prompt('Add a note about this applicant:')
     if (text && text.trim()) {
-      await addApplicantNote(id, text.trim())
+      const meta = (user?.user_metadata ?? {}) as Record<string, unknown>
+      const authorName =
+        (meta.company_name as string) || (meta.first_name as string) || user?.email || 'Unknown'
+      await addApplicantNote(id, text.trim(), authorName)
       load()
     }
   }
@@ -396,207 +405,219 @@ export const AllApplicantsPage: React.FC = () => {
           </div>
         )}
 
-        {/* Table */}
-        <div className={styles.tableCard}>
-          <div className={[styles.row, styles.headerRow].join(' ')}>
-            <div className={styles.checkCell}>
-              <input
-                type="checkbox"
-                checked={allOnPageSelected}
-                onChange={toggleAll}
-                aria-label="Select all rows on this page"
-              />
-            </div>
-            <button
-              type="button"
-              className={styles.sortableHeader}
-              onClick={() => handleSort('applicant')}
-            >
-              Applicant{' '}
-              <SortIndicator active={sort.column === 'applicant'} direction={sort.direction} />
-            </button>
-            <button
-              type="button"
-              className={styles.sortableHeader}
-              onClick={() => handleSort('job')}
-            >
-              Job title <SortIndicator active={sort.column === 'job'} direction={sort.direction} />
-            </button>
-            <div>Stage</div>
-            <button
-              type="button"
-              className={[styles.sortableHeader, styles.alignRight].join(' ')}
-              onClick={() => handleSort('match')}
-            >
-              Match <SortIndicator active={sort.column === 'match'} direction={sort.direction} />
-            </button>
-            <div className={styles.alignCenter}>Regulix</div>
-            <button
-              type="button"
-              className={styles.sortableHeader}
-              onClick={() => handleSort('applied')}
-            >
-              Applied{' '}
-              <SortIndicator active={sort.column === 'applied'} direction={sort.direction} />
-            </button>
-            <div />
-          </div>
-
-          {rows.length === 0 ? (
-            <div className={styles.emptyRow}>No applicants match the current filters.</div>
-          ) : (
-            rows.map((a) => {
-              const isSelected = selected.has(a.id)
-              const overflowItems: OverflowItem[] = [
-                { label: 'View profile', onClick: () => setOpen(a) },
-              ]
-              if (a.stage !== 'hired' && a.stage !== 'rejected') {
-                overflowItems.push({ label: 'Advance stage', onClick: () => handleAdvance(a.id) })
-              }
-              overflowItems.push(
-                { label: 'Message', onClick: () => handleMessage(a.id) },
-                {
-                  label: a.isShortlisted ? 'Unshortlist' : 'Shortlist',
-                  onClick: () => handleShortlist(a.id),
-                },
-                { label: 'Add note', onClick: () => handleAddNote(a.id) }
-              )
-              if (a.stage !== 'rejected') {
-                overflowItems.push({
-                  label: 'Reject',
-                  danger: true,
-                  onClick: () => handleReject(a.id),
-                })
-              }
-
-              return (
-                <div
-                  key={a.id}
-                  className={[styles.row, isSelected ? styles.rowSelected : '']
-                    .filter(Boolean)
-                    .join(' ')}
-                >
-                  <div className={styles.checkCell}>
-                    <input
-                      type="checkbox"
-                      checked={isSelected}
-                      onChange={() => toggleRow(a.id)}
-                      aria-label={`Select ${a.workerFirstName} ${a.workerLastInitial}.`}
-                    />
-                  </div>
-                  <div className={styles.applicantCell}>
-                    <div className={styles.avatar}>{a.workerInitials}</div>
-                    <button
-                      type="button"
-                      className={styles.applicantName}
-                      onClick={() => setOpen(a)}
-                    >
-                      {a.workerFirstName} {a.workerLastInitial}.
-                    </button>
-                  </div>
-                  <div className={styles.jobCell}>
-                    <Link to={`/site/dashboard/jobs`} className={styles.jobLink}>
-                      {a.jobTitle}
-                    </Link>
-                  </div>
-                  <div>
-                    <StagePill stage={a.stage} size="sm" />
-                  </div>
-                  <div className={[styles.alignRight, styles.matchCell].join(' ')}>
-                    {a.matchScore}%
-                  </div>
-                  <div className={styles.alignCenter}>
-                    {a.isRegulixReady ? <RegulixMarkIcon size={16} /> : null}
-                  </div>
-                  <div className={styles.dateCell}>{formatShortDate(a.appliedAt)}</div>
-                  <div className={styles.actionsCell}>
-                    <button
-                      type="button"
-                      className={styles.primaryAction}
-                      onClick={() => setOpen(a)}
-                    >
-                      View profile
-                    </button>
-                    <OverflowMenu items={overflowItems} />
-                  </div>
+        {/* Split layout: list + detail */}
+        <div className={styles.splitLayout}>
+          <div className={styles.listPane}>
+            <div className={styles.tableCard}>
+              <div className={[styles.row, styles.headerRow].join(' ')}>
+                <div className={styles.checkCell}>
+                  <input
+                    type="checkbox"
+                    checked={allOnPageSelected}
+                    onChange={toggleAll}
+                    aria-label="Select all rows on this page"
+                  />
                 </div>
-              )
-            })
-          )}
-        </div>
+                <button
+                  type="button"
+                  className={styles.sortableHeader}
+                  onClick={() => handleSort('applicant')}
+                >
+                  Applicant{' '}
+                  <SortIndicator active={sort.column === 'applicant'} direction={sort.direction} />
+                </button>
+                <button
+                  type="button"
+                  className={styles.sortableHeader}
+                  onClick={() => handleSort('job')}
+                >
+                  Job title{' '}
+                  <SortIndicator active={sort.column === 'job'} direction={sort.direction} />
+                </button>
+                <div>Stage</div>
+                <button
+                  type="button"
+                  className={[styles.sortableHeader, styles.alignRight].join(' ')}
+                  onClick={() => handleSort('match')}
+                >
+                  Match{' '}
+                  <SortIndicator active={sort.column === 'match'} direction={sort.direction} />
+                </button>
+                <div className={styles.alignCenter}>Regulix</div>
+                <button
+                  type="button"
+                  className={styles.sortableHeader}
+                  onClick={() => handleSort('applied')}
+                >
+                  Applied{' '}
+                  <SortIndicator active={sort.column === 'applied'} direction={sort.direction} />
+                </button>
+                <div />
+              </div>
 
-        {/* Pagination footer */}
-        <div className={styles.paginationBar}>
-          <div className={styles.paginationInfo}>
-            {total === 0 ? '0 applicants' : `${pageStart}–${pageEnd} of ${total} applicants`}
-          </div>
-          <div className={styles.paginationRight}>
-            <label className={styles.pageSizeLabel}>
-              Rows per page
-              <select
-                className={styles.select}
-                value={pageSize}
-                onChange={(e) => {
-                  setPageSize(Number(e.target.value))
-                  setPage(1)
-                }}
-              >
-                {PAGE_SIZES.map((n) => (
-                  <option key={n} value={n}>
-                    {n}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <div className={styles.pagerButtons}>
-              <button
-                type="button"
-                className={styles.pagerBtn}
-                disabled={page <= 1}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-              >
-                ‹
-              </button>
-              {pageButtons.map((b, i) =>
-                b === '…' ? (
-                  <span key={`dots-${i}`} className={styles.pagerEllipsis}>
-                    …
-                  </span>
-                ) : (
-                  <button
-                    key={b}
-                    type="button"
-                    className={[styles.pagerBtn, b === page ? styles.pagerBtnActive : '']
-                      .filter(Boolean)
-                      .join(' ')}
-                    onClick={() => setPage(b)}
-                  >
-                    {b}
-                  </button>
-                )
+              {rows.length === 0 ? (
+                <div className={styles.emptyRow}>No applicants match the current filters.</div>
+              ) : (
+                rows.map((a) => {
+                  const isSelected = selected.has(a.id)
+                  const overflowItems: OverflowItem[] = [
+                    { label: 'View profile', onClick: () => setOpen(a) },
+                  ]
+                  if (a.stage !== 'hired' && a.stage !== 'rejected') {
+                    overflowItems.push({
+                      label: 'Advance stage',
+                      onClick: () => handleAdvance(a.id),
+                    })
+                  }
+                  overflowItems.push(
+                    { label: 'Message', onClick: () => handleMessage(a.id) },
+                    {
+                      label: a.isShortlisted ? 'Unshortlist' : 'Shortlist',
+                      onClick: () => handleShortlist(a.id),
+                    },
+                    { label: 'Add note', onClick: () => handleAddNote(a.id) }
+                  )
+                  if (a.stage !== 'rejected') {
+                    overflowItems.push({
+                      label: 'Reject',
+                      danger: true,
+                      onClick: () => handleReject(a.id),
+                    })
+                  }
+
+                  const isOpen = open?.id === a.id
+                  return (
+                    <div
+                      key={a.id}
+                      className={[
+                        styles.row,
+                        isSelected ? styles.rowSelected : '',
+                        isOpen ? styles.rowOpen : '',
+                      ]
+                        .filter(Boolean)
+                        .join(' ')}
+                    >
+                      <div className={styles.checkCell}>
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleRow(a.id)}
+                          aria-label={`Select ${a.workerFirstName} ${a.workerLastInitial}.`}
+                        />
+                      </div>
+                      <div className={styles.applicantCell}>
+                        <div className={styles.avatar}>{a.workerInitials}</div>
+                        <button
+                          type="button"
+                          className={styles.applicantName}
+                          onClick={() => setOpen(a)}
+                        >
+                          {a.workerFirstName} {a.workerLastInitial}.
+                        </button>
+                      </div>
+                      <div className={styles.jobCell}>
+                        <Link to={`/site/dashboard/jobs`} className={styles.jobLink}>
+                          {a.jobTitle}
+                        </Link>
+                      </div>
+                      <div>
+                        <StagePill stage={a.stage} size="sm" />
+                      </div>
+                      <div className={[styles.alignRight, styles.matchCell].join(' ')}>
+                        {a.matchScore}%
+                      </div>
+                      <div className={styles.alignCenter}>
+                        {a.isRegulixReady ? <RegulixMarkIcon size={16} /> : null}
+                      </div>
+                      <div className={styles.dateCell}>{formatShortDate(a.appliedAt)}</div>
+                      <div className={styles.actionsCell}>
+                        <button
+                          type="button"
+                          className={styles.primaryAction}
+                          onClick={() => setOpen(a)}
+                        >
+                          View profile
+                        </button>
+                        <OverflowMenu items={overflowItems} />
+                      </div>
+                    </div>
+                  )
+                })
               )}
-              <button
-                type="button"
-                className={styles.pagerBtn}
-                disabled={page >= totalPages}
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              >
-                ›
-              </button>
             </div>
+
+            {/* Pagination footer */}
+            <div className={styles.paginationBar}>
+              <div className={styles.paginationInfo}>
+                {total === 0 ? '0 applicants' : `${pageStart}–${pageEnd} of ${total} applicants`}
+              </div>
+              <div className={styles.paginationRight}>
+                <label className={styles.pageSizeLabel}>
+                  Rows per page
+                  <select
+                    className={styles.select}
+                    value={pageSize}
+                    onChange={(e) => {
+                      setPageSize(Number(e.target.value))
+                      setPage(1)
+                    }}
+                  >
+                    {PAGE_SIZES.map((n) => (
+                      <option key={n} value={n}>
+                        {n}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <div className={styles.pagerButtons}>
+                  <button
+                    type="button"
+                    className={styles.pagerBtn}
+                    disabled={page <= 1}
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  >
+                    ‹
+                  </button>
+                  {pageButtons.map((b, i) =>
+                    b === '…' ? (
+                      <span key={`dots-${i}`} className={styles.pagerEllipsis}>
+                        …
+                      </span>
+                    ) : (
+                      <button
+                        key={b}
+                        type="button"
+                        className={[styles.pagerBtn, b === page ? styles.pagerBtnActive : '']
+                          .filter(Boolean)
+                          .join(' ')}
+                        onClick={() => setPage(b)}
+                      >
+                        {b}
+                      </button>
+                    )
+                  )}
+                  <button
+                    type="button"
+                    className={styles.pagerBtn}
+                    disabled={page >= totalPages}
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  >
+                    ›
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className={styles.detailPane}>
+            <ApplicantDetailPane
+              applicant={open}
+              onSetStage={handleSetStage}
+              onMessage={handleMessage}
+              onShortlist={handleShortlist}
+            />
           </div>
         </div>
       </div>
-
-      {/* Slide-over */}
-      <ApplicantSlideover
-        applicant={open}
-        onClose={() => setOpen(null)}
-        onAdvance={handleAdvance}
-        onReject={handleReject}
-        onMessage={handleMessage}
-        onShortlist={handleShortlist}
-      />
 
       {/* Bulk reject confirmation */}
       <Modal

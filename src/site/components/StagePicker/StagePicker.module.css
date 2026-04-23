@@ -1,0 +1,122 @@
+.stageBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  border-radius: var(--kt-radius-full);
+  font-family: var(--kt-font-sans);
+  font-weight: var(--kt-weight-semibold);
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  transition: filter var(--kt-duration-fast) var(--kt-ease);
+}
+
+.stageBtn:hover {
+  filter: brightness(0.96);
+}
+
+.label {
+  line-height: 1;
+}
+
+.md {
+  height: 32px;
+  padding: 0 10px 0 12px;
+  font-size: var(--kt-text-xs);
+}
+
+.sm {
+  height: 24px;
+  padding: 0 8px 0 10px;
+  font-size: 11px;
+}
+
+.stage_new {
+  background: var(--kt-info-subtle);
+  color: var(--kt-info);
+}
+
+.stage_reviewed {
+  background: var(--kt-teal-subtle);
+  color: var(--kt-teal);
+}
+
+.stage_interview {
+  background: var(--kt-violet-subtle);
+  color: var(--kt-violet);
+}
+
+.stage_offer {
+  background: var(--kt-warning-subtle);
+  color: var(--kt-warning);
+}
+
+.stage_hired {
+  background: var(--kt-success-subtle);
+  color: var(--kt-success);
+}
+
+.stage_rejected {
+  background: var(--kt-secondary);
+  color: var(--kt-text-muted);
+}
+
+/* Menu (portaled to body) */
+
+.menu {
+  position: fixed;
+  background: var(--kt-surface);
+  border: 1px solid var(--kt-border);
+  border-radius: var(--kt-radius-md);
+  box-shadow: var(--kt-shadow-md);
+  padding: 4px;
+  min-width: 160px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  text-align: left;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  border-radius: var(--kt-radius-sm);
+  font-family: var(--kt-font-sans);
+  font-size: var(--kt-text-sm);
+  color: var(--kt-text);
+  cursor: pointer;
+}
+
+.item:hover {
+  background: var(--kt-secondary);
+}
+
+.itemCurrent {
+  color: var(--kt-text);
+  font-weight: var(--kt-weight-semibold);
+}
+
+.itemCurrent::after {
+  content: '●';
+  font-size: 8px;
+  color: var(--kt-primary);
+}
+
+.itemDanger {
+  color: var(--kt-danger);
+}
+
+.itemDanger:hover {
+  background: var(--kt-danger-subtle);
+}
+
+.divider {
+  height: 1px;
+  background: var(--kt-border);
+  margin: 4px 0;
+}

@@ -13,6 +13,7 @@ import {
 import { DotsHorizontalIcon, PersonIcon, RegulixMarkIcon } from '../../icons'
 import { StagePill } from '../StagePill/StagePill'
 import { ApplicantSlideover } from '../ApplicantSlideover/ApplicantSlideover'
+import { useAuth } from '../../context/AuthContext'
 import styles from './RecentApplicantsWidget.module.css'
 
 // Inline overflow menu — mirrors the pattern used in CompanyDashboard
@@ -99,6 +100,7 @@ export const RecentApplicantsWidget: React.FC<RecentApplicantsWidgetProps> = ({
   lastSignInAt,
 }) => {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [rows, setRows] = useState<CompanyApplicant[]>([])
   const [newCount, setNewCount] = useState(0)
   const [open, setOpen] = useState<CompanyApplicant | null>(null)
@@ -146,7 +148,10 @@ export const RecentApplicantsWidget: React.FC<RecentApplicantsWidgetProps> = ({
   const handleAddNote = async (id: string) => {
     const text = window.prompt('Add a note about this applicant:')
     if (text && text.trim()) {
-      await addApplicantNote(id, text.trim())
+      const meta = (user?.user_metadata ?? {}) as Record<string, unknown>
+      const authorName =
+        (meta.company_name as string) || (meta.first_name as string) || user?.email || 'Unknown'
+      await addApplicantNote(id, text.trim(), authorName)
       load()
     }
   }

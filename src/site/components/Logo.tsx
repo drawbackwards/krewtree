@@ -44,6 +44,44 @@ export const KrewtreeBgMark: React.FC<{ style?: React.CSSProperties }> = ({ styl
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
+ * Small standalone krewtree mark — two-color brand (olive chevron + navy/sand tree).
+ * Use anywhere the horizontal wordmark is overkill (chips, inline badges, rating cards).
+ *
+ * onDark = false → navy tree on light surfaces (default)
+ * onDark = true  → sand tree on dark surfaces
+ */
+
+export interface KrewtreeMarkProps {
+  size?: number
+  onDark?: boolean
+}
+
+export const KrewtreeMark: React.FC<KrewtreeMarkProps> = ({ size = 16, onDark = false }) => {
+  const tree = onDark ? colors.sand[400] : colors.navy[900]
+  const olive = colors.olive[700]
+  return (
+    <svg
+      viewBox="0 0 156.28 242"
+      height={size}
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+      style={{ flexShrink: 0, display: 'block' }}
+    >
+      <path
+        fill={olive}
+        d="M78.2,199.57L.22,168.87v41.64l77.98,31.49,77.98-31.49v-41.64l-77.98,30.7Z"
+      />
+      <path
+        fill={tree}
+        d="M156.06,112.61c-29.43,0-54.02-21.12-59.57-49.06,11.2,6.82,24.34,10.75,38.38,10.75v-34.57C113.06,39.74,95.32,21.92,95.32,0h0s-34.58,0-34.58,0h0c0,21.92-17.74,39.74-39.55,39.74v34.57c14.04,0,27.18-3.94,38.38-10.76-5.54,27.94-30.15,49.06-59.57,49.06v34.57c23.01,0,44.13-8.21,60.62-21.87v47.06l17.41,6.85,17.41-6.85v-47.05c16.49,13.65,37.61,21.86,60.61,21.86v-34.57Z"
+      />
+    </svg>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
  * Official krewtree horizontal logo.
  *
  * Source: krewtree Brand Assets / RGB / Horizontal / Two Color-Light

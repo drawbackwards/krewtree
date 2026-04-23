@@ -289,6 +289,8 @@ export type CompanyApplicant = {
   workerJobHistory: Array<{ employer: string; title: string; duration: string }>
   workerRating: number | null
   workerRatingCount: number
+  workerRegulixRating: number | null
+  workerRegulixRatingCount: number
   jobId: string
   jobTitle: string
   jobStatus: Job['status']
@@ -298,7 +300,8 @@ export type CompanyApplicant = {
   isRegulixReady: boolean
   isShortlisted: boolean
   appliedAt: string // ISO
-  notes: string[]
+  notes: Array<{ text: string; authorName: string; createdAt: string }>
+  preInterviewAnswers?: Array<{ question: string; answer: string }>
 }
 
 // ---- Job Analytics ----

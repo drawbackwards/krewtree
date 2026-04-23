@@ -79,6 +79,14 @@
 }
 
 .titleWrap {
+  flex: 1;
+  min-width: 0;
+}
+
+.headerExtra {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
 }
 
 .title {

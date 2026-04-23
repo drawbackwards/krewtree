@@ -11,6 +11,7 @@ export interface ModalProps {
   size?: ModalSize
   title?: React.ReactNode
   description?: string
+  headerExtra?: React.ReactNode
   showClose?: boolean
   closeOnOverlay?: boolean
   mobileDrawer?: boolean
@@ -24,6 +25,7 @@ export const Modal: React.FC<ModalProps> = ({
   size = 'md',
   title,
   description,
+  headerExtra,
   showClose = true,
   closeOnOverlay = true,
   mobileDrawer = false,
@@ -60,7 +62,7 @@ export const Modal: React.FC<ModalProps> = ({
       aria-labelledby={title ? 'modal-title' : undefined}
     >
       <div className={[styles.modal, styles[size]].join(' ')} onClick={(e) => e.stopPropagation()}>
-        {(title || showClose) && (
+        {(title || showClose || headerExtra) && (
           <div className={styles.header}>
             <div className={styles.titleWrap}>
               {title && (
@@ -70,6 +72,7 @@ export const Modal: React.FC<ModalProps> = ({
               )}
               {description && <p className={styles.description}>{description}</p>}
             </div>
+            {headerExtra && <div className={styles.headerExtra}>{headerExtra}</div>}
             {showClose && (
               <button className={styles.closeBtn} onClick={onClose} aria-label="Close modal">
                 <CloseIcon size={18} />

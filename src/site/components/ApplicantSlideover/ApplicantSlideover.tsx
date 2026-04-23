@@ -231,7 +231,7 @@ export const ApplicantSlideover: React.FC<ApplicantSlideoverProps> = ({
               <ul className={styles.list}>
                 {applicant.notes.map((n, i) => (
                   <li key={i} className={styles.note}>
-                    {n}
+                    {n.text}
                   </li>
                 ))}
               </ul>

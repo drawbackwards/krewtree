@@ -1,15 +1,19 @@
 .page {
-  min-height: 100vh;
+  /* Fixed viewport height (minus sticky navbar) so inner panes own their scroll */
+  height: calc(100vh - 60px);
   background: var(--kt-bg);
+  overflow: hidden;
 }
 
 .container {
   max-width: var(--kt-layout-max-width);
   margin: 0 auto;
-  padding: 28px var(--kt-space-6);
+  padding: 20px var(--kt-space-6);
   display: flex;
   flex-direction: column;
-  gap: var(--kt-space-5);
+  gap: var(--kt-space-4);
+  height: 100%;
+  min-height: 0;
 }
 
 .breadcrumb {
@@ -220,13 +224,42 @@
   text-decoration: underline;
 }
 
+/* ── Split layout ───────────────────────────────────────────────────────── */
+
+.splitLayout {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: var(--kt-space-4);
+  align-items: stretch;
+}
+
+.listPane {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--kt-space-3);
+}
+
+.detailPane {
+  width: 420px;
+  flex-shrink: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
 /* ── Table ──────────────────────────────────────────────────────────────── */
 
 .tableCard {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
   background: var(--kt-surface);
   border: 1px solid var(--kt-border);
   border-radius: var(--kt-radius-lg);
-  overflow: hidden;
 }
 
 .row {
@@ -255,9 +288,20 @@
   color: var(--kt-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 
 .rowSelected {
+  background: var(--kt-primary-subtle);
+}
+
+.rowOpen {
+  background: var(--kt-secondary);
+}
+
+.rowOpen.rowSelected {
   background: var(--kt-primary-subtle);
 }
 
@@ -599,8 +643,21 @@
 /* ── Mobile ─────────────────────────────────────────────────────────────── */
 
 @media (max-width: 960px) {
-  /* Allow horizontal scroll on the table rather than compressing columns;
-     keeps all fields visible. */
+  /* On narrow viewports, let the whole page scroll and stack panes vertically. */
+  .page {
+    height: auto;
+    overflow: visible;
+  }
+  .container {
+    height: auto;
+  }
+  .splitLayout {
+    flex-direction: column;
+  }
+  .detailPane {
+    width: 100%;
+  }
+  /* Allow horizontal scroll on the table rather than compressing columns. */
   .tableCard {
     overflow-x: auto;
   }

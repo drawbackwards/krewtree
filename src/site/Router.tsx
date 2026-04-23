@@ -16,6 +16,7 @@ import {
   ReferralPage,
   JobPostsPage,
   AllApplicantsPage,
+  CompanyApplicantProfilePage,
 } from './pages'
 import { LoginPage } from './pages/auth/LoginPage'
 import { SignupRolePage } from './pages/auth/SignupRolePage'
@@ -92,6 +93,10 @@ export const SiteRouter: React.FC = () => (
           <Route path="/site/dashboard/company" element={<CompanyDashboard />} />
           <Route path="/site/dashboard/jobs" element={<JobPostsPage />} />
           <Route path="/site/dashboard/applicants" element={<AllApplicantsPage />} />
+          <Route
+            path="/site/dashboard/applicants/worker/:workerId"
+            element={<CompanyApplicantProfilePage />}
+          />
           <Route path="/site/post-job" element={<PostJobPage />} />
           <Route path="/site/post-job/:id" element={<PostJobPage />} />
         </Route>
