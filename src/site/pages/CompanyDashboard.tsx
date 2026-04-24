@@ -5,6 +5,7 @@ import { Badge, Button, Modal } from '../../components'
 import { StatCard } from '../components/StatCard/StatCard'
 import { RegulixBadge } from '../components/RegulixBadge/RegulixBadge'
 import { RecentApplicantsWidget } from '../components/RecentApplicantsWidget/RecentApplicantsWidget'
+import { PipelineKanban } from '../components/PipelineKanban'
 import { RegulixLogo } from '../components/RegulixLogo/RegulixLogo'
 import {
   BriefcaseIcon,
@@ -288,6 +289,9 @@ export const CompanyDashboard: React.FC = () => {
               <StatCard key={s.label} {...s} />
             ))}
           </div>
+
+          {/* Pipeline kanban — cross-job, active stages only */}
+          {user?.id && <PipelineKanban companyId={user.id} />}
 
           {/* Recent applicants — cross-job widget, active stages only */}
           {user?.id && (
