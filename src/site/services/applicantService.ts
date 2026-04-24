@@ -160,6 +160,28 @@ export async function getRecentApplicants(
 }
 
 /**
+ * Pipeline kanban board: all applicants in active stages across all jobs
+ * for the company. Flat list — caller groups by `stage` client-side.
+ * Newest-applied first.
+ */
+export async function getKanbanApplicants(
+  companyId: string
+): Promise<{ data: CompanyApplicant[]; error: string | null }> {
+  const { data, error } = await supabase
+    .from('applications')
+    .select(APPLICANT_SELECT)
+    .eq('jobs.company_id', companyId)
+    .in('kanban_stage', ACTIVE_STAGES)
+    .order('created_at', { ascending: false })
+
+  if (error) return { data: [], error: error.message }
+  return {
+    data: (data ?? []).map((row) => toCompanyApplicant(row as unknown as JoinedApplicantRow)),
+    error: null,
+  }
+}
+
+/**
  * Count applicants that arrived after the given ISO timestamp. Used to render
  * a "# since last login" badge on the dashboard. Counts across ALL stages so
  * freshly-submitted applicants that the employer already moved (reviewed,
