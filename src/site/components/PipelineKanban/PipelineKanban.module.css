@@ -1,0 +1,145 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kt-space-3);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--kt-text-muted);
+}
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--kt-space-3);
+  align-items: start;
+}
+
+.column {
+  background: var(--kt-surface-raised);
+  border: 1px solid var(--kt-border);
+  border-radius: var(--kt-radius-md);
+  padding: var(--kt-space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--kt-space-2);
+  min-height: 120px;
+  transition: background 120ms ease;
+}
+
+.columnOver {
+  background: var(--kt-bg-subtle);
+  border-color: var(--kt-border-strong);
+}
+
+.columnHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.columnLabel {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.count {
+  background: var(--kt-surface);
+  border-radius: var(--kt-radius-full);
+  padding: 1px 8px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.cardList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kt-space-2);
+}
+
+.card {
+  background: var(--kt-surface);
+  border: 1px solid var(--kt-border);
+  border-radius: var(--kt-radius-sm);
+  padding: var(--kt-space-3);
+  display: flex;
+  align-items: center;
+  gap: var(--kt-space-2);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.card:active {
+  cursor: grabbing;
+}
+
+.cardDragging {
+  opacity: 0.4;
+}
+
+.avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--kt-radius-full);
+  background: var(--kt-bg-subtle);
+  color: var(--kt-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.cardBody {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cardName {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cardJob {
+  font-size: 11px;
+  color: var(--kt-text-muted);
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.empty {
+  border: 1.5px dashed var(--kt-border);
+  border-radius: var(--kt-radius-sm);
+  padding: var(--kt-space-4);
+  text-align: center;
+  font-size: 11px;
+  color: var(--kt-text-muted);
+}
+
+.skeleton {
+  height: 140px;
+  background: var(--kt-surface-raised);
+  border-radius: var(--kt-radius-md);
+}
