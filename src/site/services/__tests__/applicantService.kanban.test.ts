@@ -1,14 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // Mock the supabase client before importing the service under test.
-const orderMock = vi.fn()
-const inMock = vi.fn(() => ({ order: orderMock }))
-const eqMock = vi.fn(() => ({ in: inMock }))
-const selectMock = vi.fn(() => ({ eq: eqMock }))
-const fromMock = vi.fn(() => ({ select: selectMock }))
+// Use vi.hoisted so the mocks are available when vi.mock's factory runs.
+const { orderMock, inMock, eqMock, fromMock } = vi.hoisted(() => {
+  const orderMock = vi.fn()
+  const inMock = vi.fn(() => ({ order: orderMock }))
+  const eqMock = vi.fn(() => ({ in: inMock }))
+  const selectMock = vi.fn(() => ({ eq: eqMock }))
+  const fromMock = vi.fn(() => ({ select: selectMock }))
+  return { orderMock, inMock, eqMock, selectMock, fromMock }
+})
 
 vi.mock('../../../lib/supabase', () => ({
-  supabase: { from: (...args: unknown[]) => fromMock(...args) },
+  supabase: { from: fromMock },
 }))
 
 import { getKanbanApplicants } from '../applicantService'
