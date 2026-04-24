@@ -5,6 +5,7 @@ import { Badge, Button, Modal } from '../../components'
 import { StatCard } from '../components/StatCard/StatCard'
 import { RegulixBadge } from '../components/RegulixBadge/RegulixBadge'
 import { RecentApplicantsWidget } from '../components/RecentApplicantsWidget/RecentApplicantsWidget'
+import { RegulixLogo } from '../components/RegulixLogo/RegulixLogo'
 import {
   BriefcaseIcon,
   UsersIcon,
@@ -46,20 +47,10 @@ const STAT_META: Record<
   DashboardStat['key'],
   { label: string; icon: React.ReactNode; color: StatCardColor }
 > = {
-  active_posts: { label: 'Active Jobs', icon: <BriefcaseIcon />, color: 'olive' },
-  new_applicants_today: { label: 'Applicants Today', icon: <PersonIcon />, color: 'navy' },
-  regulix_ready: { label: 'Regulix Ready', icon: <RegulixMarkIcon size={18} />, color: 'navy' },
-  pending_interviews: { label: 'Pending Interviews', icon: <UsersIcon />, color: 'olive' },
-}
-
-function formatDelta(delta: number | null): {
-  value: string
-  direction: 'up' | 'down' | 'flat'
-} {
-  if (delta === null) return { value: 'No history yet', direction: 'flat' }
-  if (delta === 0) return { value: '0', direction: 'flat' }
-  if (delta > 0) return { value: `+${delta}`, direction: 'up' }
-  return { value: `\u2212${Math.abs(delta)}`, direction: 'down' }
+  new_applicants_today: { label: 'New Applicants', icon: <PersonIcon />, color: 'navy' },
+  screening: { label: 'Screening', icon: <CheckIcon />, color: 'navy' },
+  pending_interviews: { label: 'Pending Interviews', icon: <UsersIcon />, color: 'navy' },
+  final_round: { label: 'Final Round', icon: <BriefcaseIcon />, color: 'navy' },
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────
@@ -253,14 +244,22 @@ export const CompanyDashboard: React.FC = () => {
 
   const stats = dashboardStats.map((s) => {
     const meta = STAT_META[s.key]
-    const trend = formatDelta(s.delta)
     return {
       label: meta.label,
       value: s.value,
       icon: meta.icon,
       color: meta.color,
-      trend,
-      subtext: s.deltaLabel,
+      trend: undefined,
+      subtext: undefined,
+      subtextNode:
+        s.key === 'new_applicants_today' ? (
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+            <span style={{ fontSize: 'var(--kt-text-xs)', color: 'var(--kt-white)' }}>
+              {s.subtext?.split(' ')[0]}
+            </span>
+            <RegulixLogo height={14} />
+          </span>
+        ) : undefined,
     }
   })
 
@@ -289,6 +288,14 @@ export const CompanyDashboard: React.FC = () => {
               <StatCard key={s.label} {...s} />
             ))}
           </div>
+
+          {/* Recent applicants — cross-job widget, active stages only */}
+          {user?.id && (
+            <RecentApplicantsWidget
+              companyId={user.id}
+              lastSignInAt={user.last_sign_in_at ?? null}
+            />
+          )}
 
           {/* ── Active jobs module ─────────────────────────────────────── */}
           <div
@@ -520,14 +527,6 @@ export const CompanyDashboard: React.FC = () => {
               )
             })()}
           </div>
-
-          {/* Recent applicants — cross-job widget, active stages only */}
-          {user?.id && (
-            <RecentApplicantsWidget
-              companyId={user.id}
-              lastSignInAt={user.last_sign_in_at ?? null}
-            />
-          )}
         </div>
 
         {/* ---- Sidebar ---- */}

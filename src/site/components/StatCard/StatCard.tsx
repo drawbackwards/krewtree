@@ -11,6 +11,7 @@ export interface StatCardProps {
   color?: StatCardColor
   trend?: { value: string; direction: 'up' | 'down' | 'flat' }
   subtext?: string
+  subtextNode?: React.ReactNode
 }
 
 export const StatCard: React.FC<StatCardProps> = ({
@@ -20,6 +21,7 @@ export const StatCard: React.FC<StatCardProps> = ({
   color = 'accent',
   trend,
   subtext,
+  subtextNode,
 }) => {
   const isBold = color === 'navy' || color === 'olive'
 
@@ -30,7 +32,7 @@ export const StatCard: React.FC<StatCardProps> = ({
         {icon && <div className={[styles.iconWrap, styles[color]].join(' ')}>{icon}</div>}
       </div>
       <div className={styles.value}>{value}</div>
-      {(trend || subtext) && (
+      {(trend || subtext || subtextNode) && (
         <div className={styles.secondary}>
           {trend && (
             <span
@@ -50,9 +52,11 @@ export const StatCard: React.FC<StatCardProps> = ({
               {trend.value}
             </span>
           )}
-          {subtext && (
-            <span className={isBold ? styles.subtextBold : styles.subtext}>{subtext}</span>
-          )}
+          {subtextNode
+            ? subtextNode
+            : subtext && (
+                <span className={isBold ? styles.subtextBold : styles.subtext}>{subtext}</span>
+              )}
         </div>
       )}
     </div>
