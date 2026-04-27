@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { BellIcon, CheckIcon } from '../../icons'
+import { BellIcon } from '../../icons'
 import { getNeedsAttentionAlerts, type AttentionAlert } from '../../services/needsAttentionService'
 import styles from './NeedsAttentionWidget.module.css'
 
@@ -56,7 +56,6 @@ export const NeedsAttentionWidget: React.FC<Props> = ({ companyId }) => {
         </div>
       ) : alerts.length === 0 ? (
         <div className={styles.empty}>
-          <CheckIcon size={20} color="var(--kt-success)" />
           <p>Nothing needs your attention</p>
         </div>
       ) : (
