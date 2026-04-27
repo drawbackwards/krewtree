@@ -10,9 +10,13 @@ type Props = {
   applicants: CompanyApplicant[]
 }
 
+const MAX_VISIBLE = 4
+
 export const KanbanColumn: React.FC<Props> = ({ stage, label, applicants }) => {
   const { setNodeRef, isOver } = useDroppable({ id: stage })
   const className = isOver ? `${styles.column} ${styles.columnOver}` : styles.column
+  const visible = applicants.slice(0, MAX_VISIBLE)
+  const overflow = applicants.length - MAX_VISIBLE
 
   return (
     <div ref={setNodeRef} className={className} data-stage={stage}>
@@ -21,10 +25,11 @@ export const KanbanColumn: React.FC<Props> = ({ stage, label, applicants }) => {
         <span className={styles.count}>{applicants.length}</span>
       </div>
       <div className={styles.cardList}>
-        {applicants.map((a) => (
+        {visible.map((a) => (
           <KanbanCard key={a.id} applicant={a} />
         ))}
         {applicants.length === 0 && <div className={styles.empty}>Drop here</div>}
+        {overflow > 0 && <div className={styles.overflow}>+{overflow} more</div>}
       </div>
     </div>
   )

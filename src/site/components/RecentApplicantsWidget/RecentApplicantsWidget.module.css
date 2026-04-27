@@ -11,13 +11,23 @@
   align-items: center;
   padding: 16px 24px;
   border-bottom: 1px solid var(--kt-border);
+  min-height: 57px;
+  box-sizing: border-box;
+  gap: 12px;
+}
+
+@media (max-width: 640px) {
+  .header {
+    padding: 14px 16px;
+  }
 }
 
 .titleWrap {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  min-width: 0;
 }
 
 .title {
@@ -57,6 +67,18 @@
   padding: 48px 24px;
   text-align: center;
   color: var(--kt-text-muted);
+  min-height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fillerRow {
+  pointer-events: none;
+}
+
+.fillerRow:last-child {
+  border-bottom: none;
 }
 
 .empty p {
@@ -71,13 +93,25 @@
 
 .row {
   display: grid;
-  /* Applicant | Job title | Stage | Match | Regulix | Applied | Actions */
-  grid-template-columns: 26% 120px 88px 52px 56px 64px minmax(150px, 1fr);
+  /* Applicant | Job | Stage | Match | Applied */
+  grid-template-columns: 26% 1fr 80px 52px 64px;
   align-items: center;
   padding: 10px 24px;
   border-bottom: 1px solid var(--kt-border);
   column-gap: 10px;
   min-height: 44px;
+}
+
+@media (max-width: 640px) {
+  .row {
+    /* Applicant | Job | Applied — hide Stage and Match */
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) auto;
+    padding: 10px 16px;
+  }
+  .row > :nth-child(3),
+  .row > :nth-child(4) {
+    display: none;
+  }
 }
 
 .row:last-child {
@@ -175,80 +209,4 @@
 .dateCell {
   font-size: 13px;
   color: var(--kt-text-muted);
-}
-
-.actionsCell {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 6px;
-}
-
-.primaryAction {
-  height: 27px;
-  padding: 0 10px;
-  border: 0.5px solid var(--kt-border);
-  border-radius: var(--kt-radius-md);
-  background: transparent;
-  cursor: pointer;
-  font-size: 11px;
-  font-family: var(--kt-font-sans);
-  font-weight: var(--kt-weight-medium);
-  color: var(--kt-text);
-  white-space: nowrap;
-}
-
-.primaryAction:hover {
-  background: var(--kt-secondary);
-}
-
-.overflowBtn {
-  width: 27px;
-  height: 27px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  border-radius: var(--kt-radius-md);
-  background: transparent;
-  color: var(--kt-text-muted);
-  cursor: pointer;
-  flex-shrink: 0;
-}
-
-.overflowBtn:hover {
-  background: var(--kt-secondary);
-}
-
-.overflowMenu {
-  position: fixed;
-  background: var(--kt-surface);
-  border: 0.5px solid var(--kt-border);
-  border-radius: var(--kt-radius-md);
-  box-shadow: var(--kt-shadow-sm);
-  min-width: 160px;
-  z-index: 1000;
-  overflow: hidden;
-}
-
-.overflowItem {
-  display: block;
-  width: 100%;
-  text-align: left;
-  padding: 8px 14px;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  font-size: 12px;
-  font-family: var(--kt-font-sans);
-  color: var(--kt-text);
-  font-weight: var(--kt-weight-medium);
-}
-
-.overflowItem:hover {
-  background: var(--kt-secondary);
-}
-
-.overflowItem.danger {
-  color: var(--kt-danger);
 }

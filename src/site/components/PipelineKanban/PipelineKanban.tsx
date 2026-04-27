@@ -1,7 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { DndContext, type DragEndEvent } from '@dnd-kit/core'
 import type { CompanyApplicant, KanbanStage } from '../../types'
 import { getKanbanApplicants, setApplicantStage } from '../../services/applicantService'
+import { KanbanIcon } from '../../icons'
 import { KanbanColumn } from './KanbanColumn'
 import styles from './PipelineKanban.module.css'
 
@@ -80,7 +82,21 @@ export const PipelineKanban: React.FC<Props> = ({ companyId }) => {
     return (
       <div className={styles.root}>
         <div className={styles.header}>
-          <span className={styles.title}>Pipeline</span>
+          <span className={styles.title}>
+            <KanbanIcon size={16} color="var(--kt-olive-700)" />
+            Pipeline
+          </span>
+          <Link
+            to="/site/dashboard/pipeline"
+            style={{
+              fontSize: 'var(--kt-text-sm)',
+              color: 'var(--kt-primary)',
+              textDecoration: 'none',
+              fontWeight: 'var(--kt-weight-medium)',
+            }}
+          >
+            View pipeline →
+          </Link>
         </div>
         <div className={styles.board}>
           {COLUMNS.map((c) => (
@@ -102,7 +118,21 @@ export const PipelineKanban: React.FC<Props> = ({ companyId }) => {
   return (
     <div className={styles.root}>
       <div className={styles.header}>
-        <span className={styles.title}>Pipeline</span>
+        <span className={styles.title}>
+          <KanbanIcon size={16} color="var(--kt-olive-700)" />
+          Pipeline
+        </span>
+        <Link
+          to="/site/dashboard/pipeline"
+          style={{
+            fontSize: 'var(--kt-text-sm)',
+            color: 'var(--kt-primary)',
+            textDecoration: 'none',
+            fontWeight: 'var(--kt-weight-medium)',
+          }}
+        >
+          View pipeline →
+        </Link>
       </div>
       <DndContext onDragEnd={handleDragEnd}>
         <div className={styles.board}>

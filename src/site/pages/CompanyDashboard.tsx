@@ -1,27 +1,20 @@
-import React, { useState, useEffect, useRef } from 'react'
-import { createPortal } from 'react-dom'
+import React, { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Badge, Button, Modal } from '../../components'
 import { StatCard } from '../components/StatCard/StatCard'
-import { RegulixBadge } from '../components/RegulixBadge/RegulixBadge'
-import { RecentApplicantsWidget } from '../components/RecentApplicantsWidget/RecentApplicantsWidget'
 import { PipelineKanban } from '../components/PipelineKanban'
+import { RecentApplicantsWidget } from '../components/RecentApplicantsWidget/RecentApplicantsWidget'
+import { NeedsAttentionWidget } from '../components/NeedsAttentionWidget/NeedsAttentionWidget'
+import { WeekCalendarWidget } from '../components/WeekCalendarWidget/WeekCalendarWidget'
 import { RegulixLogo } from '../components/RegulixLogo/RegulixLogo'
-import {
-  BriefcaseIcon,
-  UsersIcon,
-  PersonIcon,
-  RocketIcon,
-  CheckIcon,
-  DotsHorizontalIcon,
-  RegulixMarkIcon,
-} from '../icons'
+import { BriefcaseIcon, UsersIcon, PersonIcon, RocketIcon, CheckIcon, CloseIcon } from '../icons'
 import { useAuth } from '../context/AuthContext'
-import { getCompanyJobs, updateJob } from '../services/jobService'
+import { getCompanyJobs } from '../services/jobService'
 import { getCompanyDashboardStats } from '../services/companyDashboardService'
 import type { DashboardStat } from '../services/companyDashboardService'
 import type { StatCardColor } from '../components/StatCard/StatCard'
 import type { Job } from '../types'
+import dashStyles from './CompanyDashboard.module.css'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -42,144 +35,26 @@ function statusVariant(status: Job['status']): 'success' | 'warning' | 'secondar
   return 'secondary'
 }
 
+function timeGreeting(): string {
+  const h = new Date().getHours()
+  if (h >= 5 && h < 12) return 'Good morning'
+  if (h < 18) return 'Good afternoon'
+  return 'Good evening'
+}
+
 // ── Stat card config ─────────────────────────────────────────────────────────
 
 const STAT_META: Record<
   DashboardStat['key'],
   { label: string; icon: React.ReactNode; color: StatCardColor }
 > = {
-  new_applicants_today: { label: 'New Applicants', icon: <PersonIcon />, color: 'navy' },
-  screening: { label: 'Screening', icon: <CheckIcon />, color: 'navy' },
-  pending_interviews: { label: 'Pending Interviews', icon: <UsersIcon />, color: 'navy' },
-  final_round: { label: 'Final Round', icon: <BriefcaseIcon />, color: 'navy' },
+  new_applicants: { label: 'New applicants', icon: <PersonIcon />, color: 'navy' },
+  interviews_this_week: { label: 'Interviews this week', icon: <UsersIcon />, color: 'navy' },
+  open_posts: { label: 'Open posts', icon: <BriefcaseIcon />, color: 'navy' },
+  time_to_fill: { label: 'Time to fill', icon: <CheckIcon />, color: 'navy' },
 }
 
-// ── Sub-components ────────────────────────────────────────────────────────────
-
-const BoostIndicator: React.FC<{ boosted: boolean }> = ({ boosted }) => {
-  if (!boosted) return null
-  return <RocketIcon size={13} color="var(--kt-olive-600)" />
-}
-
-const ApplicantCount: React.FC<{ total: number; regulixReady: number }> = ({
-  total,
-  regulixReady,
-}) => (
-  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-    <span style={{ fontSize: 14, color: 'var(--kt-text)' }}>{total}</span>
-    {regulixReady > 0 && (
-      <>
-        <span style={{ color: 'var(--kt-text-muted)', fontSize: 12 }}>·</span>
-        <span style={{ fontSize: 14, color: 'var(--kt-text)' }}>{regulixReady}</span>
-        <RegulixMarkIcon size={14} />
-      </>
-    )}
-  </span>
-)
-
-type OverflowItem = {
-  label: string
-  danger?: boolean
-  onClick: () => void
-}
-
-const OverflowMenu: React.FC<{ items: OverflowItem[] }> = ({ items }) => {
-  const [open, setOpen] = useState(false)
-  const [menuPos, setMenuPos] = useState({ top: 0, right: 0 })
-  const btnRef = useRef<HTMLButtonElement>(null)
-  const menuRef = useRef<HTMLDivElement>(null)
-
-  const handleToggle = () => {
-    if (!open && btnRef.current) {
-      const rect = btnRef.current.getBoundingClientRect()
-      setMenuPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right })
-    }
-    setOpen((v) => !v)
-  }
-
-  useEffect(() => {
-    if (!open) return
-    const handler = (e: MouseEvent) => {
-      if (btnRef.current?.contains(e.target as Node) || menuRef.current?.contains(e.target as Node))
-        return
-      setOpen(false)
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [open])
-
-  return (
-    <>
-      <button
-        ref={btnRef}
-        onClick={handleToggle}
-        style={{
-          height: 27,
-          width: 27,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          border: 'none',
-          borderRadius: 'var(--kt-radius-md)',
-          background: 'transparent',
-          cursor: 'pointer',
-          color: 'var(--kt-text-muted)',
-          fontFamily: 'var(--kt-font-sans)',
-          flexShrink: 0,
-        }}
-        title="More actions"
-      >
-        <DotsHorizontalIcon size={13} />
-      </button>
-      {open &&
-        createPortal(
-          <div
-            ref={menuRef}
-            style={{
-              position: 'fixed',
-              top: menuPos.top,
-              right: menuPos.right,
-              background: 'var(--kt-surface)',
-              border: '0.5px solid var(--kt-border)',
-              borderRadius: 'var(--kt-radius-md)',
-              boxShadow: 'var(--kt-shadow-sm)',
-              minWidth: 140,
-              zIndex: 1000,
-              overflow: 'hidden',
-            }}
-          >
-            {items.map((item) => (
-              <button
-                key={item.label}
-                onClick={() => {
-                  item.onClick()
-                  setOpen(false)
-                }}
-                style={{
-                  display: 'block',
-                  width: '100%',
-                  textAlign: 'left',
-                  padding: '8px 14px',
-                  background: 'transparent',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontSize: 12,
-                  fontFamily: 'var(--kt-font-sans)',
-                  color: item.danger ? 'var(--kt-danger)' : 'var(--kt-text)',
-                  fontWeight: 'var(--kt-weight-medium)',
-                }}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>,
-          document.body
-        )}
-    </>
-  )
-}
-
-// ── Boost modal data ──────────────────────────────────────────────────────────
+// ── Boost modal ───────────────────────────────────────────────────────────────
 
 const boostTiers = [
   { days: 7, price: 35 },
@@ -187,23 +62,98 @@ const boostTiers = [
   { days: 30, price: 120 },
 ] as const
 
+// ── Module toggle row ─────────────────────────────────────────────────────────
+
+const ToggleRow: React.FC<{
+  label: string
+  on: boolean
+  locked?: boolean
+  onChange: (v: boolean) => void
+}> = ({ label, on, locked, onChange }) => (
+  <div
+    style={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: '12px 0',
+      borderBottom: '1px solid var(--kt-border)',
+    }}
+  >
+    <div>
+      <p
+        style={{
+          fontSize: 'var(--kt-text-sm)',
+          fontWeight: 'var(--kt-weight-medium)',
+          color: locked ? 'var(--kt-text-muted)' : 'var(--kt-text)',
+          margin: 0,
+        }}
+      >
+        {label}
+      </p>
+      {locked && (
+        <p style={{ fontSize: 11, color: 'var(--kt-text-muted)', margin: 0 }}>Always on</p>
+      )}
+    </div>
+    <button
+      type="button"
+      disabled={locked}
+      onClick={() => !locked && onChange(!on)}
+      style={{
+        width: 40,
+        height: 22,
+        borderRadius: 11,
+        border: 'none',
+        background: on ? 'var(--kt-primary)' : 'var(--kt-border)',
+        cursor: locked ? 'default' : 'pointer',
+        position: 'relative',
+        transition: 'background 150ms ease',
+        opacity: locked ? 0.5 : 1,
+        flexShrink: 0,
+      }}
+      aria-label={`${label} ${on ? 'on' : 'off'}`}
+    >
+      <span
+        style={{
+          position: 'absolute',
+          top: 3,
+          left: on ? 21 : 3,
+          width: 16,
+          height: 16,
+          borderRadius: '50%',
+          background: 'white',
+          transition: 'left 150ms ease',
+        }}
+      />
+    </button>
+  </div>
+)
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 export const CompanyDashboard: React.FC = () => {
   const { user } = useAuth()
-  const navigate = useNavigate()
 
-  const companyName: string = user?.user_metadata?.company_name ?? ''
-  const companyIndustry: string = user?.user_metadata?.industry ?? ''
-  const companySize: string = user?.user_metadata?.company_size ?? ''
+  const firstName: string =
+    (user?.user_metadata?.first_name as string) ||
+    (user?.user_metadata?.company_name as string) ||
+    ''
 
   const [companyJobs, setCompanyJobs] = useState<Job[]>([])
   const [dashboardStats, setDashboardStats] = useState<DashboardStat[]>([])
+  const [regulixBannerDismissed, setRegulixBannerDismissed] = useState(false)
+  const [customizeOpen, setCustomizeOpen] = useState(false)
+  const [moduleConfig, setModuleConfig] = useState({
+    calendar: true,
+    needsAttention: true,
+    pipeline: true,
+    recentApplicants: true,
+    activeJobs: true,
+  })
 
+  // Boost modal state
   const [boostJobId, setBoostJobId] = useState<string | null>(null)
   const [boostDuration, setBoostDuration] = useState<7 | 14 | 30>(7)
   const [boostJobSuccess, setBoostJobSuccess] = useState(false)
-  const [boostedJobIds, setBoostedJobIds] = useState<Set<string>>(new Set())
 
   const totalRegulixApplicants = companyJobs.reduce((s, j) => s + j.regulixReadyApplicants, 0)
 
@@ -220,27 +170,11 @@ export const CompanyDashboard: React.FC = () => {
   const boostingJob = boostJobId ? companyJobs.find((j) => j.id === boostJobId) : null
   const boostPrice = boostTiers.find((t) => t.days === boostDuration)?.price ?? 35
 
-  const handleBoostJobClick = (jobId: string) => {
-    setBoostJobId(jobId)
-    setBoostJobSuccess(false)
-    setBoostDuration(7)
-  }
-
   const handleBoostJobConfirm = () => setBoostJobSuccess(true)
 
   const handleBoostJobClose = () => {
-    if (boostJobSuccess && boostJobId) {
-      setBoostedJobIds((prev) => new Set([...prev, boostJobId]))
-    }
     setBoostJobId(null)
     setBoostJobSuccess(false)
-  }
-
-  const handleStatusChange = async (jobId: string, status: Job['status']) => {
-    const { error } = await updateJob(jobId, { status })
-    if (!error) {
-      setCompanyJobs((prev) => prev.map((j) => (j.id === jobId ? { ...j, status } : j)))
-    }
   }
 
   const stats = dashboardStats.map((s) => {
@@ -250,441 +184,173 @@ export const CompanyDashboard: React.FC = () => {
       value: s.value,
       icon: meta.icon,
       color: meta.color,
-      trend: undefined,
-      subtext: undefined,
-      subtextNode:
-        s.key === 'new_applicants_today' ? (
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-            <span style={{ fontSize: 'var(--kt-text-xs)', color: 'var(--kt-white)' }}>
-              {s.subtext?.split(' ')[0]}
-            </span>
-            <RegulixLogo height={14} />
-          </span>
-        ) : undefined,
+      subtext: String(s.subtext ?? ''),
     }
   })
 
-  // Dashboard module: open + paused only, max 5, newest first
   const activeJobRows = companyJobs
     .filter((j) => j.status === 'active' || j.status === 'paused')
     .slice(0, 5)
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--kt-bg)' }}>
-      <div
-        style={{
-          maxWidth: 'var(--kt-layout-max-width)',
-          margin: '0 auto',
-          padding: '28px var(--kt-space-6)',
-          display: 'flex',
-          gap: 28,
-          alignItems: 'flex-start',
-        }}
-      >
-        {/* ---- Main ---- */}
-        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 24 }}>
-          {/* Stats */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}>
-            {stats.map((s) => (
-              <StatCard key={s.label} {...s} />
-            ))}
-          </div>
-
-          {/* Pipeline kanban — cross-job, active stages only */}
-          {user?.id && <PipelineKanban companyId={user.id} />}
-
-          {/* Recent applicants — cross-job widget, active stages only */}
-          {user?.id && (
-            <RecentApplicantsWidget
-              companyId={user.id}
-              lastSignInAt={user.last_sign_in_at ?? null}
-            />
-          )}
-
-          {/* ── Active jobs module ─────────────────────────────────────── */}
-          <div
+      <div className={dashStyles.layout}>
+        {/* ── Page header ─────────────────────────────────────────────── */}
+        <div className={dashStyles.pageHeader}>
+          <h1
             style={{
-              background: 'var(--kt-surface)',
+              fontSize: 'var(--kt-text-xl)',
+              fontWeight: 'var(--kt-weight-bold)',
+              color: 'var(--kt-text)',
+              margin: 0,
+            }}
+          >
+            {timeGreeting()}
+            {firstName ? `, ${firstName}` : ''}
+          </h1>
+          <button
+            type="button"
+            onClick={() => setCustomizeOpen(true)}
+            style={{
+              height: 34,
+              padding: '0 14px',
               border: '1px solid var(--kt-border)',
-              borderRadius: 'var(--kt-radius-lg)',
-              overflow: 'hidden',
+              borderRadius: 'var(--kt-radius-md)',
+              background: 'transparent',
+              cursor: 'pointer',
+              fontSize: 'var(--kt-text-sm)',
+              fontFamily: 'var(--kt-font-sans)',
+              fontWeight: 'var(--kt-weight-medium)',
+              color: 'var(--kt-text)',
             }}
           >
-            {/* Module header */}
-            <div
+            Customize
+          </button>
+        </div>
+
+        {/* ── Stat cards ──────────────────────────────────────────────── */}
+        <div className={dashStyles.stats}>
+          {stats.map((s) => (
+            <StatCard key={s.label} {...s} />
+          ))}
+        </div>
+
+        {/* ── Regulix promo banner ─────────────────────────────────────── */}
+        {!regulixBannerDismissed && (
+          <div className={dashStyles.banner}>
+            <RegulixLogo height={22} textColor="var(--kt-navy-700)" />
+            <p className={dashStyles.bannerText}>
+              {totalRegulixApplicants > 0
+                ? `${totalRegulixApplicants} applicant${totalRegulixApplicants === 1 ? '' : 's'} in your pool have completed all hiring paperwork and can start immediately.`
+                : 'Connect Regulix to instantly verify applicant compliance before day one.'}
+            </p>
+            <button type="button" className={dashStyles.bannerLink}>
+              Learn more
+            </button>
+            <button
+              type="button"
+              onClick={() => setRegulixBannerDismissed(true)}
               style={{
-                padding: '16px 24px',
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                color: 'var(--kt-text-muted)',
                 display: 'flex',
-                justifyContent: 'space-between',
                 alignItems: 'center',
-                borderBottom: '1px solid var(--kt-border)',
+                padding: 4,
+                borderRadius: 'var(--kt-radius-sm)',
+                flexShrink: 0,
               }}
+              aria-label="Dismiss"
             >
-              <h2
-                style={{
-                  fontWeight: 'var(--kt-weight-semibold)',
-                  color: 'var(--kt-text)',
-                  fontSize: 'var(--kt-text-md)',
-                  margin: 0,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 8,
-                }}
-              >
-                <BriefcaseIcon size={16} color="var(--kt-olive-700)" />
-                Active jobs
-              </h2>
-              <Link
-                to="/site/dashboard/jobs"
-                style={{
-                  fontSize: 'var(--kt-text-sm)',
-                  color: 'var(--kt-primary)',
-                  textDecoration: 'none',
-                  fontWeight: 'var(--kt-weight-medium)',
-                }}
-              >
-                View all jobs →
-              </Link>
-            </div>
-
-            {/* ── Per-row grid (matches Recent Applicants widget) ────── */}
-            {(() => {
-              const COLS = '26% 90px 64px 56px 80px 48px minmax(150px, 1fr)'
-
-              const rowBase: React.CSSProperties = {
-                display: 'grid',
-                gridTemplateColumns: COLS,
-                alignItems: 'center',
-                columnGap: 10,
-                padding: '10px 24px',
-              }
-
-              const thStyle: React.CSSProperties = {
-                fontSize: 11,
-                fontWeight: 'var(--kt-weight-semibold)',
-                color: 'var(--kt-text-muted)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px',
-              }
-
-              const actionBtn = (label: string, onClick: () => void) => (
-                <button
-                  onClick={onClick}
-                  style={{
-                    height: 27,
-                    padding: '0 10px',
-                    border: '0.5px solid var(--kt-border)',
-                    borderRadius: 'var(--kt-radius-md)',
-                    background: 'transparent',
-                    cursor: 'pointer',
-                    fontSize: 11,
-                    fontFamily: 'var(--kt-font-sans)',
-                    fontWeight: 'var(--kt-weight-medium)',
-                    color: 'var(--kt-text)',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {label}
-                </button>
-              )
-
-              return (
-                <div>
-                  {/* Header row */}
-                  <div
-                    style={{
-                      ...rowBase,
-                      background: 'var(--kt-grey-100)',
-                      borderBottom: '1px solid var(--kt-border)',
-                      padding: '8px 24px',
-                    }}
-                  >
-                    <span style={thStyle}>Job title</span>
-                    <span style={thStyle}>Status</span>
-                    <span style={thStyle}>Posted</span>
-                    <span style={{ ...thStyle, justifySelf: 'center' }}>Views</span>
-                    <span style={{ ...thStyle, justifySelf: 'center' }}>Applicants</span>
-                    <span style={{ ...thStyle, justifySelf: 'center' }}>Boost</span>
-                    <span />
-                  </div>
-
-                  {/* Empty state */}
-                  {activeJobRows.length === 0 && (
-                    <div style={{ padding: '40px 24px', textAlign: 'center' }}>
-                      <p
-                        style={{
-                          fontSize: 'var(--kt-text-sm)',
-                          color: 'var(--kt-text-muted)',
-                          marginBottom: 12,
-                        }}
-                      >
-                        No active job postings yet.
-                      </p>
-                      <Link to="/site/post-job" style={{ textDecoration: 'none' }}>
-                        <Button variant="accent" size="sm">
-                          Post your first job
-                        </Button>
-                      </Link>
-                    </div>
-                  )}
-
-                  {/* Data rows */}
-                  {activeJobRows.map((job, i) => {
-                    const isLast = i === activeJobRows.length - 1
-                    const isBoosted = job.isSponsored || boostedJobIds.has(job.id)
-
-                    const primaryAction =
-                      job.status === 'active'
-                        ? actionBtn('View applicants', () => navigate('/site/dashboard/jobs'))
-                        : actionBtn('Resume', () => handleStatusChange(job.id, 'active'))
-
-                    const overflowItems: OverflowItem[] =
-                      job.status === 'active'
-                        ? [
-                            { label: 'Edit', onClick: () => navigate(`/site/post-job/${job.id}`) },
-                            { label: 'Pause', onClick: () => handleStatusChange(job.id, 'paused') },
-                            { label: 'Duplicate', onClick: () => {} },
-                            { label: 'Boost', onClick: () => handleBoostJobClick(job.id) },
-                            {
-                              label: 'Close',
-                              danger: true,
-                              onClick: () => handleStatusChange(job.id, 'closed'),
-                            },
-                          ]
-                        : [
-                            { label: 'Edit', onClick: () => navigate(`/site/post-job/${job.id}`) },
-                            { label: 'Duplicate', onClick: () => {} },
-                            {
-                              label: 'Close',
-                              danger: true,
-                              onClick: () => handleStatusChange(job.id, 'closed'),
-                            },
-                          ]
-
-                    return (
-                      <div
-                        key={job.id}
-                        style={{
-                          ...rowBase,
-                          borderBottom: isLast ? 'none' : '1px solid var(--kt-border)',
-                        }}
-                      >
-                        <div style={{ minWidth: 0, overflow: 'hidden' }}>
-                          <Link
-                            to={`/site/dashboard/jobs/${job.id}`}
-                            style={{ textDecoration: 'none', minWidth: 0, overflow: 'hidden' }}
-                          >
-                            <span
-                              style={{
-                                fontSize: 14,
-                                fontWeight: 'var(--kt-weight-bold)',
-                                color: 'var(--kt-primary)',
-                                display: 'block',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                              }}
-                            >
-                              {job.title}
-                            </span>
-                          </Link>
-                        </div>
-                        <div>
-                          <Badge variant={statusVariant(job.status)} size="sm">
-                            {statusLabel(job.status)}
-                          </Badge>
-                        </div>
-                        <div>
-                          <span style={{ fontSize: 14, color: 'var(--kt-text-muted)' }}>
-                            {formatShortDate(job.createdAt)}
-                          </span>
-                        </div>
-                        <div style={{ justifySelf: 'center' }}>
-                          <span style={{ fontSize: 14, color: 'var(--kt-text-muted)' }}>
-                            {job.viewCount.toLocaleString()}
-                          </span>
-                        </div>
-                        <div style={{ justifySelf: 'center' }}>
-                          <ApplicantCount
-                            total={job.totalApplicants}
-                            regulixReady={job.regulixReadyApplicants}
-                          />
-                        </div>
-                        <div style={{ justifySelf: 'center' }}>
-                          <BoostIndicator boosted={isBoosted} />
-                        </div>
-                        <div
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'flex-end',
-                            gap: 6,
-                          }}
-                        >
-                          {primaryAction}
-                          <OverflowMenu items={overflowItems} />
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              )
-            })()}
+              <CloseIcon size={14} />
+            </button>
           </div>
-        </div>
+        )}
 
-        {/* ---- Sidebar ---- */}
-        <div
-          style={{ width: 260, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 16 }}
-        >
-          {/* Company Info */}
-          <div
-            style={{
-              background: 'var(--kt-grey-50)',
-              borderRadius: 'var(--kt-radius-lg)',
-              padding: 18,
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
-              <div
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 10,
-                  background: 'var(--kt-surface)',
-                  color: 'var(--kt-navy-900)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: 'var(--kt-weight-bold)',
-                  fontSize: 'var(--kt-text-lg)',
-                  flexShrink: 0,
-                  border: '1px solid var(--kt-border)',
-                }}
-              >
-                {companyName.charAt(0)}
-              </div>
-              <h2
-                style={{
-                  fontSize: 'var(--kt-text-md)',
-                  fontWeight: 'var(--kt-weight-bold)',
-                  color: 'var(--kt-text)',
-                  margin: 0,
-                  minWidth: 0,
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {companyName}
-              </h2>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {[
-                { label: 'Industry', value: companyIndustry },
-                { label: 'Size', value: companySize ? `${companySize} employees` : '' },
-              ]
-                .filter((row) => row.value)
-                .map((row) => (
-                  <div
-                    key={row.label}
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      fontSize: 'var(--kt-text-xs)',
-                      gap: 8,
-                    }}
-                  >
-                    <span style={{ color: 'var(--kt-text-muted)' }}>{row.label}</span>
-                    <span
-                      style={{
-                        color: 'var(--kt-text)',
-                        fontWeight: 'var(--kt-weight-medium)',
-                        textAlign: 'right',
-                      }}
-                    >
-                      {row.value}
-                    </span>
-                  </div>
-                ))}
-            </div>
-          </div>
+        {/* ── Two-column module grid ───────────────────────────────────── */}
 
-          {/* Quick Actions */}
-          <div
-            style={{
-              background: 'var(--kt-grey-50)',
-              borderRadius: 'var(--kt-radius-lg)',
-              padding: 18,
-            }}
-          >
-            <h3
-              style={{
-                fontSize: 'var(--kt-text-xs)',
-                fontWeight: 'var(--kt-weight-semibold)',
-                color: 'var(--kt-text-muted)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px',
-                marginBottom: 12,
-              }}
-            >
-              Quick Actions
-            </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <Link to="/site/post-job" style={{ textDecoration: 'none' }}>
-                <Button variant="accent" size="sm" style={{ width: '100%' }}>
-                  + Post a Job
-                </Button>
-              </Link>
-              <Link to="/site/jobs" style={{ textDecoration: 'none' }}>
-                <Button variant="outline" size="sm" style={{ width: '100%' }}>
-                  Browse Worker Profiles
-                </Button>
-              </Link>
-            </div>
+        {/* Row 1: Week calendar 2/3 + Needs attention 1/3, stacks on mobile */}
+        {(moduleConfig.calendar || moduleConfig.needsAttention) && user?.id && (
+          <div className={dashStyles.row1}>
+            {moduleConfig.calendar ? <WeekCalendarWidget companyId={user.id} /> : <div />}
+            {moduleConfig.needsAttention ? <NeedsAttentionWidget companyId={user.id} /> : <div />}
           </div>
+        )}
 
-          {/* Regulix Ready Applicants */}
-          <div
-            style={{
-              background: 'color-mix(in srgb, var(--kt-accent) 6%, var(--kt-surface))',
-              borderRadius: 'var(--kt-radius-lg)',
-              padding: '20px',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'flex-start',
-              gap: 12,
-            }}
-          >
-            <RegulixBadge size="lg" pulse />
-            <div>
-              <p
-                style={{
-                  fontWeight: 'var(--kt-weight-semibold)',
-                  color: 'var(--kt-text)',
-                  fontSize: 'var(--kt-text-md)',
-                  marginBottom: 6,
-                }}
-              >
-                {totalRegulixApplicants} Regulix Ready Applicants In Your Pool
-              </p>
-              <p
-                style={{
-                  fontSize: 'var(--kt-text-sm)',
-                  color: 'var(--kt-text-muted)',
-                  lineHeight: 1.5,
-                }}
-              >
-                These workers have completed W-4, I-9, direct deposit, and drug screening. Zero
-                onboarding paperwork.
-              </p>
-            </div>
-            <Button variant="accent" size="md" style={{ width: '100%' }}>
-              Filter by Regulix Ready
-            </Button>
+        {/* Row 2: Pipeline kanban — full width */}
+        {moduleConfig.pipeline && user?.id && <PipelineKanban companyId={user.id} />}
+
+        {/* Row 3: Recent applicants + Active jobs — 1:1, stacks on mobile */}
+        {(moduleConfig.recentApplicants || moduleConfig.activeJobs) && (
+          <div className={dashStyles.row3}>
+            {moduleConfig.recentApplicants && user?.id && (
+              <RecentApplicantsWidget
+                companyId={user.id}
+                lastSignInAt={user.last_sign_in_at ?? null}
+              />
+            )}
+
+            {moduleConfig.activeJobs && <ActiveJobsModule rows={activeJobRows} />}
           </div>
-        </div>
+        )}
       </div>
+
+      {/* ── Customize panel ─────────────────────────────────────────────── */}
+      <Modal
+        open={customizeOpen}
+        onClose={() => setCustomizeOpen(false)}
+        size="sm"
+        title="Customize dashboard"
+        footer={
+          <button
+            onClick={() => setCustomizeOpen(false)}
+            style={{
+              width: '100%',
+              padding: 'var(--kt-space-3)',
+              background: 'var(--kt-primary)',
+              color: 'var(--kt-text-on-primary)',
+              border: 'none',
+              borderRadius: 'var(--kt-radius-md)',
+              fontSize: 'var(--kt-text-sm)',
+              fontWeight: 'var(--kt-weight-semibold)',
+              cursor: 'pointer',
+              fontFamily: 'var(--kt-font-sans)',
+            }}
+          >
+            Done
+          </button>
+        }
+      >
+        <div style={{ paddingTop: 4 }}>
+          <ToggleRow label="Stat cards" on locked onChange={() => {}} />
+          <ToggleRow
+            label="Week calendar"
+            on={moduleConfig.calendar}
+            onChange={(v) => setModuleConfig((c) => ({ ...c, calendar: v }))}
+          />
+          <ToggleRow
+            label="Needs attention"
+            on={moduleConfig.needsAttention}
+            onChange={(v) => setModuleConfig((c) => ({ ...c, needsAttention: v }))}
+          />
+          <ToggleRow
+            label="Pipeline"
+            on={moduleConfig.pipeline}
+            onChange={(v) => setModuleConfig((c) => ({ ...c, pipeline: v }))}
+          />
+          <ToggleRow
+            label="Recent applicants"
+            on={moduleConfig.recentApplicants}
+            onChange={(v) => setModuleConfig((c) => ({ ...c, recentApplicants: v }))}
+          />
+          <ToggleRow
+            label="Active jobs"
+            on={moduleConfig.activeJobs}
+            onChange={(v) => setModuleConfig((c) => ({ ...c, activeJobs: v }))}
+          />
+        </div>
+      </Modal>
 
       {/* ── Boost Job Modal ──────────────────────────────────────────── */}
       <Modal
@@ -944,6 +610,165 @@ export const CompanyDashboard: React.FC = () => {
           </div>
         )}
       </Modal>
+    </div>
+  )
+}
+
+// ── Active Jobs sub-component ─────────────────────────────────────────────────
+
+type ActiveJobsModuleProps = {
+  rows: Job[]
+}
+
+const ActiveJobsModule: React.FC<ActiveJobsModuleProps> = ({ rows }) => {
+  const navigate = useNavigate()
+
+  const thStyle: React.CSSProperties = {
+    fontSize: 11,
+    fontWeight: 600,
+    color: 'var(--kt-text-muted)',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px',
+  }
+
+  return (
+    <div className={dashStyles.jobsWidget}>
+      {/* Header */}
+      <div className={dashStyles.jobsWidgetHeader}>
+        <h2
+          style={{
+            fontWeight: 'var(--kt-weight-semibold)',
+            color: 'var(--kt-text)',
+            fontSize: 'var(--kt-text-md)',
+            margin: 0,
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 8,
+          }}
+        >
+          <BriefcaseIcon size={16} color="var(--kt-olive-700)" />
+          Active jobs
+        </h2>
+        <Link
+          to="/site/dashboard/jobs"
+          style={{
+            fontSize: 'var(--kt-text-sm)',
+            color: 'var(--kt-primary)',
+            textDecoration: 'none',
+            fontWeight: 'var(--kt-weight-medium)',
+          }}
+        >
+          View all jobs →
+        </Link>
+      </div>
+
+      {/* Table */}
+      <div>
+        {/* Header row */}
+        <div className={`${dashStyles.jobsRow} ${dashStyles.jobsHeader}`}>
+          <span style={thStyle}>Job title</span>
+          <span style={thStyle}>Status</span>
+          <span style={thStyle}>Posted</span>
+          <span style={{ ...thStyle, justifySelf: 'center' }}>Views</span>
+          <span style={{ ...thStyle, justifySelf: 'center' }}>Applicants</span>
+        </div>
+
+        {/* Empty state */}
+        {rows.length === 0 && (
+          <div
+            style={{
+              padding: '40px 24px',
+              textAlign: 'center',
+              minHeight: 220,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <p
+              style={{
+                fontSize: 'var(--kt-text-sm)',
+                color: 'var(--kt-text-muted)',
+                marginBottom: 12,
+              }}
+            >
+              No active job postings yet.
+            </p>
+            <Link to="/site/post-job" style={{ textDecoration: 'none' }}>
+              <Button variant="accent" size="sm">
+                Post your first job
+              </Button>
+            </Link>
+          </div>
+        )}
+
+        {/* Data rows */}
+        {rows.map((job) => (
+          <div
+            key={job.id}
+            className={dashStyles.jobsRow}
+            style={{ borderBottom: '1px solid var(--kt-border)' }}
+          >
+            <div style={{ minWidth: 0 }}>
+              <button
+                type="button"
+                onClick={() => navigate(`/site/dashboard/jobs/${job.id}`)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  padding: 0,
+                  cursor: 'pointer',
+                  fontFamily: 'var(--kt-font-sans)',
+                  fontSize: 14,
+                  fontWeight: 'var(--kt-weight-bold)',
+                  color: 'var(--kt-primary)',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  display: 'block',
+                  textAlign: 'left',
+                  width: '100%',
+                }}
+              >
+                {job.title}
+              </button>
+            </div>
+            <div>
+              <Badge variant={statusVariant(job.status)} size="sm">
+                {statusLabel(job.status)}
+              </Badge>
+            </div>
+            <div>
+              <span style={{ fontSize: 14, color: 'var(--kt-text-muted)' }}>
+                {formatShortDate(job.createdAt)}
+              </span>
+            </div>
+            <div style={{ justifySelf: 'center' }}>
+              <span style={{ fontSize: 14, color: 'var(--kt-text-muted)' }}>
+                {job.viewCount.toLocaleString()}
+              </span>
+            </div>
+            <div style={{ justifySelf: 'center' }}>
+              <span style={{ fontSize: 14, color: 'var(--kt-text)' }}>{job.totalApplicants}</span>
+            </div>
+          </div>
+        ))}
+
+        {/* Filler rows so the table reserves space for 5 rows */}
+        {rows.length > 0 &&
+          Array.from({ length: Math.max(0, 5 - rows.length) }).map((_, i) => {
+            const isLast = i === Math.max(0, 5 - rows.length) - 1
+            return (
+              <div
+                key={`filler-${i}`}
+                aria-hidden="true"
+                className={dashStyles.jobsRow}
+                style={{ borderBottom: isLast ? 'none' : '1px solid var(--kt-border)' }}
+              />
+            )
+          })}
+      </div>
     </div>
   )
 }

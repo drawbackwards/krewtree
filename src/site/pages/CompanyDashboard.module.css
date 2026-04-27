@@ -1,0 +1,160 @@
+.layout {
+  max-width: var(--kt-layout-max-width);
+  margin: 0 auto;
+  padding: 28px var(--kt-space-6);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.pageHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.banner {
+  background: #fef4e9;
+  border-radius: var(--kt-radius-lg);
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.bannerText {
+  flex: 1;
+  font-size: var(--kt-text-sm);
+  color: var(--kt-text);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.bannerLink {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: var(--kt-font-sans);
+  font-size: var(--kt-text-sm);
+  font-weight: var(--kt-weight-semibold);
+  color: #fa3b0f;
+  white-space: nowrap;
+  padding: 0;
+}
+
+.row1 {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.row3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  align-items: start;
+}
+
+@media (max-width: 960px) {
+  .layout {
+    padding: 20px var(--kt-space-4);
+    gap: 16px;
+  }
+
+  .stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .row1,
+  .row3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .layout {
+    padding: 16px var(--kt-space-3);
+  }
+
+  .banner {
+    flex-wrap: wrap;
+    padding: 12px 16px;
+  }
+
+  .bannerText {
+    flex-basis: 100%;
+    order: 2;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Active Jobs widget */
+.jobsWidget {
+  background: var(--kt-surface);
+  border: 1px solid var(--kt-border);
+  border-radius: var(--kt-radius-lg);
+  overflow: hidden;
+}
+
+.jobsWidgetHeader {
+  padding: 16px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--kt-border);
+  min-height: 57px;
+  box-sizing: border-box;
+  gap: 12px;
+}
+
+@media (max-width: 640px) {
+  .jobsWidgetHeader {
+    padding: 14px 16px;
+  }
+}
+
+/* Active Jobs table */
+.jobsRow {
+  display: grid;
+  grid-template-columns: 1fr 80px 60px 48px 80px;
+  align-items: center;
+  column-gap: 10px;
+  padding: 10px 24px;
+  min-height: 44px;
+}
+
+.jobsHeader {
+  background: var(--kt-grey-100);
+  border-bottom: 1px solid var(--kt-border);
+  padding: 8px 24px;
+  min-height: 0;
+}
+
+@media (max-width: 640px) {
+  .jobsRow {
+    /* Title | Status | Applicants — hide Posted and Views */
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    padding: 10px 16px;
+  }
+  .jobsHeader {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  .jobsRow > :nth-child(3),
+  .jobsRow > :nth-child(4) {
+    display: none;
+  }
+}

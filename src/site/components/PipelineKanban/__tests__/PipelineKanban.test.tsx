@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor, act } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
 import type { CompanyApplicant } from '../../../types'
 
 const { getKanbanApplicantsMock, setApplicantStageMock } = vi.hoisted(() => ({
@@ -58,7 +59,11 @@ describe('PipelineKanban', () => {
       error: null,
     })
 
-    render(<PipelineKanban companyId="c-1" />)
+    render(
+      <MemoryRouter>
+        <PipelineKanban companyId="c-1" />
+      </MemoryRouter>
+    )
 
     await waitFor(() => {
       expect(screen.getByText('Jane a1')).toBeInTheDocument()
@@ -73,7 +78,11 @@ describe('PipelineKanban', () => {
     })
     setApplicantStageMock.mockResolvedValue({ error: 'db_error' })
 
-    const { container } = render(<PipelineKanban companyId="c-1" />)
+    const { container } = render(
+      <MemoryRouter>
+        <PipelineKanban companyId="c-1" />
+      </MemoryRouter>
+    )
     await waitFor(() => expect(screen.getByText('Jane a1')).toBeInTheDocument())
 
     const ref = (

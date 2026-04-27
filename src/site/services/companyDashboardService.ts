@@ -3,11 +3,9 @@ import { supabase } from '@/lib/supabase'
 // ── Types ──────────────────────────────────────────────────────────────────────
 
 export type DashboardStat = {
-  key: 'new_applicants_today' | 'screening' | 'pending_interviews' | 'final_round'
-  value: number
-  delta: number | null
-  deltaLabel: string
-  subtext?: string
+  key: 'new_applicants' | 'interviews_this_week' | 'open_posts' | 'time_to_fill'
+  value: number | string
+  subtext: string
 }
 
 // ── Date helpers ───────────────────────────────────────────────────────────────
@@ -25,169 +23,86 @@ function daysAgoMidnightUTC(days: number): string {
   return d.toISOString()
 }
 
-function mondayOfWeekUTC(weeksAgo: number): string {
+function mondayOfWeekUTC(): string {
   const d = new Date()
   d.setUTCHours(0, 0, 0, 0)
   const day = d.getUTCDay()
-  const diff = day === 0 ? 6 : day - 1 // days since Monday
-  d.setUTCDate(d.getUTCDate() - diff - weeksAgo * 7)
+  const diff = day === 0 ? 6 : day - 1
+  d.setUTCDate(d.getUTCDate() - diff)
   return d.toISOString()
-}
-
-function shortWeekday(): string {
-  return new Date().toLocaleDateString('en-US', { weekday: 'short' })
 }
 
 // ── Queries ────────────────────────────────────────────────────────────────────
 
-async function fetchNewApplicantsToday(companyId: string): Promise<DashboardStat> {
-  const todayStart = todayMidnightUTC()
-  const lastWeekSameDay = daysAgoMidnightUTC(7)
-  const lastWeekNextDay = daysAgoMidnightUTC(6)
+async function fetchNewApplicants(companyId: string): Promise<DashboardStat> {
+  const weekStart = mondayOfWeekUTC()
+  const yesterday = daysAgoMidnightUTC(1)
+  const today = todayMidnightUTC()
 
-  const [todayRes, lastWeekRes, regulixRes] = await Promise.all([
+  const [weekRes, yesterdayRes] = await Promise.all([
     supabase
       .from('applications')
       .select('id, jobs!inner(company_id)', { count: 'exact', head: true })
       .eq('jobs.company_id', companyId)
-      .gte('created_at', todayStart),
+      .gte('created_at', weekStart),
     supabase
       .from('applications')
       .select('id, jobs!inner(company_id)', { count: 'exact', head: true })
       .eq('jobs.company_id', companyId)
-      .gte('created_at', lastWeekSameDay)
-      .lt('created_at', lastWeekNextDay),
-    supabase
-      .from('applications')
-      .select('id, jobs!inner(company_id), worker_profiles:worker_id!inner(is_regulix_ready)', {
-        count: 'exact',
-        head: true,
-      })
-      .eq('jobs.company_id', companyId)
-      .eq('worker_profiles.is_regulix_ready', true),
+      .gte('created_at', yesterday)
+      .lt('created_at', today),
   ])
 
-  const todayCount = todayRes.error ? 0 : (todayRes.count ?? 0)
-  const lastWeekCount = lastWeekRes.error ? 0 : (lastWeekRes.count ?? 0)
-  const regulixCount = regulixRes.error ? 0 : (regulixRes.count ?? 0)
+  const weekCount = weekRes.error ? 0 : (weekRes.count ?? 0)
+  const yesterdayCount = yesterdayRes.error ? 0 : (yesterdayRes.count ?? 0)
+  const delta = weekCount - yesterdayCount
 
   return {
-    key: 'new_applicants_today',
-    value: todayCount,
-    delta: todayCount - lastWeekCount,
-    deltaLabel: `vs last ${shortWeekday()}`,
-    subtext: `${regulixCount} Regulix Ready`,
+    key: 'new_applicants',
+    value: weekCount,
+    subtext: delta >= 0 ? `+${delta} since yesterday` : `${delta} since yesterday`,
   }
 }
 
-async function fetchScreening(companyId: string): Promise<DashboardStat> {
-  const thisMonday = mondayOfWeekUTC(0)
-  const lastMonday = mondayOfWeekUTC(1)
-
-  const [currentRes, thisWeekRes, lastWeekRes] = await Promise.all([
-    supabase
-      .from('applications')
-      .select('id, jobs!inner(company_id)', { count: 'exact', head: true })
-      .eq('jobs.company_id', companyId)
-      .in('status', ['Applied', 'Viewed']),
-    supabase
-      .from('applications')
-      .select('id, jobs!inner(company_id)', { count: 'exact', head: true })
-      .eq('jobs.company_id', companyId)
-      .in('status', ['Applied', 'Viewed'])
-      .gte('status_updated_at', thisMonday),
-    supabase
-      .from('applications')
-      .select('id, jobs!inner(company_id)', { count: 'exact', head: true })
-      .eq('jobs.company_id', companyId)
-      .in('status', ['Applied', 'Viewed'])
-      .gte('status_updated_at', lastMonday)
-      .lt('status_updated_at', thisMonday),
-  ])
-
-  const current = currentRes.error ? 0 : (currentRes.count ?? 0)
-  const thisWeek = thisWeekRes.error ? null : (thisWeekRes.count ?? 0)
-  const lastWeek = lastWeekRes.error ? null : (lastWeekRes.count ?? 0)
-
+async function fetchInterviewsThisWeek(_companyId: string): Promise<DashboardStat> {
+  // interviews table is stubbed — Supabase types will be regenerated after migration is applied
   return {
-    key: 'screening',
-    value: current,
-    delta: thisWeek !== null && lastWeek !== null ? thisWeek - lastWeek : null,
-    deltaLabel: 'vs last week',
+    key: 'interviews_this_week',
+    value: 0,
+    subtext: '0 today',
   }
 }
 
-async function fetchPendingInterviews(companyId: string): Promise<DashboardStat> {
-  const thisMonday = mondayOfWeekUTC(0)
-  const lastMonday = mondayOfWeekUTC(1)
-
-  const [currentRes, thisWeekRes, lastWeekRes] = await Promise.all([
+async function fetchOpenPosts(companyId: string): Promise<DashboardStat> {
+  const [openRes, pausedRes] = await Promise.all([
     supabase
-      .from('applications')
-      .select('id, jobs!inner(company_id)', { count: 'exact', head: true })
-      .eq('jobs.company_id', companyId)
-      .eq('status', 'Interviewing'),
+      .from('jobs')
+      .select('id', { count: 'exact', head: true })
+      .eq('company_id', companyId)
+      .eq('status', 'active'),
     supabase
-      .from('applications')
-      .select('id, jobs!inner(company_id)', { count: 'exact', head: true })
-      .eq('jobs.company_id', companyId)
-      .eq('status', 'Interviewing')
-      .gte('status_updated_at', thisMonday),
-    supabase
-      .from('applications')
-      .select('id, jobs!inner(company_id)', { count: 'exact', head: true })
-      .eq('jobs.company_id', companyId)
-      .eq('status', 'Interviewing')
-      .gte('status_updated_at', lastMonday)
-      .lt('status_updated_at', thisMonday),
+      .from('jobs')
+      .select('id', { count: 'exact', head: true })
+      .eq('company_id', companyId)
+      .eq('status', 'paused'),
   ])
 
-  const current = currentRes.error ? 0 : (currentRes.count ?? 0)
-  const thisWeek = thisWeekRes.error ? null : (thisWeekRes.count ?? 0)
-  const lastWeek = lastWeekRes.error ? null : (lastWeekRes.count ?? 0)
+  const openCount = openRes.error ? 0 : (openRes.count ?? 0)
+  const pausedCount = pausedRes.error ? 0 : (pausedRes.count ?? 0)
 
   return {
-    key: 'pending_interviews',
-    value: current,
-    delta: thisWeek !== null && lastWeek !== null ? thisWeek - lastWeek : null,
-    deltaLabel: 'vs last week',
+    key: 'open_posts',
+    value: openCount,
+    subtext: pausedCount === 1 ? '1 paused' : `${pausedCount} paused`,
   }
 }
 
-async function fetchFinalRound(companyId: string): Promise<DashboardStat> {
-  const thisMonday = mondayOfWeekUTC(0)
-  const lastMonday = mondayOfWeekUTC(1)
-
-  const [currentRes, thisWeekRes, lastWeekRes] = await Promise.all([
-    supabase
-      .from('applications')
-      .select('id, jobs!inner(company_id)', { count: 'exact', head: true })
-      .eq('jobs.company_id', companyId)
-      .eq('status', 'Offer'),
-    supabase
-      .from('applications')
-      .select('id, jobs!inner(company_id)', { count: 'exact', head: true })
-      .eq('jobs.company_id', companyId)
-      .eq('status', 'Offer')
-      .gte('status_updated_at', thisMonday),
-    supabase
-      .from('applications')
-      .select('id, jobs!inner(company_id)', { count: 'exact', head: true })
-      .eq('jobs.company_id', companyId)
-      .eq('status', 'Offer')
-      .gte('status_updated_at', lastMonday)
-      .lt('status_updated_at', thisMonday),
-  ])
-
-  const current = currentRes.error ? 0 : (currentRes.count ?? 0)
-  const thisWeek = thisWeekRes.error ? null : (thisWeekRes.count ?? 0)
-  const lastWeek = lastWeekRes.error ? null : (lastWeekRes.count ?? 0)
-
+async function fetchTimeToFill(): Promise<DashboardStat> {
+  // Requires hire event timestamps — not yet available. Stub.
   return {
-    key: 'final_round',
-    value: current,
-    delta: thisWeek !== null && lastWeek !== null ? thisWeek - lastWeek : null,
-    deltaLabel: 'vs last week',
+    key: 'time_to_fill',
+    value: '—',
+    subtext: '90-day avg',
   }
 }
 
@@ -198,10 +113,10 @@ export async function getCompanyDashboardStats(
 ): Promise<{ data: DashboardStat[]; error: string | null }> {
   try {
     const cards = await Promise.all([
-      fetchNewApplicantsToday(companyId),
-      fetchScreening(companyId),
-      fetchPendingInterviews(companyId),
-      fetchFinalRound(companyId),
+      fetchNewApplicants(companyId),
+      fetchInterviewsThisWeek(companyId),
+      fetchOpenPosts(companyId),
+      fetchTimeToFill(),
     ])
     return { data: cards, error: null }
   } catch (err) {

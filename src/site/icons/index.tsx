@@ -1124,6 +1124,28 @@ export const ChartBarIcon: React.FC<{ size?: number; color?: string }> = ({
   </svg>
 )
 
+/** Kanban / pipeline — three columns with stacked cards */
+export const KanbanIcon: React.FC<{ size?: number; color?: string }> = ({
+  size = 16,
+  color = 'currentColor',
+}) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <rect x="3" y="4" width="5" height="16" rx="1" />
+    <rect x="9.5" y="4" width="5" height="11" rx="1" />
+    <rect x="16" y="4" width="5" height="7" rx="1" />
+  </svg>
+)
+
 /** Folder — replaces 🗂 */
 export const FolderIcon: React.FC<{ size?: number; color?: string }> = ({
   size = 16,
