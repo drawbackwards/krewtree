@@ -64,13 +64,47 @@ type JoinedApplicantRow = AppRow & {
     | 'city'
     | 'region'
     | 'is_regulix_ready'
-  >
+  > & {
+    worker_skills: Array<{ name: string; years_exp: number | null }>
+    worker_certifications: Array<{
+      cert_name: string
+      issuing_body: string
+      expiry_date: string | null
+    }>
+    worker_work_history: Array<{
+      employer_name: string
+      role_title: string
+      start_date: string | null
+      end_date: string | null
+      is_current: boolean
+    }>
+  }
   jobs: Pick<JobRow, 'id' | 'title' | 'status'>
   application_notes: Array<{
     text: string
     author_name: string
     created_at: string
   }>
+}
+
+/** Format YYYY-MM(-DD) as "Mon YYYY"; falls back to the raw string. */
+function formatMonthYear(d: string | null | undefined): string {
+  if (!d) return ''
+  const [yStr, mStr] = d.split('-')
+  const y = Number(yStr)
+  const m = Number(mStr)
+  if (!y || !m) return d
+  const month = new Date(y, m - 1).toLocaleString('default', { month: 'short' })
+  return `${month} ${y}`
+}
+
+function formatJobDuration(start: string | null, end: string | null, isCurrent: boolean): string {
+  const startLabel = formatMonthYear(start)
+  const endLabel = isCurrent ? 'Present' : formatMonthYear(end)
+  if (!startLabel && !endLabel) return ''
+  if (!startLabel) return endLabel
+  if (!endLabel) return startLabel
+  return `${startLabel} – ${endLabel}`
 }
 
 /**
@@ -102,9 +136,30 @@ function toCompanyApplicant(a: JoinedApplicantRow): CompanyApplicant {
     workerPrimaryTrade: w.primary_trade ?? '',
     workerLocation: [w.city, w.region].filter(Boolean).join(', '),
     workerAvailability: 'available',
-    workerTopSkills: [],
-    workerCertifications: [],
-    workerJobHistory: [],
+    workerTopSkills: Array.from(
+      [...(w.worker_skills ?? [])]
+        .sort((s1, s2) => (s2.years_exp ?? 0) - (s1.years_exp ?? 0))
+        .reduce((acc, s) => {
+          if (!acc.has(s.name)) acc.set(s.name, true)
+          return acc
+        }, new Map<string, true>())
+        .keys()
+    ).slice(0, 5),
+    workerCertifications: (w.worker_certifications ?? []).map((c) => ({
+      name: c.cert_name,
+      issuer: c.issuing_body,
+      expiresOn: formatMonthYear(c.expiry_date) || null,
+    })),
+    workerJobHistory: [...(w.worker_work_history ?? [])]
+      .sort((j1, j2) => {
+        if (j1.is_current !== j2.is_current) return j1.is_current ? -1 : 1
+        return (j2.start_date ?? '').localeCompare(j1.start_date ?? '')
+      })
+      .map((j) => ({
+        employer: j.employer_name,
+        title: j.role_title,
+        duration: formatJobDuration(j.start_date, j.end_date, j.is_current),
+      })),
     workerRating: null,
     workerRatingCount: 0,
     workerRegulixRating: null,
@@ -129,7 +184,12 @@ function toCompanyApplicant(a: JoinedApplicantRow): CompanyApplicant {
 
 const APPLICANT_SELECT = `
   *,
-  worker_profiles!inner(id, first_name, last_name, avatar_url, primary_trade, city, region, is_regulix_ready),
+  worker_profiles!inner(
+    id, first_name, last_name, avatar_url, primary_trade, city, region, is_regulix_ready,
+    worker_skills(name, years_exp),
+    worker_certifications(cert_name, issuing_body, expiry_date),
+    worker_work_history(employer_name, role_title, start_date, end_date, is_current)
+  ),
   jobs!inner(id, title, status, company_id),
   application_notes(text, author_name, created_at)
 `

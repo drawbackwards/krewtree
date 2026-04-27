@@ -26,7 +26,7 @@ function formatShortDate(isoString: string): string {
 function statusLabel(status: Job['status']): string {
   if (status === 'active') return 'Open'
   if (status === 'paused') return 'Paused'
-  return 'Closed'
+  return 'Archived'
 }
 
 function statusVariant(status: Job['status']): 'success' | 'warning' | 'secondary' {
@@ -713,7 +713,7 @@ const ActiveJobsModule: React.FC<ActiveJobsModuleProps> = ({ rows }) => {
             <div style={{ minWidth: 0 }}>
               <button
                 type="button"
-                onClick={() => navigate(`/site/dashboard/jobs/${job.id}`)}
+                onClick={() => navigate(`/site/jobs/${job.id}`)}
                 style={{
                   background: 'none',
                   border: 'none',

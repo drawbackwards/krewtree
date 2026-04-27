@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { Modal } from '../../components'
 import { useAuth } from '../context/AuthContext'
 import type { CompanyApplicant, KanbanStage } from '../types'
@@ -115,8 +115,15 @@ const OverflowMenu: React.FC<{ items: OverflowItem[] }> = ({ items }) => {
 
 export const AllApplicantsPage: React.FC = () => {
   const { user } = useAuth()
+  const [searchParams] = useSearchParams()
 
-  const [filters, setFilters] = useState<ApplicantFilters>(DEFAULT_FILTERS)
+  // Initial jobId pulled from URL (set when arriving from JobPostsPage's
+  // "View applicants" or the dashboard ActiveJobsModule). After mount, the
+  // user manages this via the dropdown — no bidirectional URL sync.
+  const [filters, setFilters] = useState<ApplicantFilters>(() => {
+    const jobIdParam = searchParams.get('jobId')
+    return jobIdParam ? { ...DEFAULT_FILTERS, jobId: jobIdParam } : DEFAULT_FILTERS
+  })
   const [sort, setSort] = useState<{ column: ApplicantSort; direction: 'asc' | 'desc' }>({
     column: 'applied',
     direction: 'desc',

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Input, Textarea, Select, Button, Badge, Alert, Switch, Divider } from '../../components'
 import styles from './PostJobPage.module.css'
 import { RegulixBadge } from '../components/RegulixBadge/RegulixBadge'
@@ -156,6 +156,8 @@ const experienceOptions = [
 export const PostJobPage: React.FC = () => {
   const navigate = useNavigate()
   const { id: editId } = useParams<{ id: string }>()
+  const [searchParams] = useSearchParams()
+  const duplicateOf = searchParams.get('duplicate')
   const isEditMode = !!editId
   const { user } = useAuth()
   const [submitted, setSubmitted] = useState(false)
@@ -182,25 +184,28 @@ export const PostJobPage: React.FC = () => {
   const [regulixPreferred, setRegulixPreferred] = useState(false)
   const [questions, setQuestions] = useState<string[]>([''])
 
-  // Pre-fill industry from company profile when creating a new job
+  // Pre-fill industry from company profile when creating a new job from scratch
+  // (skip when editing or duplicating — both already supply an industry)
   useEffect(() => {
-    if (editId || !user) return
+    if (editId || duplicateOf || !user) return
     getCompanyIndustry(user.id).then(({ data }) => {
       if (!data) return
       const match = industries.find((i) => i.name.toLowerCase() === data.toLowerCase())
       if (match) setIndustry(match.slug)
     })
-  }, [editId, user])
+  }, [editId, duplicateOf, user])
 
-  // Load existing job when editing
+  // Load existing job when editing or duplicating. In duplicate mode the title
+  // gets a "(Copy)" suffix and editId stays unset so submit creates a new job.
   useEffect(() => {
-    if (!editId) return
-    getJobById(editId).then(({ data, error }) => {
+    const sourceId = editId ?? duplicateOf
+    if (!sourceId) return
+    getJobById(sourceId).then(({ data, error }) => {
       if (error || !data) {
         setLoadError(error ?? 'Job not found')
         return
       }
-      setTitle(data.title)
+      setTitle(duplicateOf ? `${data.title} (Copy)` : data.title)
       setIndustry(data.industrySlug)
       setJobType(data.type)
       setLocation(data.location)
@@ -220,7 +225,7 @@ export const PostJobPage: React.FC = () => {
         setAppLimit(String(data.autoPauseLimit))
       }
     })
-  }, [editId])
+  }, [editId, duplicateOf])
 
   const estimatedCost =
     stopMode === 'limit' ? `$${(Number(appLimit) * 38).toLocaleString()}` : 'pay-per-application'

@@ -6,6 +6,9 @@ import { DotsHorizontalIcon, RocketIcon, RegulixMarkIcon, SearchIcon } from '../
 import { useAuth } from '../context/AuthContext'
 import { getCompanyJobs, updateJob } from '../services/jobService'
 import type { Job } from '../types'
+import { ManageListingModal } from '../components/ManageListingModal/ManageListingModal'
+import { ArchiveListingModal } from '../components/ArchiveListingModal/ArchiveListingModal'
+import { BoostListingModal } from '../components/BoostListingModal/BoostListingModal'
 import styles from './JobPostsPage.module.css'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -18,7 +21,7 @@ function formatShortDate(isoString: string): string {
 function statusLabel(status: Job['status']): string {
   if (status === 'active') return 'Open'
   if (status === 'paused') return 'Paused'
-  return 'Closed'
+  return 'Archived'
 }
 
 function statusVariant(status: Job['status']): 'success' | 'warning' | 'secondary' {
@@ -155,6 +158,15 @@ export const JobPostsPage: React.FC = () => {
 
   // Selection
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+
+  // Pause confirmation modal target (null = closed)
+  const [pauseTarget, setPauseTarget] = useState<Job | null>(null)
+
+  // Boost (sponsor) modal target (null = closed)
+  const [boostTarget, setBoostTarget] = useState<Job | null>(null)
+
+  // Archive confirmation modal target (null = closed)
+  const [archiveTarget, setArchiveTarget] = useState<Job | null>(null)
 
   useEffect(() => {
     if (!user?.id) return
@@ -410,7 +422,7 @@ export const JobPostsPage: React.FC = () => {
               { key: 'all', label: 'All', count: statusCounts.all },
               { key: 'active', label: 'Open', count: statusCounts.active },
               { key: 'paused', label: 'Paused', count: statusCounts.paused },
-              { key: 'closed', label: 'Closed', count: statusCounts.closed },
+              { key: 'closed', label: 'Archived', count: statusCounts.closed },
             ] as const
           ).map(({ key, label, count }) => (
             <button
@@ -525,27 +537,36 @@ export const JobPostsPage: React.FC = () => {
               job.status === 'active'
                 ? [
                     { label: 'Edit', onClick: () => navigate(`/site/post-job/${job.id}`) },
-                    { label: 'Pause', onClick: () => handleStatusChange(job.id, 'paused') },
-                    { label: 'Duplicate', onClick: () => {} },
-                    { label: 'Boost', onClick: () => {} },
+                    { label: 'Pause', onClick: () => setPauseTarget(job) },
                     {
-                      label: 'Close',
+                      label: 'Duplicate',
+                      onClick: () => navigate(`/site/post-job?duplicate=${job.id}`),
+                    },
+                    { label: 'Boost', onClick: () => setBoostTarget(job) },
+                    {
+                      label: 'Archive',
                       danger: true,
-                      onClick: () => handleStatusChange(job.id, 'closed'),
+                      onClick: () => setArchiveTarget(job),
                     },
                   ]
                 : job.status === 'paused'
                   ? [
                       { label: 'Edit', onClick: () => navigate(`/site/post-job/${job.id}`) },
-                      { label: 'Duplicate', onClick: () => {} },
                       {
-                        label: 'Close',
+                        label: 'Duplicate',
+                        onClick: () => navigate(`/site/post-job?duplicate=${job.id}`),
+                      },
+                      {
+                        label: 'Archive',
                         danger: true,
-                        onClick: () => handleStatusChange(job.id, 'closed'),
+                        onClick: () => setArchiveTarget(job),
                       },
                     ]
                   : [
-                      { label: 'Duplicate', onClick: () => {} },
+                      {
+                        label: 'Duplicate',
+                        onClick: () => navigate(`/site/post-job?duplicate=${job.id}`),
+                      },
                       { label: 'Delete', danger: true, onClick: () => {} },
                     ]
 
@@ -554,7 +575,7 @@ export const JobPostsPage: React.FC = () => {
                 <button
                   type="button"
                   className={styles.primaryAction}
-                  onClick={() => navigate(`/site/dashboard/jobs/${job.id}`)}
+                  onClick={() => navigate(`/site/dashboard/applicants?jobId=${job.id}`)}
                 >
                   View applicants
                 </button>
@@ -587,7 +608,7 @@ export const JobPostsPage: React.FC = () => {
                   />
                 </div>
                 <div className={styles.jobTitleCell}>
-                  <Link to={`/site/dashboard/jobs/${job.id}`} className={styles.jobTitleLink}>
+                  <Link to={`/site/jobs/${job.id}`} className={styles.jobTitleLink}>
                     {job.title}
                   </Link>
                 </div>
@@ -685,6 +706,42 @@ export const JobPostsPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      <ManageListingModal
+        open={pauseTarget !== null}
+        onClose={() => setPauseTarget(null)}
+        jobTitle={pauseTarget?.title ?? ''}
+        companyName={pauseTarget?.company.name ?? ''}
+        onPauseConfirm={async () => {
+          if (pauseTarget) await handleStatusChange(pauseTarget.id, 'paused')
+        }}
+      />
+
+      <ArchiveListingModal
+        open={archiveTarget !== null}
+        onClose={() => setArchiveTarget(null)}
+        jobTitle={archiveTarget?.title ?? ''}
+        companyName={archiveTarget?.company.name ?? ''}
+        onConfirm={async () => {
+          if (archiveTarget) await handleStatusChange(archiveTarget.id, 'closed')
+        }}
+      />
+
+      <BoostListingModal
+        open={boostTarget !== null}
+        onClose={() => setBoostTarget(null)}
+        jobTitle={boostTarget?.title ?? ''}
+        companyName={boostTarget?.company.name ?? ''}
+        onConfirm={async () => {
+          if (!boostTarget) return
+          const { error } = await updateJob(boostTarget.id, { isSponsored: true })
+          if (!error) {
+            setAllJobs((prev) =>
+              prev.map((j) => (j.id === boostTarget.id ? { ...j, isSponsored: true } : j))
+            )
+          }
+        }}
+      />
     </div>
   )
 }

@@ -4,6 +4,7 @@ import { Badge, Button, Divider, Modal } from '../../components'
 import styles from './JobDetailPage.module.css'
 import { RegulixBadge } from '../components/RegulixBadge/RegulixBadge'
 import { QuickApplyModal } from '../components/QuickApplyModal/QuickApplyModal'
+import { ManageListingModal } from '../components/ManageListingModal/ManageListingModal'
 import { getJobById, getAppliedJobIds, getSimilarJobs } from '../services/jobService'
 import type { Job } from '../types'
 import { useAuth } from '../context/AuthContext'
@@ -46,8 +47,6 @@ export const JobDetailPage: React.FC = () => {
   const [shareOpen, setShareOpen] = useState(false)
   const [copied, setCopied] = useState(false)
   const [manageOpen, setManageOpen] = useState(false)
-  const [pauseDuration, setPauseDuration] = useState<'7d' | '30d' | 'indefinite'>('7d')
-  const [manageAction, setManageAction] = useState<'pause' | 'archive'>('pause')
   const [job, setJob] = useState<Job | null>(null)
   const [jobLoading, setJobLoading] = useState(true)
   const [jobError, setJobError] = useState<string | null>(null)
@@ -1188,253 +1187,13 @@ export const JobDetailPage: React.FC = () => {
         onApplied={() => setAppliedAt(new Date().toISOString())}
       />
 
-      {/* Manage Listing modal */}
-      <Modal
+      <ManageListingModal
         open={manageOpen}
-        onClose={() => {
-          setManageOpen(false)
-          setManageAction('pause')
-          setPauseDuration('7d')
-        }}
-        size="sm"
-        title="Manage listing"
-        description={`${job.title} · ${job.company.name}`}
-      >
-        {/* Tab toggle — Pause / Delete */}
-        <div
-          style={{
-            display: 'flex',
-            background: 'var(--kt-bg)',
-            border: '1px solid var(--kt-border)',
-            borderRadius: 'var(--kt-radius-md)',
-            padding: 3,
-            marginBottom: 20,
-            gap: 3,
-          }}
-        >
-          {(['pause', 'archive'] as const).map((action) => (
-            <button
-              key={action}
-              onClick={() => setManageAction(action)}
-              style={{
-                flex: 1,
-                padding: '7px 0',
-                background: manageAction === action ? 'var(--kt-olive-700)' : 'transparent',
-                border: '1px solid transparent',
-                borderRadius: 'var(--kt-radius-sm)',
-                fontSize: 'var(--kt-text-sm)',
-                fontWeight: 'var(--kt-weight-medium)',
-                color: manageAction === action ? 'white' : 'var(--kt-text-muted)',
-                cursor: 'pointer',
-                fontFamily: 'var(--kt-font-sans)',
-                transition: 'all var(--kt-duration-fast)',
-              }}
-            >
-              {action === 'pause' ? 'Pause listing' : 'Archive listing'}
-            </button>
-          ))}
-        </div>
-
-        {manageAction !== 'archive' ? (
-          <>
-            <p
-              style={{
-                fontSize: 'var(--kt-text-sm)',
-                color: 'var(--kt-text-muted)',
-                marginBottom: 16,
-                lineHeight: 1.5,
-              }}
-            >
-              Pausing hides this job from search results. You can reactivate it at any time from
-              your dashboard.
-            </p>
-            <p
-              style={{
-                fontSize: 'var(--kt-text-xs)',
-                fontWeight: 'var(--kt-weight-semibold)',
-                color: 'var(--kt-text)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px',
-                marginBottom: 10,
-              }}
-            >
-              Pause duration
-            </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 24 }}>
-              {(
-                [
-                  { value: '7d', label: '7 days', hint: 'Auto-resumes after one week' },
-                  { value: '30d', label: '30 days', hint: 'Auto-resumes after one month' },
-                  {
-                    value: 'indefinite',
-                    label: 'Indefinitely',
-                    hint: 'Stays paused until you reactivate it',
-                  },
-                ] as { value: '7d' | '30d' | 'indefinite'; label: string; hint: string }[]
-              ).map((opt) => (
-                <label
-                  key={opt.value}
-                  onClick={() => setPauseDuration(opt.value)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 12,
-                    padding: '10px 12px',
-                    borderRadius: 'var(--kt-radius-md)',
-                    border: `1px solid ${pauseDuration === opt.value ? 'var(--kt-primary)' : 'var(--kt-border)'}`,
-                    background:
-                      pauseDuration === opt.value
-                        ? 'var(--kt-primary-subtle)'
-                        : 'var(--kt-surface)',
-                    cursor: 'pointer',
-                    transition: 'all var(--kt-duration-fast)',
-                  }}
-                >
-                  <div
-                    style={{
-                      width: 16,
-                      height: 16,
-                      borderRadius: '50%',
-                      flexShrink: 0,
-                      border: `2px solid ${pauseDuration === opt.value ? 'var(--kt-primary)' : 'var(--kt-border-strong)'}`,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    {pauseDuration === opt.value && (
-                      <div
-                        style={{
-                          width: 8,
-                          height: 8,
-                          borderRadius: '50%',
-                          background: 'var(--kt-primary)',
-                        }}
-                      />
-                    )}
-                  </div>
-                  <div>
-                    <p
-                      style={{
-                        fontSize: 'var(--kt-text-sm)',
-                        fontWeight: 'var(--kt-weight-medium)',
-                        color: 'var(--kt-text)',
-                        marginBottom: 1,
-                      }}
-                    >
-                      {opt.label}
-                    </p>
-                    <p style={{ fontSize: 'var(--kt-text-xs)', color: 'var(--kt-text-muted)' }}>
-                      {opt.hint}
-                    </p>
-                  </div>
-                </label>
-              ))}
-            </div>
-            <button
-              onClick={() => setManageOpen(false)}
-              style={{
-                width: '100%',
-                padding: '10px 0',
-                background: 'var(--kt-primary)',
-                color: 'white',
-                border: 'none',
-                borderRadius: 'var(--kt-radius-md)',
-                fontSize: 'var(--kt-text-sm)',
-                fontWeight: 'var(--kt-weight-semibold)',
-                cursor: 'pointer',
-                fontFamily: 'var(--kt-font-sans)',
-                marginBottom: 10,
-              }}
-            >
-              Confirm Pause
-            </button>
-            <div style={{ textAlign: 'center' }}>
-              <button
-                onClick={() => setManageOpen(false)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  padding: 0,
-                  fontSize: 'var(--kt-text-sm)',
-                  color: 'var(--kt-text-muted)',
-                  cursor: 'pointer',
-                  fontFamily: 'var(--kt-font-sans)',
-                  textDecoration: 'underline',
-                  textUnderlineOffset: 3,
-                }}
-              >
-                Cancel
-              </button>
-            </div>
-          </>
-        ) : (
-          <>
-            <div
-              style={{
-                marginBottom: 20,
-              }}
-            >
-              <p
-                style={{
-                  fontSize: 'var(--kt-text-sm)',
-                  fontWeight: 'var(--kt-weight-semibold)',
-                  color: 'var(--kt-text)',
-                  marginBottom: 4,
-                }}
-              >
-                Listing will be archived
-              </p>
-              <p
-                style={{
-                  fontSize: 'var(--kt-text-sm)',
-                  color: 'var(--kt-text-muted)',
-                  lineHeight: 1.5,
-                }}
-              >
-                Archiving removes this job from search results but keeps it on record. You can find
-                and restore it anytime from your dashboard under <strong>Archived</strong>.
-              </p>
-            </div>
-            <button
-              onClick={() => setManageOpen(false)}
-              style={{
-                width: '100%',
-                padding: '10px 0',
-                background: 'var(--kt-navy-900)',
-                color: 'white',
-                border: 'none',
-                borderRadius: 'var(--kt-radius-md)',
-                fontSize: 'var(--kt-text-sm)',
-                fontWeight: 'var(--kt-weight-semibold)',
-                cursor: 'pointer',
-                fontFamily: 'var(--kt-font-sans)',
-                marginBottom: 10,
-              }}
-            >
-              Archive listing
-            </button>
-            <div style={{ textAlign: 'center' }}>
-              <button
-                onClick={() => setManageOpen(false)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  padding: 0,
-                  fontSize: 'var(--kt-text-sm)',
-                  color: 'var(--kt-text-muted)',
-                  cursor: 'pointer',
-                  fontFamily: 'var(--kt-font-sans)',
-                  textDecoration: 'underline',
-                  textUnderlineOffset: 3,
-                }}
-              >
-                Cancel
-              </button>
-            </div>
-          </>
-        )}
-      </Modal>
+        onClose={() => setManageOpen(false)}
+        jobTitle={job.title}
+        companyName={job.company.name}
+        onPauseConfirm={() => {}}
+      />
 
       {/* Share modal */}
       <Modal

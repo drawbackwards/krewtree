@@ -120,18 +120,14 @@ export const RecentApplicantsWidget: React.FC<RecentApplicantsWidgetProps> = ({
       <ApplicantSlideover
         applicant={open}
         onClose={() => setOpen(null)}
-        onAdvance={async (id) => {
-          setOpen(null)
+        onSetStage={(id, stage) => {
           void id
-        }}
-        onReject={async (id) => {
-          setOpen(null)
-          void id
+          void stage
         }}
         onMessage={(id) => {
           void id
         }}
-        onShortlist={async (id) => {
+        onShortlist={(id) => {
           void id
         }}
       />
