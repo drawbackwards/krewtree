@@ -17,6 +17,7 @@ import {
   JobPostsPage,
   AllApplicantsPage,
   CompanyApplicantProfilePage,
+  ApplicationsPage,
 } from './pages'
 import { LoginPage } from './pages/auth/LoginPage'
 import { SignupRolePage } from './pages/auth/SignupRolePage'
@@ -85,6 +86,7 @@ export const SiteRouter: React.FC = () => (
           <Route path="/site/profile/edit" element={<WorkerProfileEditPage />} />
           <Route path="/site/profile/create" element={<WorkerProfileEditPage />} />
           <Route path="/site/saved-jobs" element={<SavedJobsPage />} />
+          <Route path="/site/applications" element={<ApplicationsPage />} />
           <Route path="/site/referrals" element={<ReferralPage />} />
         </Route>
 

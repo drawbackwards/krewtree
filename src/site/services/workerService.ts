@@ -440,3 +440,329 @@ export async function upsertWorkerProfile(
   if (error) return { error: error.message }
   return { error: null }
 }
+
+// ── Dashboard-specific types ───────────────────────────────────────────────────
+
+export type DashboardApplication = {
+  id: string
+  jobId: string
+  jobTitle: string
+  companyId: string
+  companyName: string
+  companyLocation: string
+  /** Worker-facing stage — maps from DB status */
+  stage: 'Applied' | 'Reviewed' | 'Interview' | 'Offer' | 'Closed'
+  appliedAt: string
+  isBoosted: boolean
+}
+
+export type DashboardSavedJob = {
+  id: string
+  jobId: string
+  jobTitle: string
+  companyName: string
+  jobStatus: 'active' | 'paused' | 'closed'
+  closingAt: string | null
+  savedAt: string
+  hasApplied: boolean
+  staleness: 'open' | 'expiring_soon' | 'closed'
+}
+
+export type JobForYou = {
+  jobId: string
+  jobTitle: string
+  companyName: string
+  location: string
+  matchScore: number
+}
+
+export type WorkerCompleteness = {
+  hasSkills: boolean
+  hasPhoto: boolean
+  hasWorkHistory: boolean
+  hasCerts: boolean
+}
+
+export type RegulixNudgeData = {
+  subState: 'connect' | 'import' | 'complete'
+  dismissedAt: string | null
+}
+
+// ── Dashboard Applications ─────────────────────────────────────────────────────
+
+const DB_TO_WORKER_STAGE: Record<string, DashboardApplication['stage']> = {
+  Applied: 'Applied',
+  Viewed: 'Reviewed',
+  Interviewing: 'Interview',
+  Offer: 'Offer',
+  Rejected: 'Closed',
+}
+
+export async function getDashboardApplications(
+  userId: string,
+  limit = 5
+): Promise<{ data: DashboardApplication[]; error: string | null }> {
+  const { data, error } = await supabase
+    .from('applications')
+    .select(
+      'id, status, is_boosted, created_at, job_id, jobs(id, title, location, company_profiles(id, name))'
+    )
+    .eq('worker_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(limit)
+
+  if (error) return { data: [], error: error.message }
+  if (!data) return { data: [], error: null }
+
+  return {
+    data: data.map((a) => {
+      const j = a.jobs as unknown as {
+        id: string
+        title: string
+        location: string
+        company_profiles: { id: string; name: string } | null
+      } | null
+      return {
+        id: a.id,
+        jobId: a.job_id,
+        jobTitle: j?.title ?? '',
+        companyId: j?.company_profiles?.id ?? '',
+        companyName: j?.company_profiles?.name ?? '',
+        companyLocation: j?.location ?? '',
+        stage: DB_TO_WORKER_STAGE[a.status] ?? 'Applied',
+        appliedAt: a.created_at,
+        isBoosted: a.is_boosted,
+      }
+    }),
+    error: null,
+  }
+}
+
+// ── Withdraw Application ───────────────────────────────────────────────────────
+
+export async function withdrawApplication(
+  applicationId: string,
+  reason: string,
+  message: string
+): Promise<{ error: string | null }> {
+  const { error } = await supabase
+    .from('applications')
+    .update({ status: 'Rejected', notes: message || reason })
+    .eq('id', applicationId)
+
+  if (error) return { error: error.message }
+  return { error: null }
+}
+
+// ── Dashboard Saved Jobs ───────────────────────────────────────────────────────
+
+function computeStaleness(
+  jobStatus: string,
+  closingAt: string | null
+): DashboardSavedJob['staleness'] {
+  if (jobStatus === 'closed' || jobStatus === 'paused') return 'closed'
+  if (closingAt) {
+    const daysUntilClose = Math.ceil((new Date(closingAt).getTime() - Date.now()) / 86_400_000)
+    if (daysUntilClose >= 0 && daysUntilClose <= 7) return 'expiring_soon'
+  }
+  return 'open'
+}
+
+export async function getDashboardSavedJobs(
+  userId: string,
+  limit = 5
+): Promise<{ data: DashboardSavedJob[]; error: string | null }> {
+  const [savedRes, appliedRes] = await Promise.all([
+    supabase
+      .from('saved_jobs')
+      .select('id, created_at, job_id, jobs(id, title, status, closing_at, company_profiles(name))')
+      .eq('worker_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(limit * 2),
+    supabase.from('applications').select('job_id').eq('worker_id', userId),
+  ])
+
+  if (savedRes.error) return { data: [], error: savedRes.error.message }
+
+  const appliedJobIds = new Set((appliedRes.data ?? []).map((a) => a.job_id))
+
+  const rows = (savedRes.data ?? []).map((s) => {
+    const j = s.jobs as unknown as {
+      id: string
+      title: string
+      status: string
+      closing_at: string | null
+      company_profiles: { name: string } | null
+    } | null
+
+    const jobStatus = (j?.status ?? 'active') as DashboardSavedJob['jobStatus']
+    const closingAt = j?.closing_at ?? null
+
+    return {
+      id: s.id,
+      jobId: s.job_id,
+      jobTitle: j?.title ?? '',
+      companyName: j?.company_profiles?.name ?? '',
+      jobStatus,
+      closingAt,
+      savedAt: s.created_at,
+      hasApplied: appliedJobIds.has(s.job_id),
+      staleness: computeStaleness(jobStatus, closingAt),
+    } satisfies DashboardSavedJob
+  })
+
+  // Closed always at bottom; within groups preserve saved-date desc order
+  rows.sort((a, b) => {
+    const aIsClosed = a.staleness === 'closed' ? 1 : 0
+    const bIsClosed = b.staleness === 'closed' ? 1 : 0
+    return aIsClosed - bIsClosed
+  })
+
+  return { data: rows.slice(0, limit), error: null }
+}
+
+// ── Remove Saved Job ───────────────────────────────────────────────────────────
+
+export async function removeSavedJob(savedJobId: string): Promise<{ error: string | null }> {
+  const { error } = await supabase.from('saved_jobs').delete().eq('id', savedJobId)
+  if (error) return { error: error.message }
+  return { error: null }
+}
+
+// ── New Jobs For You ───────────────────────────────────────────────────────────
+
+export async function getNewJobsForYou(
+  userId: string,
+  limit = 5
+): Promise<{ data: JobForYou[]; isFallback: boolean; error: string | null }> {
+  const [skillsRes, appliedRes] = await Promise.all([
+    supabase.from('worker_skills').select('name').eq('worker_id', userId),
+    supabase.from('applications').select('job_id').eq('worker_id', userId),
+  ])
+
+  if (skillsRes.error) return { data: [], isFallback: false, error: skillsRes.error.message }
+
+  const workerSkills = (skillsRes.data ?? []).map((s) => s.name.toLowerCase())
+  const appliedJobIds = (appliedRes.data ?? []).map((a) => a.job_id)
+
+  let query = supabase
+    .from('jobs')
+    .select('id, title, location, skills, company_profiles(name)')
+    .eq('status', 'active')
+    .order('created_at', { ascending: false })
+    .limit(25)
+
+  if (appliedJobIds.length > 0) {
+    query = query.not('id', 'in', `(${appliedJobIds.join(',')})`)
+  }
+
+  const { data: jobData, error: jobError } = await query
+  if (jobError) return { data: [], isFallback: false, error: jobError.message }
+
+  const scored = (jobData ?? []).map((j) => {
+    const jobSkillsRaw = (j.skills ?? []) as string[]
+    const jobSkills = jobSkillsRaw.map((s) => s.toLowerCase())
+    const matchScore = workerSkills.filter((ws) =>
+      jobSkills.some((js) => js.includes(ws) || ws.includes(js))
+    ).length
+    const co = j.company_profiles as unknown as { name: string } | null
+    return {
+      jobId: j.id,
+      jobTitle: j.title,
+      companyName: co?.name ?? '',
+      location: j.location,
+      matchScore,
+    }
+  })
+
+  scored.sort((a, b) => b.matchScore - a.matchScore)
+
+  const hasMatches = workerSkills.length > 0 && scored.some((s) => s.matchScore > 0)
+
+  return {
+    data: scored.slice(0, limit),
+    isFallback: !hasMatches,
+    error: null,
+  }
+}
+
+// ── Worker Completeness ────────────────────────────────────────────────────────
+
+export async function getWorkerCompleteness(
+  userId: string
+): Promise<{ data: WorkerCompleteness | null; error: string | null }> {
+  const [skillsRes, workHistRes, certsRes] = await Promise.all([
+    supabase
+      .from('worker_skills')
+      .select('id', { count: 'exact', head: true })
+      .eq('worker_id', userId),
+    supabase
+      .from('worker_work_history')
+      .select('id', { count: 'exact', head: true })
+      .eq('worker_id', userId),
+    supabase
+      .from('worker_certifications')
+      .select('id', { count: 'exact', head: true })
+      .eq('worker_id', userId),
+  ])
+
+  if (skillsRes.error) return { data: null, error: skillsRes.error.message }
+
+  return {
+    data: {
+      hasSkills: (skillsRes.count ?? 0) > 0,
+      hasPhoto: false, // caller fills this in from profile.avatar_url
+      hasWorkHistory: (workHistRes.count ?? 0) > 0,
+      hasCerts: (certsRes.count ?? 0) > 0,
+    },
+    error: null,
+  }
+}
+
+// ── Regulix Nudge ─────────────────────────────────────────────────────────────
+
+export async function getRegulixNudgeData(
+  userId: string
+): Promise<{ data: RegulixNudgeData | null; error: string | null }> {
+  const [intRes, prefRes] = await Promise.all([
+    supabase
+      .from('worker_integrations')
+      .select('regulix_connected, regulix_reviews_imported')
+      .eq('worker_id', userId)
+      .maybeSingle(),
+    supabase
+      .from('worker_preferences')
+      .select('regulix_nudge_dismissed_at')
+      .eq('worker_id', userId)
+      .maybeSingle(),
+  ])
+
+  if (intRes.error) return { data: null, error: intRes.error.message }
+
+  const connected = intRes.data?.regulix_connected ?? false
+  const imported = intRes.data?.regulix_reviews_imported ?? false
+
+  let subState: RegulixNudgeData['subState']
+  if (!connected) subState = 'connect'
+  else if (!imported) subState = 'import'
+  else subState = 'complete'
+
+  return {
+    data: {
+      subState,
+      dismissedAt: prefRes.data?.regulix_nudge_dismissed_at ?? null,
+    },
+    error: null,
+  }
+}
+
+export async function dismissRegulixNudge(userId: string): Promise<{ error: string | null }> {
+  const { error } = await supabase
+    .from('worker_preferences')
+    .upsert(
+      { worker_id: userId, regulix_nudge_dismissed_at: new Date().toISOString() },
+      { onConflict: 'worker_id' }
+    )
+  if (error) return { error: error.message }
+  return { error: null }
+}

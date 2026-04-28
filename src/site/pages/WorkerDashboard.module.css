@@ -1,0 +1,212 @@
+/* ── Table card shell ───────────────────────────────────────────────────── */
+
+.tableCard {
+  background: var(--kt-surface);
+  border: 1px solid var(--kt-border);
+  border-radius: var(--kt-radius-lg);
+  overflow: hidden;
+}
+
+/* ── Rows ───────────────────────────────────────────────────────────────── */
+
+.row {
+  display: grid;
+  align-items: center;
+  padding: 6px var(--kt-space-5);
+  border-bottom: 1px solid var(--kt-border);
+  column-gap: 10px;
+  min-height: 40px;
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.headerRow {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  min-height: 0;
+  background: var(--kt-bg);
+  font-size: 11px;
+  font-weight: var(--kt-weight-semibold);
+  color: var(--kt-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.appsRow {
+  /* Job | Stage | Applied | Actions */
+  grid-template-columns: 2fr 110px 1fr 2fr;
+}
+
+.savedRow {
+  /* Job | Status | Saved | Actions */
+  grid-template-columns: 2fr 110px 1fr 2fr;
+}
+
+/* ── Cell types ─────────────────────────────────────────────────────────── */
+
+.titleCell {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.titleLink {
+  font-size: 12px;
+  font-weight: var(--kt-weight-bold);
+  color: var(--kt-primary);
+  text-decoration: none;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.titleLink:hover {
+  text-decoration: underline;
+}
+
+.titleStruck {
+  font-size: 12px;
+  font-weight: var(--kt-weight-medium);
+  color: var(--kt-text-muted);
+  text-decoration: line-through;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+
+.subtitleText {
+  font-size: 11px;
+  color: var(--kt-text-muted);
+  margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.metaText {
+  font-size: 12px;
+  color: var(--kt-text-muted);
+}
+
+.actionsCell {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+/* ── Applied state ──────────────────────────────────────────────────────── */
+
+.appliedState {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: var(--kt-weight-medium);
+  color: var(--kt-success);
+}
+
+/* ── Boosted indicator ──────────────────────────────────────────────────── */
+
+.boostedIndicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--kt-olive-600);
+  font-weight: var(--kt-weight-medium);
+}
+
+/* ── Primary action button ──────────────────────────────────────────────── */
+
+.primaryAction {
+  height: 26px;
+  padding: 0 10px;
+  border: 0.5px solid var(--kt-border);
+  border-radius: var(--kt-radius-md);
+  background: transparent;
+  cursor: pointer;
+  font-size: 11px;
+  font-family: var(--kt-font-sans);
+  font-weight: var(--kt-weight-medium);
+  color: var(--kt-text);
+  white-space: nowrap;
+}
+
+.primaryAction:hover {
+  background: var(--kt-secondary);
+}
+
+/* ── Overflow button ────────────────────────────────────────────────────── */
+
+.overflowBtn {
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: var(--kt-radius-md);
+  background: transparent;
+  color: var(--kt-text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.overflowBtn:hover {
+  background: var(--kt-secondary);
+}
+
+/* ── Overflow menu (portaled) ───────────────────────────────────────────── */
+
+.overflowMenu {
+  position: fixed;
+  background: var(--kt-surface);
+  border: 0.5px solid var(--kt-border);
+  border-radius: var(--kt-radius-md);
+  box-shadow: var(--kt-shadow-sm);
+  min-width: 140px;
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.overflowItem {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px 14px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  font-family: var(--kt-font-sans);
+  color: var(--kt-text);
+  font-weight: var(--kt-weight-medium);
+}
+
+.overflowItem:hover {
+  background: var(--kt-secondary);
+}
+
+.overflowItemDanger {
+  color: var(--kt-danger);
+}
+
+/* ── Empty state ────────────────────────────────────────────────────────── */
+
+.emptyRow {
+  padding: 48px 24px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--kt-text-muted);
+}
+
+/* ── Closed row dim ─────────────────────────────────────────────────────── */
+
+.rowClosed {
+  opacity: 0.55;
+}

@@ -386,6 +386,9 @@ export type Database = {
           pre_interview_questions: string[]
           auto_pause_limit: number | null
           experience_level: string | null
+          closing_at: string | null
+          start_date: string | null
+          end_date: string | null
           created_at: string
           updated_at: string
         }
@@ -410,6 +413,9 @@ export type Database = {
           pre_interview_questions?: string[]
           auto_pause_limit?: number | null
           experience_level?: string | null
+          closing_at?: string | null
+          start_date?: string | null
+          end_date?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -453,6 +459,12 @@ export type Database = {
           is_shortlisted: boolean
           match_score: number
           status_updated_at: string
+          application_source:
+            | 'dashboard_saved'
+            | 'dashboard_recommended'
+            | 'job_browse'
+            | 'job_detail'
+            | null
           created_at: string
           updated_at: string
         }
@@ -468,6 +480,12 @@ export type Database = {
           is_shortlisted?: boolean
           match_score?: number
           status_updated_at?: string
+          application_source?:
+            | 'dashboard_saved'
+            | 'dashboard_recommended'
+            | 'job_browse'
+            | 'job_detail'
+            | null
           created_at?: string
           updated_at?: string
         }
@@ -702,6 +720,36 @@ export type Database = {
           created_at?: string
         }
         Update: Partial<Database['public']['Tables']['referrals']['Insert']>
+        Relationships: []
+      }
+      worker_preferences: {
+        Row: {
+          worker_id: string
+          regulix_nudge_dismissed_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          worker_id: string
+          regulix_nudge_dismissed_at?: string | null
+          updated_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['worker_preferences']['Insert']>
+        Relationships: []
+      }
+      worker_integrations: {
+        Row: {
+          worker_id: string
+          regulix_connected: boolean
+          regulix_reviews_imported: boolean
+          updated_at: string
+        }
+        Insert: {
+          worker_id: string
+          regulix_connected?: boolean
+          regulix_reviews_imported?: boolean
+          updated_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['worker_integrations']['Insert']>
         Relationships: []
       }
     }

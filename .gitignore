@@ -23,3 +23,6 @@ dist/
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+
+# Local project log — running summary, not for version control
+PROJECT_LOG.md

@@ -1,220 +1,340 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
-import { Badge, Button, Modal, Progress, Divider } from '../../components'
-import { StatCard } from '../components/StatCard/StatCard'
+import { Badge, Modal } from '../../components'
+import { Progress } from '../../components'
 import { RegulixBadge } from '../components/RegulixBadge/RegulixBadge'
-import type { Application, ApplicationEvent, Job } from '../types'
+import { QuickApplyModal } from '../components/QuickApplyModal/QuickApplyModal'
+import type { Job } from '../types'
 import { useAuth } from '../context/AuthContext'
+import { daysSince } from '../utils/date'
+import { getJobById } from '../services/jobService'
 import {
   getWorkerProfile,
-  getWorkerApplications,
-  getApplicationEvents,
-  getSavedJobsCount,
-  getRecommendedJobs,
+  getDashboardApplications,
+  getDashboardSavedJobs,
+  getNewJobsForYou,
+  getWorkerCompleteness,
+  getRegulixNudgeData,
+  dismissRegulixNudge,
+  withdrawApplication,
+  removeSavedJob,
   type WorkerProfileRow,
+  type DashboardApplication,
+  type DashboardSavedJob,
+  type JobForYou,
+  type WorkerCompleteness,
+  type RegulixNudgeData,
 } from '../services/workerService'
 import {
-  StarIcon,
-  StarOutlineIcon,
-  BriefcaseIcon,
-  EyeIcon,
-  TrendingUpIcon,
-  CheckCircleIcon,
   RocketIcon,
-  ClipboardIcon,
-  CalendarIcon,
-  CelebrationIcon,
-  DangerCircleIcon,
-  MessageIcon,
-  PersonIcon,
   CheckIcon,
+  CloseIcon,
   SparkleIcon,
-  SearchIcon,
+  BriefcaseIcon,
   BookmarkFilledIcon,
-  GiftIcon,
+  PersonIcon,
+  DotsHorizontalIcon,
 } from '../icons'
+import styles from './WorkerDashboard.module.css'
 
-const statusConfig: Record<
-  string,
-  { variant: 'success' | 'info' | 'warning' | 'danger' | 'secondary'; label: string }
-> = {
+// ── Stage config ───────────────────────────────────────────────────────────────
+
+type StageCfg = {
+  variant: 'secondary' | 'info' | 'warning' | 'success'
+  label: string
+}
+
+const STAGE_CFG: Record<DashboardApplication['stage'], StageCfg> = {
   Applied: { variant: 'secondary', label: 'Applied' },
-  Viewed: { variant: 'info', label: 'Viewed' },
-  Interviewing: { variant: 'warning', label: 'Interviewing' },
+  Reviewed: { variant: 'info', label: 'Reviewed' },
+  Interview: { variant: 'warning', label: 'Interview' },
   Offer: { variant: 'success', label: 'Offer' },
-  Rejected: { variant: 'danger', label: 'Rejected' },
+  Closed: { variant: 'secondary', label: 'Closed' },
 }
 
-const timelineStatusIcon: Record<string, React.ReactNode> = {
-  Applied: <ClipboardIcon size={14} />,
-  Viewed: <EyeIcon size={14} />,
-  Interviewing: <CalendarIcon size={14} />,
-  Offer: <CelebrationIcon size={14} />,
-  Rejected: <DangerCircleIcon size={14} />,
+const WITHDRAW_REASONS = [
+  'Accepted another offer',
+  'Applied by mistake',
+  'Position no longer a good fit',
+  'Not available for the dates/schedule',
+  'Other',
+]
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function fmtApplied(iso: string): string {
+  const d = daysSince(iso)
+  if (d === 0) return 'Today'
+  return `${d}d ago`
 }
+
+function fmtSaved(iso: string): string {
+  const d = daysSince(iso)
+  if (d === 0) return 'Saved today'
+  return `Saved ${d}d ago`
+}
+
+// ── OverflowMenu (matches company table pattern) ───────────────────────────────
+
+type OverflowItem = { label: string; danger?: boolean; onClick: () => void }
+
+const OverflowMenu: React.FC<{ items: OverflowItem[] }> = ({ items }) => {
+  const [open, setOpen] = useState(false)
+  const [menuPos, setMenuPos] = useState({ top: 0, right: 0 })
+  const btnRef = useRef<HTMLButtonElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  const handleToggle = () => {
+    if (!open && btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect()
+      setMenuPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right })
+    }
+    setOpen((v) => !v)
+  }
+
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: MouseEvent) => {
+      if (btnRef.current?.contains(e.target as Node) || menuRef.current?.contains(e.target as Node))
+        return
+      setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
+  return (
+    <>
+      <button
+        ref={btnRef}
+        onClick={handleToggle}
+        className={styles.overflowBtn}
+        title="More actions"
+        type="button"
+      >
+        <DotsHorizontalIcon size={12} />
+      </button>
+      {open &&
+        createPortal(
+          <div
+            ref={menuRef}
+            className={styles.overflowMenu}
+            style={{ top: menuPos.top, right: menuPos.right }}
+          >
+            {items.map((item) => (
+              <button
+                key={item.label}
+                onClick={() => {
+                  item.onClick()
+                  setOpen(false)
+                }}
+                className={[styles.overflowItem, item.danger ? styles.overflowItemDanger : '']
+                  .filter(Boolean)
+                  .join(' ')}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>,
+          document.body
+        )}
+    </>
+  )
+}
+
+// ── Component ─────────────────────────────────────────────────────────────────
 
 export const WorkerDashboard: React.FC = () => {
   const { user, isEmailVerified } = useAuth()
-  const [profileError, setProfileError] = useState<string | null>(null)
-  const [dataError, setDataError] = useState<string | null>(null)
+
+  // ── Data state ─────────────────────────────────────────────────────────────
   const [profile, setProfile] = useState<WorkerProfileRow | null>(null)
+  const [completeness, setCompleteness] = useState<WorkerCompleteness | null>(null)
+  const [applications, setApplications] = useState<DashboardApplication[]>([])
+  const [savedJobs, setSavedJobs] = useState<DashboardSavedJob[]>([])
+  const [newJobs, setNewJobs] = useState<JobForYou[]>([])
+  const [newJobsIsFallback, setNewJobsIsFallback] = useState(false)
+  const [nudgeData, setNudgeData] = useState<RegulixNudgeData | null>(null)
+  const [dataError, setDataError] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (!user) return
-    getWorkerProfile(user.id).then(({ data, error }) => {
-      if (error) setProfileError(error)
-      if (data) setProfile(data)
-    })
-  }, [user])
-
-  const worker = {
-    id: user?.id ?? '',
-    name: profile?.first_name ? `${profile.first_name} ${profile.last_name ?? ''}`.trim() : '',
-    initials: profile?.first_name
-      ? `${profile.first_name[0]}${profile.last_name?.[0] ?? ''}`.toUpperCase()
-      : '',
-    headline: profile?.primary_trade ?? '',
-    location:
-      profile?.city && profile?.region
-        ? `${profile.city}, ${profile.region}`
-        : profile?.city || profile?.region || '',
-    isRegulixReady: profile?.is_regulix_ready ?? false,
-    performanceScore: profile?.performance_score ?? undefined,
-    profileCompletePct: profile?.profile_complete_pct ?? 0,
-    totalHoursWorked: profile?.total_hours_worked ?? undefined,
-    skills: [] as { name: string }[],
-  }
-
-  const [applications, setApplications] = useState<Application[]>([])
-  const [appEvents, setAppEvents] = useState<ApplicationEvent[]>([])
-  const [recommendedJobs, setRecommendedJobs] = useState<Job[]>([])
-  const [savedJobsCount, setSavedJobsCount] = useState(0)
-
-  useEffect(() => {
-    if (!user) return
-
-    getWorkerApplications(user.id).then(({ data, error }) => {
-      if (error) {
-        setDataError(error)
-        return
-      }
-      setApplications(data)
-      const ids = data.map((a) => a.id)
-      getApplicationEvents(ids).then(({ data: evData, error: evError }) => {
-        if (evError) {
-          setDataError(evError)
-          return
-        }
-        setAppEvents(evData)
-      })
-    })
-
-    getSavedJobsCount(user.id).then(({ count, error }) => {
-      if (error) setDataError(error)
-      else setSavedJobsCount(count)
-    })
-
-    getRecommendedJobs().then(({ data, error }) => {
-      if (error) setDataError(error)
-      else setRecommendedJobs(data)
-    })
-  }, [user])
-
-  const profileChecklist = [
-    { label: 'Basic Info', done: !!profile?.first_name },
-    { label: 'Work Experience', done: false },
-    { label: 'Skills', done: false },
-    { label: 'Regulix Verified', done: worker.isRegulixReady },
-    { label: 'Profile Photo', done: false },
-  ]
-
-  const [selectedBoostId, setSelectedBoostId] = useState<string | null>(null)
-  const [boostPayMethod, setBoostPayMethod] = useState<'apple' | 'zelle'>('apple')
-  const [boostSuccess, setBoostSuccess] = useState(false)
+  // ── UI state ───────────────────────────────────────────────────────────────
+  const [nudgeDismissedLocally, setNudgeDismissedLocally] = useState(false)
   const [boostedAppIds, setBoostedAppIds] = useState<Set<string>>(new Set())
-  const [expandedAppId, setExpandedAppId] = useState<string | null>(null)
 
-  const boostingApp = selectedBoostId ? applications.find((a) => a.id === selectedBoostId) : null
+  // Boost modal
+  const [boostAppId, setBoostAppId] = useState<string | null>(null)
+  const [boostSuccess, setBoostSuccess] = useState(false)
 
-  const handleBoostClick = (appId: string) => {
-    setSelectedBoostId(appId)
-    setBoostSuccess(false)
-    setBoostPayMethod('apple')
-  }
+  // Withdraw modal
+  const [withdrawAppId, setWithdrawAppId] = useState<string | null>(null)
+  const [withdrawReason, setWithdrawReason] = useState('')
+  const [withdrawMessage, setWithdrawMessage] = useState('')
+  const [withdrawing, setWithdrawing] = useState(false)
 
-  const handleBoostConfirm = () => {
-    setBoostSuccess(true)
-  }
+  // Quick Apply (saved jobs)
+  const [quickApplyJob, setQuickApplyJob] = useState<Job | null>(null)
+  const [quickApplyOpen, setQuickApplyOpen] = useState(false)
+  const [appliedFromDashboard, setAppliedFromDashboard] = useState<Set<string>>(new Set())
+
+  // ── Data loading ───────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!user) return
+
+    Promise.all([
+      getWorkerProfile(user.id),
+      getDashboardApplications(user.id),
+      getDashboardSavedJobs(user.id),
+      getNewJobsForYou(user.id),
+      getWorkerCompleteness(user.id),
+      getRegulixNudgeData(user.id),
+    ]).then(([profileRes, appsRes, savedRes, newJobsRes, completenessRes, nudgeRes]) => {
+      if (profileRes.data) setProfile(profileRes.data)
+      if (appsRes.error) setDataError(appsRes.error)
+      setApplications(appsRes.data)
+      setSavedJobs(savedRes.data)
+      setNewJobs(newJobsRes.data)
+      setNewJobsIsFallback(newJobsRes.isFallback)
+      if (completenessRes.data) {
+        setCompleteness({
+          ...completenessRes.data,
+          hasPhoto: !!profileRes.data?.avatar_url,
+        })
+      }
+      if (nudgeRes.data) setNudgeData(nudgeRes.data)
+    })
+  }, [user])
+
+  // ── Derived values ─────────────────────────────────────────────────────────
+  const workerName = profile?.first_name
+    ? `${profile.first_name} ${profile.last_name ?? ''}`.trim()
+    : ''
+  const workerInitials = profile?.first_name
+    ? `${profile.first_name[0]}${profile.last_name?.[0] ?? ''}`.toUpperCase()
+    : ''
+
+  const incompleteItems = completeness
+    ? [
+        !completeness.hasSkills && {
+          key: 'skills',
+          prompt: 'Add your skills so employers can find you.',
+          href: '/site/profile/edit',
+        },
+        !completeness.hasPhoto && {
+          key: 'photo',
+          prompt: 'Add a profile photo to stand out to employers.',
+          href: '/site/profile/edit',
+        },
+        !completeness.hasWorkHistory && {
+          key: 'work_history',
+          prompt: 'Add past work experience to build employer trust.',
+          href: '/site/profile/edit',
+        },
+        !completeness.hasCerts && {
+          key: 'certifications',
+          prompt: 'Add certifications to strengthen your profile.',
+          href: '/site/profile/edit',
+        },
+      ].filter(Boolean)
+    : []
+
+  const showCompletenessModule = incompleteItems.length >= 2
+
+  const showRegulixNudge =
+    nudgeData !== null &&
+    nudgeData.subState !== 'complete' &&
+    !nudgeDismissedLocally &&
+    (nudgeData.dismissedAt === null || daysSince(nudgeData.dismissedAt) >= 14)
+
+  const profileCompletePct = profile?.profile_complete_pct ?? 0
+
+  // ── Handlers ───────────────────────────────────────────────────────────────
+  const handleDismissNudge = useCallback(async () => {
+    setNudgeDismissedLocally(true)
+    if (user) await dismissRegulixNudge(user.id)
+  }, [user])
+
+  const handleBoostConfirm = () => setBoostSuccess(true)
 
   const handleBoostClose = () => {
-    if (boostSuccess && selectedBoostId) {
-      setBoostedAppIds((prev) => new Set([...prev, selectedBoostId]))
+    if (boostSuccess && boostAppId) {
+      setBoostedAppIds((prev) => new Set([...prev, boostAppId]))
     }
-    setSelectedBoostId(null)
+    setBoostAppId(null)
     setBoostSuccess(false)
   }
 
-  const stats = [
-    {
-      label: 'Applications',
-      value: applications.length,
-      icon: <BriefcaseIcon size={18} />,
-      color: 'primary' as const,
-      trend: { direction: 'flat' as const, value: '' },
-    },
-    {
-      label: 'Profile Views',
-      value: 0,
-      icon: <EyeIcon size={18} />,
-      color: 'accent' as const,
-      trend: { direction: 'flat' as const, value: '' },
-    },
-    {
-      label: 'Interviews',
-      value: applications.filter((a) => a.status === 'Interviewing').length,
-      icon: <TrendingUpIcon size={18} />,
-      color: 'info' as const,
-      trend: { direction: 'flat' as const, value: '' },
-    },
-    {
-      label: 'Offers',
-      value: applications.filter((a) => a.status === 'Offer').length,
-      icon: <CheckCircleIcon size={18} />,
-      color: 'success' as const,
-      trend: { direction: 'flat' as const, value: '' },
-    },
-  ]
+  const handleWithdrawOpen = (appId: string) => {
+    setWithdrawAppId(appId)
+    setWithdrawReason('')
+    setWithdrawMessage('')
+  }
 
+  const handleWithdrawConfirm = async () => {
+    if (!withdrawAppId || !withdrawReason) return
+    setWithdrawing(true)
+    const { error } = await withdrawApplication(withdrawAppId, withdrawReason, withdrawMessage)
+    setWithdrawing(false)
+    if (!error) {
+      setApplications((prev) => prev.filter((a) => a.id !== withdrawAppId))
+      setWithdrawAppId(null)
+    }
+  }
+
+  const handleQuickApply = useCallback(async (jobId: string) => {
+    const { data } = await getJobById(jobId)
+    if (data) {
+      setQuickApplyJob(data)
+      setQuickApplyOpen(true)
+    }
+  }, [])
+
+  const handleQuickApplyDone = useCallback((jobId: string) => {
+    setAppliedFromDashboard((prev) => new Set([...prev, jobId]))
+    setQuickApplyOpen(false)
+    setQuickApplyJob(null)
+  }, [])
+
+  const handleRemoveSaved = useCallback(async (savedJobId: string) => {
+    setSavedJobs((prev) => prev.filter((s) => s.id !== savedJobId))
+    await removeSavedJob(savedJobId)
+  }, [])
+
+  const boostingApp = boostAppId ? applications.find((a) => a.id === boostAppId) : null
+
+  // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div style={{ minHeight: '100vh', background: 'var(--kt-bg)' }}>
+      {/* Email verification banner */}
       {!isEmailVerified && (
         <div
           style={{
             background: 'var(--kt-amber-subtle, #fffbeb)',
             borderBottom: '1px solid var(--kt-amber-border, #fde68a)',
             padding: '10px var(--kt-space-6)',
-            fontSize: 'var(--kt-text-sm)',
+            fontSize: 12,
             color: 'var(--kt-amber-text, #92400e)',
             textAlign: 'center',
           }}
         >
-          Please verify your email address to unlock job applications.{' '}
-          <strong>{user?.email}</strong>
+          Please verify your email to unlock job applications. <strong>{user?.email}</strong>
         </div>
       )}
-      {(profileError || dataError) && (
+
+      {dataError && (
         <div
           style={{
             background: 'var(--kt-danger-subtle)',
             color: 'var(--kt-danger)',
             padding: '10px var(--kt-space-6)',
-            fontSize: 'var(--kt-text-sm)',
+            fontSize: 12,
             textAlign: 'center',
           }}
         >
-          {profileError ?? dataError}
+          {dataError}
         </div>
       )}
+
       {/* Page header */}
       <div
         style={{
@@ -233,26 +353,32 @@ export const WorkerDashboard: React.FC = () => {
             gap: 14,
           }}
         >
-          {/* Avatar */}
           <div
             style={{
               width: 52,
               height: 52,
               borderRadius: '50%',
-              background: 'var(--kt-primary)',
+              background: profile?.avatar_url ? 'transparent' : 'var(--kt-primary)',
               color: 'var(--kt-primary-fg)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontWeight: 'var(--kt-weight-bold)',
               fontSize: 'var(--kt-text-xl)',
-              border: '2px solid var(--kt-border)',
               flexShrink: 0,
+              overflow: 'hidden',
             }}
           >
-            {worker.initials}
+            {profile?.avatar_url ? (
+              <img
+                src={profile.avatar_url}
+                alt={workerName}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+            ) : (
+              workerInitials
+            )}
           </div>
-          {/* Name + subtitle */}
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
               <h1
@@ -263,104 +389,62 @@ export const WorkerDashboard: React.FC = () => {
                   margin: 0,
                 }}
               >
-                Welcome back{worker.name ? `, ${worker.name.split(' ')[0]}` : ''}
+                Welcome back{workerName ? `, ${workerName.split(' ')[0]}` : ''}
               </h1>
-              {worker.isRegulixReady && <RegulixBadge size="sm" />}
+              {profile?.is_regulix_ready && <RegulixBadge size="sm" />}
             </div>
-            <p style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text-muted)', margin: 0 }}>
-              {[worker.headline, worker.location].filter(Boolean).join(' · ')}
+            <p style={{ fontSize: 12, color: 'var(--kt-text-muted)', margin: 0 }}>
+              {[
+                profile?.primary_trade,
+                profile?.city && profile?.region
+                  ? `${profile.city}, ${profile.region}`
+                  : profile?.city || profile?.region || null,
+              ]
+                .filter(Boolean)
+                .join(' · ')}
             </p>
           </div>
-          {/* Actions */}
           <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
             <Link to="/site/profile/edit">
-              <Button variant="outline" size="sm">
+              <button type="button" className={styles.primaryAction}>
                 Edit profile
-              </Button>
+              </button>
             </Link>
-            <Link to={`/site/profile/${worker.id}`}>
-              <Button variant="ghost" size="sm">
+            <Link to={`/site/profile/${user?.id}`} style={{ textDecoration: 'none' }}>
+              <button type="button" className={styles.primaryAction}>
                 View profile
-              </Button>
+              </button>
             </Link>
           </div>
         </div>
       </div>
 
+      {/* Main layout */}
       <div
         style={{
           maxWidth: 'var(--kt-layout-max-width)',
           margin: '0 auto',
           padding: '28px var(--kt-space-6)',
           display: 'flex',
-          gap: 28,
-          alignItems: 'flex-start',
+          flexDirection: 'column',
+          gap: 24,
         }}
       >
-        {/* ---- Main ---- */}
-        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 24 }}>
-          {/* Stats row */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}>
-            {stats.map((s) => (
-              <StatCard key={s.label} {...s} />
-            ))}
-          </div>
-
-          {/* Regulix CTA — only if not ready */}
-          {!worker.isRegulixReady && (
+        {/* ── Two-column section ──────────────────────────────────────────── */}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '65fr 35fr',
+            gap: 24,
+            alignItems: 'start',
+          }}
+        >
+          {/* ── My Applications ─────────────────────────────────────────── */}
+          <div className={styles.tableCard}>
+            {/* Header */}
             <div
               style={{
-                background: 'color-mix(in srgb, var(--kt-accent) 6%, var(--kt-surface))',
-                border: '1px solid color-mix(in srgb, var(--kt-accent) 20%, var(--kt-border))',
-                borderRadius: 'var(--kt-radius-lg)',
-                padding: '20px 24px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 16,
-                flexWrap: 'wrap',
-              }}
-            >
-              <RegulixBadge size="lg" pulse />
-              <div style={{ flex: 1 }}>
-                <p
-                  style={{
-                    fontWeight: 'var(--kt-weight-semibold)',
-                    color: 'var(--kt-text)',
-                    fontSize: 'var(--kt-text-md)',
-                    marginBottom: 4,
-                  }}
-                >
-                  Get Regulix Ready — Stand out to employers
-                </p>
-                <p
-                  style={{
-                    fontSize: 'var(--kt-text-sm)',
-                    color: 'var(--kt-text-muted)',
-                    lineHeight: 1.5,
-                  }}
-                >
-                  Complete your W-4, I-9, direct deposit, and background check. Become Day-1
-                  hire-ready.
-                </p>
-              </div>
-              <Button variant="accent" size="md">
-                Start Regulix →
-              </Button>
-            </div>
-          )}
-
-          {/* Applications Table */}
-          <div
-            style={{
-              background: 'var(--kt-surface)',
-              border: '1px solid var(--kt-border)',
-              borderRadius: 'var(--kt-radius-lg)',
-              overflow: 'hidden',
-            }}
-          >
-            <div
-              style={{
-                padding: '18px 24px',
+                padding: '14px 20px',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
@@ -371,748 +455,614 @@ export const WorkerDashboard: React.FC = () => {
                 style={{
                   fontWeight: 'var(--kt-weight-semibold)',
                   color: 'var(--kt-text)',
-                  fontSize: 'var(--kt-text-md)',
+                  fontSize: 13,
+                  margin: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 7,
                 }}
               >
-                My Applications
+                <BriefcaseIcon size={14} />
+                My applications
               </h2>
               <Link
-                to="/site/jobs"
+                to="/site/applications"
                 style={{
-                  fontSize: 'var(--kt-text-sm)',
-                  color: 'var(--kt-accent)',
+                  fontSize: 12,
+                  color: 'var(--kt-primary)',
                   textDecoration: 'none',
                   fontWeight: 'var(--kt-weight-medium)',
                 }}
               >
-                Browse More Jobs →
+                View all →
               </Link>
             </div>
 
-            {/* Table header */}
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: '2fr 1fr 1fr 1fr',
-                padding: '10px 24px',
-                borderBottom: '1px solid var(--kt-border)',
-                background: 'var(--kt-bg)',
-              }}
-            >
-              {['Job', 'Status', 'Applied', 'Actions'].map((h) => (
-                <span
-                  key={h}
-                  style={{
-                    fontSize: 'var(--kt-text-xs)',
-                    fontWeight: 'var(--kt-weight-semibold)',
-                    color: 'var(--kt-text-muted)',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.5px',
-                  }}
-                >
-                  {h}
-                </span>
-              ))}
-            </div>
+            {/* Column headers */}
+            {applications.length > 0 && (
+              <div className={`${styles.row} ${styles.headerRow} ${styles.appsRow}`}>
+                <div>Job</div>
+                <div>Stage</div>
+                <div>Applied</div>
+                <div style={{ textAlign: 'right' }}>Actions</div>
+              </div>
+            )}
 
+            {/* Empty state */}
             {applications.length === 0 && (
-              <div
-                style={{
-                  padding: '40px 24px',
-                  textAlign: 'center',
-                  color: 'var(--kt-text-muted)',
-                  fontSize: 'var(--kt-text-sm)',
-                }}
-              >
+              <div className={styles.emptyRow}>
                 No applications yet.{' '}
-                <Link to="/site/jobs" style={{ color: 'var(--kt-accent)' }}>
+                <Link to="/site/jobs" style={{ color: 'var(--kt-primary)' }}>
                   Browse jobs →
                 </Link>
               </div>
             )}
-            {applications.map((app, i) => {
-              const cfg = statusConfig[app.status]
-              const isLast = i === applications.length - 1
-              const isExpanded = expandedAppId === app.id
-              const events = appEvents.filter((e) => e.applicationId === app.id)
+
+            {/* Rows */}
+            {applications.map((app) => {
+              const cfg = STAGE_CFG[app.stage]
+              const isBoosted = app.isBoosted || boostedAppIds.has(app.id)
+              const canAction = app.stage !== 'Offer' && app.stage !== 'Closed'
+
+              const overflowItems: OverflowItem[] = []
+              if (canAction) {
+                if (!isBoosted) {
+                  overflowItems.push({
+                    label: 'Boost — $9.99',
+                    onClick: () => {
+                      setBoostAppId(app.id)
+                      setBoostSuccess(false)
+                    },
+                  })
+                }
+                overflowItems.push({
+                  label: 'Withdraw',
+                  danger: true,
+                  onClick: () => handleWithdrawOpen(app.id),
+                })
+              }
+
               return (
-                <React.Fragment key={app.id}>
-                  <div
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: '2fr 1fr 1fr 1fr',
-                      padding: '14px 24px',
-                      alignItems: 'center',
-                      borderBottom: !isExpanded && isLast ? 'none' : '1px solid var(--kt-border)',
-                      background:
-                        app.status === 'Offer'
-                          ? 'color-mix(in srgb, var(--kt-success) 5%, transparent)'
-                          : 'transparent',
-                    }}
-                  >
-                    {/* Job info */}
-                    <div>
-                      <Link to={`/site/jobs/${app.jobId}`} style={{ textDecoration: 'none' }}>
-                        <p
-                          style={{
-                            fontSize: 'var(--kt-text-sm)',
-                            fontWeight: 'var(--kt-weight-medium)',
-                            color: 'var(--kt-text)',
-                            marginBottom: 2,
-                          }}
-                        >
-                          {app.job.title}
-                        </p>
-                      </Link>
-                      <p style={{ fontSize: 'var(--kt-text-xs)', color: 'var(--kt-text-muted)' }}>
-                        {app.job.company.name} · {app.job.location}
-                      </p>
-                      {(app.isBoosted || boostedAppIds.has(app.id)) && (
-                        <span
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: 4,
-                            marginTop: 4,
-                            fontSize: 'var(--kt-text-xs)',
-                            color: 'var(--kt-olive-700)',
-                            fontWeight: 'var(--kt-weight-medium)',
-                          }}
-                        >
-                          <RocketIcon /> Boosted
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Status */}
-                    <div>
-                      <Badge variant={cfg.variant} size="sm" dot>
-                        {cfg.label}
-                      </Badge>
-                    </div>
-
-                    {/* Applied */}
-                    <span style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text-muted)' }}>
-                      {app.appliedDaysAgo === 0 ? 'Today' : `${app.appliedDaysAgo}d ago`}
-                    </span>
-
-                    {/* Actions */}
-                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                      {app.status === 'Offer' && (
-                        <Button variant="accent" size="sm" onClick={() => {}}>
-                          View Offer
-                        </Button>
-                      )}
-                      {!app.isBoosted &&
-                        !boostedAppIds.has(app.id) &&
-                        app.status !== 'Rejected' &&
-                        app.status !== 'Offer' && (
-                          <button
-                            onClick={() => handleBoostClick(app.id)}
-                            style={{
-                              fontSize: 'var(--kt-text-xs)',
-                              color: 'var(--kt-olive-700)',
-                              background: 'transparent',
-                              border: '1px solid var(--kt-olive-300)',
-                              borderRadius: 'var(--kt-radius-sm)',
-                              padding: '4px 10px',
-                              cursor: 'pointer',
-                              fontFamily: 'var(--kt-font-sans)',
-                              fontWeight: 'var(--kt-weight-medium)',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 4,
-                            }}
-                          >
-                            <RocketIcon /> Boost
-                          </button>
-                        )}
-                      <button
-                        onClick={() => setExpandedAppId(isExpanded ? null : app.id)}
-                        style={{
-                          fontSize: 'var(--kt-text-xs)',
-                          color: 'var(--kt-text-muted)',
-                          background: 'transparent',
-                          border: '1px solid var(--kt-border)',
-                          borderRadius: 'var(--kt-radius-sm)',
-                          padding: '4px 8px',
-                          cursor: 'pointer',
-                          fontFamily: 'var(--kt-font-sans)',
-                        }}
-                        title="View timeline"
-                      >
-                        {isExpanded ? '▲' : '▼'}
-                      </button>
-                    </div>
+                <div
+                  key={app.id}
+                  className={`${styles.row} ${styles.appsRow} ${app.stage === 'Closed' ? styles.rowClosed : ''}`}
+                >
+                  <div className={styles.titleCell}>
+                    <Link to={`/site/jobs/${app.jobId}`} className={styles.titleLink}>
+                      {app.jobTitle}
+                    </Link>
+                    <div className={styles.subtitleText}>{app.companyName}</div>
+                    {isBoosted && (
+                      <div className={styles.boostedIndicator}>
+                        <RocketIcon size={11} /> Boosted
+                      </div>
+                    )}
                   </div>
 
-                  {/* Timeline */}
-                  {isExpanded && (
-                    <div
-                      style={{
-                        padding: '12px 24px 16px',
-                        background: 'var(--kt-bg)',
-                        borderBottom: isLast ? 'none' : '1px solid var(--kt-border)',
-                      }}
-                    >
-                      <p
-                        style={{
-                          fontSize: 'var(--kt-text-xs)',
-                          fontWeight: 'var(--kt-weight-semibold)',
-                          color: 'var(--kt-text-muted)',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.5px',
-                          marginBottom: 12,
-                        }}
-                      >
-                        Application Timeline
-                      </p>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-                        {events.map((ev, ei) => (
-                          <div
-                            key={ev.id}
-                            style={{ display: 'flex', gap: 12, position: 'relative' }}
-                          >
-                            {/* Connector line */}
-                            {ei < events.length - 1 && (
-                              <div
-                                style={{
-                                  position: 'absolute',
-                                  left: 12,
-                                  top: 24,
-                                  bottom: 0,
-                                  width: 2,
-                                  background: 'var(--kt-border)',
-                                }}
-                              />
-                            )}
-                            <div
-                              style={{
-                                width: 26,
-                                height: 26,
-                                borderRadius: '50%',
-                                background: 'var(--kt-surface)',
-                                border: '2px solid var(--kt-border)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: '11px',
-                                flexShrink: 0,
-                                zIndex: 1,
-                              }}
-                            >
-                              {timelineStatusIcon[ev.status]}
-                            </div>
-                            <div style={{ paddingBottom: 14 }}>
-                              <p
-                                style={{
-                                  fontSize: 'var(--kt-text-xs)',
-                                  fontWeight: 'var(--kt-weight-semibold)',
-                                  color: 'var(--kt-text)',
-                                  marginBottom: 1,
-                                }}
-                              >
-                                {ev.status}
-                              </p>
-                              <p
-                                style={{
-                                  fontSize: 'var(--kt-text-xs)',
-                                  color: 'var(--kt-text-muted)',
-                                }}
-                              >
-                                {ev.note} ·{' '}
-                                {ev.occurredDaysAgo === 0 ? 'Today' : `${ev.occurredDaysAgo}d ago`}
-                              </p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </React.Fragment>
+                  <div>
+                    <Badge variant={cfg.variant} size="sm">
+                      {cfg.label}
+                    </Badge>
+                  </div>
+
+                  <div className={styles.metaText}>{fmtApplied(app.appliedAt)}</div>
+
+                  <div className={styles.actionsCell}>
+                    <Link to={`/site/jobs/${app.jobId}`} style={{ textDecoration: 'none' }}>
+                      <button type="button" className={styles.primaryAction}>
+                        View job
+                      </button>
+                    </Link>
+                    {overflowItems.length > 0 && <OverflowMenu items={overflowItems} />}
+                  </div>
+                </div>
               )
             })}
           </div>
 
-          {/* Recommended Jobs */}
-          {recommendedJobs.length > 0 && (
-            <div
-              style={{
-                background: 'var(--kt-surface)',
-                border: '1px solid var(--kt-border)',
-                borderRadius: 'var(--kt-radius-lg)',
-                overflow: 'hidden',
-              }}
-            >
+          {/* ── Right sidebar ───────────────────────────────────────────── */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {/* Profile Completeness */}
+            {showCompletenessModule && (
               <div
                 style={{
-                  padding: '18px 24px',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  borderBottom: '1px solid var(--kt-border)',
+                  background: 'var(--kt-surface)',
+                  border: '1px solid var(--kt-border)',
+                  borderRadius: 'var(--kt-radius-lg)',
+                  padding: 20,
                 }}
               >
-                <h2
-                  style={{
-                    fontWeight: 'var(--kt-weight-semibold)',
-                    color: 'var(--kt-text)',
-                    fontSize: 'var(--kt-text-md)',
-                  }}
-                >
-                  <SparkleIcon size={16} /> Recommended for You
-                </h2>
-                <Link
-                  to="/site/jobs"
-                  style={{
-                    fontSize: 'var(--kt-text-sm)',
-                    color: 'var(--kt-accent)',
-                    textDecoration: 'none',
-                    fontWeight: 'var(--kt-weight-medium)',
-                  }}
-                >
-                  See all →
-                </Link>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                {recommendedJobs.map((job, i) => (
-                  <Link
-                    key={job.id}
-                    to={`/site/jobs/${job.id}`}
-                    style={{
-                      textDecoration: 'none',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 14,
-                      padding: '14px 24px',
-                      borderBottom:
-                        i < recommendedJobs.length - 1 ? '1px solid var(--kt-border)' : 'none',
-                      background: 'transparent',
-                      transition: 'background var(--kt-duration-fast)',
-                    }}
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.background = 'var(--kt-surface-raised)')
-                    }
-                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-                  >
-                    <div
-                      style={{
-                        width: 40,
-                        height: 40,
-                        borderRadius: 8,
-                        background: 'var(--kt-navy-900)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: 'var(--kt-sand-300)',
-                        fontWeight: 'var(--kt-weight-bold)',
-                        fontSize: 'var(--kt-text-md)',
-                        flexShrink: 0,
-                      }}
-                    >
-                      {job.company.name.charAt(0)}
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p
-                        style={{
-                          fontSize: 'var(--kt-text-sm)',
-                          fontWeight: 'var(--kt-weight-semibold)',
-                          color: 'var(--kt-text)',
-                          marginBottom: 2,
-                        }}
-                      >
-                        {job.title}
-                      </p>
-                      <p style={{ fontSize: 'var(--kt-text-xs)', color: 'var(--kt-text-muted)' }}>
-                        {job.company.name} · {job.location} · ${job.payMin}–${job.payMax}/hr
-                      </p>
-                    </div>
-                    <div
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'flex-end',
-                        gap: 4,
-                        flexShrink: 0,
-                      }}
-                    >
-                      <Badge variant="secondary" size="sm">
-                        {job.type}
-                      </Badge>
-                      {job.isSponsored && (
-                        <Badge variant="accent" size="sm">
-                          Featured
-                        </Badge>
-                      )}
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Performance */}
-          {worker.performanceScore && (
-            <div
-              style={{
-                background: 'var(--kt-surface)',
-                border: '1px solid var(--kt-border)',
-                borderRadius: 'var(--kt-radius-lg)',
-                padding: 24,
-              }}
-            >
-              <h2
-                style={{
-                  fontWeight: 'var(--kt-weight-semibold)',
-                  color: 'var(--kt-text)',
-                  fontSize: 'var(--kt-text-md)',
-                  marginBottom: 16,
-                }}
-              >
-                Performance Score
-              </h2>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                 <div
                   style={{
-                    width: 64,
-                    height: 64,
-                    borderRadius: '50%',
-                    border: '3px solid var(--kt-olive-400)',
                     display: 'flex',
+                    justifyContent: 'space-between',
                     alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
+                    marginBottom: 4,
                   }}
                 >
+                  <h3
+                    style={{
+                      fontSize: 13,
+                      fontWeight: 'var(--kt-weight-semibold)',
+                      color: 'var(--kt-text)',
+                      margin: 0,
+                    }}
+                  >
+                    Complete your profile
+                  </h3>
                   <span
                     style={{
-                      fontSize: 'var(--kt-text-xl)',
+                      fontSize: 12,
                       fontWeight: 'var(--kt-weight-bold)',
                       color: 'var(--kt-olive-700)',
                     }}
                   >
-                    {worker.performanceScore}
+                    {profileCompletePct}%
                   </span>
                 </div>
-                <div>
-                  <div style={{ display: 'flex', gap: 2, marginBottom: 6 }}>
-                    {[1, 2, 3, 4, 5].map((n) =>
-                      n <= Math.round(worker.performanceScore!) ? (
-                        <StarIcon key={n} size={13} color="var(--kt-warning)" />
-                      ) : (
-                        <StarOutlineIcon key={n} size={13} color="var(--kt-border-strong)" />
-                      )
-                    )}
-                  </div>
-                  <p style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text-muted)' }}>
-                    Employer ratings
-                    {worker.totalHoursWorked &&
-                      ` · ${worker.totalHoursWorked.toLocaleString()} hours worked`}
-                  </p>
+                <p style={{ fontSize: 12, color: 'var(--kt-text-muted)', marginBottom: 12 }}>
+                  Your profile is {profileCompletePct}% complete.
+                </p>
+                <Progress
+                  value={profileCompletePct}
+                  color={
+                    profileCompletePct >= 90
+                      ? 'success'
+                      : profileCompletePct >= 60
+                        ? 'warning'
+                        : 'danger'
+                  }
+                  size="sm"
+                  style={{ marginBottom: 16 }}
+                />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {(incompleteItems as Array<{ key: string; prompt: string; href: string }>)
+                    .slice(0, 3)
+                    .map((item) => (
+                      <Link
+                        key={item.key}
+                        to={item.href}
+                        style={{
+                          fontSize: 12,
+                          color: 'var(--kt-primary)',
+                          textDecoration: 'none',
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          gap: 8,
+                          lineHeight: 1.4,
+                        }}
+                      >
+                        <span
+                          style={{
+                            marginTop: 1,
+                            width: 13,
+                            height: 13,
+                            borderRadius: '50%',
+                            border: '1.5px solid var(--kt-border-strong)',
+                            flexShrink: 0,
+                            display: 'inline-block',
+                          }}
+                        />
+                        {item.prompt}
+                      </Link>
+                    ))}
+                </div>
+                <div
+                  style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--kt-border)' }}
+                >
+                  <Link
+                    to={`/site/profile/${user?.id}`}
+                    style={{
+                      fontSize: 12,
+                      color: 'var(--kt-text-muted)',
+                      textDecoration: 'none',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 4,
+                    }}
+                  >
+                    <PersonIcon size={13} />
+                    View full profile →
+                  </Link>
                 </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
 
-        {/* ---- Sidebar ---- */}
-        <div
-          style={{ width: 260, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 16 }}
-        >
-          {/* Profile Completion — hidden once 100% */}
-          {worker.profileCompletePct < 100 && (
-            <div
-              style={{
-                background: 'var(--kt-surface)',
-                border: '1px solid var(--kt-border)',
-                borderRadius: 'var(--kt-radius-lg)',
-                padding: 20,
-              }}
-            >
+            {/* Regulix Nudge */}
+            {showRegulixNudge && nudgeData && (
               <div
                 style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginBottom: 12,
+                  background: 'color-mix(in srgb, var(--kt-accent) 5%, var(--kt-surface))',
+                  border: '1px solid color-mix(in srgb, var(--kt-accent) 18%, var(--kt-border))',
+                  borderRadius: 'var(--kt-radius-lg)',
+                  padding: 20,
+                  position: 'relative',
                 }}
               >
-                <h3
+                <button
+                  onClick={handleDismissNudge}
                   style={{
-                    fontSize: 'var(--kt-text-sm)',
-                    fontWeight: 'var(--kt-weight-semibold)',
-                    color: 'var(--kt-text)',
+                    position: 'absolute',
+                    top: 12,
+                    right: 12,
+                    background: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: 'var(--kt-text-muted)',
+                    padding: 2,
+                    display: 'flex',
+                    alignItems: 'center',
                   }}
+                  aria-label="Dismiss"
                 >
-                  Profile Strength
-                </h3>
-                <span
-                  style={{
-                    fontSize: 'var(--kt-text-sm)',
-                    fontWeight: 'var(--kt-weight-bold)',
-                    color: 'var(--kt-olive-700)',
-                  }}
-                >
-                  {worker.profileCompletePct}%
-                </span>
-              </div>
-              <Progress
-                value={worker.profileCompletePct}
-                color={
-                  worker.profileCompletePct >= 90
-                    ? 'success'
-                    : worker.profileCompletePct >= 60
-                      ? 'warning'
-                      : 'danger'
-                }
-                size="sm"
-                style={{ marginBottom: 14 }}
-              />
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {profileChecklist.map((item) => (
-                  <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <div
+                  <CloseIcon size={14} />
+                </button>
+                <RegulixBadge size="sm" />
+                {nudgeData.subState === 'connect' ? (
+                  <>
+                    <p
                       style={{
-                        width: 16,
-                        height: 16,
-                        borderRadius: '50%',
-                        background: item.done ? 'var(--kt-success)' : 'var(--kt-border)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0,
+                        fontSize: 13,
+                        fontWeight: 'var(--kt-weight-semibold)',
+                        color: 'var(--kt-text)',
+                        marginTop: 12,
+                        marginBottom: 6,
                       }}
                     >
-                      {item.done && (
-                        <svg
-                          width="9"
-                          height="7"
-                          viewBox="0 0 9 7"
-                          fill="none"
-                          stroke="white"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                        >
-                          <path d="M1 3.5l2.5 2.5 5-5" />
-                        </svg>
-                      )}
-                    </div>
-                    <span
+                      Connect your Regulix account
+                    </p>
+                    <p
                       style={{
-                        fontSize: 'var(--kt-text-xs)',
-                        color: item.done ? 'var(--kt-text)' : 'var(--kt-text-muted)',
+                        fontSize: 12,
+                        color: 'var(--kt-text-muted)',
+                        marginBottom: 14,
+                        lineHeight: 1.5,
                       }}
                     >
-                      {item.label}
-                    </span>
-                  </div>
-                ))}
+                      Become Day-1 hire-ready. Complete your W-4, I-9, direct deposit, and
+                      background check.
+                    </p>
+                    <button
+                      type="button"
+                      className={styles.primaryAction}
+                      style={{
+                        width: '100%',
+                        height: 30,
+                        fontSize: 12,
+                        background: 'var(--kt-accent)',
+                        color: 'white',
+                        border: 'none',
+                      }}
+                    >
+                      Connect Regulix
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <p
+                      style={{
+                        fontSize: 13,
+                        fontWeight: 'var(--kt-weight-semibold)',
+                        color: 'var(--kt-text)',
+                        marginTop: 12,
+                        marginBottom: 6,
+                      }}
+                    >
+                      Import your Regulix reviews
+                    </p>
+                    <p
+                      style={{
+                        fontSize: 12,
+                        color: 'var(--kt-text-muted)',
+                        marginBottom: 14,
+                        lineHeight: 1.5,
+                      }}
+                    >
+                      Bring your employer ratings into krewtree to stand out to new employers.
+                    </p>
+                    <button
+                      type="button"
+                      className={styles.primaryAction}
+                      style={{
+                        width: '100%',
+                        height: 30,
+                        fontSize: 12,
+                        background: 'var(--kt-accent)',
+                        color: 'white',
+                        border: 'none',
+                      }}
+                    >
+                      Import reviews
+                    </button>
+                  </>
+                )}
               </div>
-              <Divider style={{ margin: '14px 0' }} />
-              <Link
-                to={`/site/profile/${worker.id}`}
-                style={{ textDecoration: 'none', display: 'block' }}
-              >
-                <Button variant="outline" size="sm" style={{ width: '100%' }}>
-                  View My Profile
-                </Button>
+            )}
+          </div>
+        </div>
+
+        {/* ── Saved Jobs ──────────────────────────────────────────────────── */}
+        <div className={styles.tableCard}>
+          <div
+            style={{
+              padding: '14px 20px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              borderBottom: '1px solid var(--kt-border)',
+            }}
+          >
+            <h2
+              style={{
+                fontWeight: 'var(--kt-weight-semibold)',
+                color: 'var(--kt-text)',
+                fontSize: 13,
+                margin: 0,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 7,
+              }}
+            >
+              <BookmarkFilledIcon size={14} />
+              Saved jobs
+            </h2>
+            <Link
+              to="/site/saved-jobs"
+              style={{
+                fontSize: 12,
+                color: 'var(--kt-primary)',
+                textDecoration: 'none',
+                fontWeight: 'var(--kt-weight-medium)',
+              }}
+            >
+              View all →
+            </Link>
+          </div>
+
+          {savedJobs.length === 0 && (
+            <div className={styles.emptyRow}>
+              No saved jobs yet.{' '}
+              <Link to="/site/jobs" style={{ color: 'var(--kt-primary)' }}>
+                Browse jobs →
               </Link>
             </div>
           )}
 
-          {/* Quick Links */}
+          {savedJobs.length > 0 && (
+            <>
+              <div className={`${styles.row} ${styles.headerRow} ${styles.savedRow}`}>
+                <div>Job</div>
+                <div>Status</div>
+                <div>Saved</div>
+                <div style={{ textAlign: 'right' }}>Actions</div>
+              </div>
+
+              {savedJobs.map((sj) => {
+                const isClosed = sj.staleness === 'closed'
+                const isExpiring = sj.staleness === 'expiring_soon'
+                const hasApplied = sj.hasApplied || appliedFromDashboard.has(sj.jobId)
+
+                return (
+                  <div
+                    key={sj.id}
+                    className={`${styles.row} ${styles.savedRow} ${isClosed ? styles.rowClosed : ''}`}
+                  >
+                    <div className={styles.titleCell}>
+                      {isClosed ? (
+                        <span className={styles.titleStruck}>{sj.jobTitle}</span>
+                      ) : (
+                        <Link to={`/site/jobs/${sj.jobId}`} className={styles.titleLink}>
+                          {sj.jobTitle}
+                        </Link>
+                      )}
+                      <div className={styles.subtitleText}>{sj.companyName}</div>
+                    </div>
+
+                    <div>
+                      {isExpiring && (
+                        <Badge variant="warning" size="sm">
+                          Expiring soon
+                        </Badge>
+                      )}
+                      {isClosed && (
+                        <Badge variant="secondary" size="sm">
+                          Closed
+                        </Badge>
+                      )}
+                    </div>
+
+                    <div className={styles.metaText}>{fmtSaved(sj.savedAt)}</div>
+
+                    <div className={styles.actionsCell}>
+                      {!isClosed &&
+                        (hasApplied ? (
+                          <span className={styles.appliedState}>
+                            <CheckIcon size={12} /> Applied
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            className={styles.primaryAction}
+                            onClick={() => handleQuickApply(sj.jobId)}
+                            style={
+                              isExpiring
+                                ? {
+                                    background: 'var(--kt-primary)',
+                                    color: 'var(--kt-primary-fg)',
+                                    border: 'none',
+                                  }
+                                : undefined
+                            }
+                          >
+                            Quick Apply
+                          </button>
+                        ))}
+                      <OverflowMenu
+                        items={[
+                          {
+                            label: 'Remove bookmark',
+                            onClick: () => handleRemoveSaved(sj.id),
+                          },
+                        ]}
+                      />
+                    </div>
+                  </div>
+                )
+              })}
+            </>
+          )}
+        </div>
+
+        {/* ── New Jobs For You ─────────────────────────────────────────────── */}
+        <div className={styles.tableCard}>
           <div
             style={{
-              background: 'var(--kt-surface)',
-              border: '1px solid var(--kt-border)',
-              borderRadius: 'var(--kt-radius-lg)',
-              padding: 20,
+              padding: '14px 20px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              borderBottom: '1px solid var(--kt-border)',
             }}
           >
-            <h3
+            <h2
               style={{
-                fontSize: 'var(--kt-text-sm)',
                 fontWeight: 'var(--kt-weight-semibold)',
                 color: 'var(--kt-text)',
-                marginBottom: 12,
+                fontSize: 13,
+                margin: 0,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 7,
               }}
             >
-              Quick Links
-            </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {[
-                {
-                  label: (
-                    <>
-                      <SearchIcon size={14} /> Browse Jobs
-                    </>
-                  ),
-                  to: '/site/jobs',
-                },
-                {
-                  label: (
-                    <>
-                      <BookmarkFilledIcon size={14} /> Saved Jobs ({savedJobsCount})
-                    </>
-                  ),
-                  to: '/site/saved-jobs',
-                },
-                {
-                  label: (
-                    <>
-                      <MessageIcon size={14} /> Messages
-                    </>
-                  ),
-                  to: '/site/messages',
-                },
-                {
-                  label: (
-                    <>
-                      <PersonIcon size={14} /> Edit Profile
-                    </>
-                  ),
-                  to: `/site/profile/${worker.id}`,
-                },
-                {
-                  label: (
-                    <>
-                      <GiftIcon size={14} /> Referrals
-                    </>
-                  ),
-                  to: '/site/referrals',
-                },
-              ].map((link) => (
-                <Link
-                  key={link.to}
-                  to={link.to}
-                  style={{
-                    display: 'block',
-                    padding: '8px 12px',
-                    borderRadius: 'var(--kt-radius-md)',
-                    border: '1px solid var(--kt-border)',
-                    fontSize: 'var(--kt-text-sm)',
-                    color: 'var(--kt-text)',
-                    textDecoration: 'none',
-                    fontWeight: 'var(--kt-weight-medium)',
-                    background: 'var(--kt-bg)',
-                  }}
-                >
-                  {link.label}
-                </Link>
-              ))}
-            </div>
+              <SparkleIcon size={14} />
+              New jobs for you
+            </h2>
+            <Link
+              to="/site/jobs"
+              style={{
+                fontSize: 12,
+                color: 'var(--kt-primary)',
+                textDecoration: 'none',
+                fontWeight: 'var(--kt-weight-medium)',
+              }}
+            >
+              Browse all jobs →
+            </Link>
           </div>
 
-          {/* Skills */}
-          <div
-            style={{
-              background: 'var(--kt-surface)',
-              border: '1px solid var(--kt-border)',
-              borderRadius: 'var(--kt-radius-lg)',
-              padding: 20,
-            }}
-          >
-            <h3
-              style={{
-                fontSize: 'var(--kt-text-sm)',
-                fontWeight: 'var(--kt-weight-semibold)',
-                color: 'var(--kt-text)',
-                marginBottom: 12,
-              }}
-            >
-              My Top Skills
-            </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {worker.skills.map((skill) => (
-                <div key={skill.name}>
+          {completeness && !completeness.hasSkills && (
+            <div className={styles.emptyRow}>
+              Add your skills to your profile to get personalised job recommendations.{' '}
+              <Link to="/site/profile/edit" style={{ color: 'var(--kt-primary)' }}>
+                Add skills →
+              </Link>
+            </div>
+          )}
+
+          {(!completeness || completeness.hasSkills) && (
+            <>
+              {newJobsIsFallback && newJobs.length > 0 && (
+                <p
+                  style={{
+                    fontSize: 12,
+                    color: 'var(--kt-text-muted)',
+                    padding: '10px 20px 0',
+                    margin: 0,
+                  }}
+                >
+                  We couldn't find any direct matches, but you might be interested in:
+                </p>
+              )}
+              {newJobs.length === 0 && (
+                <div className={styles.emptyRow}>
+                  No new jobs available right now.{' '}
+                  <Link to="/site/jobs" style={{ color: 'var(--kt-primary)' }}>
+                    Browse all →
+                  </Link>
+                </div>
+              )}
+              {newJobs.map((job, i) => (
+                <Link
+                  key={job.jobId}
+                  to={`/site/jobs/${job.jobId}`}
+                  style={{
+                    textDecoration: 'none',
+                    display: 'grid',
+                    gridTemplateColumns: '36px 1fr auto',
+                    alignItems: 'center',
+                    gap: 12,
+                    padding: '10px 20px',
+                    borderBottom: i < newJobs.length - 1 ? '1px solid var(--kt-border)' : 'none',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--kt-bg)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                >
                   <div
-                    style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: 8,
+                      background: 'var(--kt-navy-900)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'var(--kt-sand-300)',
+                      fontWeight: 'var(--kt-weight-bold)',
+                      fontSize: 13,
+                      flexShrink: 0,
+                    }}
                   >
-                    <span
+                    {job.companyName.charAt(0)}
+                  </div>
+                  <div>
+                    <div
                       style={{
-                        fontSize: 'var(--kt-text-xs)',
-                        fontWeight: 'var(--kt-weight-medium)',
-                        color: 'var(--kt-text)',
+                        fontSize: 12,
+                        fontWeight: 'var(--kt-weight-bold)',
+                        color: 'var(--kt-primary)',
+                        marginBottom: 1,
                       }}
                     >
-                      {skill.name}
-                    </span>
+                      {job.jobTitle}
+                    </div>
+                    <div style={{ fontSize: 11, color: 'var(--kt-text-muted)' }}>
+                      {job.companyName} · {job.location}
+                    </div>
                   </div>
-                  <Progress value={65} color="primary" size="sm" />
-                </div>
+                  <span style={{ fontSize: 11, color: 'var(--kt-text-muted)' }}>→</span>
+                </Link>
               ))}
-            </div>
-          </div>
+            </>
+          )}
         </div>
       </div>
 
-      {/* ── Boost Modal ─────────────────────────────────────────────── */}
+      {/* ── Boost Modal ──────────────────────────────────────────────────────── */}
       <Modal
-        open={selectedBoostId !== null}
+        open={boostAppId !== null}
         onClose={handleBoostClose}
         size="sm"
         title={
           boostSuccess ? undefined : (
-            <>
-              <RocketIcon size={16} /> Boost Your Application
-            </>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <RocketIcon size={16} /> Boost your application
+            </span>
           )
         }
         showClose={!boostSuccess}
         footer={
           boostSuccess ? (
-            <button
-              onClick={handleBoostClose}
-              style={{
-                width: '100%',
-                padding: 'var(--kt-space-3)',
-                background: 'var(--kt-primary)',
-                color: 'var(--kt-text-on-primary)',
-                border: 'none',
-                borderRadius: 'var(--kt-radius-md)',
-                fontSize: 'var(--kt-text-sm)',
-                fontWeight: 'var(--kt-weight-semibold)',
-                cursor: 'pointer',
-                fontFamily: 'var(--kt-font-sans)',
-              }}
-            >
+            <button onClick={handleBoostClose} style={modalPrimaryBtnStyle}>
               Done
             </button>
           ) : (
             <div style={{ display: 'flex', gap: 'var(--kt-space-3)' }}>
-              <button
-                onClick={handleBoostClose}
-                style={{
-                  flex: 1,
-                  padding: 'var(--kt-space-3)',
-                  background: 'transparent',
-                  color: 'var(--kt-text)',
-                  border: '1px solid var(--kt-border)',
-                  borderRadius: 'var(--kt-radius-md)',
-                  fontSize: 'var(--kt-text-sm)',
-                  fontWeight: 'var(--kt-weight-medium)',
-                  cursor: 'pointer',
-                  fontFamily: 'var(--kt-font-sans)',
-                }}
-              >
+              <button onClick={handleBoostClose} style={modalSecondaryBtnStyle}>
                 Cancel
               </button>
-              <button
-                onClick={handleBoostConfirm}
-                style={{
-                  flex: 2,
-                  padding: 'var(--kt-space-3)',
-                  background: 'var(--kt-accent)',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: 'var(--kt-radius-md)',
-                  fontSize: 'var(--kt-text-sm)',
-                  fontWeight: 'var(--kt-weight-semibold)',
-                  cursor: 'pointer',
-                  fontFamily: 'var(--kt-font-sans)',
-                }}
-              >
-                Pay $9.99 via {boostPayMethod === 'apple' ? 'Apple Pay' : 'Zelle'}
+              <button onClick={handleBoostConfirm} style={modalPrimaryBtnStyle}>
+                Pay $9.99
               </button>
             </div>
           )
@@ -1131,47 +1081,37 @@ export const WorkerDashboard: React.FC = () => {
                 marginBottom: 8,
               }}
             >
-              Application Boosted!
+              Application boosted!
             </p>
-            <p
-              style={{
-                fontSize: 'var(--kt-text-sm)',
-                color: 'var(--kt-text-muted)',
-                lineHeight: 1.6,
-              }}
-            >
-              Your application for <strong>{boostingApp?.job.title}</strong> at{' '}
-              <strong>{boostingApp?.job.company.name}</strong> has been moved to the top of the
-              list.
+            <p style={{ fontSize: 13, color: 'var(--kt-text-muted)', lineHeight: 1.6 }}>
+              Your application for <strong>{boostingApp?.jobTitle}</strong> at{' '}
+              <strong>{boostingApp?.companyName}</strong> has been moved to the top of the list.
             </p>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-            {/* Job summary */}
             <div
               style={{
                 padding: '12px 14px',
                 background: 'var(--kt-bg)',
                 borderRadius: 'var(--kt-radius-md)',
-                border: '1px solid var(--kt-border)',
+                border: '0.5px solid var(--kt-border)',
               }}
             >
               <p
                 style={{
-                  fontSize: 'var(--kt-text-sm)',
+                  fontSize: 13,
                   fontWeight: 'var(--kt-weight-semibold)',
                   color: 'var(--kt-text)',
                   marginBottom: 3,
                 }}
               >
-                {boostingApp?.job.title}
+                {boostingApp?.jobTitle}
               </p>
-              <p style={{ fontSize: 'var(--kt-text-xs)', color: 'var(--kt-text-muted)' }}>
-                {boostingApp?.job.company.name} · {boostingApp?.job.location}
+              <p style={{ fontSize: 12, color: 'var(--kt-text-muted)' }}>
+                {boostingApp?.companyName}
               </p>
             </div>
-
-            {/* Price */}
             <div style={{ textAlign: 'center' }}>
               <p
                 style={{
@@ -1183,29 +1123,20 @@ export const WorkerDashboard: React.FC = () => {
               >
                 $9.99
               </p>
-              <p
-                style={{
-                  fontSize: 'var(--kt-text-xs)',
-                  color: 'var(--kt-text-muted)',
-                  marginTop: 4,
-                }}
-              >
+              <p style={{ fontSize: 12, color: 'var(--kt-text-muted)', marginTop: 4 }}>
                 One-time boost fee
               </p>
             </div>
-
-            {/* What you get */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {[
                 "Move to the top of the employer's applicant list",
                 'Stay pinned for 7 days',
-                'Boost badge shown on your application',
+                'Boost badge visible on your application',
               ].map((item) => (
                 <div key={item} style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
                   <span
                     style={{
-                      color: 'var(--kt-accent)',
-                      fontWeight: 700,
+                      color: 'var(--kt-primary)',
                       fontSize: 14,
                       marginTop: 1,
                       flexShrink: 0,
@@ -1213,86 +1144,152 @@ export const WorkerDashboard: React.FC = () => {
                   >
                     <CheckIcon size={14} />
                   </span>
-                  <span
-                    style={{
-                      fontSize: 'var(--kt-text-xs)',
-                      color: 'var(--kt-text)',
-                      lineHeight: 1.5,
-                    }}
-                  >
+                  <span style={{ fontSize: 12, color: 'var(--kt-text)', lineHeight: 1.5 }}>
                     {item}
                   </span>
                 </div>
               ))}
             </div>
-
-            {/* Payment method picker */}
-            <div>
-              <p
-                style={{
-                  fontSize: 'var(--kt-text-xs)',
-                  fontWeight: 'var(--kt-weight-semibold)',
-                  color: 'var(--kt-text-muted)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
-                  marginBottom: 10,
-                }}
-              >
-                Pay with
-              </p>
-              <div style={{ display: 'flex', gap: 10 }}>
-                {(['apple', 'zelle'] as const).map((method) => (
-                  <button
-                    key={method}
-                    onClick={() => setBoostPayMethod(method)}
-                    style={{
-                      flex: 1,
-                      padding: '10px 12px',
-                      border: `2px solid ${boostPayMethod === method ? 'var(--kt-primary)' : 'var(--kt-border)'}`,
-                      borderRadius: 'var(--kt-radius-md)',
-                      background:
-                        boostPayMethod === method ? 'var(--kt-primary-subtle)' : 'transparent',
-                      color: boostPayMethod === method ? 'var(--kt-text)' : 'var(--kt-text-muted)',
-                      fontSize: 'var(--kt-text-sm)',
-                      fontWeight: 'var(--kt-weight-medium)',
-                      cursor: 'pointer',
-                      fontFamily: 'var(--kt-font-sans)',
-                      transition: 'all 0.15s ease',
-                    }}
-                  >
-                    {method === 'apple' ? 'Apple Pay' : 'Zelle'}
-                  </button>
-                ))}
-              </div>
-              <p
-                style={{
-                  fontSize: 'var(--kt-text-xs)',
-                  color: 'var(--kt-text-muted)',
-                  marginTop: 10,
-                  lineHeight: 1.5,
-                }}
-              >
-                No card on file.{' '}
-                <button
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    color: 'var(--kt-accent)',
-                    fontSize: 'inherit',
-                    padding: 0,
-                    textDecoration: 'underline',
-                    fontFamily: 'var(--kt-font-sans)',
-                  }}
-                >
-                  Add a card
-                </button>{' '}
-                to pay by credit or debit.
-              </p>
-            </div>
           </div>
         )}
       </Modal>
+
+      {/* ── Withdraw Modal ───────────────────────────────────────────────────── */}
+      <Modal
+        open={withdrawAppId !== null}
+        onClose={() => setWithdrawAppId(null)}
+        size="sm"
+        title="Withdraw application"
+        footer={
+          <div style={{ display: 'flex', gap: 'var(--kt-space-3)' }}>
+            <button onClick={() => setWithdrawAppId(null)} style={modalSecondaryBtnStyle}>
+              Cancel
+            </button>
+            <button
+              onClick={handleWithdrawConfirm}
+              disabled={!withdrawReason || withdrawing}
+              style={{
+                ...modalPrimaryBtnStyle,
+                background: 'var(--kt-danger)',
+                opacity: !withdrawReason || withdrawing ? 0.5 : 1,
+                cursor: !withdrawReason || withdrawing ? 'not-allowed' : 'pointer',
+              }}
+            >
+              {withdrawing ? 'Withdrawing…' : 'Withdraw'}
+            </button>
+          </div>
+        }
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div>
+            <label
+              style={{
+                display: 'block',
+                fontSize: 13,
+                fontWeight: 'var(--kt-weight-medium)',
+                color: 'var(--kt-text)',
+                marginBottom: 8,
+              }}
+            >
+              Reason <span style={{ color: 'var(--kt-danger)' }}>*</span>
+            </label>
+            <select
+              value={withdrawReason}
+              onChange={(e) => setWithdrawReason(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                border: '1px solid var(--kt-border)',
+                borderRadius: 'var(--kt-radius-md)',
+                background: 'var(--kt-surface)',
+                color: 'var(--kt-text)',
+                fontSize: 13,
+                fontFamily: 'var(--kt-font-sans)',
+                outline: 'none',
+              }}
+            >
+              <option value="">Select a reason</option>
+              {WITHDRAW_REASONS.map((r) => (
+                <option key={r} value={r}>
+                  {r}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label
+              style={{
+                display: 'block',
+                fontSize: 13,
+                fontWeight: 'var(--kt-weight-medium)',
+                color: 'var(--kt-text)',
+                marginBottom: 8,
+              }}
+            >
+              Message to company{' '}
+              <span style={{ color: 'var(--kt-text-muted)', fontWeight: 400 }}>(optional)</span>
+            </label>
+            <textarea
+              value={withdrawMessage}
+              onChange={(e) => setWithdrawMessage(e.target.value)}
+              placeholder="Let the company know why you're withdrawing…"
+              rows={3}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                border: '1px solid var(--kt-border)',
+                borderRadius: 'var(--kt-radius-md)',
+                background: 'var(--kt-surface)',
+                color: 'var(--kt-text)',
+                fontSize: 13,
+                fontFamily: 'var(--kt-font-sans)',
+                resize: 'vertical',
+                outline: 'none',
+                boxSizing: 'border-box',
+              }}
+            />
+          </div>
+        </div>
+      </Modal>
+
+      {/* ── Quick Apply Modal ────────────────────────────────────────────────── */}
+      <QuickApplyModal
+        job={quickApplyJob}
+        open={quickApplyOpen}
+        onClose={() => {
+          setQuickApplyOpen(false)
+          setQuickApplyJob(null)
+        }}
+        onApplied={handleQuickApplyDone}
+      />
     </div>
   )
+}
+
+// ── Modal button styles ────────────────────────────────────────────────────────
+
+const modalPrimaryBtnStyle: React.CSSProperties = {
+  flex: 2,
+  padding: 'var(--kt-space-3)',
+  background: 'var(--kt-primary)',
+  color: 'var(--kt-text-on-primary)',
+  border: 'none',
+  borderRadius: 'var(--kt-radius-md)',
+  fontSize: 13,
+  fontWeight: 'var(--kt-weight-semibold)',
+  cursor: 'pointer',
+  fontFamily: 'var(--kt-font-sans)',
+}
+
+const modalSecondaryBtnStyle: React.CSSProperties = {
+  flex: 1,
+  padding: 'var(--kt-space-3)',
+  background: 'transparent',
+  color: 'var(--kt-text)',
+  border: '0.5px solid var(--kt-border)',
+  borderRadius: 'var(--kt-radius-md)',
+  fontSize: 13,
+  fontWeight: 'var(--kt-weight-medium)',
+  cursor: 'pointer',
+  fontFamily: 'var(--kt-font-sans)',
 }
