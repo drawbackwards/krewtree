@@ -109,16 +109,16 @@ export const Navbar: React.FC = () => {
             {persona === 'worker' && (
               <>
                 <Link
-                  to="/site/jobs"
-                  className={[styles.link, isActive('/site/jobs')].filter(Boolean).join(' ')}
-                >
-                  Find Jobs
-                </Link>
-                <Link
                   to="/site/dashboard/worker"
                   className={[styles.link, isActive('/site/dashboard')].filter(Boolean).join(' ')}
                 >
                   Dashboard
+                </Link>
+                <Link
+                  to="/site/jobs"
+                  className={[styles.link, isActive('/site/jobs')].filter(Boolean).join(' ')}
+                >
+                  Find Jobs
                 </Link>
                 <Link
                   to={`/site/profile/${user!.id}`}
