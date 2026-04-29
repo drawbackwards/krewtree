@@ -11,6 +11,8 @@ export type WorkerProfileRow = {
   region: string | null
   primary_trade: string | null
   avatar_url: string | null
+  bio: string | null
+  phone: string | null
   is_regulix_ready: boolean
   performance_score: number | null
   profile_complete_pct: number
@@ -23,7 +25,7 @@ export async function getWorkerProfile(
   const { data, error } = await supabase
     .from('worker_profiles')
     .select(
-      'first_name, last_name, city, region, primary_trade, avatar_url, is_regulix_ready, performance_score, profile_complete_pct, total_hours_worked'
+      'first_name, last_name, city, region, primary_trade, avatar_url, bio, phone, is_regulix_ready, performance_score, profile_complete_pct, total_hours_worked'
     )
     .eq('id', userId)
     .single()
@@ -477,10 +479,16 @@ export type JobForYou = {
 }
 
 export type WorkerCompleteness = {
-  hasSkills: boolean
   hasPhoto: boolean
+  hasBio: boolean
+  hasPrimaryTrade: boolean
+  hasLocation: boolean
+  hasPhone: boolean
+  hasSkills: boolean
   hasWorkHistory: boolean
   hasCerts: boolean
+  hasResume: boolean
+  hasSocialLinks: boolean
 }
 
 export type RegulixNudgeData = {
@@ -691,7 +699,7 @@ export async function getNewJobsForYou(
 export async function getWorkerCompleteness(
   userId: string
 ): Promise<{ data: WorkerCompleteness | null; error: string | null }> {
-  const [skillsRes, workHistRes, certsRes] = await Promise.all([
+  const [skillsRes, workHistRes, certsRes, resumeRes, socialRes] = await Promise.all([
     supabase
       .from('worker_skills')
       .select('id', { count: 'exact', head: true })
@@ -704,16 +712,31 @@ export async function getWorkerCompleteness(
       .from('worker_certifications')
       .select('id', { count: 'exact', head: true })
       .eq('worker_id', userId),
+    supabase
+      .from('worker_resumes')
+      .select('id', { count: 'exact', head: true })
+      .eq('worker_id', userId),
+    supabase
+      .from('worker_social_links')
+      .select('id', { count: 'exact', head: true })
+      .eq('worker_id', userId),
   ])
 
   if (skillsRes.error) return { data: null, error: skillsRes.error.message }
 
   return {
     data: {
+      // caller fills profile-derived fields from profile row
+      hasPhoto: false,
+      hasBio: false,
+      hasPrimaryTrade: false,
+      hasLocation: false,
+      hasPhone: false,
       hasSkills: (skillsRes.count ?? 0) > 0,
-      hasPhoto: false, // caller fills this in from profile.avatar_url
       hasWorkHistory: (workHistRes.count ?? 0) > 0,
       hasCerts: (certsRes.count ?? 0) > 0,
+      hasResume: (resumeRes.count ?? 0) > 0,
+      hasSocialLinks: (socialRes.count ?? 0) > 0,
     },
     error: null,
   }

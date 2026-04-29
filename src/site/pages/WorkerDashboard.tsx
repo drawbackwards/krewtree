@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import { Badge, Modal } from '../../components'
-import { Progress } from '../../components'
 import { StatCard } from '../components/StatCard/StatCard'
 import { RegulixBadge } from '../components/RegulixBadge/RegulixBadge'
 import { RegulixLogo } from '../components/RegulixLogo/RegulixLogo'
@@ -35,7 +34,6 @@ import {
   SparkleIcon,
   BriefcaseIcon,
   BookmarkFilledIcon,
-  PersonIcon,
   DotsHorizontalIcon,
   CalendarIcon,
   LocationIcon,
@@ -164,6 +162,9 @@ export const WorkerDashboard: React.FC = () => {
 
   // ── UI state ───────────────────────────────────────────────────────────────
   const [nudgeDismissedLocally, setNudgeDismissedLocally] = useState(false)
+  const [completenessDismissed, setCompletenessDismissed] = useState(
+    () => localStorage.getItem('kt_completeness_dismissed') === '1'
+  )
   const [boostedAppIds, setBoostedAppIds] = useState<Set<string>>(new Set())
 
   // Boost modal
@@ -200,9 +201,14 @@ export const WorkerDashboard: React.FC = () => {
       setNewJobs(newJobsRes.data)
       setNewJobsIsFallback(newJobsRes.isFallback)
       if (completenessRes.data) {
+        const p = profileRes.data
         setCompleteness({
           ...completenessRes.data,
-          hasPhoto: !!profileRes.data?.avatar_url,
+          hasPhoto: !!p?.avatar_url,
+          hasBio: !!(p?.bio && p.bio.trim()),
+          hasPrimaryTrade: !!p?.primary_trade,
+          hasLocation: !!p?.city,
+          hasPhone: !!p?.phone,
         })
       }
       if (nudgeRes.data) setNudgeData(nudgeRes.data)
@@ -217,32 +223,29 @@ export const WorkerDashboard: React.FC = () => {
     ? `${profile.first_name[0]}${profile.last_name?.[0] ?? ''}`.toUpperCase()
     : ''
 
-  const incompleteItems = completeness
+  const allCompletenessItems = completeness
     ? [
-        !completeness.hasSkills && {
-          key: 'skills',
-          prompt: 'Add your skills so employers can find you.',
-          href: '/site/profile/edit',
-        },
-        !completeness.hasPhoto && {
-          key: 'photo',
-          prompt: 'Add a profile photo to stand out to employers.',
-          href: '/site/profile/edit',
-        },
-        !completeness.hasWorkHistory && {
-          key: 'work_history',
-          prompt: 'Add past work experience to build employer trust.',
-          href: '/site/profile/edit',
-        },
-        !completeness.hasCerts && {
-          key: 'certifications',
-          prompt: 'Add certifications to strengthen your profile.',
-          href: '/site/profile/edit',
-        },
-      ].filter(Boolean)
+        { key: 'photo', label: 'Profile photo', done: completeness.hasPhoto },
+        { key: 'bio', label: 'Bio / about you', done: completeness.hasBio },
+        { key: 'trade', label: 'Primary trade', done: completeness.hasPrimaryTrade },
+        { key: 'location', label: 'Location', done: completeness.hasLocation },
+        { key: 'phone', label: 'Phone number', done: completeness.hasPhone },
+        { key: 'skills', label: 'Skills', done: completeness.hasSkills },
+        { key: 'work_history', label: 'Work history', done: completeness.hasWorkHistory },
+        { key: 'certifications', label: 'Certifications', done: completeness.hasCerts },
+        { key: 'resume', label: 'Resume', done: completeness.hasResume },
+        { key: 'social', label: 'Social links', done: completeness.hasSocialLinks },
+      ].sort((a, b) => Number(b.done) - Number(a.done))
     : []
 
-  const showCompletenessModule = incompleteItems.length >= 2
+  const cardCompletePct =
+    allCompletenessItems.length > 0
+      ? Math.round(
+          (allCompletenessItems.filter((i) => i.done).length / allCompletenessItems.length) * 100
+        )
+      : 0
+
+  const showCompletenessModule = !completenessDismissed && cardCompletePct < 100
 
   const showRegulixNudge =
     nudgeData !== null &&
@@ -250,9 +253,12 @@ export const WorkerDashboard: React.FC = () => {
     !nudgeDismissedLocally &&
     (nudgeData.dismissedAt === null || daysSince(nudgeData.dismissedAt) >= 14)
 
-  const profileCompletePct = profile?.profile_complete_pct ?? 0
-
   // ── Handlers ───────────────────────────────────────────────────────────────
+  const handleDismissCompleteness = () => {
+    localStorage.setItem('kt_completeness_dismissed', '1')
+    setCompletenessDismissed(true)
+  }
+
   const handleDismissNudge = useCallback(async () => {
     setNudgeDismissedLocally(true)
     if (user) await dismissRegulixNudge(user.id)
@@ -629,7 +635,7 @@ export const WorkerDashboard: React.FC = () => {
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
-                  marginBottom: 4,
+                  marginBottom: 12,
                 }}
               >
                 <h3
@@ -644,77 +650,138 @@ export const WorkerDashboard: React.FC = () => {
                 </h3>
                 <span
                   style={{
-                    fontSize: 12,
+                    fontSize: 22,
                     fontWeight: 'var(--kt-weight-bold)',
-                    color: 'var(--kt-olive-700)',
+                    color: 'var(--kt-primary)',
+                    lineHeight: 1,
                   }}
                 >
-                  {profileCompletePct}%
+                  {cardCompletePct}%
                 </span>
               </div>
-              <p style={{ fontSize: 12, color: 'var(--kt-text-muted)', marginBottom: 12 }}>
-                Your profile is {profileCompletePct}% complete.
+              <p
+                style={{
+                  fontSize: 12,
+                  color: 'var(--kt-text-muted)',
+                  lineHeight: 1.5,
+                  margin: '0 0 12px',
+                }}
+              >
+                A complete profile gets you in front of more employers. Your skills are the first
+                thing they see, and they&rsquo;re how krewtree matches you to the right jobs.
               </p>
-              <Progress
-                value={profileCompletePct}
-                color={
-                  profileCompletePct >= 90
-                    ? 'success'
-                    : profileCompletePct >= 60
-                      ? 'warning'
-                      : 'danger'
-                }
-                size="sm"
-                style={{ marginBottom: 16 }}
-              />
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {(incompleteItems as Array<{ key: string; prompt: string; href: string }>)
-                  .slice(0, 3)
-                  .map((item) => (
-                    <Link
-                      key={item.key}
-                      to={item.href}
-                      style={{
-                        fontSize: 12,
-                        color: 'var(--kt-primary)',
-                        textDecoration: 'none',
-                        display: 'flex',
-                        alignItems: 'flex-start',
-                        gap: 8,
-                        lineHeight: 1.4,
-                      }}
-                    >
+              {/* Lighter-blue progress bar */}
+              <div
+                style={{
+                  width: '100%',
+                  height: 4,
+                  borderRadius: 'var(--kt-radius-full)',
+                  background: 'var(--kt-border)',
+                  overflow: 'hidden',
+                  marginBottom: 16,
+                }}
+              >
+                <div
+                  style={{
+                    height: '100%',
+                    width: `${cardCompletePct}%`,
+                    background: 'var(--kt-navy-300)',
+                    borderRadius: 'var(--kt-radius-full)',
+                    transition: 'width 0.4s ease',
+                  }}
+                />
+              </div>
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gridTemplateRows: `repeat(${Math.ceil(allCompletenessItems.length / 2)}, auto)`,
+                  gridAutoFlow: 'column',
+                  gap: '8px 16px',
+                }}
+              >
+                {allCompletenessItems.map((item) => (
+                  <div
+                    key={item.key}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                    }}
+                  >
+                    {item.done ? (
                       <span
                         style={{
-                          marginTop: 1,
-                          width: 13,
-                          height: 13,
+                          width: 15,
+                          height: 15,
+                          borderRadius: '50%',
+                          background: 'var(--kt-success)',
+                          flexShrink: 0,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <CheckIcon size={9} color="var(--kt-white)" />
+                      </span>
+                    ) : (
+                      <span
+                        style={{
+                          width: 15,
+                          height: 15,
                           borderRadius: '50%',
                           border: '1.5px solid var(--kt-border-strong)',
                           flexShrink: 0,
                           display: 'inline-block',
                         }}
                       />
-                      {item.prompt}
-                    </Link>
-                  ))}
+                    )}
+                    <span
+                      style={{
+                        fontSize: 12,
+                        color: item.done ? 'var(--kt-text-muted)' : 'var(--kt-text)',
+                        textDecoration: item.done ? 'line-through' : 'none',
+                      }}
+                    >
+                      {item.label}
+                    </span>
+                  </div>
+                ))}
               </div>
               <div
-                style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--kt-border)' }}
+                style={{
+                  marginTop: 16,
+                  paddingTop: 16,
+                  borderTop: '1px solid var(--kt-border)',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}
               >
-                <Link
-                  to={`/site/profile/${user?.id}`}
+                <button
+                  type="button"
+                  onClick={handleDismissCompleteness}
                   style={{
+                    background: 'none',
+                    border: 'none',
+                    padding: 0,
                     fontSize: 12,
                     color: 'var(--kt-text-muted)',
-                    textDecoration: 'none',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 4,
+                    cursor: 'pointer',
                   }}
                 >
-                  <PersonIcon size={13} />
-                  View full profile →
+                  Dismiss
+                </button>
+                <Link
+                  to="/site/profile/edit"
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 'var(--kt-weight-semibold)',
+                    color: 'var(--kt-primary)',
+                    textDecoration: 'none',
+                  }}
+                >
+                  Edit profile →
                 </Link>
               </div>
             </div>
