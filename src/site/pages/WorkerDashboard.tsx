@@ -37,6 +37,7 @@ import {
   PersonIcon,
   DotsHorizontalIcon,
   CalendarIcon,
+  LocationIcon,
 } from '../icons'
 import styles from './WorkerDashboard.module.css'
 
@@ -952,14 +953,13 @@ export const WorkerDashboard: React.FC = () => {
         </div>
 
         {/* ── New Jobs For You ─────────────────────────────────────────────── */}
-        <div className={styles.tableCard}>
+        <div>
           <div
             style={{
-              padding: '14px 20px',
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              borderBottom: '1px solid var(--kt-border)',
+              marginBottom: 12,
             }}
           >
             <h2
@@ -1005,72 +1005,119 @@ export const WorkerDashboard: React.FC = () => {
                   style={{
                     fontSize: 12,
                     color: 'var(--kt-text-muted)',
-                    padding: '10px 20px 0',
-                    margin: 0,
+                    margin: '0 0 8px',
                   }}
                 >
                   We couldn't find any direct matches, but you might be interested in:
                 </p>
               )}
-              {newJobs.length === 0 && (
+              {newJobs.length === 0 ? (
                 <div className={styles.emptyRow}>
                   No new jobs available right now.{' '}
                   <Link to="/site/jobs" style={{ color: 'var(--kt-primary)' }}>
                     Browse all →
                   </Link>
                 </div>
-              )}
-              {newJobs.map((job, i) => (
-                <Link
-                  key={job.jobId}
-                  to={`/site/jobs/${job.jobId}`}
+              ) : (
+                <div
                   style={{
-                    textDecoration: 'none',
-                    display: 'grid',
-                    gridTemplateColumns: '36px 1fr auto',
-                    alignItems: 'center',
+                    display: 'flex',
                     gap: 12,
-                    padding: '10px 20px',
-                    borderBottom: i < newJobs.length - 1 ? '1px solid var(--kt-border)' : 'none',
                   }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--kt-bg)')}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                 >
-                  <div
-                    style={{
-                      width: 36,
-                      height: 36,
-                      borderRadius: 8,
-                      background: 'var(--kt-navy-900)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: 'var(--kt-sand-300)',
-                      fontWeight: 'var(--kt-weight-bold)',
-                      fontSize: 13,
-                      flexShrink: 0,
-                    }}
-                  >
-                    {job.companyName.charAt(0)}
-                  </div>
-                  <div>
-                    <div
-                      style={{
-                        fontSize: 12,
-                        fontWeight: 'var(--kt-weight-bold)',
-                        color: 'var(--kt-primary)',
-                        marginBottom: 1,
-                      }}
-                    >
-                      {job.jobTitle}
-                    </div>
-                    <div style={{ fontSize: 11, color: 'var(--kt-text-muted)' }}>
-                      {job.companyName} · {job.location}
-                    </div>
-                  </div>
-                  <span style={{ fontSize: 11, color: 'var(--kt-text-muted)' }}>→</span>
-                </Link>
-              ))}
+                  {newJobs.map((job) => {
+                    const initials = job.companyName
+                      .split(' ')
+                      .map((w) => w[0])
+                      .join('')
+                      .slice(0, 2)
+                      .toUpperCase()
+                    return (
+                      <Link
+                        key={job.jobId}
+                        to={`/site/jobs/${job.jobId}`}
+                        style={{
+                          textDecoration: 'none',
+                          flex: '1 1 0',
+                          minWidth: 0,
+                          background: 'var(--kt-white)',
+                          border: '1px solid var(--kt-border)',
+                          borderRadius: 'var(--kt-radius-lg)',
+                          padding: 'var(--kt-space-5)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: 'var(--kt-space-3)',
+                          transition:
+                            'box-shadow var(--kt-duration-base) var(--kt-ease), border-color var(--kt-duration-base) var(--kt-ease), transform var(--kt-duration-base) var(--kt-ease)',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.boxShadow = 'var(--kt-shadow-md)'
+                          e.currentTarget.style.borderColor = 'var(--kt-grey-300)'
+                          e.currentTarget.style.transform = 'translateY(-1px)'
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.boxShadow = 'none'
+                          e.currentTarget.style.borderColor = 'var(--kt-border)'
+                          e.currentTarget.style.transform = 'none'
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: 40,
+                            height: 40,
+                            borderRadius: 'var(--kt-radius-md)',
+                            background: 'var(--kt-grey-100)',
+                            color: 'var(--kt-grey-700)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: 'var(--kt-text-sm)',
+                            fontWeight: 'var(--kt-weight-bold)',
+                            flexShrink: 0,
+                          }}
+                        >
+                          {initials}
+                        </div>
+                        <div
+                          style={{
+                            fontSize: 'var(--kt-text-base)',
+                            fontWeight: 'var(--kt-weight-semibold)',
+                            color: 'var(--kt-grey-900)',
+                            lineHeight: 'var(--kt-leading-tight)',
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden',
+                          }}
+                        >
+                          {job.jobTitle}
+                        </div>
+                        <div
+                          style={{
+                            fontSize: 'var(--kt-text-sm)',
+                            fontWeight: 'var(--kt-weight-semibold)',
+                            color: 'var(--kt-grey-800)',
+                          }}
+                        >
+                          {job.companyName}
+                        </div>
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 4,
+                            fontSize: 'var(--kt-text-sm)',
+                            color: 'var(--kt-text-muted)',
+                          }}
+                        >
+                          <LocationIcon size={13} />
+                          {job.location}
+                        </div>
+                      </Link>
+                    )
+                  })}
+                </div>
+              )}
             </>
           )}
         </div>
