@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
-import { Badge, Modal } from '../../components'
+import { Badge, Modal, Button } from '../../components'
 import { StatCard } from '../components/StatCard/StatCard'
 import { RegulixBadge } from '../components/RegulixBadge/RegulixBadge'
 import { RegulixLogo } from '../components/RegulixLogo/RegulixLogo'
@@ -415,15 +415,15 @@ export const WorkerDashboard: React.FC = () => {
             </p>
           </div>
           <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
-            <Link to="/site/profile/edit">
-              <button type="button" className={styles.primaryAction}>
-                Edit profile
-              </button>
-            </Link>
             <Link to={`/site/profile/${user?.id}`} style={{ textDecoration: 'none' }}>
-              <button type="button" className={styles.primaryAction}>
+              <Button type="button" variant="outline" size="sm">
                 View profile
-              </button>
+              </Button>
+            </Link>
+            <Link to="/site/profile/edit" style={{ textDecoration: 'none' }}>
+              <Button type="button" variant="primary" size="sm">
+                Edit profile
+              </Button>
             </Link>
           </div>
         </div>
