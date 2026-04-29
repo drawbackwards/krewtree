@@ -5,6 +5,7 @@ import { Badge, Modal } from '../../components'
 import { Progress } from '../../components'
 import { StatCard } from '../components/StatCard/StatCard'
 import { RegulixBadge } from '../components/RegulixBadge/RegulixBadge'
+import { RegulixLogo } from '../components/RegulixLogo/RegulixLogo'
 import { QuickApplyModal } from '../components/QuickApplyModal/QuickApplyModal'
 import type { Job } from '../types'
 import { useAuth } from '../context/AuthContext'
@@ -473,9 +474,9 @@ export const WorkerDashboard: React.FC = () => {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: '65fr 35fr',
+            gridTemplateColumns: showCompletenessModule ? '65fr 35fr' : '1fr',
             gap: 24,
-            alignItems: 'start',
+            alignItems: 'stretch',
           }}
         >
           {/* ── My Applications ─────────────────────────────────────────── */}
@@ -597,228 +598,161 @@ export const WorkerDashboard: React.FC = () => {
                 </div>
               )
             })}
+
+            {/* Filler rows so the table reserves space for 5 rows */}
+            {applications.length > 0 &&
+              Array.from({ length: Math.max(0, 5 - applications.length) }).map((_, i) => {
+                const isLast = i === Math.max(0, 5 - applications.length) - 1
+                return (
+                  <div
+                    key={`filler-${i}`}
+                    aria-hidden="true"
+                    className={`${styles.row} ${styles.appsRow}`}
+                    style={{ borderBottom: isLast ? 'none' : undefined }}
+                  />
+                )
+              })}
           </div>
 
-          {/* ── Right sidebar ───────────────────────────────────────────── */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {/* Profile Completeness */}
-            {showCompletenessModule && (
+          {/* ── Profile Completeness (right column, full height) ────────── */}
+          {showCompletenessModule && (
+            <div
+              style={{
+                background: 'var(--kt-surface)',
+                border: '1px solid var(--kt-border)',
+                borderRadius: 'var(--kt-radius-lg)',
+                padding: 20,
+              }}
+            >
               <div
                 style={{
-                  background: 'var(--kt-surface)',
-                  border: '1px solid var(--kt-border)',
-                  borderRadius: 'var(--kt-radius-lg)',
-                  padding: 20,
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: 4,
                 }}
               >
-                <div
+                <h3
                   style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: 4,
+                    fontSize: 13,
+                    fontWeight: 'var(--kt-weight-semibold)',
+                    color: 'var(--kt-text)',
+                    margin: 0,
                   }}
                 >
-                  <h3
-                    style={{
-                      fontSize: 13,
-                      fontWeight: 'var(--kt-weight-semibold)',
-                      color: 'var(--kt-text)',
-                      margin: 0,
-                    }}
-                  >
-                    Complete your profile
-                  </h3>
-                  <span
-                    style={{
-                      fontSize: 12,
-                      fontWeight: 'var(--kt-weight-bold)',
-                      color: 'var(--kt-olive-700)',
-                    }}
-                  >
-                    {profileCompletePct}%
-                  </span>
-                </div>
-                <p style={{ fontSize: 12, color: 'var(--kt-text-muted)', marginBottom: 12 }}>
-                  Your profile is {profileCompletePct}% complete.
-                </p>
-                <Progress
-                  value={profileCompletePct}
-                  color={
-                    profileCompletePct >= 90
-                      ? 'success'
-                      : profileCompletePct >= 60
-                        ? 'warning'
-                        : 'danger'
-                  }
-                  size="sm"
-                  style={{ marginBottom: 16 }}
-                />
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {(incompleteItems as Array<{ key: string; prompt: string; href: string }>)
-                    .slice(0, 3)
-                    .map((item) => (
-                      <Link
-                        key={item.key}
-                        to={item.href}
+                  Complete your profile
+                </h3>
+                <span
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 'var(--kt-weight-bold)',
+                    color: 'var(--kt-olive-700)',
+                  }}
+                >
+                  {profileCompletePct}%
+                </span>
+              </div>
+              <p style={{ fontSize: 12, color: 'var(--kt-text-muted)', marginBottom: 12 }}>
+                Your profile is {profileCompletePct}% complete.
+              </p>
+              <Progress
+                value={profileCompletePct}
+                color={
+                  profileCompletePct >= 90
+                    ? 'success'
+                    : profileCompletePct >= 60
+                      ? 'warning'
+                      : 'danger'
+                }
+                size="sm"
+                style={{ marginBottom: 16 }}
+              />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {(incompleteItems as Array<{ key: string; prompt: string; href: string }>)
+                  .slice(0, 3)
+                  .map((item) => (
+                    <Link
+                      key={item.key}
+                      to={item.href}
+                      style={{
+                        fontSize: 12,
+                        color: 'var(--kt-primary)',
+                        textDecoration: 'none',
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: 8,
+                        lineHeight: 1.4,
+                      }}
+                    >
+                      <span
                         style={{
-                          fontSize: 12,
-                          color: 'var(--kt-primary)',
-                          textDecoration: 'none',
-                          display: 'flex',
-                          alignItems: 'flex-start',
-                          gap: 8,
-                          lineHeight: 1.4,
+                          marginTop: 1,
+                          width: 13,
+                          height: 13,
+                          borderRadius: '50%',
+                          border: '1.5px solid var(--kt-border-strong)',
+                          flexShrink: 0,
+                          display: 'inline-block',
                         }}
-                      >
-                        <span
-                          style={{
-                            marginTop: 1,
-                            width: 13,
-                            height: 13,
-                            borderRadius: '50%',
-                            border: '1.5px solid var(--kt-border-strong)',
-                            flexShrink: 0,
-                            display: 'inline-block',
-                          }}
-                        />
-                        {item.prompt}
-                      </Link>
-                    ))}
-                </div>
-                <div
-                  style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--kt-border)' }}
-                >
-                  <Link
-                    to={`/site/profile/${user?.id}`}
-                    style={{
-                      fontSize: 12,
-                      color: 'var(--kt-text-muted)',
-                      textDecoration: 'none',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 4,
-                    }}
-                  >
-                    <PersonIcon size={13} />
-                    View full profile →
-                  </Link>
-                </div>
+                      />
+                      {item.prompt}
+                    </Link>
+                  ))}
               </div>
-            )}
-
-            {/* Regulix Nudge */}
-            {showRegulixNudge && nudgeData && (
               <div
-                style={{
-                  background: 'color-mix(in srgb, var(--kt-accent) 5%, var(--kt-surface))',
-                  border: '1px solid color-mix(in srgb, var(--kt-accent) 18%, var(--kt-border))',
-                  borderRadius: 'var(--kt-radius-lg)',
-                  padding: 20,
-                  position: 'relative',
-                }}
+                style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--kt-border)' }}
               >
-                <button
-                  onClick={handleDismissNudge}
+                <Link
+                  to={`/site/profile/${user?.id}`}
                   style={{
-                    position: 'absolute',
-                    top: 12,
-                    right: 12,
-                    background: 'transparent',
-                    border: 'none',
-                    cursor: 'pointer',
+                    fontSize: 12,
                     color: 'var(--kt-text-muted)',
-                    padding: 2,
+                    textDecoration: 'none',
                     display: 'flex',
                     alignItems: 'center',
+                    gap: 4,
                   }}
-                  aria-label="Dismiss"
                 >
-                  <CloseIcon size={14} />
-                </button>
-                <RegulixBadge size="sm" />
-                {nudgeData.subState === 'connect' ? (
-                  <>
-                    <p
-                      style={{
-                        fontSize: 13,
-                        fontWeight: 'var(--kt-weight-semibold)',
-                        color: 'var(--kt-text)',
-                        marginTop: 12,
-                        marginBottom: 6,
-                      }}
-                    >
-                      Connect your Regulix account
-                    </p>
-                    <p
-                      style={{
-                        fontSize: 12,
-                        color: 'var(--kt-text-muted)',
-                        marginBottom: 14,
-                        lineHeight: 1.5,
-                      }}
-                    >
-                      Become Day-1 hire-ready. Complete your W-4, I-9, direct deposit, and
-                      background check.
-                    </p>
-                    <button
-                      type="button"
-                      className={styles.primaryAction}
-                      style={{
-                        width: '100%',
-                        height: 30,
-                        fontSize: 12,
-                        background: 'var(--kt-accent)',
-                        color: 'white',
-                        border: 'none',
-                      }}
-                    >
-                      Connect Regulix
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <p
-                      style={{
-                        fontSize: 13,
-                        fontWeight: 'var(--kt-weight-semibold)',
-                        color: 'var(--kt-text)',
-                        marginTop: 12,
-                        marginBottom: 6,
-                      }}
-                    >
-                      Import your Regulix reviews
-                    </p>
-                    <p
-                      style={{
-                        fontSize: 12,
-                        color: 'var(--kt-text-muted)',
-                        marginBottom: 14,
-                        lineHeight: 1.5,
-                      }}
-                    >
-                      Bring your employer ratings into krewtree to stand out to new employers.
-                    </p>
-                    <button
-                      type="button"
-                      className={styles.primaryAction}
-                      style={{
-                        width: '100%',
-                        height: 30,
-                        fontSize: 12,
-                        background: 'var(--kt-accent)',
-                        color: 'white',
-                        border: 'none',
-                      }}
-                    >
-                      Import reviews
-                    </button>
-                  </>
-                )}
+                  <PersonIcon size={13} />
+                  View full profile →
+                </Link>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
+
+        {/* ── Regulix promo banner ────────────────────────────────────────── */}
+        {showRegulixNudge && nudgeData && (
+          <div className={styles.banner}>
+            <RegulixLogo height={22} textColor="var(--kt-navy-700)" />
+            <p className={styles.bannerText}>
+              {nudgeData.subState === 'connect'
+                ? 'Complete your W-4, I-9, direct deposit, and background check to become Day-1 hire-ready and stand out to employers.'
+                : 'Import your employer ratings from Regulix to build credibility and stand out to new employers.'}
+            </p>
+            <button type="button" className={styles.bannerLink}>
+              {nudgeData.subState === 'connect' ? 'Connect Regulix' : 'Import reviews'}
+            </button>
+            <button
+              type="button"
+              onClick={handleDismissNudge}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                color: 'var(--kt-text-muted)',
+                display: 'flex',
+                alignItems: 'center',
+                padding: 4,
+                borderRadius: 'var(--kt-radius-sm)',
+                flexShrink: 0,
+              }}
+              aria-label="Dismiss"
+            >
+              <CloseIcon size={14} />
+            </button>
+          </div>
+        )}
 
         {/* ── Saved Jobs ──────────────────────────────────────────────────── */}
         <div className={styles.tableCard}>

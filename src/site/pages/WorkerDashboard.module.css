@@ -223,6 +223,53 @@
   text-align: center;
   font-size: 13px;
   color: var(--kt-text-muted);
+  min-height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Regulix banner ─────────────────────────────────────────────────────── */
+
+.banner {
+  background: #fef4e9;
+  border-radius: var(--kt-radius-lg);
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.bannerText {
+  flex: 1;
+  font-size: var(--kt-text-sm);
+  color: var(--kt-text);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.bannerLink {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: var(--kt-font-sans);
+  font-size: var(--kt-text-sm);
+  font-weight: var(--kt-weight-semibold);
+  color: #fa3b0f;
+  white-space: nowrap;
+  padding: 0;
+}
+
+@media (max-width: 640px) {
+  .banner {
+    flex-wrap: wrap;
+    padding: 12px 16px;
+  }
+
+  .bannerText {
+    flex-basis: 100%;
+    order: 2;
+  }
 }
 
 /* ── Closed row dim ─────────────────────────────────────────────────────── */
