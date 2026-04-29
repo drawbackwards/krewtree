@@ -991,7 +991,7 @@ export const WorkerDashboard: React.FC = () => {
           </div>
 
           {completeness && !completeness.hasSkills && (
-            <div className={styles.emptyRow}>
+            <div className={styles.emptyCard}>
               Add your skills to your profile to get personalised job recommendations.{' '}
               <Link to="/site/profile/edit" style={{ color: 'var(--kt-primary)' }}>
                 Add skills →
@@ -1013,7 +1013,7 @@ export const WorkerDashboard: React.FC = () => {
                 </p>
               )}
               {newJobs.length === 0 ? (
-                <div className={styles.emptyRow}>
+                <div className={styles.emptyCard}>
                   No new jobs available right now.{' '}
                   <Link to="/site/jobs" style={{ color: 'var(--kt-primary)' }}>
                     Browse all →
