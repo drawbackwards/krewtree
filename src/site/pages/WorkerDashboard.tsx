@@ -443,13 +443,6 @@ export const WorkerDashboard: React.FC = () => {
         {/* ── Stat cards ──────────────────────────────────────────────────── */}
         <div className={styles.stats}>
           <StatCard
-            label="New matches"
-            value={newJobs.length}
-            icon={<SparkleIcon />}
-            color="blue"
-            subtext={`${newJobs.length} new since last login`}
-          />
-          <StatCard
             label="Active applications"
             value={applications.filter((a) => a.stage !== 'Closed').length}
             icon={<BriefcaseIcon />}
@@ -473,6 +466,13 @@ export const WorkerDashboard: React.FC = () => {
                 ? `${savedJobs.filter((sj) => sj.staleness === 'expiring_soon').length} expiring soon`
                 : 'None expiring soon'
             }
+          />
+          <StatCard
+            label="New matches"
+            value={newJobs.length}
+            icon={<SparkleIcon />}
+            color="blue"
+            subtext={`${newJobs.length} new since last login`}
           />
         </div>
 
@@ -628,6 +628,8 @@ export const WorkerDashboard: React.FC = () => {
                 border: '1px solid var(--kt-border)',
                 borderRadius: 'var(--kt-radius-lg)',
                 padding: 20,
+                display: 'flex',
+                flexDirection: 'column',
               }}
             >
               <div
@@ -750,9 +752,8 @@ export const WorkerDashboard: React.FC = () => {
               </div>
               <div
                 style={{
-                  marginTop: 16,
+                  marginTop: 'auto',
                   paddingTop: 16,
-                  borderTop: '1px solid var(--kt-border)',
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
@@ -975,7 +976,7 @@ export const WorkerDashboard: React.FC = () => {
               }}
             >
               <SparkleIcon size={14} />
-              New jobs for you
+              New job matches
             </h2>
             <Link
               to="/site/jobs"
@@ -1109,6 +1110,7 @@ export const WorkerDashboard: React.FC = () => {
                             gap: 4,
                             fontSize: 'var(--kt-text-sm)',
                             color: 'var(--kt-text-muted)',
+                            marginTop: 'auto',
                           }}
                         >
                           <LocationIcon size={13} />
