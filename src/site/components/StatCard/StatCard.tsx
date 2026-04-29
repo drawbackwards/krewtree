@@ -2,7 +2,15 @@ import React from 'react'
 import { ArrowUpIcon, ArrowDownIcon } from '../../icons'
 import styles from './StatCard.module.css'
 
-export type StatCardColor = 'accent' | 'primary' | 'success' | 'warning' | 'info' | 'navy' | 'olive'
+export type StatCardColor =
+  | 'accent'
+  | 'primary'
+  | 'success'
+  | 'warning'
+  | 'info'
+  | 'navy'
+  | 'olive'
+  | 'blue'
 
 export interface StatCardProps {
   label: string
@@ -23,7 +31,7 @@ export const StatCard: React.FC<StatCardProps> = ({
   subtext,
   subtextNode,
 }) => {
-  const isBold = color === 'navy' || color === 'olive'
+  const isBold = color === 'navy' || color === 'olive' || color === 'blue'
 
   return (
     <div className={[styles.card, styles[color]].join(' ')}>

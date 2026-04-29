@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import { Badge, Modal } from '../../components'
 import { Progress } from '../../components'
+import { StatCard } from '../components/StatCard/StatCard'
 import { RegulixBadge } from '../components/RegulixBadge/RegulixBadge'
 import { QuickApplyModal } from '../components/QuickApplyModal/QuickApplyModal'
 import type { Job } from '../types'
@@ -35,6 +36,7 @@ import {
   BookmarkFilledIcon,
   PersonIcon,
   DotsHorizontalIcon,
+  CalendarIcon,
 } from '../icons'
 import styles from './WorkerDashboard.module.css'
 
@@ -430,6 +432,42 @@ export const WorkerDashboard: React.FC = () => {
           gap: 24,
         }}
       >
+        {/* ── Stat cards ──────────────────────────────────────────────────── */}
+        <div className={styles.stats}>
+          <StatCard
+            label="New matches"
+            value={newJobs.length}
+            icon={<SparkleIcon />}
+            color="blue"
+            subtext={`${newJobs.length} new since last login`}
+          />
+          <StatCard
+            label="Active applications"
+            value={applications.filter((a) => a.stage !== 'Closed').length}
+            icon={<BriefcaseIcon />}
+            color="blue"
+            subtext={`${applications.filter((a) => a.stage === 'Reviewed' || a.stage === 'Interview' || a.stage === 'Offer').length} moved forward this week`}
+          />
+          <StatCard
+            label="Interviews scheduled"
+            value={applications.filter((a) => a.stage === 'Interview').length}
+            icon={<CalendarIcon />}
+            color="blue"
+            subtext={`${applications.filter((a) => a.stage === 'Interview').length} new this week`}
+          />
+          <StatCard
+            label="Saved jobs"
+            value={savedJobs.length}
+            icon={<BookmarkFilledIcon />}
+            color="blue"
+            subtext={
+              savedJobs.filter((sj) => sj.staleness === 'expiring_soon').length > 0
+                ? `${savedJobs.filter((sj) => sj.staleness === 'expiring_soon').length} expiring soon`
+                : 'None expiring soon'
+            }
+          />
+        </div>
+
         {/* ── Two-column section ──────────────────────────────────────────── */}
         <div
           style={{
