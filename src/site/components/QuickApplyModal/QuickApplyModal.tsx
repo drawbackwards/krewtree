@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react'
+import Lottie from 'lottie-react'
+import successAnimation from './success-animation.json'
 import { useNavigate } from 'react-router-dom'
 import { Modal } from '../../../components'
 import type { Job } from '../../types'
@@ -252,7 +254,11 @@ export const QuickApplyModal: React.FC<QuickApplyModalProps> = ({
               {submittedWithBoost ? (
                 <RocketIcon size={40} color="var(--kt-olive-700)" />
               ) : (
-                <CelebrationIcon size={40} color="var(--kt-primary)" />
+                <Lottie
+                  animationData={successAnimation}
+                  loop={false}
+                  style={{ width: 80, height: 80 }}
+                />
               )}
             </div>
             <div className={styles.confirmTitle}>
