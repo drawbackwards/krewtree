@@ -6,6 +6,7 @@ import { RegulixBadge } from '../components/RegulixBadge/RegulixBadge'
 import { QuickApplyModal } from '../components/QuickApplyModal/QuickApplyModal'
 import { ManageListingModal } from '../components/ManageListingModal/ManageListingModal'
 import { getJobById, getAppliedJobIds, getSimilarJobs } from '../services/jobService'
+import { saveJob, removeSavedJob, getIsSavedJob } from '../services/workerService'
 import type { Job } from '../types'
 import { useAuth } from '../context/AuthContext'
 import {
@@ -42,7 +43,8 @@ export const JobDetailPage: React.FC = () => {
   const { persona, user } = useAuth()
   const isCompany = persona === 'company'
   const [appliedAt, setAppliedAt] = useState<string | null>(null)
-  const [saved, setSaved] = useState(false)
+  const [savedJobId, setSavedJobId] = useState<string | null>(null)
+  const saved = savedJobId !== null
   const [quickApplyOpen, setQuickApplyOpen] = useState(false)
   const [shareOpen, setShareOpen] = useState(false)
   const [copied, setCopied] = useState(false)
@@ -73,6 +75,11 @@ export const JobDetailPage: React.FC = () => {
       if (match) setAppliedAt(match.appliedAt)
     })
   }, [user?.id, id])
+
+  useEffect(() => {
+    if (!user?.id || !id || isCompany) return
+    getIsSavedJob(user.id, id).then(({ savedJobId: sjId }) => setSavedJobId(sjId))
+  }, [user?.id, id, isCompany])
 
   if (jobLoading) {
     return (
@@ -399,7 +406,16 @@ export const JobDetailPage: React.FC = () => {
                 <Button
                   variant="outline"
                   style={{ width: '100%' }}
-                  onClick={() => setSaved((s) => !s)}
+                  onClick={async () => {
+                    if (!user?.id || !id) return
+                    if (saved) {
+                      setSavedJobId(null)
+                      await removeSavedJob(savedJobId!)
+                    } else {
+                      const { savedJobId: newId } = await saveJob(user.id, id)
+                      setSavedJobId(newId)
+                    }
+                  }}
                 >
                   {saved ? (
                     <>
@@ -1138,7 +1154,16 @@ export const JobDetailPage: React.FC = () => {
             )}
           </Button>
           <button
-            onClick={() => setSaved((s) => !s)}
+            onClick={async () => {
+              if (!user?.id || !id) return
+              if (saved) {
+                setSavedJobId(null)
+                await removeSavedJob(savedJobId!)
+              } else {
+                const { savedJobId: newId } = await saveJob(user.id, id)
+                setSavedJobId(newId)
+              }
+            }}
             title={saved ? 'Saved' : 'Save job'}
             style={{
               width: 44,

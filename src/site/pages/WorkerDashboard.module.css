@@ -56,13 +56,13 @@
 }
 
 .appsRow {
-  /* Job | Stage | Applied | Actions */
-  grid-template-columns: 2fr 110px 1fr 2fr;
+  /* Job | Stage | Applied | Boosted | Actions */
+  grid-template-columns: 2fr 110px 1fr 80px 2fr;
 }
 
 .savedRow {
-  /* Job | Status | Saved | Actions */
-  grid-template-columns: 2fr 110px 1fr 2fr;
+  /* Job | Status | Posted | Saved | Actions */
+  grid-template-columns: 2fr 110px 1fr 1fr 2fr;
 }
 
 /* ── Cell types ─────────────────────────────────────────────────────────── */

@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase'
-import type { Application, ApplicationEvent, Job } from '@site/types'
+import type { Application, ApplicationEvent, Job, SavedJob } from '@site/types'
 import { daysSince } from '@site/utils/date'
 
 // ── Worker Profile ─────────────────────────────────────────────────────────────
@@ -466,6 +466,7 @@ export type DashboardSavedJob = {
   jobStatus: 'active' | 'paused' | 'closed'
   closingAt: string | null
   savedAt: string
+  jobPostedAt: string | null
   hasApplied: boolean
   staleness: 'open' | 'expiring_soon' | 'closed'
 }
@@ -584,7 +585,9 @@ export async function getDashboardSavedJobs(
   const [savedRes, appliedRes] = await Promise.all([
     supabase
       .from('saved_jobs')
-      .select('id, created_at, job_id, jobs(id, title, status, closing_at, company_profiles(name))')
+      .select(
+        'id, created_at, job_id, jobs(id, title, status, closing_at, created_at, company_profiles(name))'
+      )
       .eq('worker_id', userId)
       .order('created_at', { ascending: false })
       .limit(limit * 2),
@@ -601,6 +604,7 @@ export async function getDashboardSavedJobs(
       title: string
       status: string
       closing_at: string | null
+      created_at: string
       company_profiles: { name: string } | null
     } | null
 
@@ -615,6 +619,7 @@ export async function getDashboardSavedJobs(
       jobStatus,
       closingAt,
       savedAt: s.created_at,
+      jobPostedAt: j?.created_at ?? null,
       hasApplied: appliedJobIds.has(s.job_id),
       staleness: computeStaleness(jobStatus, closingAt),
     } satisfies DashboardSavedJob
@@ -636,6 +641,141 @@ export async function removeSavedJob(savedJobId: string): Promise<{ error: strin
   const { error } = await supabase.from('saved_jobs').delete().eq('id', savedJobId)
   if (error) return { error: error.message }
   return { error: null }
+}
+
+export async function saveJob(
+  userId: string,
+  jobId: string
+): Promise<{ savedJobId: string | null; error: string | null }> {
+  const { data, error } = await supabase
+    .from('saved_jobs')
+    .insert({ worker_id: userId, job_id: jobId })
+    .select('id')
+    .single()
+  if (error) return { savedJobId: null, error: error.message }
+  return { savedJobId: data.id, error: null }
+}
+
+export async function getIsSavedJob(
+  userId: string,
+  jobId: string
+): Promise<{ savedJobId: string | null; error: string | null }> {
+  const { data, error } = await supabase
+    .from('saved_jobs')
+    .select('id')
+    .eq('worker_id', userId)
+    .eq('job_id', jobId)
+    .maybeSingle()
+  if (error) return { savedJobId: null, error: error.message }
+  return { savedJobId: data?.id ?? null, error: null }
+}
+
+// ── Saved Jobs Page ────────────────────────────────────────────────────────────
+
+export async function getSavedJobs(
+  userId: string
+): Promise<{ data: SavedJob[]; error: string | null }> {
+  const { data, error } = await supabase
+    .from('saved_jobs')
+    .select(
+      `
+      id,
+      created_at,
+      note,
+      job_id,
+      jobs(
+        id,
+        company_id,
+        title,
+        industry,
+        industry_slug,
+        type,
+        location,
+        pay_min,
+        pay_max,
+        pay_type,
+        description,
+        skills,
+        is_sponsored,
+        status,
+        created_at,
+        experience_level,
+        company_profiles(id, name, is_verified)
+      )
+    `
+    )
+    .eq('worker_id', userId)
+    .order('created_at', { ascending: false })
+
+  if (error) return { data: [], error: error.message }
+
+  const rows = (data ?? []).map((s) => {
+    type DBJob = {
+      id: string
+      company_id: string
+      title: string
+      industry: string
+      industry_slug: string
+      type: string
+      location: string
+      pay_min: number | null
+      pay_max: number | null
+      pay_type: string | null
+      description: string
+      skills: string[]
+      is_sponsored: boolean
+      status: string
+      created_at: string
+      experience_level: string | null
+      company_profiles: { id: string; name: string; is_verified: boolean } | null
+    }
+    const j = s.jobs as unknown as DBJob | null
+
+    const job: Job = {
+      id: j?.id ?? s.job_id,
+      companyId: j?.company_id ?? '',
+      company: {
+        id: j?.company_profiles?.id ?? '',
+        name: j?.company_profiles?.name ?? '',
+        logo: '',
+        location: j?.location ?? '',
+        industry: j?.industry ?? '',
+        isVerified: j?.company_profiles?.is_verified ?? false,
+        description: '',
+        size: '',
+        website: '',
+      },
+      title: j?.title ?? '',
+      industry: j?.industry ?? '',
+      industrySlug: j?.industry_slug ?? '',
+      type: (j?.type as Job['type']) ?? 'Full-time',
+      location: j?.location ?? '',
+      payMin: Number(j?.pay_min ?? 0),
+      payMax: Number(j?.pay_max ?? 0),
+      payType: (j?.pay_type as Job['payType']) ?? 'hour',
+      description: j?.description ?? '',
+      requirements: [],
+      skills: j?.skills ?? [],
+      isSponsored: j?.is_sponsored ?? false,
+      regulixReadyApplicants: 0,
+      totalApplicants: 0,
+      viewCount: 0,
+      postedDaysAgo: j ? daysSince(j.created_at) : 0,
+      createdAt: j?.created_at ?? '',
+      status: (j?.status as Job['status']) ?? 'active',
+      experienceLevel: j?.experience_level ?? null,
+    }
+
+    return {
+      id: s.id,
+      jobId: s.job_id,
+      job,
+      savedDaysAgo: daysSince(s.created_at),
+      note: s.note ?? '',
+    }
+  })
+
+  return { data: rows, error: null }
 }
 
 // ── New Jobs For You ───────────────────────────────────────────────────────────

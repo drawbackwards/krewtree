@@ -77,6 +77,13 @@ function fmtSaved(iso: string): string {
   return `Saved ${d}d ago`
 }
 
+function fmtPosted(iso: string | null): string {
+  if (!iso) return '—'
+  const d = daysSince(iso)
+  if (d === 0) return 'Today'
+  return `${d}d ago`
+}
+
 // ── OverflowMenu (matches company table pattern) ───────────────────────────────
 
 type OverflowItem = { label: string; danger?: boolean; onClick: () => void }
@@ -530,6 +537,7 @@ export const WorkerDashboard: React.FC = () => {
                 <div>Job</div>
                 <div>Stage</div>
                 <div>Applied</div>
+                <div>Boosted</div>
                 <div style={{ textAlign: 'right' }}>Actions</div>
               </div>
             )}
@@ -578,11 +586,6 @@ export const WorkerDashboard: React.FC = () => {
                       {app.jobTitle}
                     </Link>
                     <div className={styles.subtitleText}>{app.companyName}</div>
-                    {isBoosted && (
-                      <div className={styles.boostedIndicator}>
-                        <RocketIcon size={11} /> Boosted
-                      </div>
-                    )}
                   </div>
 
                   <div>
@@ -592,6 +595,14 @@ export const WorkerDashboard: React.FC = () => {
                   </div>
 
                   <div className={styles.metaText}>{fmtApplied(app.appliedAt)}</div>
+
+                  <div>
+                    {isBoosted && (
+                      <div className={styles.boostedIndicator}>
+                        <RocketIcon size={11} />
+                      </div>
+                    )}
+                  </div>
 
                   <div className={styles.actionsCell}>
                     <Link to={`/site/jobs/${app.jobId}`} style={{ textDecoration: 'none' }}>
@@ -687,7 +698,7 @@ export const WorkerDashboard: React.FC = () => {
                   style={{
                     height: '100%',
                     width: `${cardCompletePct}%`,
-                    background: 'var(--kt-navy-300)',
+                    background: 'var(--kt-navy-700)',
                     borderRadius: 'var(--kt-radius-full)',
                     transition: 'width 0.4s ease',
                   }}
@@ -874,6 +885,7 @@ export const WorkerDashboard: React.FC = () => {
               <div className={`${styles.row} ${styles.headerRow} ${styles.savedRow}`}>
                 <div>Job</div>
                 <div>Status</div>
+                <div>Posted</div>
                 <div>Saved</div>
                 <div style={{ textAlign: 'right' }}>Actions</div>
               </div>
@@ -911,6 +923,8 @@ export const WorkerDashboard: React.FC = () => {
                         </Badge>
                       )}
                     </div>
+
+                    <div className={styles.metaText}>{fmtPosted(sj.jobPostedAt)}</div>
 
                     <div className={styles.metaText}>{fmtSaved(sj.savedAt)}</div>
 

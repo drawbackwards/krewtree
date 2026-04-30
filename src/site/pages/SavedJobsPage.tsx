@@ -1,23 +1,34 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Button } from '../../components'
 import { JobCard } from '../components/JobCard/JobCard'
 import type { SavedJob } from '../types'
-// TODO: replace with real Supabase query for saved_jobs by worker_id
-import { savedJobs as initialSavedJobs } from '../data/mock'
+import { useAuth } from '../context/AuthContext'
+import { getSavedJobs, removeSavedJob } from '../services/workerService'
 import { BookmarkFilledIcon, ClipboardIcon } from '../icons'
 
 export const SavedJobsPage: React.FC = () => {
-  const [saved, setSaved] = useState<SavedJob[]>(initialSavedJobs)
+  const { user } = useAuth()
+  const [saved, setSaved] = useState<SavedJob[]>([])
+  const [loading, setLoading] = useState(true)
   const [sort, setSort] = useState<'recent' | 'industry'>('recent')
+
+  useEffect(() => {
+    if (!user) return
+    getSavedJobs(user.id).then(({ data }) => {
+      setSaved(data)
+      setLoading(false)
+    })
+  }, [user])
 
   const sorted = [...saved].sort((a, b) => {
     if (sort === 'recent') return a.savedDaysAgo - b.savedDaysAgo
     return a.job.industry.localeCompare(b.job.industry)
   })
 
-  const handleUnsave = (id: string) => {
+  const handleUnsave = async (id: string) => {
     setSaved((prev) => prev.filter((s) => s.id !== id))
+    await removeSavedJob(id)
   }
 
   return (
@@ -46,7 +57,7 @@ export const SavedJobsPage: React.FC = () => {
               Saved Jobs
             </h1>
             <p style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text-muted)' }}>
-              {saved.length} saved position{saved.length !== 1 ? 's' : ''}
+              {loading ? '—' : `${saved.length} saved position${saved.length !== 1 ? 's' : ''}`}
             </p>
           </div>
           <Link to="/site/jobs">
@@ -57,7 +68,7 @@ export const SavedJobsPage: React.FC = () => {
         </div>
 
         {/* Sort bar */}
-        {saved.length > 0 && (
+        {!loading && saved.length > 0 && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
             <span style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text-muted)' }}>
               Sort by:
@@ -91,7 +102,18 @@ export const SavedJobsPage: React.FC = () => {
         )}
 
         {/* Saved job list */}
-        {sorted.length === 0 ? (
+        {loading ? (
+          <div
+            style={{
+              textAlign: 'center',
+              padding: '60px 20px',
+              color: 'var(--kt-text-muted)',
+              fontSize: 'var(--kt-text-sm)',
+            }}
+          >
+            Loading…
+          </div>
+        ) : sorted.length === 0 ? (
           <div
             style={{
               textAlign: 'center',

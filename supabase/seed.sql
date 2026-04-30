@@ -19,41 +19,7 @@ INSERT INTO industries (id, name, slug, color, job_count) VALUES
   ('landscaping',   'Landscaping',   'landscaping',   '#4d5a16',  894),
   ('security',      'Security',      'security',      '#164355',  762);
 
--- ── Reference: Skills (construction subset) ───────────────
-INSERT INTO skills (id, industry_id, name, aliases) VALUES
-  ('carpentry',     'construction', 'Carpentry',               ARRAY['carpenter','woodwork','finish carpentry']),
-  ('framing',       'construction', 'Framing',                 ARRAY['wood framing','stud framing','rough framing']),
-  ('drywall',       'construction', 'Drywall Installation',    ARRAY['drywall','sheetrock','gypsum board']),
-  ('concrete',      'construction', 'Concrete Work',           ARRAY['concrete pouring','concrete finishing','flatwork']),
-  ('masonry',       'construction', 'Masonry',                 ARRAY['bricklaying','block laying','stonework']),
-  ('plumbing',      'construction', 'Plumbing',                ARRAY['plumber','pipe fitting','drain work']),
-  ('electrical',    'construction', 'Electrical Wiring',       ARRAY['electrician','electrical','wiring']),
-  ('hvac',          'construction', 'HVAC',                    ARRAY['hvac tech','heating and cooling','refrigeration']),
-  ('roofing',       'construction', 'Roofing',                 ARRAY['roofer','shingles','flat roofing']),
-  ('blueprint',     'construction', 'Blueprint Reading',       ARRAY['blueprints','plan reading','schematic reading']),
-  ('osha',          'construction', 'OSHA Safety Compliance',  ARRAY['osha 10','osha 30','safety','job site safety']),
-  ('heavy_equip',   'construction', 'Heavy Equipment Operation',ARRAY['equipment operator','bulldozer','backhoe','excavator']),
-  ('welding',       'construction', 'Welding (MIG/TIG)',        ARRAY['welder','mig welding','tig welding']),
-  ('scaffolding',   'construction', 'Scaffolding',             ARRAY['scaffold erection','aerial lift']),
-  ('demolition',    'construction', 'Demolition',              ARRAY['demo','selective demo']);
-
-INSERT INTO skills (id, industry_id, name, aliases) VALUES
-  ('patient_care',      'healthcare', 'Patient Care',            ARRAY['direct patient care','bedside care']),
-  ('vitals',            'healthcare', 'Vital Signs Monitoring',  ARRAY['vitals','blood pressure monitoring','pulse ox']),
-  ('medication_admin',  'healthcare', 'Medication Administration',ARRAY['med pass','medication management']),
-  ('cpr_bls',           'healthcare', 'CPR/BLS',                 ARRAY['cpr','bls','basic life support']),
-  ('emr',               'healthcare', 'EMR / EHR',               ARRAY['emr','ehr','epic','cerner','electronic records']),
-  ('phlebotomy',        'healthcare', 'Phlebotomy',              ARRAY['blood draw','venipuncture']),
-  ('wound_care',        'healthcare', 'Wound Care',              ARRAY['dressing changes','wound assessment']),
-  ('scheduling',        'healthcare', 'Scheduling',              ARRAY['appointment scheduling','patient scheduling']);
-
-INSERT INTO skills (id, industry_id, name, aliases) VALUES
-  ('forklift',       'manufacturing', 'Forklift Operation',   ARRAY['forklift certified','forklift operator','pallet jack']),
-  ('welding_mfg',    'manufacturing', 'Welding',              ARRAY['welder','mig','tig']),
-  ('cnc',            'manufacturing', 'CNC Operation',        ARRAY['cnc machinist','cnc operator','machine shop']),
-  ('quality_ctrl',   'manufacturing', 'Quality Control',      ARRAY['qc','quality inspection','iso']),
-  ('assembly',       'manufacturing', 'Assembly Line',        ARRAY['production line','assembly']),
-  ('safety_mfg',     'manufacturing', 'Workplace Safety',     ARRAY['osha','safety compliance','lockout tagout']);
+-- Skills are seeded via migration 20260428000001_sync_skills.sql
 
 -- ── Reference: Locations ──────────────────────────────────
 INSERT INTO location_regions (id, city, state, slug, job_count, featured_industries) VALUES
@@ -182,7 +148,7 @@ INSERT INTO worker_skills (worker_id, industry_id, skill_id, name, years_exp, so
   ('a0000000-0000-0000-0000-000000000001', 'construction', 'carpentry', 'Carpentry',         8, 'suggested'),
 
   ('a0000000-0000-0000-0000-000000000002', 'healthcare', 'patient_care',     'Patient Care',           7, 'suggested'),
-  ('a0000000-0000-0000-0000-000000000002', 'healthcare', 'cpr_bls',          'CPR/BLS',                7, 'suggested'),
+  ('a0000000-0000-0000-0000-000000000002', 'healthcare', 'cpr_aed',          'CPR / AED Certified',    7, 'suggested'),
   ('a0000000-0000-0000-0000-000000000002', 'healthcare', 'vitals',           'Vital Signs Monitoring', 7, 'suggested'),
   ('a0000000-0000-0000-0000-000000000002', 'healthcare', 'medication_admin', 'Medication Administration',5,'suggested'),
 
