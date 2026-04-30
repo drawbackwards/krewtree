@@ -26,7 +26,7 @@
 
 /* Bold solid-color variants */
 .card.navy {
-  background-color: var(--kt-navy-900);
+  background-color: var(--kt-navy-700);
   border: none;
   color: #fff;
 }
@@ -38,7 +38,7 @@
 }
 
 .card.blue {
-  background-color: var(--kt-navy-900);
+  background-color: var(--kt-navy-700);
   border: none;
   color: #fff;
 }
