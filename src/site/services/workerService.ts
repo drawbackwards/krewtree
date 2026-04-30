@@ -499,11 +499,12 @@ export type RegulixNudgeData = {
 // ── Dashboard Applications ─────────────────────────────────────────────────────
 
 const DB_TO_WORKER_STAGE: Record<string, DashboardApplication['stage']> = {
-  Applied: 'Applied',
-  Viewed: 'Reviewed',
-  Interviewing: 'Interview',
-  Offer: 'Offer',
-  Rejected: 'Closed',
+  new: 'Applied',
+  reviewed: 'Reviewed',
+  interview: 'Interview',
+  offer: 'Offer',
+  hired: 'Offer',
+  rejected: 'Closed',
 }
 
 export async function getDashboardApplications(
@@ -513,7 +514,7 @@ export async function getDashboardApplications(
   const { data, error } = await supabase
     .from('applications')
     .select(
-      'id, status, is_boosted, created_at, job_id, jobs(id, title, location, company_profiles(id, name))'
+      'id, kanban_stage, is_boosted, created_at, job_id, jobs(id, title, location, company_profiles(id, name))'
     )
     .eq('worker_id', userId)
     .order('created_at', { ascending: false })
@@ -537,7 +538,7 @@ export async function getDashboardApplications(
         companyId: j?.company_profiles?.id ?? '',
         companyName: j?.company_profiles?.name ?? '',
         companyLocation: j?.location ?? '',
-        stage: DB_TO_WORKER_STAGE[a.status] ?? 'Applied',
+        stage: DB_TO_WORKER_STAGE[a.kanban_stage as string] ?? 'Applied',
         appliedAt: a.created_at,
         isBoosted: a.is_boosted,
       }
