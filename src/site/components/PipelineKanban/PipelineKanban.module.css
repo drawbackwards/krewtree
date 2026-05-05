@@ -177,3 +177,27 @@
   text-align: center;
   padding: var(--kt-space-1) 0;
 }
+
+@media (max-width: 768px) {
+  .column {
+    /* Size to real content; no artificial min-height on mobile */
+    min-height: 0;
+  }
+  .empty {
+    display: none;
+  }
+  .title {
+    font-size: 16px;
+  }
+  .cardName {
+    font-size: 16px;
+  }
+  .cardJob {
+    font-size: 13px;
+  }
+  .avatar {
+    width: 32px;
+    height: 32px;
+    font-size: 13px;
+  }
+}

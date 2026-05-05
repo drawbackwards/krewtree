@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Badge, Modal, Button } from '../../components'
 import { StatCard } from '../components/StatCard/StatCard'
 import { RegulixBadge } from '../components/RegulixBadge/RegulixBadge'
@@ -86,7 +86,13 @@ function fmtPosted(iso: string | null): string {
 
 // ── OverflowMenu (matches company table pattern) ───────────────────────────────
 
-type OverflowItem = { label: string; danger?: boolean; onClick: () => void }
+type OverflowItem = {
+  label: string
+  danger?: boolean
+  mobileOnly?: boolean
+  disabled?: boolean
+  onClick: () => void
+}
 
 const OverflowMenu: React.FC<{ items: OverflowItem[] }> = ({ items }) => {
   const [open, setOpen] = useState(false)
@@ -134,11 +140,18 @@ const OverflowMenu: React.FC<{ items: OverflowItem[] }> = ({ items }) => {
             {items.map((item) => (
               <button
                 key={item.label}
+                disabled={item.disabled}
                 onClick={() => {
+                  if (item.disabled) return
                   item.onClick()
                   setOpen(false)
                 }}
-                className={[styles.overflowItem, item.danger ? styles.overflowItemDanger : '']
+                className={[
+                  styles.overflowItem,
+                  item.danger ? styles.overflowItemDanger : '',
+                  item.mobileOnly ? styles.overflowItemMobileOnly : '',
+                  item.disabled ? styles.overflowItemDisabled : '',
+                ]
                   .filter(Boolean)
                   .join(' ')}
               >
@@ -156,6 +169,7 @@ const OverflowMenu: React.FC<{ items: OverflowItem[] }> = ({ items }) => {
 
 export const WorkerDashboard: React.FC = () => {
   const { user, isEmailVerified } = useAuth()
+  const navigate = useNavigate()
 
   // ── Data state ─────────────────────────────────────────────────────────────
   const [profile, setProfile] = useState<WorkerProfileRow | null>(null)
@@ -353,64 +367,26 @@ export const WorkerDashboard: React.FC = () => {
       )}
 
       {/* Page header */}
-      <div
-        style={{
-          background: 'var(--kt-surface)',
-          padding: '28px 0',
-          borderBottom: '1px solid var(--kt-border)',
-        }}
-      >
-        <div
-          style={{
-            maxWidth: 'var(--kt-layout-max-width)',
-            margin: '0 auto',
-            padding: '0 var(--kt-space-6)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 14,
-          }}
-        >
+      <div className={styles.headerBand}>
+        <div className={styles.headerInner}>
           <div
-            style={{
-              width: 52,
-              height: 52,
-              borderRadius: '50%',
-              background: profile?.avatar_url ? 'transparent' : 'var(--kt-primary)',
-              color: 'var(--kt-primary-fg)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontWeight: 'var(--kt-weight-bold)',
-              fontSize: 'var(--kt-text-xl)',
-              flexShrink: 0,
-              overflow: 'hidden',
-            }}
+            className={styles.headerAvatar}
+            style={{ background: profile?.avatar_url ? 'transparent' : 'var(--kt-primary)' }}
           >
             {profile?.avatar_url ? (
-              <img
-                src={profile.avatar_url}
-                alt={workerName}
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-              />
+              <img src={profile.avatar_url} alt={workerName} className={styles.headerAvatarImg} />
             ) : (
               workerInitials
             )}
           </div>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-              <h1
-                style={{
-                  fontSize: 'var(--kt-text-xl)',
-                  fontWeight: 'var(--kt-weight-bold)',
-                  color: 'var(--kt-text)',
-                  margin: 0,
-                }}
-              >
+          <div className={styles.headerText}>
+            <div className={styles.headerTitleRow}>
+              <h1 className={styles.headerTitle}>
                 Welcome back{workerName ? `, ${workerName.split(' ')[0]}` : ''}
               </h1>
               {profile?.is_regulix_ready && <RegulixBadge size="sm" />}
             </div>
-            <p style={{ fontSize: 12, color: 'var(--kt-text-muted)', margin: 0 }}>
+            <p className={styles.headerMeta}>
               {[
                 profile?.primary_trade,
                 profile?.city && profile?.region
@@ -421,7 +397,7 @@ export const WorkerDashboard: React.FC = () => {
                 .join(' · ')}
             </p>
           </div>
-          <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
+          <div className={styles.headerActions}>
             <Link to={`/site/profile/${user?.id}`} style={{ textDecoration: 'none' }}>
               <Button type="button" variant="outline" size="sm">
                 View profile
@@ -437,37 +413,28 @@ export const WorkerDashboard: React.FC = () => {
       </div>
 
       {/* Main layout */}
-      <div
-        style={{
-          maxWidth: 'var(--kt-layout-max-width)',
-          margin: '0 auto',
-          padding: '28px var(--kt-space-6)',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 24,
-        }}
-      >
+      <div className={styles.layout}>
         {/* ── Stat cards ──────────────────────────────────────────────────── */}
         <div className={styles.stats}>
           <StatCard
             label="Active applications"
             value={applications.filter((a) => a.stage !== 'Closed').length}
             icon={<BriefcaseIcon />}
-            color="blue"
+            color="navy"
             subtext={`${applications.filter((a) => a.stage === 'Reviewed' || a.stage === 'Interview' || a.stage === 'Offer').length} moved forward this week`}
           />
           <StatCard
             label="Interviews scheduled"
             value={applications.filter((a) => a.stage === 'Interview').length}
             icon={<CalendarIcon />}
-            color="blue"
+            color="navy"
             subtext={`${applications.filter((a) => a.stage === 'Interview').length} new this week`}
           />
           <StatCard
             label="Saved jobs"
             value={savedJobs.length}
             icon={<BookmarkFilledIcon />}
-            color="blue"
+            color="navy"
             subtext={
               savedJobs.filter((sj) => sj.staleness === 'expiring_soon').length > 0
                 ? `${savedJobs.filter((sj) => sj.staleness === 'expiring_soon').length} expiring soon`
@@ -478,55 +445,22 @@ export const WorkerDashboard: React.FC = () => {
             label="New matches"
             value={newJobs.length}
             icon={<SparkleIcon />}
-            color="blue"
+            color="navy"
             subtext={`${newJobs.length} new since last login`}
           />
         </div>
 
         {/* ── Two-column section ──────────────────────────────────────────── */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: showCompletenessModule ? '65fr 35fr' : '1fr',
-            gap: 24,
-            alignItems: 'stretch',
-          }}
-        >
+        <div className={`${styles.twoCol} ${!showCompletenessModule ? styles.twoColSingle : ''}`}>
           {/* ── My Applications ─────────────────────────────────────────── */}
           <div className={styles.tableCard}>
             {/* Header */}
-            <div
-              style={{
-                padding: '14px 20px',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                borderBottom: '1px solid var(--kt-border)',
-              }}
-            >
-              <h2
-                style={{
-                  fontWeight: 'var(--kt-weight-semibold)',
-                  color: 'var(--kt-text)',
-                  fontSize: 13,
-                  margin: 0,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 7,
-                }}
-              >
-                <BriefcaseIcon size={14} />
+            <div className={styles.tableCardHeader}>
+              <h2 className={styles.tableCardTitle}>
+                <BriefcaseIcon size={16} color="var(--kt-olive-700)" />
                 My applications
               </h2>
-              <Link
-                to="/site/applications"
-                style={{
-                  fontSize: 12,
-                  color: 'var(--kt-primary)',
-                  textDecoration: 'none',
-                  fontWeight: 'var(--kt-weight-medium)',
-                }}
-              >
+              <Link to="/site/applications" className={styles.tableCardLink}>
                 View all →
               </Link>
             </div>
@@ -538,7 +472,7 @@ export const WorkerDashboard: React.FC = () => {
                 <div>Stage</div>
                 <div>Applied</div>
                 <div>Boosted</div>
-                <div style={{ textAlign: 'right' }}>Actions</div>
+                <div className={styles.actionsHeader}>Actions</div>
               </div>
             )}
 
@@ -558,7 +492,14 @@ export const WorkerDashboard: React.FC = () => {
               const isBoosted = app.isBoosted || boostedAppIds.has(app.id)
               const canAction = app.stage !== 'Offer' && app.stage !== 'Closed'
 
-              const overflowItems: OverflowItem[] = []
+              const overflowItems: OverflowItem[] = [
+                // Mirrors the inline "View job" CTA so it's reachable from the menu on mobile
+                {
+                  label: 'View job',
+                  mobileOnly: true,
+                  onClick: () => navigate(`/site/jobs/${app.jobId}`),
+                },
+              ]
               if (canAction) {
                 if (!isBoosted) {
                   overflowItems.push({
@@ -651,16 +592,7 @@ export const WorkerDashboard: React.FC = () => {
                   marginBottom: 12,
                 }}
               >
-                <h3
-                  style={{
-                    fontSize: 13,
-                    fontWeight: 'var(--kt-weight-semibold)',
-                    color: 'var(--kt-text)',
-                    margin: 0,
-                  }}
-                >
-                  Complete your profile
-                </h3>
+                <h3 className={styles.completenessTitle}>Complete your profile</h3>
                 <span
                   style={{
                     fontSize: 22,
@@ -815,17 +747,7 @@ export const WorkerDashboard: React.FC = () => {
             <button
               type="button"
               onClick={handleDismissNudge}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-                color: 'var(--kt-text-muted)',
-                display: 'flex',
-                alignItems: 'center',
-                padding: 4,
-                borderRadius: 'var(--kt-radius-sm)',
-                flexShrink: 0,
-              }}
+              className={styles.bannerClose}
               aria-label="Dismiss"
             >
               <CloseIcon size={14} />
@@ -835,38 +757,12 @@ export const WorkerDashboard: React.FC = () => {
 
         {/* ── Saved Jobs ──────────────────────────────────────────────────── */}
         <div className={styles.tableCard}>
-          <div
-            style={{
-              padding: '14px 20px',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              borderBottom: '1px solid var(--kt-border)',
-            }}
-          >
-            <h2
-              style={{
-                fontWeight: 'var(--kt-weight-semibold)',
-                color: 'var(--kt-text)',
-                fontSize: 13,
-                margin: 0,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 7,
-              }}
-            >
-              <BookmarkFilledIcon size={14} />
+          <div className={styles.tableCardHeader}>
+            <h2 className={styles.tableCardTitle}>
+              <BookmarkFilledIcon size={16} color="var(--kt-olive-700)" />
               Saved jobs
             </h2>
-            <Link
-              to="/site/saved-jobs"
-              style={{
-                fontSize: 12,
-                color: 'var(--kt-primary)',
-                textDecoration: 'none',
-                fontWeight: 'var(--kt-weight-medium)',
-              }}
-            >
+            <Link to="/site/saved-jobs" className={styles.tableCardLink}>
               View all →
             </Link>
           </div>
@@ -887,7 +783,7 @@ export const WorkerDashboard: React.FC = () => {
                 <div>Status</div>
                 <div>Posted</div>
                 <div>Saved</div>
-                <div style={{ textAlign: 'right' }}>Actions</div>
+                <div className={styles.actionsHeader}>Actions</div>
               </div>
 
               {savedJobs.map((sj) => {
@@ -954,6 +850,24 @@ export const WorkerDashboard: React.FC = () => {
                         ))}
                       <OverflowMenu
                         items={[
+                          ...(isClosed
+                            ? []
+                            : hasApplied
+                              ? [
+                                  {
+                                    label: 'Applied',
+                                    mobileOnly: true,
+                                    disabled: true,
+                                    onClick: () => {},
+                                  },
+                                ]
+                              : [
+                                  {
+                                    label: 'Quick Apply',
+                                    mobileOnly: true,
+                                    onClick: () => handleQuickApply(sj.jobId),
+                                  },
+                                ]),
                           {
                             label: 'Remove bookmark',
                             onClick: () => handleRemoveSaved(sj.id),
@@ -970,37 +884,12 @@ export const WorkerDashboard: React.FC = () => {
 
         {/* ── New Jobs For You ─────────────────────────────────────────────── */}
         <div>
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: 12,
-            }}
-          >
-            <h2
-              style={{
-                fontWeight: 'var(--kt-weight-semibold)',
-                color: 'var(--kt-text)',
-                fontSize: 13,
-                margin: 0,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 7,
-              }}
-            >
-              <SparkleIcon size={14} />
+          <div className={styles.sectionHeader}>
+            <h2 className={styles.sectionTitle}>
+              <SparkleIcon size={16} color="var(--kt-olive-700)" />
               New job matches
             </h2>
-            <Link
-              to="/site/jobs"
-              style={{
-                fontSize: 12,
-                color: 'var(--kt-primary)',
-                textDecoration: 'none',
-                fontWeight: 'var(--kt-weight-medium)',
-              }}
-            >
+            <Link to="/site/jobs" className={styles.tableCardLink}>
               Browse all jobs →
             </Link>
           </div>
@@ -1035,12 +924,7 @@ export const WorkerDashboard: React.FC = () => {
                   </Link>
                 </div>
               ) : (
-                <div
-                  style={{
-                    display: 'flex',
-                    gap: 12,
-                  }}
-                >
+                <div className={styles.newJobsGrid}>
                   {newJobs.map((job) => {
                     const initials = job.companyName
                       .split(' ')
@@ -1052,81 +936,14 @@ export const WorkerDashboard: React.FC = () => {
                       <Link
                         key={job.jobId}
                         to={`/site/jobs/${job.jobId}`}
-                        style={{
-                          textDecoration: 'none',
-                          flex: '1 1 0',
-                          minWidth: 0,
-                          background: 'var(--kt-white)',
-                          border: '1px solid var(--kt-border)',
-                          borderRadius: 'var(--kt-radius-lg)',
-                          padding: 'var(--kt-space-5)',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: 'var(--kt-space-3)',
-                          transition:
-                            'box-shadow var(--kt-duration-base) var(--kt-ease), border-color var(--kt-duration-base) var(--kt-ease), transform var(--kt-duration-base) var(--kt-ease)',
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.boxShadow = 'var(--kt-shadow-md)'
-                          e.currentTarget.style.borderColor = 'var(--kt-grey-300)'
-                          e.currentTarget.style.transform = 'translateY(-1px)'
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.boxShadow = 'none'
-                          e.currentTarget.style.borderColor = 'var(--kt-border)'
-                          e.currentTarget.style.transform = 'none'
-                        }}
+                        className={styles.newJobCard}
                       >
-                        <div
-                          style={{
-                            width: 40,
-                            height: 40,
-                            borderRadius: 'var(--kt-radius-md)',
-                            background: 'var(--kt-grey-100)',
-                            color: 'var(--kt-grey-700)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: 'var(--kt-text-sm)',
-                            fontWeight: 'var(--kt-weight-bold)',
-                            flexShrink: 0,
-                          }}
-                        >
-                          {initials}
+                        <div className={styles.newJobCardHeader}>
+                          <div className={styles.newJobCardLogo}>{initials}</div>
+                          <div className={styles.newJobCardTitle}>{job.jobTitle}</div>
                         </div>
-                        <div
-                          style={{
-                            fontSize: 'var(--kt-text-base)',
-                            fontWeight: 'var(--kt-weight-semibold)',
-                            color: 'var(--kt-grey-900)',
-                            lineHeight: 'var(--kt-leading-tight)',
-                            display: '-webkit-box',
-                            WebkitLineClamp: 2,
-                            WebkitBoxOrient: 'vertical',
-                            overflow: 'hidden',
-                          }}
-                        >
-                          {job.jobTitle}
-                        </div>
-                        <div
-                          style={{
-                            fontSize: 'var(--kt-text-sm)',
-                            fontWeight: 'var(--kt-weight-semibold)',
-                            color: 'var(--kt-grey-800)',
-                          }}
-                        >
-                          {job.companyName}
-                        </div>
-                        <div
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 4,
-                            fontSize: 'var(--kt-text-sm)',
-                            color: 'var(--kt-text-muted)',
-                            marginTop: 'auto',
-                          }}
-                        >
+                        <div className={styles.newJobCardCompany}>{job.companyName}</div>
+                        <div className={styles.newJobCardLocation}>
                           <LocationIcon size={13} />
                           {job.location}
                         </div>

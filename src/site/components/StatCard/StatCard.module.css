@@ -158,3 +158,19 @@
   font-size: var(--kt-text-xs);
   color: rgba(255, 255, 255, 0.6);
 }
+
+/* Hide icon on small viewports — labels need the room when stacked 2x2 */
+@media (max-width: 480px) {
+  .card {
+    padding: var(--kt-space-4);
+  }
+  .iconWrap {
+    display: none;
+  }
+  .label {
+    font-size: var(--kt-text-sm);
+  }
+  .value {
+    font-size: var(--kt-text-2xl);
+  }
+}

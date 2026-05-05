@@ -142,13 +142,39 @@ export const CompanyDashboard: React.FC = () => {
   const [dashboardStats, setDashboardStats] = useState<DashboardStat[]>([])
   const [regulixBannerDismissed, setRegulixBannerDismissed] = useState(false)
   const [customizeOpen, setCustomizeOpen] = useState(false)
-  const [moduleConfig, setModuleConfig] = useState({
+
+  type ModuleConfig = {
+    calendar: boolean
+    needsAttention: boolean
+    pipeline: boolean
+    recentApplicants: boolean
+    activeJobs: boolean
+  }
+  const DEFAULT_MODULE_CONFIG: ModuleConfig = {
     calendar: true,
     needsAttention: true,
     pipeline: true,
     recentApplicants: true,
     activeJobs: true,
+  }
+  const [moduleConfig, setModuleConfig] = useState<ModuleConfig>(() => {
+    try {
+      const raw = localStorage.getItem('kt_company_modules_v1')
+      if (!raw) return DEFAULT_MODULE_CONFIG
+      const parsed = JSON.parse(raw) as Partial<ModuleConfig>
+      return { ...DEFAULT_MODULE_CONFIG, ...parsed }
+    } catch {
+      return DEFAULT_MODULE_CONFIG
+    }
   })
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('kt_company_modules_v1', JSON.stringify(moduleConfig))
+    } catch {
+      /* ignore quota errors */
+    }
+  }, [moduleConfig])
 
   // Boost modal state
   const [boostJobId, setBoostJobId] = useState<string | null>(null)
@@ -197,32 +223,14 @@ export const CompanyDashboard: React.FC = () => {
       <div className={dashStyles.layout}>
         {/* ── Page header ─────────────────────────────────────────────── */}
         <div className={dashStyles.pageHeader}>
-          <h1
-            style={{
-              fontSize: 'var(--kt-text-xl)',
-              fontWeight: 'var(--kt-weight-bold)',
-              color: 'var(--kt-text)',
-              margin: 0,
-            }}
-          >
+          <h1 className={dashStyles.pageHeaderTitle}>
             {timeGreeting()}
             {firstName ? `, ${firstName}` : ''}
           </h1>
           <button
             type="button"
             onClick={() => setCustomizeOpen(true)}
-            style={{
-              height: 34,
-              padding: '0 14px',
-              border: '1px solid var(--kt-border)',
-              borderRadius: 'var(--kt-radius-md)',
-              background: 'transparent',
-              cursor: 'pointer',
-              fontSize: 'var(--kt-text-sm)',
-              fontFamily: 'var(--kt-font-sans)',
-              fontWeight: 'var(--kt-weight-medium)',
-              color: 'var(--kt-text)',
-            }}
+            className={dashStyles.customizeBtn}
           >
             Customize
           </button>
@@ -250,17 +258,7 @@ export const CompanyDashboard: React.FC = () => {
             <button
               type="button"
               onClick={() => setRegulixBannerDismissed(true)}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-                color: 'var(--kt-text-muted)',
-                display: 'flex',
-                alignItems: 'center',
-                padding: 4,
-                borderRadius: 'var(--kt-radius-sm)',
-                flexShrink: 0,
-              }}
+              className={dashStyles.bannerClose}
               aria-label="Dismiss"
             >
               <CloseIcon size={14} />
@@ -635,29 +633,11 @@ const ActiveJobsModule: React.FC<ActiveJobsModuleProps> = ({ rows }) => {
     <div className={dashStyles.jobsWidget}>
       {/* Header */}
       <div className={dashStyles.jobsWidgetHeader}>
-        <h2
-          style={{
-            fontWeight: 'var(--kt-weight-semibold)',
-            color: 'var(--kt-text)',
-            fontSize: 'var(--kt-text-md)',
-            margin: 0,
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 8,
-          }}
-        >
+        <h2 className={dashStyles.jobsWidgetTitle}>
           <BriefcaseIcon size={16} color="var(--kt-olive-700)" />
           Active jobs
         </h2>
-        <Link
-          to="/site/dashboard/jobs"
-          style={{
-            fontSize: 'var(--kt-text-sm)',
-            color: 'var(--kt-primary)',
-            textDecoration: 'none',
-            fontWeight: 'var(--kt-weight-medium)',
-          }}
-        >
+        <Link to="/site/dashboard/jobs" className={dashStyles.jobsWidgetLink}>
           View all jobs →
         </Link>
       </div>
@@ -714,22 +694,7 @@ const ActiveJobsModule: React.FC<ActiveJobsModuleProps> = ({ rows }) => {
               <button
                 type="button"
                 onClick={() => navigate(`/site/jobs/${job.id}`)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  padding: 0,
-                  cursor: 'pointer',
-                  fontFamily: 'var(--kt-font-sans)',
-                  fontSize: 14,
-                  fontWeight: 'var(--kt-weight-bold)',
-                  color: 'var(--kt-primary)',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  display: 'block',
-                  textAlign: 'left',
-                  width: '100%',
-                }}
+                className={dashStyles.jobTitleBtn}
               >
                 {job.title}
               </button>
@@ -740,17 +705,13 @@ const ActiveJobsModule: React.FC<ActiveJobsModuleProps> = ({ rows }) => {
               </Badge>
             </div>
             <div>
-              <span style={{ fontSize: 14, color: 'var(--kt-text-muted)' }}>
-                {formatShortDate(job.createdAt)}
-              </span>
+              <span className={dashStyles.jobsRowCell}>{formatShortDate(job.createdAt)}</span>
             </div>
             <div style={{ justifySelf: 'center' }}>
-              <span style={{ fontSize: 14, color: 'var(--kt-text-muted)' }}>
-                {job.viewCount.toLocaleString()}
-              </span>
+              <span className={dashStyles.jobsRowCell}>{job.viewCount.toLocaleString()}</span>
             </div>
             <div style={{ justifySelf: 'center' }}>
-              <span style={{ fontSize: 14, color: 'var(--kt-text)' }}>{job.totalApplicants}</span>
+              <span className={dashStyles.jobsRowApplicants}>{job.totalApplicants}</span>
             </div>
           </div>
         ))}
@@ -763,7 +724,7 @@ const ActiveJobsModule: React.FC<ActiveJobsModuleProps> = ({ rows }) => {
               <div
                 key={`filler-${i}`}
                 aria-hidden="true"
-                className={dashStyles.jobsRow}
+                className={`${dashStyles.jobsRow} ${dashStyles.jobsRowFiller}`}
                 style={{ borderBottom: isLast ? 'none' : '1px solid var(--kt-border)' }}
               />
             )

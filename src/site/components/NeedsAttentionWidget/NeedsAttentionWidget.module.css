@@ -26,6 +26,12 @@
   gap: 8px;
 }
 
+@media (max-width: 640px) {
+  .title {
+    font-size: 16px;
+  }
+}
+
 .viewAll {
   font-size: var(--kt-text-sm);
   color: var(--kt-primary);
