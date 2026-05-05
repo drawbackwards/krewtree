@@ -217,7 +217,22 @@
 
 .appsRow {
   /* Job | Stage | Applied | Boosted | Actions */
-  grid-template-columns: 2fr 110px 1fr 80px 2fr;
+  grid-template-columns: minmax(0, 1fr) 100px 80px 70px 140px;
+}
+
+.appsRow > :nth-child(2),
+.appsRow > :nth-child(3),
+.appsRow > :nth-child(5) {
+  justify-self: end;
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.appsRow > :nth-child(4) {
+  justify-self: center;
+  text-align: center;
 }
 
 .savedRow {
@@ -579,6 +594,21 @@
 }
 
 /* ── New jobs grid ──────────────────────────────────────────────────────── */
+
+.newJobsContainer {
+  background: var(--kt-grey-100);
+  border-radius: var(--kt-radius-lg);
+  padding: var(--kt-space-4);
+}
+
+.newJobsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  gap: 12px;
+  padding: 0 4px;
+}
 
 .newJobsGrid {
   display: grid;

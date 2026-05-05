@@ -7,10 +7,6 @@ import { StagePill } from '../StagePill/StagePill'
 import { ApplicantSlideover } from '../ApplicantSlideover/ApplicantSlideover'
 import styles from './RecentApplicantsWidget.module.css'
 
-function formatShortDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-}
-
 export interface RecentApplicantsWidgetProps {
   companyId: string
   /** Supabase user.last_sign_in_at. When present, the "# since last login"
@@ -70,7 +66,6 @@ export const RecentApplicantsWidget: React.FC<RecentApplicantsWidgetProps> = ({
             <div>Job</div>
             <div>Stage</div>
             <div className={styles.alignRight}>Match</div>
-            <div>Applied</div>
           </div>
 
           {rows.length === 0 ? (
@@ -102,7 +97,6 @@ export const RecentApplicantsWidget: React.FC<RecentApplicantsWidgetProps> = ({
                   <div className={[styles.alignRight, styles.matchCell].join(' ')}>
                     {a.matchScore}%
                   </div>
-                  <div className={styles.dateCell}>{formatShortDate(a.appliedAt)}</div>
                 </div>
               ))}
               {Array.from({ length: Math.max(0, 5 - rows.length) }).map((_, i) => (

@@ -207,7 +207,7 @@
 /* Active Jobs table */
 .jobsRow {
   display: grid;
-  grid-template-columns: 1fr 80px 60px 48px 80px;
+  grid-template-columns: 1fr 100px 80px 70px;
   align-items: center;
   column-gap: 10px;
   padding: 10px var(--kt-space-5);
@@ -247,14 +247,9 @@
   color: var(--kt-text-muted);
 }
 
-.jobsRowApplicants {
-  font-size: 14px;
-  color: var(--kt-text);
-}
-
 @media (max-width: 640px) {
   .jobsRow {
-    /* Title | Status — hide Posted, Views, and Applicants */
+    /* Title | Status — hide Posted and Boosted */
     grid-template-columns: minmax(0, 1fr) auto;
     padding: 10px var(--kt-space-4);
   }
@@ -263,8 +258,7 @@
     padding-right: var(--kt-space-4);
   }
   .jobsRow > :nth-child(3),
-  .jobsRow > :nth-child(4),
-  .jobsRow > :nth-child(5) {
+  .jobsRow > :nth-child(4) {
     display: none;
   }
   /* Drop filler rows so the table is sized to its real content */
@@ -281,8 +275,7 @@
   .jobTitleBtn {
     font-size: 16px;
   }
-  .jobsRowCell,
-  .jobsRowApplicants {
+  .jobsRowCell {
     font-size: 16px;
   }
 }

@@ -546,7 +546,7 @@ export const WorkerDashboard: React.FC = () => {
                   <div>
                     {isBoosted && (
                       <div className={styles.boostedIndicator}>
-                        <RocketIcon size={11} />
+                        <RocketIcon size={16} />
                       </div>
                     )}
                   </div>
@@ -895,8 +895,8 @@ export const WorkerDashboard: React.FC = () => {
         </div>
 
         {/* ── New Jobs For You ─────────────────────────────────────────────── */}
-        <div>
-          <div className={styles.sectionHeader}>
+        <div className={styles.newJobsContainer}>
+          <div className={styles.newJobsHeader}>
             <h2 className={styles.sectionTitle}>
               <SparkleIcon size={16} color="var(--kt-olive-700)" />
               New job matches
@@ -949,7 +949,7 @@ export const WorkerDashboard: React.FC = () => {
                 </div>
               ) : (
                 <div className={styles.newJobsGrid}>
-                  {newJobs.map((job) => {
+                  {newJobs.slice(0, 4).map((job) => {
                     const initials = job.companyName
                       .split(' ')
                       .map((w) => w[0])

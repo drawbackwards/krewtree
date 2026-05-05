@@ -34,7 +34,7 @@ function statusVariant(status: Job['status']): 'success' | 'warning' | 'secondar
 
 const BoostIndicator: React.FC<{ boosted: boolean }> = ({ boosted }) => {
   if (!boosted) return null
-  return <RocketIcon size={13} color="var(--kt-olive-600)" />
+  return <RocketIcon size={16} color="var(--kt-olive-600)" />
 }
 
 const ApplicantCount: React.FC<{ total: number; regulixReady: number }> = ({

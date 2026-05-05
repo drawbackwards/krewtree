@@ -93,8 +93,8 @@
 
 .row {
   display: grid;
-  /* Applicant | Job | Stage | Match | Applied */
-  grid-template-columns: 26% 1fr 80px 52px 64px;
+  /* Applicant | Job | Stage | Match */
+  grid-template-columns: 26% 1fr 80px 52px;
   align-items: center;
   padding: 10px 24px;
   border-bottom: 1px solid var(--kt-border);
@@ -104,13 +104,12 @@
 
 @media (max-width: 640px) {
   .row {
-    /* Applicant | Job — hide Stage, Match, and Applied date */
+    /* Applicant | Job — hide Stage and Match */
     grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
     padding: 10px 16px;
   }
   .row > :nth-child(3),
-  .row > :nth-child(4),
-  .row > :nth-child(5) {
+  .row > :nth-child(4) {
     display: none;
   }
 }
@@ -206,11 +205,6 @@
   color: var(--kt-text);
 }
 
-.dateCell {
-  font-size: 13px;
-  color: var(--kt-text-muted);
-}
-
 @media (max-width: 640px) {
   /* Drop filler rows on mobile so the table sizes to real content */
   .fillerRow {
@@ -222,7 +216,6 @@
   }
   .applicantName,
   .jobLink,
-  .dateCell,
   .matchCell {
     font-size: 16px;
   }

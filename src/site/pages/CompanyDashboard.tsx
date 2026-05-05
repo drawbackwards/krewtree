@@ -649,8 +649,7 @@ const ActiveJobsModule: React.FC<ActiveJobsModuleProps> = ({ rows }) => {
           <span style={thStyle}>Job title</span>
           <span style={thStyle}>Status</span>
           <span style={thStyle}>Posted</span>
-          <span style={{ ...thStyle, justifySelf: 'center' }}>Views</span>
-          <span style={{ ...thStyle, justifySelf: 'center' }}>Applicants</span>
+          <span style={{ ...thStyle, justifySelf: 'center' }}>Boosted</span>
         </div>
 
         {/* Empty state */}
@@ -708,10 +707,7 @@ const ActiveJobsModule: React.FC<ActiveJobsModuleProps> = ({ rows }) => {
               <span className={dashStyles.jobsRowCell}>{formatShortDate(job.createdAt)}</span>
             </div>
             <div style={{ justifySelf: 'center' }}>
-              <span className={dashStyles.jobsRowCell}>{job.viewCount.toLocaleString()}</span>
-            </div>
-            <div style={{ justifySelf: 'center' }}>
-              <span className={dashStyles.jobsRowApplicants}>{job.totalApplicants}</span>
+              {job.isSponsored && <RocketIcon size={16} color="var(--kt-olive-600)" />}
             </div>
           </div>
         ))}

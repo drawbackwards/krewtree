@@ -287,7 +287,7 @@ export const ApplicationsPage: React.FC = () => {
                 <div className={styles.appliedCell}>{fmtApplied(app.appliedAt)}</div>
 
                 <div className={styles.alignCenter}>
-                  {isBoosted ? <RocketIcon size={13} color="var(--kt-olive-600)" /> : null}
+                  {isBoosted ? <RocketIcon size={16} color="var(--kt-olive-600)" /> : null}
                 </div>
 
                 <div className={styles.actionsCell}>
