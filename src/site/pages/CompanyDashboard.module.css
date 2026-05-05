@@ -121,7 +121,7 @@
 
 @media (max-width: 640px) {
   .layout {
-    padding: 16px var(--kt-space-3);
+    padding: 16px var(--kt-space-3) max(32px, env(safe-area-inset-bottom));
   }
 
   .banner {
@@ -190,9 +190,9 @@
 
 .jobsWidgetLink {
   font-size: var(--kt-text-sm);
-  color: var(--kt-primary);
+  color: var(--kt-navy-500);
   text-decoration: none;
-  font-weight: var(--kt-weight-medium);
+  font-weight: var(--kt-weight-bold);
 }
 
 @media (max-width: 640px) {
@@ -233,7 +233,7 @@
   font-family: var(--kt-font-sans);
   font-size: 14px;
   font-weight: var(--kt-weight-bold);
-  color: var(--kt-primary);
+  color: var(--kt-navy-500);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

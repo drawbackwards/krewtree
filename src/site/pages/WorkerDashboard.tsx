@@ -480,7 +480,13 @@ export const WorkerDashboard: React.FC = () => {
             {applications.length === 0 && (
               <div className={styles.emptyRow}>
                 No applications yet.{' '}
-                <Link to="/site/jobs" style={{ color: 'var(--kt-primary)' }}>
+                <Link
+                  to="/site/jobs"
+                  style={{
+                    color: 'var(--kt-navy-500)',
+                    fontWeight: 'var(--kt-weight-bold)',
+                  }}
+                >
                   Browse jobs →
                 </Link>
               </div>
@@ -720,8 +726,8 @@ export const WorkerDashboard: React.FC = () => {
                   to="/site/profile/edit"
                   style={{
                     fontSize: 13,
-                    fontWeight: 'var(--kt-weight-semibold)',
-                    color: 'var(--kt-primary)',
+                    fontWeight: 'var(--kt-weight-bold)',
+                    color: 'var(--kt-navy-500)',
                     textDecoration: 'none',
                   }}
                 >
@@ -770,7 +776,13 @@ export const WorkerDashboard: React.FC = () => {
           {savedJobs.length === 0 && (
             <div className={styles.emptyRow}>
               No saved jobs yet.{' '}
-              <Link to="/site/jobs" style={{ color: 'var(--kt-primary)' }}>
+              <Link
+                to="/site/jobs"
+                style={{
+                  color: 'var(--kt-navy-500)',
+                  fontWeight: 'var(--kt-weight-bold)',
+                }}
+              >
                 Browse jobs →
               </Link>
             </div>
@@ -897,7 +909,13 @@ export const WorkerDashboard: React.FC = () => {
           {completeness && !completeness.hasSkills && (
             <div className={styles.emptyCard}>
               Add your skills to your profile to get personalised job recommendations.{' '}
-              <Link to="/site/profile/edit" style={{ color: 'var(--kt-primary)' }}>
+              <Link
+                to="/site/profile/edit"
+                style={{
+                  color: 'var(--kt-navy-500)',
+                  fontWeight: 'var(--kt-weight-bold)',
+                }}
+              >
                 Add skills →
               </Link>
             </div>
@@ -919,7 +937,13 @@ export const WorkerDashboard: React.FC = () => {
               {newJobs.length === 0 ? (
                 <div className={styles.emptyCard}>
                   No new jobs available right now.{' '}
-                  <Link to="/site/jobs" style={{ color: 'var(--kt-primary)' }}>
+                  <Link
+                    to="/site/jobs"
+                    style={{
+                      color: 'var(--kt-navy-500)',
+                      fontWeight: 'var(--kt-weight-bold)',
+                    }}
+                  >
                     Browse all →
                   </Link>
                 </div>

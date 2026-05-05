@@ -69,6 +69,19 @@ with different dashboards, flows, and data access.
 - No gradients, no Tailwind, no external UI libraries
 - Light + dark mode tokens exist in `src/styles/tokens.css`
 
+### Link standard
+
+Anchor-style links inside dashboards, widgets, and tables (e.g. "View all →",
+"View pipeline →", clickable applicant or job titles, "Edit profile →",
+"Browse jobs →") use the same color and weight everywhere:
+
+- `color: var(--kt-navy-500)`
+- `font-weight: var(--kt-weight-bold)`
+
+Do NOT use `--kt-primary` (resolves to navy-900) for these links — it reads as
+near-black body text. Reserve `--kt-primary` for filled buttons and other
+primary-action surfaces. This rule applies to both worker and company dashboards.
+
 ## Testing
 
 - Unit tests: Vitest — test utility functions and data transforms

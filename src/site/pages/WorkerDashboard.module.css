@@ -175,9 +175,9 @@
 
 .tableCardLink {
   font-size: var(--kt-text-sm);
-  color: var(--kt-primary);
+  color: var(--kt-navy-500);
   text-decoration: none;
-  font-weight: var(--kt-weight-medium);
+  font-weight: var(--kt-weight-bold);
   white-space: nowrap;
 }
 
@@ -257,8 +257,8 @@
 
 .titleLink {
   font-size: var(--kt-text-sm);
-  font-weight: var(--kt-weight-semibold);
-  color: var(--kt-primary);
+  font-weight: var(--kt-weight-bold);
+  color: var(--kt-navy-500);
   text-decoration: none;
   display: block;
   overflow: hidden;

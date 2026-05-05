@@ -90,9 +90,9 @@ export const PipelineKanban: React.FC<Props> = ({ companyId }) => {
             to="/site/dashboard/pipeline"
             style={{
               fontSize: 'var(--kt-text-sm)',
-              color: 'var(--kt-primary)',
+              color: 'var(--kt-navy-500)',
               textDecoration: 'none',
-              fontWeight: 'var(--kt-weight-medium)',
+              fontWeight: 'var(--kt-weight-bold)',
             }}
           >
             View pipeline →
@@ -126,9 +126,9 @@ export const PipelineKanban: React.FC<Props> = ({ companyId }) => {
           to="/site/dashboard/pipeline"
           style={{
             fontSize: 'var(--kt-text-sm)',
-            color: 'var(--kt-primary)',
+            color: 'var(--kt-navy-500)',
             textDecoration: 'none',
-            fontWeight: 'var(--kt-weight-medium)',
+            fontWeight: 'var(--kt-weight-bold)',
           }}
         >
           View pipeline →

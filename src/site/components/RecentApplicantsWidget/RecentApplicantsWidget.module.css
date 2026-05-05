@@ -54,9 +54,9 @@
 
 .viewAll {
   font-size: var(--kt-text-sm);
-  color: var(--kt-primary);
+  color: var(--kt-navy-500);
   text-decoration: none;
-  font-weight: var(--kt-weight-medium);
+  font-weight: var(--kt-weight-bold);
 }
 
 .viewAll:hover {
@@ -168,7 +168,7 @@
   padding: 0;
   font-family: var(--kt-font-sans);
   font-size: 14px;
-  font-weight: var(--kt-weight-medium);
+  font-weight: var(--kt-weight-bold);
   color: var(--kt-navy-500);
   cursor: pointer;
   text-align: left;

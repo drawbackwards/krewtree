@@ -171,6 +171,6 @@
     font-size: var(--kt-text-sm);
   }
   .value {
-    font-size: var(--kt-text-2xl);
+    font-size: var(--kt-text-3xl);
   }
 }

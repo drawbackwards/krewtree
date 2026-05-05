@@ -186,6 +186,11 @@
   .empty {
     display: none;
   }
+  .card {
+    /* Let vertical scroll pass through; drag stays a desktop affordance. */
+    touch-action: pan-y;
+    cursor: default;
+  }
   .title {
     font-size: 16px;
   }
