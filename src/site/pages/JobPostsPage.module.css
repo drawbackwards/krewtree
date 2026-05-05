@@ -337,8 +337,8 @@
 }
 
 .jobTitleLink {
-  font-size: 12px;
-  font-weight: var(--kt-weight-bold);
+  font-size: var(--kt-text-sm);
+  font-weight: var(--kt-weight-semibold);
   color: var(--kt-primary);
   text-decoration: none;
   display: block;

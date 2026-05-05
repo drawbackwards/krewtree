@@ -409,7 +409,7 @@ const IndustrySkillsCard: React.FC<{
               margin: '0 0 12px',
             }}
           >
-            Self-reported. Add the cert name, issuing body, and expiry date.
+            Self-reported. Add the cert name, issuing body, and earned date.
           </p>
           {data.certifications.length > 0 && (
             <div style={{ marginBottom: 10 }}>

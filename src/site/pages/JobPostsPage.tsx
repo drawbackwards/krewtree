@@ -617,12 +617,12 @@ export const JobPostsPage: React.FC = () => {
                     {statusLabel(job.status)}
                   </Badge>
                 </div>
-                <div style={{ fontSize: 12, color: 'var(--kt-text-muted)' }}>
+                <div style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text-muted)' }}>
                   {formatShortDate(job.createdAt)}
                 </div>
                 <div
                   className={styles.alignCenter}
-                  style={{ fontSize: 12, color: 'var(--kt-text-muted)' }}
+                  style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text-muted)' }}
                 >
                   {job.viewCount.toLocaleString()}
                 </div>

@@ -83,6 +83,7 @@ export type Job = {
   urgentHiring?: boolean
   regulixPreferred?: boolean
   autoPauseLimit?: number | null
+  closingAt?: string | null
 }
 
 export type Application = {

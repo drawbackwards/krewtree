@@ -3,7 +3,14 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Input, Textarea, Select, Button, Badge, Alert, Switch, Divider } from '../../components'
 import styles from './PostJobPage.module.css'
 import { RegulixBadge } from '../components/RegulixBadge/RegulixBadge'
-import { RegulixMarkIcon, StarIcon, PlusIcon, CelebrationIcon, LightningIcon } from '../icons'
+import {
+  RegulixMarkIcon,
+  RocketIcon,
+  PlusIcon,
+  CelebrationIcon,
+  LightningIcon,
+  CalendarIcon,
+} from '../icons'
 import { industries } from '../data/mock'
 import { createJob, updateJob, getJobById, getCompanyIndustry } from '../services/jobService'
 import { useAuth } from '../context/AuthContext'
@@ -183,6 +190,7 @@ export const PostJobPage: React.FC = () => {
   const [urgentHiring, setUrgentHiring] = useState(false)
   const [regulixPreferred, setRegulixPreferred] = useState(false)
   const [questions, setQuestions] = useState<string[]>([''])
+  const [closingAt, setClosingAt] = useState('')
 
   // Pre-fill industry from company profile when creating a new job from scratch
   // (skip when editing or duplicating — both already supply an industry)
@@ -224,6 +232,7 @@ export const PostJobPage: React.FC = () => {
         setStopMode('limit')
         setAppLimit(String(data.autoPauseLimit))
       }
+      setClosingAt(data.closingAt ? data.closingAt.slice(0, 10) : '')
     })
   }, [editId, duplicateOf])
 
@@ -297,6 +306,7 @@ export const PostJobPage: React.FC = () => {
       urgentHiring,
       regulixPreferred,
       autoPauseLimit: stopMode === 'limit' && appLimit ? Number(appLimit) : null,
+      closingAt: closingAt ? closingAt : null,
     }
 
     if (isEditMode && editId) {
@@ -419,6 +429,14 @@ export const PostJobPage: React.FC = () => {
                 required
               />
               <FieldRow>
+                <Input
+                  label="Location"
+                  placeholder="e.g. Phoenix, AZ"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  error={errors.location}
+                  required
+                />
                 <Select
                   label="Industry"
                   value={industry}
@@ -430,21 +448,13 @@ export const PostJobPage: React.FC = () => {
                     ...industries.map((i) => ({ value: i.slug, label: i.name })),
                   ]}
                 />
+              </FieldRow>
+              <FieldRow>
                 <Select
                   label="Job Type"
                   value={jobType}
                   onChange={(e) => setJobType(e.target.value)}
                   options={typeOptions}
-                />
-              </FieldRow>
-              <FieldRow>
-                <Input
-                  label="Location"
-                  placeholder="e.g. Phoenix, AZ"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  error={errors.location}
-                  required
                 />
                 <Select
                   label="Experience Level"
@@ -462,13 +472,13 @@ export const PostJobPage: React.FC = () => {
             subtitle="Set a competitive pay range to attract qualified candidates."
           >
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <Select
-                label="Pay Type"
-                value={payType}
-                onChange={(e) => setPayType(e.target.value)}
-                options={payTypeOptions}
-              />
-              <FieldRow>
+              <div className={styles.payGrid}>
+                <Select
+                  label="Pay Type"
+                  value={payType}
+                  onChange={(e) => setPayType(e.target.value)}
+                  options={payTypeOptions}
+                />
                 <Input
                   label={`Minimum Pay (${payType === 'hour' ? '$/hr' : 'K/yr'})`}
                   type="number"
@@ -484,7 +494,7 @@ export const PostJobPage: React.FC = () => {
                   value={payMax}
                   onChange={(e) => setPayMax(e.target.value)}
                 />
-              </FieldRow>
+              </div>
               <p style={{ fontSize: 'var(--kt-text-xs)', color: 'var(--kt-text-muted)' }}>
                 Jobs with a posted pay range receive 3x more applications on average.
               </p>
@@ -530,7 +540,7 @@ export const PostJobPage: React.FC = () => {
             subtitle="Tag the skills workers need. These help match your job to the right candidates."
           >
             {/* Input row */}
-            <div style={{ display: 'flex', gap: 10, marginBottom: 12 }}>
+            <div className={styles.skillInputRow}>
               <Input
                 placeholder="Add a skill (e.g. Framing, CPR/BLS, CDL-A)…"
                 value={skillInput}
@@ -541,7 +551,6 @@ export const PostJobPage: React.FC = () => {
                     addSkill()
                   }
                 }}
-                style={{ flex: 1 }}
               />
               <Button type="button" variant="outline" size="md" onClick={() => addSkill()}>
                 Add
@@ -659,21 +668,19 @@ export const PostJobPage: React.FC = () => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {questions.map((q, i) => (
                 // eslint-disable-next-line react/no-array-index-key
-                <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-end' }}>
-                  <div style={{ flex: 1 }}>
-                    <Input
-                      label={`Question ${i + 1}${i > 0 ? ' (optional)' : ''}`}
-                      placeholder={
-                        i === 0
-                          ? "e.g. Do you have a valid driver's license?"
-                          : i === 1
-                            ? 'e.g. Are you available to start immediately?'
-                            : 'e.g. Do you have the required certification?'
-                      }
-                      value={q}
-                      onChange={(e) => updateQuestion(i, e.target.value)}
-                    />
-                  </div>
+                <div key={i} className={styles.questionRow}>
+                  <Input
+                    label={`Question ${i + 1}${i > 0 ? ' (optional)' : ''}`}
+                    placeholder={
+                      i === 0
+                        ? "e.g. Do you have a valid driver's license?"
+                        : i === 1
+                          ? 'e.g. Are you available to start immediately?'
+                          : 'e.g. Do you have the required certification?'
+                    }
+                    value={q}
+                    onChange={(e) => updateQuestion(i, e.target.value)}
+                  />
                   {questions.length > 1 && (
                     <button
                       type="button"
@@ -739,7 +746,54 @@ export const PostJobPage: React.FC = () => {
             title="Listing Options"
             subtitle="Boost your listing's visibility and attract hire-ready candidates."
           >
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              {/* Closing Date */}
+              <div className={styles.optionRowDate}>
+                <div
+                  style={{
+                    width: 28,
+                    height: 28,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}
+                >
+                  <CalendarIcon size={22} color="var(--kt-text-muted)" />
+                </div>
+                <div className={styles.optionRowDateText}>
+                  <p
+                    style={{
+                      fontWeight: 'var(--kt-weight-semibold)',
+                      color: 'var(--kt-text)',
+                      fontSize: 'var(--kt-text-sm)',
+                      marginBottom: 2,
+                    }}
+                  >
+                    Closing Date
+                  </p>
+                  <p
+                    style={{
+                      fontSize: 'var(--kt-text-xs)',
+                      color: 'var(--kt-text-muted)',
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    Optional. Workers see an "Expiring soon" warning when within 7 days of this
+                    date.
+                  </p>
+                </div>
+                <div className={styles.optionRowDateInput}>
+                  <Input
+                    type="date"
+                    value={closingAt}
+                    onChange={(e) => setClosingAt(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <Divider style={{ borderColor: 'var(--kt-border-subtle, rgba(0,0,0,0.06))' }} />
+
               {/* Regulix Preferred */}
               <div
                 style={{
@@ -747,11 +801,7 @@ export const PostJobPage: React.FC = () => {
                   alignItems: 'flex-start',
                   justifyContent: 'space-between',
                   gap: 16,
-                  padding: '16px 18px',
-                  background: regulixPreferred ? 'rgba(109, 117, 49, 0.07)' : 'var(--kt-bg)',
-                  border: `1px solid ${regulixPreferred ? 'var(--kt-accent)' : 'var(--kt-border)'}`,
-                  borderRadius: 'var(--kt-radius-md)',
-                  transition: 'all var(--kt-duration-fast)',
+                  padding: '24px 4px',
                 }}
               >
                 <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
@@ -797,15 +847,10 @@ export const PostJobPage: React.FC = () => {
                 />
               </div>
 
+              <Divider style={{ borderColor: 'var(--kt-border-subtle, rgba(0,0,0,0.06))' }} />
+
               {/* Sponsored / Featured */}
-              <div
-                style={{
-                  border: `1px solid ${sponsorMode === 'on' ? 'var(--kt-accent)' : 'var(--kt-border)'}`,
-                  borderRadius: 'var(--kt-radius-md)',
-                  overflow: 'hidden',
-                  transition: 'border-color var(--kt-duration-fast)',
-                }}
-              >
+              <div>
                 {/* Always-visible top row */}
                 <div
                   style={{
@@ -813,10 +858,7 @@ export const PostJobPage: React.FC = () => {
                     alignItems: 'flex-start',
                     justifyContent: 'space-between',
                     gap: 16,
-                    padding: '16px 18px',
-                    background: sponsorMode === 'on' ? 'rgba(109, 117, 49, 0.07)' : 'var(--kt-bg)',
-                    borderBottom: sponsorMode === 'on' ? '1px solid var(--kt-border)' : 'none',
-                    transition: 'background var(--kt-duration-fast)',
+                    padding: '24px 4px',
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
@@ -830,7 +872,7 @@ export const PostJobPage: React.FC = () => {
                         flexShrink: 0,
                       }}
                     >
-                      <StarIcon size={24} color="var(--kt-olive-700)" />
+                      <RocketIcon size={24} color="var(--kt-olive-700)" />
                     </div>
                     <div>
                       <div
@@ -877,56 +919,177 @@ export const PostJobPage: React.FC = () => {
                 </div>
 
                 {sponsorMode === 'on' && (
-                  <div
-                    style={{
-                      padding: '20px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: 20,
-                      background: 'var(--kt-surface)',
-                    }}
-                  >
-                    {/* Stop mode */}
-                    <div>
-                      <p
-                        style={{
-                          fontSize: 'var(--kt-text-sm)',
-                          fontWeight: 'var(--kt-weight-semibold)',
-                          color: 'var(--kt-text)',
-                          marginBottom: 12,
-                        }}
-                      >
-                        When should this sponsored listing stop?
-                      </p>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                        {/* Option 1: pause mode */}
-                        <label
+                  <>
+                    <Divider />
+                    <div
+                      style={{
+                        padding: '20px 4px 4px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 20,
+                      }}
+                    >
+                      {/* Stop mode */}
+                      <div>
+                        <p
                           style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 10,
-                            cursor: 'pointer',
+                            fontSize: 'var(--kt-text-sm)',
+                            fontWeight: 'var(--kt-weight-semibold)',
+                            color: 'var(--kt-text)',
+                            marginBottom: 12,
                           }}
                         >
+                          When should this sponsored listing stop?
+                        </p>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                          {/* Option 1: pause mode */}
+                          <label
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 10,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            <input
+                              type="radio"
+                              name="stopMode"
+                              checked={stopMode === 'pause'}
+                              onChange={() => setStopMode('pause')}
+                              style={{ accentColor: 'var(--kt-primary)', flexShrink: 0 }}
+                            />
+                            <div>
+                              <p
+                                style={{
+                                  fontSize: 'var(--kt-text-sm)',
+                                  color: 'var(--kt-text)',
+                                  fontWeight:
+                                    stopMode === 'pause'
+                                      ? 'var(--kt-weight-semibold)'
+                                      : 'var(--kt-weight-normal)',
+                                }}
+                              >
+                                Pause or close listing
+                              </p>
+                              <p
+                                style={{
+                                  fontSize: 'var(--kt-text-xs)',
+                                  color: 'var(--kt-text-muted)',
+                                  lineHeight: 1.5,
+                                }}
+                              >
+                                Keep running until you manually pause it or close the job.
+                              </p>
+                            </div>
+                          </label>
+
+                          {/* Option 2: limit mode */}
+                          <label
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 10,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            <input
+                              type="radio"
+                              name="stopMode"
+                              checked={stopMode === 'limit'}
+                              onChange={() => setStopMode('limit')}
+                              style={{ accentColor: 'var(--kt-primary)', flexShrink: 0 }}
+                            />
+                            <div style={{ flex: 1 }}>
+                              <div
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 10,
+                                  flexWrap: 'wrap',
+                                }}
+                              >
+                                <p
+                                  style={{
+                                    fontSize: 'var(--kt-text-sm)',
+                                    color: 'var(--kt-text)',
+                                    fontWeight:
+                                      stopMode === 'limit'
+                                        ? 'var(--kt-weight-semibold)'
+                                        : 'var(--kt-weight-normal)',
+                                  }}
+                                >
+                                  Stop after
+                                </p>
+                                <input
+                                  type="number"
+                                  min="1"
+                                  value={appLimit}
+                                  onChange={(e) => setAppLimit(e.target.value)}
+                                  onClick={() => setStopMode('limit')}
+                                  style={{
+                                    width: 72,
+                                    padding: '4px 8px',
+                                    border: `1px solid ${stopMode === 'limit' ? 'var(--kt-primary)' : 'var(--kt-border)'}`,
+                                    borderRadius: 'var(--kt-radius-sm)',
+                                    fontSize: 'var(--kt-text-sm)',
+                                    color: 'var(--kt-text)',
+                                    background: 'var(--kt-bg)',
+                                    fontFamily: 'var(--kt-font-sans)',
+                                    outline: 'none',
+                                    textAlign: 'center',
+                                  }}
+                                />
+                                <p
+                                  style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text)' }}
+                                >
+                                  applications
+                                </p>
+                              </div>
+                              {stopMode === 'limit' && (
+                                <p
+                                  style={{
+                                    fontSize: 'var(--kt-text-xs)',
+                                    color: 'var(--kt-text-muted)',
+                                    marginTop: 4,
+                                    lineHeight: 1.5,
+                                  }}
+                                >
+                                  Estimated budget: <strong>{estimatedCost}</strong> total
+                                </p>
+                              )}
+                            </div>
+                          </label>
+                        </div>
+                      </div>
+
+                      <Divider />
+
+                      {/* Urgently hiring */}
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
                           <input
-                            type="radio"
-                            name="stopMode"
-                            checked={stopMode === 'pause'}
-                            onChange={() => setStopMode('pause')}
-                            style={{ accentColor: 'var(--kt-primary)', flexShrink: 0 }}
+                            type="checkbox"
+                            id="urgentHiring"
+                            checked={urgentHiring}
+                            onChange={(e) => setUrgentHiring(e.target.checked)}
+                            style={{
+                              marginTop: 3,
+                              accentColor: 'var(--kt-primary)',
+                              width: 16,
+                              height: 16,
+                              cursor: 'pointer',
+                            }}
                           />
-                          <div>
+                          <label htmlFor="urgentHiring" style={{ cursor: 'pointer', flex: 1 }}>
                             <p
                               style={{
                                 fontSize: 'var(--kt-text-sm)',
+                                fontWeight: 'var(--kt-weight-semibold)',
                                 color: 'var(--kt-text)',
-                                fontWeight:
-                                  stopMode === 'pause'
-                                    ? 'var(--kt-weight-semibold)'
-                                    : 'var(--kt-weight-normal)',
+                                marginBottom: 3,
                               }}
                             >
-                              Pause or close listing
+                              Add "Urgently Hiring" label
                             </p>
                             <p
                               style={{
@@ -935,150 +1098,33 @@ export const PostJobPage: React.FC = () => {
                                 lineHeight: 1.5,
                               }}
                             >
-                              Keep running until you manually pause it or close the job.
+                              Shows a badge on your listing to signal that you need to fill this
+                              role fast.
                             </p>
-                          </div>
-                        </label>
-
-                        {/* Option 2: limit mode */}
-                        <label
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 10,
-                            cursor: 'pointer',
-                          }}
-                        >
-                          <input
-                            type="radio"
-                            name="stopMode"
-                            checked={stopMode === 'limit'}
-                            onChange={() => setStopMode('limit')}
-                            style={{ accentColor: 'var(--kt-primary)', flexShrink: 0 }}
-                          />
-                          <div style={{ flex: 1 }}>
-                            <div
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 10,
-                                flexWrap: 'wrap',
-                              }}
-                            >
-                              <p
+                            {urgentHiring && (
+                              <div
                                 style={{
-                                  fontSize: 'var(--kt-text-sm)',
-                                  color: 'var(--kt-text)',
-                                  fontWeight:
-                                    stopMode === 'limit'
-                                      ? 'var(--kt-weight-semibold)'
-                                      : 'var(--kt-weight-normal)',
-                                }}
-                              >
-                                Stop after
-                              </p>
-                              <input
-                                type="number"
-                                min="1"
-                                value={appLimit}
-                                onChange={(e) => setAppLimit(e.target.value)}
-                                onClick={() => setStopMode('limit')}
-                                style={{
-                                  width: 72,
-                                  padding: '4px 8px',
-                                  border: `1px solid ${stopMode === 'limit' ? 'var(--kt-primary)' : 'var(--kt-border)'}`,
-                                  borderRadius: 'var(--kt-radius-sm)',
-                                  fontSize: 'var(--kt-text-sm)',
-                                  color: 'var(--kt-text)',
-                                  background: 'var(--kt-bg)',
-                                  fontFamily: 'var(--kt-font-sans)',
-                                  outline: 'none',
-                                  textAlign: 'center',
-                                }}
-                              />
-                              <p style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text)' }}>
-                                applications
-                              </p>
-                            </div>
-                            {stopMode === 'limit' && (
-                              <p
-                                style={{
+                                  marginTop: 8,
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: 6,
+                                  padding: '3px 10px',
+                                  background: 'var(--kt-warning-subtle)',
+                                  border: '1px solid var(--kt-warning)',
+                                  borderRadius: 'var(--kt-radius-full)',
                                   fontSize: 'var(--kt-text-xs)',
-                                  color: 'var(--kt-text-muted)',
-                                  marginTop: 4,
-                                  lineHeight: 1.5,
+                                  fontWeight: 'var(--kt-weight-semibold)',
+                                  color: 'var(--kt-warning-text)',
                                 }}
                               >
-                                Estimated budget: <strong>{estimatedCost}</strong> total
-                              </p>
+                                <LightningIcon size={12} /> Urgently Hiring
+                              </div>
                             )}
-                          </div>
-                        </label>
+                          </label>
+                        </div>
                       </div>
                     </div>
-
-                    <Divider />
-
-                    {/* Urgently hiring */}
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                        <input
-                          type="checkbox"
-                          id="urgentHiring"
-                          checked={urgentHiring}
-                          onChange={(e) => setUrgentHiring(e.target.checked)}
-                          style={{
-                            marginTop: 3,
-                            accentColor: 'var(--kt-primary)',
-                            width: 16,
-                            height: 16,
-                            cursor: 'pointer',
-                          }}
-                        />
-                        <label htmlFor="urgentHiring" style={{ cursor: 'pointer', flex: 1 }}>
-                          <p
-                            style={{
-                              fontSize: 'var(--kt-text-sm)',
-                              fontWeight: 'var(--kt-weight-semibold)',
-                              color: 'var(--kt-text)',
-                              marginBottom: 3,
-                            }}
-                          >
-                            Add "Urgently Hiring" label
-                          </p>
-                          <p
-                            style={{
-                              fontSize: 'var(--kt-text-xs)',
-                              color: 'var(--kt-text-muted)',
-                              lineHeight: 1.5,
-                            }}
-                          >
-                            Shows a badge on your listing to signal that you need to fill this role
-                            fast.
-                          </p>
-                          {urgentHiring && (
-                            <div
-                              style={{
-                                marginTop: 8,
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: 6,
-                                padding: '3px 10px',
-                                background: 'var(--kt-warning-subtle)',
-                                border: '1px solid var(--kt-warning)',
-                                borderRadius: 'var(--kt-radius-full)',
-                                fontSize: 'var(--kt-text-xs)',
-                                fontWeight: 'var(--kt-weight-semibold)',
-                                color: 'var(--kt-warning-text)',
-                              }}
-                            >
-                              <LightningIcon size={12} /> Urgently Hiring
-                            </div>
-                          )}
-                        </label>
-                      </div>
-                    </div>
-                  </div>
+                  </>
                 )}
               </div>
             </div>

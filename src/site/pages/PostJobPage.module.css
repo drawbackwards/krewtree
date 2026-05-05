@@ -45,6 +45,62 @@
   gap: 16px;
 }
 
+/* ── 3-column pay grid ───────────────────────────────────── */
+.payGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+/* ── Listing-option rows ─────────────────────────────────── */
+.optionRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 24px 4px;
+}
+
+.optionRowDate {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 20px 4px;
+}
+
+.optionRowDateText {
+  flex: 1;
+  min-width: 0;
+}
+
+.optionRowDateInput {
+  width: 180px;
+  flex-shrink: 0;
+}
+
+/* ── Skill / question input rows ─────────────────────────── */
+.skillInputRow {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.skillInputRow > :first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+.questionRow {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.questionRow > :first-child {
+  flex: 1;
+  min-width: 0;
+}
+
 /* ── Submit bar ──────────────────────────────────────────── */
 .submitRow {
   display: flex;
@@ -86,6 +142,31 @@
   .fieldRow {
     grid-template-columns: 1fr;
     gap: 12px;
+  }
+
+  .payGrid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .optionRow {
+    padding: 18px 0;
+    gap: 12px;
+  }
+
+  .optionRowDate {
+    flex-wrap: wrap;
+    padding: 18px 0;
+    gap: 12px;
+  }
+
+  .optionRowDateText {
+    flex: 1 1 calc(100% - 42px);
+  }
+
+  .optionRowDateInput {
+    width: 100%;
+    padding-left: 42px;
   }
 
   .submitRow {

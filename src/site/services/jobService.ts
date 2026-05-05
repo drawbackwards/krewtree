@@ -28,6 +28,7 @@ type DbJob = {
   urgent_hiring: boolean
   regulix_preferred: boolean
   auto_pause_limit: number | null
+  closing_at: string | null
   company_profiles: {
     id: string
     name: string
@@ -64,6 +65,7 @@ export type CreateJobParams = {
   urgentHiring: boolean
   regulixPreferred: boolean
   autoPauseLimit: number | null
+  closingAt?: string | null
 }
 
 export type UpdateJobParams = Partial<Omit<CreateJobParams, 'companyId'>> & {
@@ -76,7 +78,7 @@ const JOB_SELECT = `
   id, company_id, title, industry, industry_slug, type, location,
   pay_min, pay_max, pay_type, description, requirements, skills,
   is_sponsored, regulix_ready_applicants, total_applicants, status, created_at,
-  experience_level, pre_interview_questions, urgent_hiring, regulix_preferred, auto_pause_limit,
+  experience_level, pre_interview_questions, urgent_hiring, regulix_preferred, auto_pause_limit, closing_at,
   company_profiles(id, name, logo_url, location, industry, is_verified, description, size, website, avg_rating, review_count),
   job_analytics(views_total),
   applications(id)
@@ -123,6 +125,7 @@ function mapJob(j: DbJob): Job {
     urgentHiring: j.urgent_hiring ?? false,
     regulixPreferred: j.regulix_preferred ?? false,
     autoPauseLimit: j.auto_pause_limit ?? null,
+    closingAt: j.closing_at ?? null,
   }
 }
 
@@ -239,6 +242,7 @@ export async function createJob(
       urgent_hiring: params.urgentHiring,
       regulix_preferred: params.regulixPreferred,
       auto_pause_limit: params.autoPauseLimit,
+      closing_at: params.closingAt ?? null,
       status: 'active',
     })
     .select('id')
@@ -271,6 +275,7 @@ export async function updateJob(
   if (params.urgentHiring !== undefined) patch.urgent_hiring = params.urgentHiring
   if (params.regulixPreferred !== undefined) patch.regulix_preferred = params.regulixPreferred
   if (params.autoPauseLimit !== undefined) patch.auto_pause_limit = params.autoPauseLimit
+  if (params.closingAt !== undefined) patch.closing_at = params.closingAt
   if (params.status !== undefined) patch.status = params.status
 
   const { error } = await supabase.from('jobs').update(patch).eq('id', id)
