@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { Input, Textarea, Select, Button, Badge, Alert, Switch, Divider } from '../../components'
+import { Input, Textarea, Select, Button, Alert, Switch, Divider } from '../../components'
 import styles from './PostJobPage.module.css'
 import { RegulixBadge } from '../components/RegulixBadge/RegulixBadge'
 import {
@@ -186,7 +186,7 @@ export const PostJobPage: React.FC = () => {
   const [parsedSkills, setParsedSkills] = useState<string[]>([])
   const [sponsorMode, setSponsorMode] = useState<'off' | 'on'>('off')
   const [stopMode, setStopMode] = useState<'pause' | 'limit'>('pause')
-  const [appLimit, setAppLimit] = useState('50')
+  const [budget, setBudget] = useState('1900')
   const [urgentHiring, setUrgentHiring] = useState(false)
   const [regulixPreferred, setRegulixPreferred] = useState(false)
   const [questions, setQuestions] = useState<string[]>([''])
@@ -230,14 +230,14 @@ export const PostJobPage: React.FC = () => {
       setQuestions(data.preInterviewQuestions?.length ? data.preInterviewQuestions : [''])
       if (data.autoPauseLimit) {
         setStopMode('limit')
-        setAppLimit(String(data.autoPauseLimit))
+        setBudget(String(data.autoPauseLimit * 38))
       }
       setClosingAt(data.closingAt ? data.closingAt.slice(0, 10) : '')
     })
   }, [editId, duplicateOf])
 
-  const estimatedCost =
-    stopMode === 'limit' ? `$${(Number(appLimit) * 38).toLocaleString()}` : 'pay-per-application'
+  const estimatedApplications =
+    stopMode === 'limit' && Number(budget) > 0 ? Math.floor(Number(budget) / 38) : 0
 
   const [errors, setErrors] = useState<Record<string, string>>({})
 
@@ -305,7 +305,8 @@ export const PostJobPage: React.FC = () => {
       preInterviewQuestions: questions.filter(Boolean),
       urgentHiring,
       regulixPreferred,
-      autoPauseLimit: stopMode === 'limit' && appLimit ? Number(appLimit) : null,
+      autoPauseLimit:
+        stopMode === 'limit' && Number(budget) > 0 ? Math.floor(Number(budget) / 38) : null,
       closingAt: closingAt ? closingAt : null,
     }
 
@@ -767,20 +768,17 @@ export const PostJobPage: React.FC = () => {
                       fontWeight: 'var(--kt-weight-semibold)',
                       color: 'var(--kt-text)',
                       fontSize: 'var(--kt-text-sm)',
-                      marginBottom: 2,
                     }}
                   >
-                    Closing Date
-                  </p>
-                  <p
-                    style={{
-                      fontSize: 'var(--kt-text-xs)',
-                      color: 'var(--kt-text-muted)',
-                      lineHeight: 1.5,
-                    }}
-                  >
-                    Optional. Workers see an "Expiring soon" warning when within 7 days of this
-                    date.
+                    Closing Date{' '}
+                    <span
+                      style={{
+                        fontWeight: 'var(--kt-weight-normal)',
+                        color: 'var(--kt-text-muted)',
+                      }}
+                    >
+                      (Optional)
+                    </span>
                   </p>
                 </div>
                 <div className={styles.optionRowDateInput}>
@@ -875,24 +873,16 @@ export const PostJobPage: React.FC = () => {
                       <RocketIcon size={24} color="var(--kt-olive-700)" />
                     </div>
                     <div>
-                      <div
-                        style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}
+                      <p
+                        style={{
+                          fontWeight: 'var(--kt-weight-semibold)',
+                          color: 'var(--kt-text)',
+                          fontSize: 'var(--kt-text-sm)',
+                          marginBottom: 4,
+                        }}
                       >
-                        <p
-                          style={{
-                            fontWeight: 'var(--kt-weight-semibold)',
-                            color: 'var(--kt-text)',
-                            fontSize: 'var(--kt-text-sm)',
-                          }}
-                        >
-                          Sponsor this listing
-                        </p>
-                        {sponsorMode === 'on' && (
-                          <Badge variant="accent" size="sm">
-                            Active
-                          </Badge>
-                        )}
-                      </div>
+                        Boost this listing
+                      </p>
                       <p
                         style={{
                           fontSize: 'var(--kt-text-xs)',
@@ -901,10 +891,8 @@ export const PostJobPage: React.FC = () => {
                           maxWidth: 460,
                         }}
                       >
-                        Pinned to the top of search results with a "Featured" banner. Only pay when
-                        someone applies. Sponsored jobs get <strong>5× more views</strong> on
-                        average.{' '}
-                        <strong style={{ color: 'var(--kt-text)' }}>$38.00 per application.</strong>
+                        Pinned to the top of search results with a "Boosted" banner. Only pay when
+                        someone applies.
                       </p>
                     </div>
                   </div>
@@ -920,10 +908,9 @@ export const PostJobPage: React.FC = () => {
 
                 {sponsorMode === 'on' && (
                   <>
-                    <Divider />
                     <div
                       style={{
-                        padding: '20px 4px 4px',
+                        padding: '4px 4px 4px',
                         display: 'flex',
                         flexDirection: 'column',
                         gap: 20,
@@ -939,14 +926,14 @@ export const PostJobPage: React.FC = () => {
                             marginBottom: 12,
                           }}
                         >
-                          When should this sponsored listing stop?
+                          When should this boosted listing stop?
                         </p>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                           {/* Option 1: pause mode */}
                           <label
                             style={{
                               display: 'flex',
-                              alignItems: 'center',
+                              alignItems: 'flex-start',
                               gap: 10,
                               cursor: 'pointer',
                             }}
@@ -956,7 +943,11 @@ export const PostJobPage: React.FC = () => {
                               name="stopMode"
                               checked={stopMode === 'pause'}
                               onChange={() => setStopMode('pause')}
-                              style={{ accentColor: 'var(--kt-primary)', flexShrink: 0 }}
+                              style={{
+                                marginTop: 3,
+                                accentColor: 'var(--kt-primary)',
+                                flexShrink: 0,
+                              }}
                             />
                             <div>
                               <p
@@ -969,7 +960,7 @@ export const PostJobPage: React.FC = () => {
                                       : 'var(--kt-weight-normal)',
                                 }}
                               >
-                                Pause or close listing
+                                Manually
                               </p>
                               <p
                                 style={{
@@ -978,7 +969,7 @@ export const PostJobPage: React.FC = () => {
                                   lineHeight: 1.5,
                                 }}
                               >
-                                Keep running until you manually pause it or close the job.
+                                Keep running until you pause or close it.
                               </p>
                             </div>
                           </label>
@@ -987,48 +978,69 @@ export const PostJobPage: React.FC = () => {
                           <label
                             style={{
                               display: 'flex',
-                              alignItems: 'center',
-                              gap: 10,
+                              flexDirection: 'column',
+                              gap: 4,
                               cursor: 'pointer',
                             }}
                           >
-                            <input
-                              type="radio"
-                              name="stopMode"
-                              checked={stopMode === 'limit'}
-                              onChange={() => setStopMode('limit')}
-                              style={{ accentColor: 'var(--kt-primary)', flexShrink: 0 }}
-                            />
-                            <div style={{ flex: 1 }}>
-                              <div
+                            <div
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 10,
+                                flexWrap: 'wrap',
+                              }}
+                            >
+                              <input
+                                type="radio"
+                                name="stopMode"
+                                checked={stopMode === 'limit'}
+                                onChange={() => setStopMode('limit')}
                                 style={{
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: 10,
-                                  flexWrap: 'wrap',
+                                  accentColor: 'var(--kt-primary)',
+                                  flexShrink: 0,
+                                }}
+                              />
+                              <p
+                                style={{
+                                  fontSize: 'var(--kt-text-sm)',
+                                  color: 'var(--kt-text)',
+                                  fontWeight:
+                                    stopMode === 'limit'
+                                      ? 'var(--kt-weight-semibold)'
+                                      : 'var(--kt-weight-normal)',
                                 }}
                               >
-                                <p
+                                Stop after
+                              </p>
+                              <div
+                                style={{
+                                  position: 'relative',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                }}
+                              >
+                                <span
                                   style={{
+                                    position: 'absolute',
+                                    left: 8,
                                     fontSize: 'var(--kt-text-sm)',
-                                    color: 'var(--kt-text)',
-                                    fontWeight:
-                                      stopMode === 'limit'
-                                        ? 'var(--kt-weight-semibold)'
-                                        : 'var(--kt-weight-normal)',
+                                    color: 'var(--kt-text-muted)',
+                                    pointerEvents: 'none',
                                   }}
                                 >
-                                  Stop after
-                                </p>
+                                  $
+                                </span>
                                 <input
                                   type="number"
                                   min="1"
-                                  value={appLimit}
-                                  onChange={(e) => setAppLimit(e.target.value)}
+                                  step="1"
+                                  value={budget}
+                                  onChange={(e) => setBudget(e.target.value)}
                                   onClick={() => setStopMode('limit')}
                                   style={{
-                                    width: 72,
-                                    padding: '4px 8px',
+                                    width: 110,
+                                    padding: '4px 8px 4px 18px',
                                     border: `1px solid ${stopMode === 'limit' ? 'var(--kt-primary)' : 'var(--kt-border)'}`,
                                     borderRadius: 'var(--kt-radius-sm)',
                                     fontSize: 'var(--kt-text-sm)',
@@ -1036,33 +1048,34 @@ export const PostJobPage: React.FC = () => {
                                     background: 'var(--kt-bg)',
                                     fontFamily: 'var(--kt-font-sans)',
                                     outline: 'none',
-                                    textAlign: 'center',
+                                    textAlign: 'left',
                                   }}
                                 />
-                                <p
-                                  style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text)' }}
-                                >
-                                  applications
-                                </p>
                               </div>
-                              {stopMode === 'limit' && (
-                                <p
-                                  style={{
-                                    fontSize: 'var(--kt-text-xs)',
-                                    color: 'var(--kt-text-muted)',
-                                    marginTop: 4,
-                                    lineHeight: 1.5,
-                                  }}
-                                >
-                                  Estimated budget: <strong>{estimatedCost}</strong> total
-                                </p>
-                              )}
+                              <p style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text)' }}>
+                                budget
+                              </p>
                             </div>
+                            {stopMode === 'limit' && (
+                              <p
+                                style={{
+                                  fontSize: 'var(--kt-text-xs)',
+                                  color: 'var(--kt-text-muted)',
+                                  paddingLeft: 26,
+                                  lineHeight: 1.5,
+                                }}
+                              >
+                                Equals approximately{' '}
+                                <strong>
+                                  {estimatedApplications.toLocaleString()} application
+                                  {estimatedApplications === 1 ? '' : 's'}
+                                </strong>{' '}
+                                at $38 each
+                              </p>
+                            )}
                           </label>
                         </div>
                       </div>
-
-                      <Divider />
 
                       {/* Urgently hiring */}
                       <div>

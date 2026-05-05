@@ -14,7 +14,6 @@ import {
   MapPinIcon,
   DollarIcon,
   UsersIcon,
-  ShareIcon,
   BookmarkIcon,
   RegulixMarkIcon,
   BuildingIcon,
@@ -278,29 +277,6 @@ export const JobDetailPage: React.FC = () => {
                   </Badge>
                 </div>
               </div>
-
-              {/* Share — desktop only */}
-              <div className={styles.headerActions}>
-                <button
-                  title="Share"
-                  onClick={() => setShareOpen(true)}
-                  style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 'var(--kt-radius-md)',
-                    border: '1px solid var(--kt-border)',
-                    background: 'transparent',
-                    color: 'var(--kt-text-muted)',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    transition: 'all var(--kt-duration-fast)',
-                  }}
-                >
-                  <ShareIcon size={16} />
-                </button>
-              </div>
             </div>
 
             {/* Meta row */}
@@ -375,6 +351,13 @@ export const JobDetailPage: React.FC = () => {
                 >
                   Manage Listing
                 </Button>
+                <Button
+                  variant="outline"
+                  style={{ width: '100%' }}
+                  onClick={() => setShareOpen(true)}
+                >
+                  Share Job
+                </Button>
                 <Link to="/site/dashboard/company" style={{ textDecoration: 'none' }}>
                   <Button variant="ghost" style={{ width: '100%' }}>
                     View Pipeline →
@@ -424,6 +407,13 @@ export const JobDetailPage: React.FC = () => {
                   ) : (
                     'Save Job'
                   )}
+                </Button>
+                <Button
+                  variant="outline"
+                  style={{ width: '100%' }}
+                  onClick={() => setShareOpen(true)}
+                >
+                  Share Job
                 </Button>
               </>
             )}
@@ -1181,26 +1171,6 @@ export const JobDetailPage: React.FC = () => {
             }}
           >
             <BookmarkIcon size={18} />
-          </button>
-          <button
-            onClick={() => setShareOpen(true)}
-            title="Share"
-            style={{
-              width: 44,
-              height: 44,
-              flexShrink: 0,
-              borderRadius: 'var(--kt-radius-md)',
-              border: '1px solid var(--kt-border)',
-              background: 'transparent',
-              color: 'var(--kt-text-muted)',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transition: 'all var(--kt-duration-fast)',
-            }}
-          >
-            <ShareIcon size={18} />
           </button>
         </div>
       )}

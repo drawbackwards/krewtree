@@ -101,13 +101,6 @@
   padding: 28px;
 }
 
-/* ── Header save/share actions — visible on desktop, hidden on mobile ── */
-.headerActions {
-  display: flex;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
 /* ── Meta row — below logo/title, full width ── */
 .metaRow {
   display: flex;
@@ -178,10 +171,6 @@
 
   .sectionCard {
     padding: 20px;
-  }
-
-  .headerActions {
-    display: none;
   }
 
   .metaRow {
