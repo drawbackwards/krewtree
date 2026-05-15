@@ -1,35 +1,99 @@
 import React from 'react'
 import { useDroppable } from '@dnd-kit/core'
+import { Link } from 'react-router-dom'
 import type { CompanyApplicant, KanbanStage } from '../../types'
+import { ChevronDownIcon, ChevronUpIcon } from '../../icons'
 import { KanbanCard } from './KanbanCard'
 import styles from './PipelineKanban.module.css'
+
+const MAX_VISIBLE = 15
 
 type Props = {
   stage: KanbanStage
   label: string
+  semantic: string
   applicants: CompanyApplicant[]
+  isValidDrop?: boolean
+  collapsedOnMobile: boolean
+  onToggleCollapse: () => void
+  onCardClick: (applicant: CompanyApplicant) => void
+  onReject: (applicant: CompanyApplicant) => void
+  onHire: (applicant: CompanyApplicant) => void
+  onMessage?: (applicant: CompanyApplicant) => void
 }
 
-const MAX_VISIBLE = 4
-
-export const KanbanColumn: React.FC<Props> = ({ stage, label, applicants }) => {
+export const KanbanColumn: React.FC<Props> = ({
+  stage,
+  label,
+  semantic,
+  applicants,
+  isValidDrop,
+  collapsedOnMobile,
+  onToggleCollapse,
+  onCardClick,
+  onReject,
+  onHire,
+  onMessage,
+}) => {
   const { setNodeRef, isOver } = useDroppable({ id: stage })
-  const className = isOver ? `${styles.column} ${styles.columnOver}` : styles.column
+
+  let columnClass = styles.column
+  if (isOver && isValidDrop !== false) columnClass += ` ${styles.columnValidDrop}`
+  if (isOver && isValidDrop === false) columnClass += ` ${styles.columnInvalidDrop}`
+
   const visible = applicants.slice(0, MAX_VISIBLE)
   const overflow = applicants.length - MAX_VISIBLE
 
   return (
-    <div ref={setNodeRef} className={className} data-stage={stage}>
+    <div className={styles.columnWrapper}>
+      {/* Column header — clickable for mobile collapse */}
       <div className={styles.columnHeader}>
-        <span className={styles.columnLabel}>{label}</span>
-        <span className={styles.count}>{applicants.length}</span>
+        <button
+          type="button"
+          className={styles.columnHeaderBtn}
+          onClick={onToggleCollapse}
+          aria-expanded={!collapsedOnMobile}
+          aria-controls={`kanban-col-${stage}`}
+        >
+          <span className={styles.columnLabel}>{label}</span>
+          <span className={styles.columnCount}>({applicants.length})</span>
+          <span className={styles.collapseIcon}>
+            {collapsedOnMobile ? <ChevronDownIcon size={13} /> : <ChevronUpIcon size={13} />}
+          </span>
+        </button>
       </div>
-      <div className={styles.cardList}>
-        {visible.map((a) => (
-          <KanbanCard key={a.id} applicant={a} />
-        ))}
-        {applicants.length === 0 && <div className={styles.empty}>Drop here</div>}
-        {overflow > 0 && <div className={styles.overflow}>+{overflow} more</div>}
+
+      {/* Column body */}
+      <div
+        id={`kanban-col-${stage}`}
+        ref={setNodeRef}
+        data-stage={stage}
+        className={[columnClass, collapsedOnMobile ? styles.columnCollapsed : '']
+          .filter(Boolean)
+          .join(' ')}
+      >
+        <div className={styles.cardList}>
+          {visible.map((a) => (
+            <KanbanCard
+              key={a.id}
+              applicant={a}
+              onCardClick={onCardClick}
+              onReject={onReject}
+              onHire={onHire}
+              onMessage={onMessage}
+            />
+          ))}
+          {applicants.length === 0 && <div className={styles.emptyColumn} />}
+        </div>
+
+        {overflow > 0 && (
+          <Link
+            to={`/site/dashboard/applicants?semantic=${semantic}`}
+            className={styles.overflowLink}
+          >
+            +{overflow} more
+          </Link>
+        )}
       </div>
     </div>
   )

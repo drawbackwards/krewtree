@@ -255,6 +255,7 @@ export type Notification = {
 
 // ---- Kanban Applicant ----
 export type KanbanStage = 'new' | 'reviewed' | 'interview' | 'offer' | 'hired' | 'rejected'
+export type SlaState = 'none' | 'approaching' | 'breached'
 
 export type KanbanApplicant = {
   id: string
@@ -301,6 +302,9 @@ export type CompanyApplicant = {
   isRegulixReady: boolean
   isShortlisted: boolean
   appliedAt: string // ISO
+  stageEnteredAt: string | null
+  slaState: SlaState
+  flagged: boolean
   notes: Array<{ text: string; authorName: string; createdAt: string }>
   preInterviewAnswers?: Array<{ question: string; answer: string }>
 }

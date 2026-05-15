@@ -11,6 +11,8 @@ const { getKanbanApplicantsMock, setApplicantStageMock } = vi.hoisted(() => ({
 vi.mock('../../../services/applicantService', () => ({
   getKanbanApplicants: getKanbanApplicantsMock,
   setApplicantStage: setApplicantStageMock,
+  rejectApplicant: vi.fn().mockResolvedValue({ error: null }),
+  hireApplicant: vi.fn().mockResolvedValue({ error: null }),
 }))
 
 import { PipelineKanban } from '../PipelineKanban'
@@ -19,11 +21,11 @@ function makeApplicant(id: string, stage: CompanyApplicant['stage']): CompanyApp
   return {
     id,
     workerId: `w-${id}`,
-    workerFirstName: 'Jane',
-    workerLastInitial: 'D',
-    workerFullName: `Jane ${id}`,
+    workerFirstName: id,
+    workerLastInitial: 'S',
+    workerFullName: `${id} S`,
     workerAvatar: '',
-    workerInitials: 'JD',
+    workerInitials: 'JS',
     workerPrimaryTrade: 'Electrician',
     workerLocation: 'Austin, TX',
     workerAvailability: 'available',
@@ -43,6 +45,9 @@ function makeApplicant(id: string, stage: CompanyApplicant['stage']): CompanyApp
     isRegulixReady: false,
     isShortlisted: false,
     appliedAt: '2026-04-20T00:00:00Z',
+    stageEnteredAt: '2026-04-20T00:00:00Z',
+    slaState: 'none',
+    flagged: false,
     notes: [],
     preInterviewAnswers: [],
   }
@@ -66,8 +71,8 @@ describe('PipelineKanban', () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByText('Jane a1')).toBeInTheDocument()
-      expect(screen.getByText('Jane a2')).toBeInTheDocument()
+      expect(screen.getAllByText('a1 S.').length).toBeGreaterThan(0)
+      expect(screen.getAllByText('a2 S.').length).toBeGreaterThan(0)
     })
   })
 
@@ -83,7 +88,7 @@ describe('PipelineKanban', () => {
         <PipelineKanban companyId="c-1" />
       </MemoryRouter>
     )
-    await waitFor(() => expect(screen.getByText('Jane a1')).toBeInTheDocument())
+    await waitFor(() => expect(screen.getAllByText('a1 S.').length).toBeGreaterThan(0))
 
     const ref = (
       window as unknown as {
@@ -100,6 +105,6 @@ describe('PipelineKanban', () => {
 
     // After revert, card should still be in 'new' column
     const newCol = container.querySelector('[data-stage="new"]')
-    expect(newCol?.textContent).toContain('Jane a1')
+    expect(newCol?.textContent).toContain('a1 S.')
   })
 })

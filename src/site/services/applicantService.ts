@@ -173,6 +173,9 @@ function toCompanyApplicant(a: JoinedApplicantRow): CompanyApplicant {
     isRegulixReady: w.is_regulix_ready,
     isShortlisted: a.is_shortlisted,
     appliedAt: a.created_at,
+    stageEnteredAt: a.status_updated_at ?? a.created_at,
+    slaState: 'none' as const,
+    flagged: false,
     notes: a.application_notes.map((n) => ({
       text: n.text,
       authorName: n.author_name,
@@ -417,6 +420,14 @@ export async function rejectApplicant(applicationId: string): Promise<{ error: s
   const { error } = await supabase
     .from('applications')
     .update({ kanban_stage: 'rejected' })
+    .eq('id', applicationId)
+  return { error: error?.message ?? null }
+}
+
+export async function hireApplicant(applicationId: string): Promise<{ error: string | null }> {
+  const { error } = await supabase
+    .from('applications')
+    .update({ kanban_stage: 'hired' })
     .eq('id', applicationId)
   return { error: error?.message ?? null }
 }
