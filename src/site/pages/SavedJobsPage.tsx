@@ -1,225 +1,289 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
-import { Button } from '../../components'
-import { JobCard } from '../components/JobCard/JobCard'
-import type { SavedJob } from '../types'
+import { Badge, Button } from '../../components'
+import { BookmarkFilledIcon, DotsHorizontalIcon } from '../icons'
 import { useAuth } from '../context/AuthContext'
-import { getSavedJobs, removeSavedJob } from '../services/workerService'
-import { BookmarkFilledIcon, ClipboardIcon } from '../icons'
+import {
+  getDashboardSavedJobs,
+  removeSavedJob,
+  type DashboardSavedJob,
+} from '../services/workerService'
+import { daysSince } from '../utils/date'
+import styles from './SavedJobsPage.module.css'
+
+type StalenessFilter = 'All' | DashboardSavedJob['staleness']
+
+const FILTER_LABELS: Record<DashboardSavedJob['staleness'], string> = {
+  open: 'Active',
+  expiring_soon: 'Expiring soon',
+  closed: 'Closed',
+}
+
+const FILTERS: StalenessFilter[] = ['All', 'open', 'expiring_soon', 'closed']
+
+function fmtSaved(iso: string): string {
+  const d = daysSince(iso)
+  if (d === 0) return 'Today'
+  return `${d}d ago`
+}
+
+function fmtPosted(iso: string | null): string {
+  if (!iso) return '—'
+  const d = daysSince(iso)
+  if (d === 0) return 'Today'
+  return `${d}d ago`
+}
+
+// ── Overflow menu ────────────────────────────────────────────────────────────
+
+type OverflowItem = { label: string; danger?: boolean; onClick: () => void }
+
+const OverflowMenu: React.FC<{ items: OverflowItem[] }> = ({ items }) => {
+  const [open, setOpen] = useState(false)
+  const [menuPos, setMenuPos] = useState({ top: 0, right: 0 })
+  const btnRef = useRef<HTMLButtonElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  const handleToggle = () => {
+    if (!open && btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect()
+      setMenuPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right })
+    }
+    setOpen((v) => !v)
+  }
+
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: MouseEvent) => {
+      if (btnRef.current?.contains(e.target as Node) || menuRef.current?.contains(e.target as Node))
+        return
+      setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
+  return (
+    <>
+      <button
+        ref={btnRef}
+        onClick={handleToggle}
+        className={styles.overflowBtn}
+        title="More actions"
+        type="button"
+      >
+        <DotsHorizontalIcon size={12} />
+      </button>
+      {open &&
+        createPortal(
+          <div
+            ref={menuRef}
+            className={styles.overflowMenu}
+            style={{ top: menuPos.top, right: menuPos.right }}
+          >
+            {items.map((item) => (
+              <button
+                key={item.label}
+                onClick={() => {
+                  item.onClick()
+                  setOpen(false)
+                }}
+                className={[styles.overflowItem, item.danger ? styles.danger : '']
+                  .filter(Boolean)
+                  .join(' ')}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>,
+          document.body
+        )}
+    </>
+  )
+}
+
+// ── Page ─────────────────────────────────────────────────────────────────────
 
 export const SavedJobsPage: React.FC = () => {
   const { user } = useAuth()
-  const [saved, setSaved] = useState<SavedJob[]>([])
+  const [savedJobs, setSavedJobs] = useState<DashboardSavedJob[]>([])
   const [loading, setLoading] = useState(true)
-  const [sort, setSort] = useState<'recent' | 'industry'>('recent')
+  const [activeFilter, setActiveFilter] = useState<StalenessFilter>('All')
 
   useEffect(() => {
     if (!user) return
-    getSavedJobs(user.id).then(({ data }) => {
-      setSaved(data)
+    getDashboardSavedJobs(user.id).then(({ data }) => {
+      setSavedJobs(data)
       setLoading(false)
     })
   }, [user])
 
-  const sorted = [...saved].sort((a, b) => {
-    if (sort === 'recent') return a.savedDaysAgo - b.savedDaysAgo
-    return a.job.industry.localeCompare(b.job.industry)
-  })
+  const filtered =
+    activeFilter === 'All' ? savedJobs : savedJobs.filter((s) => s.staleness === activeFilter)
 
-  const handleUnsave = async (id: string) => {
-    setSaved((prev) => prev.filter((s) => s.id !== id))
+  const handleRemove = async (id: string) => {
+    setSavedJobs((prev) => prev.filter((s) => s.id !== id))
     await removeSavedJob(id)
   }
 
+  const filterCounts = savedJobs.reduce<Partial<Record<StalenessFilter, number>>>(
+    (acc, s) => ({ ...acc, [s.staleness]: (acc[s.staleness] ?? 0) + 1 }),
+    {}
+  )
+
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--kt-bg)' }}>
-      <div style={{ maxWidth: 860, margin: '0 auto', padding: '32px var(--kt-space-6)' }}>
-        {/* Header */}
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: 24,
-            flexWrap: 'wrap',
-            gap: 12,
-          }}
-        >
-          <div>
-            <h1
-              style={{
-                fontSize: 'var(--kt-text-2xl)',
-                fontWeight: 'var(--kt-weight-bold)',
-                color: 'var(--kt-text)',
-                marginBottom: 4,
-              }}
-            >
-              Saved Jobs
-            </h1>
-            <p style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text-muted)' }}>
-              {loading ? '—' : `${saved.length} saved position${saved.length !== 1 ? 's' : ''}`}
+    <div className={styles.page}>
+      <div className={styles.container}>
+        <header className={styles.pageHeader}>
+          <div className={styles.titleGroup}>
+            <h1 className={styles.title}>Saved jobs</h1>
+            <p className={styles.subtitle}>
+              {loading
+                ? '—'
+                : `${savedJobs.length} saved position${savedJobs.length !== 1 ? 's' : ''}`}
             </p>
           </div>
           <Link to="/site/jobs">
             <Button variant="primary" size="sm">
-              Browse More Jobs
+              Browse more jobs
             </Button>
           </Link>
-        </div>
+        </header>
 
-        {/* Sort bar */}
-        {!loading && saved.length > 0 && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
-            <span style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text-muted)' }}>
-              Sort by:
-            </span>
-            {[
-              { val: 'recent', label: 'Date saved' },
-              { val: 'industry', label: 'Industry' },
-            ].map(({ val, label }) => (
-              <button
-                key={val}
-                onClick={() => setSort(val as typeof sort)}
-                style={{
-                  padding: '5px 12px',
-                  borderRadius: 'var(--kt-radius-full)',
-                  border: `1px solid ${sort === val ? 'var(--kt-primary)' : 'var(--kt-border)'}`,
-                  background:
-                    sort === val
-                      ? 'color-mix(in srgb, var(--kt-primary) 8%, transparent)'
-                      : 'transparent',
-                  color: sort === val ? 'var(--kt-primary)' : 'var(--kt-text-muted)',
-                  fontSize: 'var(--kt-text-xs)',
-                  fontWeight: 'var(--kt-weight-medium)',
-                  cursor: 'pointer',
-                  fontFamily: 'var(--kt-font-sans)',
-                }}
-              >
-                {label}
-              </button>
-            ))}
+        {/* Filter pills */}
+        {!loading && savedJobs.length > 0 && (
+          <div className={styles.statusTabs}>
+            {FILTERS.map((f) => {
+              const n = f === 'All' ? savedJobs.length : (filterCounts[f] ?? 0)
+              const active = activeFilter === f
+              return (
+                <button
+                  key={f}
+                  type="button"
+                  onClick={() => setActiveFilter(f)}
+                  className={[styles.statusTab, active ? styles.statusTabActive : '']
+                    .filter(Boolean)
+                    .join(' ')}
+                >
+                  {f === 'All' ? 'All' : FILTER_LABELS[f]}
+                  <span className={styles.statusTabCount}>{n}</span>
+                </button>
+              )
+            })}
           </div>
         )}
 
-        {/* Saved job list */}
-        {loading ? (
-          <div
-            style={{
-              textAlign: 'center',
-              padding: '60px 20px',
-              color: 'var(--kt-text-muted)',
-              fontSize: 'var(--kt-text-sm)',
-            }}
-          >
-            Loading…
-          </div>
-        ) : sorted.length === 0 ? (
-          <div
-            style={{
-              textAlign: 'center',
-              padding: '60px 20px',
-              background: 'var(--kt-surface)',
-              borderRadius: 'var(--kt-radius-xl)',
-              border: '1px solid var(--kt-border)',
-            }}
-          >
-            <div style={{ marginBottom: 16, color: 'var(--kt-text-muted)' }}>
-              <BookmarkFilledIcon size={48} />
+        {/* Table */}
+        <div className={styles.tableCard}>
+          {/* Header row */}
+          {!loading && savedJobs.length > 0 && (
+            <div className={[styles.row, styles.headerRow].join(' ')}>
+              <div>Job</div>
+              <div>Status</div>
+              <div>Posted</div>
+              <div>Saved</div>
+              <div />
             </div>
-            <h2
-              style={{
-                fontSize: 'var(--kt-text-lg)',
-                fontWeight: 'var(--kt-weight-semibold)',
-                color: 'var(--kt-text)',
-                marginBottom: 8,
-              }}
-            >
-              No saved jobs yet
-            </h2>
-            <p
-              style={{
-                fontSize: 'var(--kt-text-sm)',
-                color: 'var(--kt-text-muted)',
-                marginBottom: 20,
-              }}
-            >
-              Bookmark jobs you're interested in to revisit them later.
-            </p>
-            <Link to="/site/jobs">
-              <Button variant="primary" size="md">
-                Browse Jobs
-              </Button>
-            </Link>
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {sorted.map((item) => (
-              <div
-                key={item.id}
-                style={{
-                  background: 'var(--kt-surface)',
-                  border: '1px solid var(--kt-border)',
-                  borderRadius: 'var(--kt-radius-xl)',
-                  overflow: 'hidden',
-                }}
+          )}
+
+          {/* Loading */}
+          {loading && <div className={styles.emptyRow}>Loading…</div>}
+
+          {/* Empty — no saved jobs at all */}
+          {!loading && savedJobs.length === 0 && (
+            <div className={styles.emptyRow}>
+              <div style={{ marginBottom: 12, color: 'var(--kt-text-muted)' }}>
+                <BookmarkFilledIcon size={36} />
+              </div>
+              No saved jobs yet.{' '}
+              <Link to="/site/jobs" className={styles.emptyLink}>
+                Browse jobs →
+              </Link>
+            </div>
+          )}
+
+          {/* Empty — filter has no matches */}
+          {!loading && savedJobs.length > 0 && filtered.length === 0 && (
+            <div className={styles.emptyRow}>
+              No{' '}
+              {activeFilter === 'All'
+                ? ''
+                : FILTER_LABELS[activeFilter as DashboardSavedJob['staleness']].toLowerCase() + ' '}
+              saved jobs.{' '}
+              <button
+                type="button"
+                className={styles.emptyLink}
+                onClick={() => setActiveFilter('All')}
               >
-                <JobCard job={item.job} compact={false} />
-                {/* Meta bar */}
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '10px 20px',
-                    borderTop: '1px solid var(--kt-border)',
-                    background: 'var(--kt-bg)',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                    <span style={{ fontSize: 'var(--kt-text-xs)', color: 'var(--kt-text-muted)' }}>
-                      <BookmarkFilledIcon size={12} /> Saved{' '}
-                      {item.savedDaysAgo === 0 ? 'today' : `${item.savedDaysAgo}d ago`}
-                    </span>
-                    {item.note && (
-                      <span
-                        style={{
-                          fontSize: 'var(--kt-text-xs)',
-                          color: 'var(--kt-text-muted)',
-                          padding: '2px 8px',
-                          background: 'var(--kt-surface)',
-                          borderRadius: 'var(--kt-radius-full)',
-                          border: '1px solid var(--kt-border)',
-                          maxWidth: 220,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        <ClipboardIcon size={12} /> {item.note}
-                      </span>
-                    )}
-                  </div>
-                  <button
-                    onClick={() => handleUnsave(item.id)}
-                    style={{
-                      fontSize: 'var(--kt-text-xs)',
-                      color: 'var(--kt-danger)',
-                      background: 'transparent',
-                      border: '1px solid var(--kt-danger)',
-                      borderRadius: 'var(--kt-radius-sm)',
-                      padding: '3px 10px',
-                      cursor: 'pointer',
-                      fontFamily: 'var(--kt-font-sans)',
-                      fontWeight: 'var(--kt-weight-medium)',
-                    }}
-                  >
-                    Remove
-                  </button>
+                Show all →
+              </button>
+            </div>
+          )}
+
+          {/* Data rows */}
+          {filtered.map((sj) => {
+            const isClosed = sj.staleness === 'closed'
+            const isExpiring = sj.staleness === 'expiring_soon'
+
+            return (
+              <div
+                key={sj.id}
+                className={[styles.row, isClosed ? styles.rowClosed : ''].filter(Boolean).join(' ')}
+              >
+                <div className={styles.jobTitleCell}>
+                  {isClosed ? (
+                    <span className={styles.jobTitleStruck}>{sj.jobTitle}</span>
+                  ) : (
+                    <Link to={`/site/jobs/${sj.jobId}`} className={styles.jobTitleLink}>
+                      {sj.jobTitle}
+                    </Link>
+                  )}
+                  <span className={styles.companyName}>{sj.companyName}</span>
+                </div>
+
+                <div>
+                  {!isExpiring && !isClosed && (
+                    <Badge variant="secondary" size="sm">
+                      Active
+                    </Badge>
+                  )}
+                  {isExpiring && (
+                    <Badge variant="warning" size="sm">
+                      Expiring soon
+                    </Badge>
+                  )}
+                  {isClosed && (
+                    <Badge variant="secondary" size="sm">
+                      Closed
+                    </Badge>
+                  )}
+                </div>
+
+                <div className={styles.metaCell}>{fmtPosted(sj.jobPostedAt)}</div>
+
+                <div className={styles.metaCell}>{fmtSaved(sj.savedAt)}</div>
+
+                <div className={styles.actionsCell}>
+                  {!isClosed && (
+                    <Link to={`/site/jobs/${sj.jobId}`} className={styles.primaryAction}>
+                      View job
+                    </Link>
+                  )}
+                  <OverflowMenu
+                    items={[
+                      {
+                        label: 'Remove bookmark',
+                        danger: true,
+                        onClick: () => handleRemove(sj.id),
+                      },
+                    ]}
+                  />
                 </div>
               </div>
-            ))}
-          </div>
-        )}
+            )
+          })}
+        </div>
       </div>
     </div>
   )

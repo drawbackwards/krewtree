@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { Badge, Button, Divider, Modal } from '../../components'
 import styles from './JobDetailPage.module.css'
-import { RegulixBadge } from '../components/RegulixBadge/RegulixBadge'
+import { RegulixLogo } from '../components/RegulixLogo/RegulixLogo'
 import { QuickApplyModal } from '../components/QuickApplyModal/QuickApplyModal'
 import { ManageListingModal } from '../components/ManageListingModal/ManageListingModal'
 import { getJobById, getAppliedJobIds, getSimilarJobs } from '../services/jobService'
@@ -428,8 +428,7 @@ export const JobDetailPage: React.FC = () => {
             {!isCompany && job.regulixReadyApplicants > 0 && (
               <div
                 style={{
-                  background: 'var(--kt-olive-100)',
-                  border: '1px solid var(--kt-olive-200)',
+                  background: 'var(--kt-regulix-50)',
                   borderRadius: 'var(--kt-radius-lg)',
                   padding: '16px 20px',
                   display: 'flex',
@@ -437,7 +436,7 @@ export const JobDetailPage: React.FC = () => {
                   gap: 14,
                 }}
               >
-                <RegulixBadge size="lg" pulse />
+                <RegulixLogo height={20} textColor="var(--kt-navy-700)" />
                 <div>
                   <p
                     style={{
@@ -680,7 +679,7 @@ export const JobDetailPage: React.FC = () => {
                       {/* Regulix Ready box */}
                       <div
                         style={{
-                          background: 'rgba(109, 117, 49, 0.09)',
+                          background: 'rgba(255, 61, 0, 0.07)',
                           borderRadius: 'var(--kt-radius-sm)',
                           padding: '10px',
                           display: 'flex',
@@ -769,7 +768,7 @@ export const JobDetailPage: React.FC = () => {
                         style={{
                           width: '100%',
                           padding: '7px 0',
-                          background: 'var(--kt-olive-700)',
+                          background: 'var(--kt-regulix-500)',
                           color: 'white',
                           border: 'none',
                           borderRadius: 'var(--kt-radius-md)',
@@ -791,7 +790,7 @@ export const JobDetailPage: React.FC = () => {
                         textAlign: 'center',
                         marginTop: 8,
                         fontSize: 'var(--kt-text-xs)',
-                        color: 'var(--kt-olive-700)',
+                        color: 'var(--kt-regulix-500)',
                         textDecoration: 'none',
                         fontWeight: 'var(--kt-weight-medium)',
                       }}
@@ -806,23 +805,13 @@ export const JobDetailPage: React.FC = () => {
                 {/* Regulix upsell */}
                 <div
                   style={{
-                    background: 'rgba(109, 117, 49, 0.07)',
-                    border: '1px solid var(--kt-olive-200)',
+                    background: 'var(--kt-regulix-50)',
                     borderRadius: 'var(--kt-radius-lg)',
                     padding: '16px 20px',
                   }}
                 >
-                  <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 8 }}>
-                    <RegulixBadge size="md" />
-                    <span
-                      style={{
-                        fontSize: 'var(--kt-text-sm)',
-                        fontWeight: 'var(--kt-weight-semibold)',
-                        color: 'var(--kt-navy-900)',
-                      }}
-                    >
-                      Stand Out with Regulix
-                    </span>
+                  <div style={{ marginBottom: 8 }}>
+                    <RegulixLogo height={20} textColor="var(--kt-navy-700)" />
                   </div>
                   <p
                     style={{
@@ -839,7 +828,7 @@ export const JobDetailPage: React.FC = () => {
                     style={{
                       width: '100%',
                       padding: '7px 0',
-                      background: 'var(--kt-olive-700)',
+                      background: 'var(--kt-regulix-500)',
                       color: 'white',
                       border: 'none',
                       borderRadius: 'var(--kt-radius-md)',

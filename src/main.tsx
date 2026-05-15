@@ -8,12 +8,12 @@ import { ErrorBoundary } from './components/ErrorBoundary/ErrorBoundary'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <ErrorBoundary>
-      <BrowserRouter>
+    <BrowserRouter>
+      <ErrorBoundary>
         <ToastProvider position="top-right">
           <App />
         </ToastProvider>
-      </BrowserRouter>
-    </ErrorBoundary>
+      </ErrorBoundary>
+    </BrowserRouter>
   </React.StrictMode>
 )

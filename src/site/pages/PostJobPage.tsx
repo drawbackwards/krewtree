@@ -881,7 +881,7 @@ export const PostJobPage: React.FC = () => {
                           marginBottom: 4,
                         }}
                       >
-                        Boost this listing
+                        Boost this listing for $38
                       </p>
                       <p
                         style={{

@@ -483,7 +483,7 @@ export const WorkerDashboard: React.FC = () => {
                 <Link
                   to="/site/jobs"
                   style={{
-                    color: 'var(--kt-navy-500)',
+                    color: 'var(--kt-navy-600)',
                     fontWeight: 'var(--kt-weight-bold)',
                   }}
                 >
@@ -727,7 +727,7 @@ export const WorkerDashboard: React.FC = () => {
                   style={{
                     fontSize: 13,
                     fontWeight: 'var(--kt-weight-bold)',
-                    color: 'var(--kt-navy-500)',
+                    color: 'var(--kt-navy-600)',
                     textDecoration: 'none',
                   }}
                 >
@@ -779,7 +779,7 @@ export const WorkerDashboard: React.FC = () => {
               <Link
                 to="/site/jobs"
                 style={{
-                  color: 'var(--kt-navy-500)',
+                  color: 'var(--kt-navy-600)',
                   fontWeight: 'var(--kt-weight-bold)',
                 }}
               >
@@ -820,6 +820,11 @@ export const WorkerDashboard: React.FC = () => {
                     </div>
 
                     <div>
+                      {!isExpiring && !isClosed && (
+                        <Badge variant="secondary" size="sm">
+                          Active
+                        </Badge>
+                      )}
                       {isExpiring && (
                         <Badge variant="warning" size="sm">
                           Expiring soon
@@ -847,15 +852,6 @@ export const WorkerDashboard: React.FC = () => {
                             type="button"
                             className={styles.primaryAction}
                             onClick={() => handleQuickApply(sj.jobId)}
-                            style={
-                              isExpiring
-                                ? {
-                                    background: 'var(--kt-primary)',
-                                    color: 'var(--kt-primary-fg)',
-                                    border: 'none',
-                                  }
-                                : undefined
-                            }
                           >
                             Quick Apply
                           </button>
@@ -912,7 +908,7 @@ export const WorkerDashboard: React.FC = () => {
               <Link
                 to="/site/profile/edit"
                 style={{
-                  color: 'var(--kt-navy-500)',
+                  color: 'var(--kt-navy-600)',
                   fontWeight: 'var(--kt-weight-bold)',
                 }}
               >
@@ -940,7 +936,7 @@ export const WorkerDashboard: React.FC = () => {
                   <Link
                     to="/site/jobs"
                     style={{
-                      color: 'var(--kt-navy-500)',
+                      color: 'var(--kt-navy-600)',
                       fontWeight: 'var(--kt-weight-bold)',
                     }}
                   >
