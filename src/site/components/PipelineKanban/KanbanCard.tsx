@@ -11,19 +11,9 @@ import {
   CheckIcon,
   PersonIcon,
   MessageIcon,
+  RegulixMarkIcon,
 } from '../../icons'
 import styles from './PipelineKanban.module.css'
-
-function formatTimeInStage(iso: string | null): string {
-  if (!iso) return '—'
-  const ms = Date.now() - new Date(iso).getTime()
-  const hours = Math.floor(ms / 3_600_000)
-  const days = Math.floor(hours / 24)
-  const weeks = Math.floor(days / 7)
-  if (weeks >= 2) return `${weeks}w`
-  if (days >= 1) return `${days}d`
-  return `${Math.max(1, hours)}h`
-}
 
 type Props = {
   applicant: CompanyApplicant
@@ -83,8 +73,9 @@ export const KanbanCard: React.FC<Props> = ({
   const cardClass = [styles.card, isDragging ? styles.cardDragging : ''].filter(Boolean).join(' ')
 
   const displayName = `${applicant.workerFirstName} ${applicant.workerLastInitial}.`
-  const timeLabel = formatTimeInStage(applicant.stageEnteredAt)
   const isPaused = applicant.jobStatus === 'paused'
+  const hasStatusIndicators =
+    applicant.slaState === 'approaching' || applicant.slaState === 'breached' || applicant.flagged
 
   function handleBodyClick() {
     if (!isDragging) onCardClick(applicant)
@@ -120,30 +111,30 @@ export const KanbanCard: React.FC<Props> = ({
       {...attributes}
       aria-label={`${displayName}, ${applicant.jobTitle}`}
     >
-      {/* Top row: avatar + name + regulix badge + overflow trigger */}
-      <div className={styles.cardTopRow}>
-        <div
-          className={styles.cardClickZone}
-          onClick={handleBodyClick}
-          onKeyDown={handleBodyKeyDown}
-          role="button"
-          tabIndex={0}
-        >
-          {/* Avatar */}
-          {applicant.workerAvatar ? (
-            <img
-              src={applicant.workerAvatar}
-              alt=""
-              className={styles.avatarImg}
-              aria-hidden="true"
-            />
-          ) : (
-            <div className={styles.avatar} aria-hidden="true">
-              {applicant.workerInitials}
-            </div>
-          )}
+      {/* Avatar + text block (name + title), vertically centered as a unit */}
+      <div
+        className={styles.cardClickZone}
+        onClick={handleBodyClick}
+        onKeyDown={handleBodyKeyDown}
+        role="button"
+        tabIndex={0}
+      >
+        {/* Avatar */}
+        {applicant.workerAvatar ? (
+          <img
+            src={applicant.workerAvatar}
+            alt=""
+            className={styles.avatarImg}
+            aria-hidden="true"
+          />
+        ) : (
+          <div className={styles.avatar} aria-hidden="true">
+            {applicant.workerInitials}
+          </div>
+        )}
 
-          {/* Name + Regulix badge */}
+        {/* Name + title stacked */}
+        <div className={styles.textBlock}>
           <div className={styles.nameRow}>
             <span className={styles.cardName}>{displayName}</span>
             {applicant.isRegulixReady && (
@@ -152,59 +143,49 @@ export const KanbanCard: React.FC<Props> = ({
                 title="Regulix Ready"
                 aria-label="Regulix Ready"
               >
-                R
+                <RegulixMarkIcon size={11} />
               </span>
             )}
           </div>
+          <div className={styles.jobRow}>
+            <span className={styles.cardJob}>{applicant.jobTitle}</span>
+            {isPaused && <span className={styles.pausedTag}>Paused</span>}
+          </div>
         </div>
-
-        {/* Overflow trigger */}
-        <button
-          ref={triggerRef}
-          type="button"
-          className={styles.overflowTrigger}
-          onClick={handleMenuTrigger}
-          aria-label="More options"
-          aria-expanded={menuOpen}
-        >
-          <DotsHorizontalIcon size={14} />
-        </button>
       </div>
 
-      {/* Job title row */}
-      <div
-        className={styles.cardClickZone}
-        onClick={handleBodyClick}
-        onKeyDown={handleBodyKeyDown}
-        role="button"
-        tabIndex={-1}
-        aria-hidden="true"
+      {/* Overflow trigger */}
+      <button
+        ref={triggerRef}
+        type="button"
+        className={styles.overflowTrigger}
+        onClick={handleMenuTrigger}
+        aria-label="More options"
+        aria-expanded={menuOpen}
       >
-        <div className={styles.jobRow}>
-          <span className={styles.cardJob}>{applicant.jobTitle}</span>
-          {isPaused && <span className={styles.pausedTag}>Paused</span>}
-        </div>
-      </div>
+        <DotsHorizontalIcon size={14} />
+      </button>
 
-      {/* Status strip */}
-      <div className={styles.statusStrip}>
-        <span className={styles.timeInStage}>{timeLabel}</span>
-        {applicant.slaState === 'approaching' && (
-          <span className={styles.slaApproaching} title="SLA approaching">
-            <WarningTriangleIcon size={11} />
-          </span>
-        )}
-        {applicant.slaState === 'breached' && (
-          <span className={styles.slaBreached} title="SLA breached">
-            <DangerCircleIcon size={11} />
-          </span>
-        )}
-        {applicant.flagged && (
-          <span className={styles.flagIndicator} title="Flagged for attention">
-            <FlagIcon size={11} />
-          </span>
-        )}
-      </div>
+      {/* Status strip — only when there are indicators to show */}
+      {hasStatusIndicators && (
+        <div className={styles.statusStrip}>
+          {applicant.slaState === 'approaching' && (
+            <span className={styles.slaApproaching} title="SLA approaching">
+              <WarningTriangleIcon size={11} />
+            </span>
+          )}
+          {applicant.slaState === 'breached' && (
+            <span className={styles.slaBreached} title="SLA breached">
+              <DangerCircleIcon size={11} />
+            </span>
+          )}
+          {applicant.flagged && (
+            <span className={styles.flagIndicator} title="Flagged for attention">
+              <FlagIcon size={11} />
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Overflow dropdown — rendered in a portal so it escapes scrolling columns */}
       {menuOpen &&

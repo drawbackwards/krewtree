@@ -285,10 +285,10 @@
   text-decoration: underline;
 }
 
-/* ── View pane — fixed height shared by list + kanban ─────────────────── */
+/* ── View pane ────────────────────────────────────────────────────────── */
 
 .viewPane {
-  height: 352px; /* 320px columns + 16px top + 16px bottom board padding */
+  height: 360px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -315,7 +315,7 @@
   padding: 6px 24px;
   border-bottom: 1px solid var(--kt-border);
   column-gap: 10px;
-  min-height: 40px;
+  min-height: 45px;
 }
 
 .listRow:last-child {
@@ -323,7 +323,7 @@
 }
 
 .listHeaderRow {
-  background: var(--kt-bg);
+  background: var(--kt-grey-100);
   font-size: 11px;
   font-weight: var(--kt-weight-semibold);
   color: var(--kt-text-muted);
@@ -553,10 +553,10 @@
   background: var(--kt-surface);
   border: 0.5px solid var(--kt-border);
   border-radius: var(--kt-radius-md);
-  padding: 8px 10px;
+  padding: 6px 10px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 0;
   cursor: grab;
   touch-action: none;
   user-select: none;
@@ -576,13 +576,6 @@
   opacity: 0.5;
 }
 
-/* Top row */
-.cardTopRow {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-}
-
 .cardClickZone {
   display: flex;
   align-items: center;
@@ -593,8 +586,16 @@
   background: none;
   border: none;
   padding: 0;
+  padding-right: 28px; /* room for absolute overflow trigger */
   text-align: left;
   font-family: var(--kt-font-sans);
+}
+
+.textBlock {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
 }
 
 .cardClickZone:focus-visible {
@@ -605,8 +606,8 @@
 
 /* Avatar */
 .avatar {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border-radius: var(--kt-radius-full);
   background: var(--kt-surface-raised);
   color: var(--kt-text);
@@ -616,14 +617,17 @@
   font-size: 11px;
   font-weight: 600;
   flex-shrink: 0;
+  align-self: center;
 }
 
 .avatarImg {
-  width: 32px;
-  height: 32px;
+  display: block;
+  width: 28px;
+  height: 28px;
   border-radius: var(--kt-radius-full);
   object-fit: cover;
   flex-shrink: 0;
+  align-self: center;
 }
 
 /* Name row */
@@ -636,31 +640,26 @@
 
 .cardName {
   font-size: 13px;
-  font-weight: 600;
-  color: var(--kt-text);
+  font-weight: var(--kt-weight-bold);
+  color: var(--kt-navy-500);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* Regulix badge */
+/* Regulix mark */
 .regulixBadge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 16px;
-  height: 16px;
-  border-radius: var(--kt-radius-full);
-  background: var(--kt-olive-700);
-  color: white;
-  font-size: 9px;
-  font-weight: 700;
   flex-shrink: 0;
-  letter-spacing: 0;
 }
 
 /* Overflow trigger */
 .overflowTrigger {
+  position: absolute;
+  top: 4px;
+  right: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -676,7 +675,6 @@
   transition:
     opacity 120ms ease,
     background 120ms ease;
-  margin-left: auto;
 }
 
 .card:hover .overflowTrigger,
@@ -702,11 +700,10 @@
   align-items: center;
   gap: 6px;
   min-width: 0;
-  padding-left: 40px; /* align under name (32px avatar + 8px gap) */
 }
 
 .cardJob {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--kt-text-muted);
   white-space: nowrap;
   overflow: hidden;
@@ -730,7 +727,8 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  padding-left: 40px;
+  padding-left: 36px;
+  margin-top: 4px;
 }
 
 .timeInStage {

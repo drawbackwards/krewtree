@@ -19,10 +19,9 @@ import {
   hireApplicant,
   shortlistApplicant,
 } from '../../services/applicantService'
-import { KanbanIcon, CloseIcon, ListIcon, RegulixMarkIcon } from '../../icons'
+import { KanbanIcon, CloseIcon } from '../../icons'
 import { Modal } from '../../../components'
 import { ApplicantSlideover } from '../ApplicantSlideover/ApplicantSlideover'
-import { StagePill } from '../StagePill/StagePill'
 import { KanbanColumn } from './KanbanColumn'
 import { KanbanCard } from './KanbanCard'
 import styles from './PipelineKanban.module.css'
@@ -88,7 +87,6 @@ export const PipelineKanban: React.FC<Props> = ({ companyId }) => {
   const [applicants, setApplicants] = useState<CompanyApplicant[]>([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
-  const [view, setView] = useState<'kanban' | 'list'>('kanban')
   const [activeId, setActiveId] = useState<string | null>(null)
   const [undoToast, setUndoToast] = useState<UndoToast | null>(null)
   const [confirmModal, setConfirmModal] = useState<ConfirmModal | null>(null)
@@ -249,11 +247,7 @@ export const PipelineKanban: React.FC<Props> = ({ companyId }) => {
   if (loading) {
     return (
       <div className={styles.root}>
-        <WidgetHeader
-          view={view}
-          onViewChange={setView}
-          onListViewAll={() => navigate('/site/dashboard/applicants')}
-        />
+        <WidgetHeader onViewAll={() => navigate('/site/dashboard/applicants')} />
         <div className={styles.viewPane}>
           <div className={styles.board}>
             {COLUMNS.map((c) => (
@@ -268,11 +262,7 @@ export const PipelineKanban: React.FC<Props> = ({ companyId }) => {
   if (loadError) {
     return (
       <div className={styles.root}>
-        <WidgetHeader
-          view={view}
-          onViewChange={setView}
-          onListViewAll={() => navigate('/site/dashboard/applicants')}
-        />
+        <WidgetHeader onViewAll={() => navigate('/site/dashboard/applicants')} />
         <div className={styles.viewPane}>
           <div className={styles.errorState}>Couldn't load pipeline: {loadError}</div>
         </div>
@@ -285,11 +275,7 @@ export const PipelineKanban: React.FC<Props> = ({ companyId }) => {
   if (totalActive === 0) {
     return (
       <div className={styles.root}>
-        <WidgetHeader
-          view={view}
-          onViewChange={setView}
-          onListViewAll={() => navigate('/site/dashboard/applicants')}
-        />
+        <WidgetHeader onViewAll={() => navigate('/site/dashboard/applicants')} />
         <div className={styles.viewPane}>
           <div className={styles.emptyState}>
             <p className={styles.emptyStateText}>No applicants yet.</p>
@@ -302,97 +288,42 @@ export const PipelineKanban: React.FC<Props> = ({ companyId }) => {
     )
   }
 
-  const shortDate = (iso: string) =>
-    new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-
   return (
     <div className={styles.root}>
-      <WidgetHeader
-        view={view}
-        onViewChange={setView}
-        onListViewAll={() => navigate('/site/dashboard/applicants')}
-      />
+      <WidgetHeader onViewAll={() => navigate('/site/dashboard/applicants')} />
 
-      {/* ── View pane (fixed height so widget doesn't resize on toggle) ── */}
+      {/* ── Kanban board ─────────────────────────────────────────────────── */}
       <div className={styles.viewPane}>
-        {/* ── List view ──────────────────────────────────────────────── */}
-        {view === 'list' && (
-          <div className={styles.listTable}>
-            <div className={[styles.listRow, styles.listHeaderRow].join(' ')}>
-              <span>Applicant</span>
-              <span>Job</span>
-              <span>Stage</span>
-              <span className={styles.listAlignRight}>Match</span>
-              <span>Applied</span>
-            </div>
-            {filtered.length === 0 ? (
-              <div className={styles.listEmpty}>No active applicants.</div>
-            ) : (
-              filtered.map((a) => (
-                <div key={a.id} className={styles.listRow}>
-                  <button
-                    type="button"
-                    className={styles.listApplicant}
-                    onClick={() => setSlideover(a)}
-                  >
-                    <span className={styles.listAvatar}>
-                      {a.workerAvatar ? (
-                        <img src={a.workerAvatar} alt="" className={styles.listAvatarImg} />
-                      ) : (
-                        a.workerInitials
-                      )}
-                    </span>
-                    <span className={styles.listName}>
-                      {a.workerFirstName} {a.workerLastInitial}.
-                      {a.isRegulixReady && <RegulixMarkIcon size={12} />}
-                    </span>
-                  </button>
-                  <span className={styles.listJob}>{a.jobTitle}</span>
-                  <span>
-                    <StagePill stage={a.stage} size="sm" />
-                  </span>
-                  <span className={styles.listAlignRight}>{a.matchScore}%</span>
-                  <span className={styles.listDate}>{shortDate(a.appliedAt)}</span>
-                </div>
-              ))
-            )}
+        <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+          <div className={styles.board}>
+            {COLUMNS.map((c) => (
+              <KanbanColumn
+                key={c.stage}
+                stage={c.stage}
+                label={c.label}
+                applicants={byStage[c.stage]}
+                collapsedOnMobile={!!collapseState[c.stage]}
+                onToggleCollapse={() => toggleCollapse(c.stage)}
+                onCardClick={setSlideover}
+                onReject={(a) => setConfirmModal({ type: 'reject', applicant: a })}
+                onHire={(a) => setConfirmModal({ type: 'hire', applicant: a })}
+              />
+            ))}
           </div>
-        )}
 
-        {/* ── Kanban board ───────────────────────────────────────────── */}
-        {view === 'kanban' && (
-          <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-            <div className={styles.board}>
-              {COLUMNS.map((c) => (
-                <KanbanColumn
-                  key={c.stage}
-                  stage={c.stage}
-                  label={c.label}
-                  semantic={c.semantic}
-                  applicants={byStage[c.stage]}
-                  collapsedOnMobile={!!collapseState[c.stage]}
-                  onToggleCollapse={() => toggleCollapse(c.stage)}
-                  onCardClick={setSlideover}
-                  onReject={(a) => setConfirmModal({ type: 'reject', applicant: a })}
-                  onHire={(a) => setConfirmModal({ type: 'hire', applicant: a })}
+          <DragOverlay>
+            {activeApplicant && (
+              <div className={styles.dragOverlayCard}>
+                <KanbanCard
+                  applicant={activeApplicant}
+                  onCardClick={() => {}}
+                  onReject={() => {}}
+                  onHire={() => {}}
                 />
-              ))}
-            </div>
-
-            <DragOverlay>
-              {activeApplicant && (
-                <div className={styles.dragOverlayCard}>
-                  <KanbanCard
-                    applicant={activeApplicant}
-                    onCardClick={() => {}}
-                    onReject={() => {}}
-                    onHire={() => {}}
-                  />
-                </div>
-              )}
-            </DragOverlay>
-          </DndContext>
-        )}
+              </div>
+            )}
+          </DragOverlay>
+        </DndContext>
       </div>
       {/* end viewPane */}
 
@@ -521,58 +452,28 @@ export const PipelineKanban: React.FC<Props> = ({ companyId }) => {
 
 // ── Widget header (extracted so it renders in loading/error states too) ────
 
-const WidgetHeader: React.FC<{
-  view: 'kanban' | 'list'
-  onViewChange: (v: 'kanban' | 'list') => void
-  onListViewAll: () => void
-}> = ({ view, onViewChange, onListViewAll }) => (
+const WidgetHeader: React.FC<{ onViewAll: () => void }> = ({ onViewAll }) => (
   <div className={styles.header}>
     <span className={styles.title}>
       <KanbanIcon size={16} color="var(--kt-olive-700)" />
       Applicant pipeline
     </span>
-    <div className={styles.headerRight}>
-      <div className={styles.viewToggle} role="group" aria-label="View">
-        <button
-          type="button"
-          className={[styles.viewBtn, view === 'list' ? styles.viewBtnActive : '']
-            .filter(Boolean)
-            .join(' ')}
-          onClick={() => onViewChange('list')}
-          aria-pressed={view === 'list'}
-        >
-          <ListIcon size={13} />
-          List
-        </button>
-        <button
-          type="button"
-          className={[styles.viewBtn, view === 'kanban' ? styles.viewBtnActive : '']
-            .filter(Boolean)
-            .join(' ')}
-          onClick={() => onViewChange('kanban')}
-          aria-pressed={view === 'kanban'}
-        >
-          <KanbanIcon size={13} />
-          Kanban
-        </button>
-      </div>
-      <button
-        type="button"
-        onClick={onListViewAll}
-        style={{
-          fontSize: 'var(--kt-text-sm)',
-          color: 'var(--kt-navy-500)',
-          background: 'none',
-          border: 'none',
-          cursor: 'pointer',
-          fontWeight: 'var(--kt-weight-bold)',
-          fontFamily: 'var(--kt-font-sans)',
-          whiteSpace: 'nowrap',
-          padding: 0,
-        }}
-      >
-        View all →
-      </button>
-    </div>
+    <button
+      type="button"
+      onClick={onViewAll}
+      style={{
+        fontSize: 'var(--kt-text-sm)',
+        color: 'var(--kt-navy-500)',
+        background: 'none',
+        border: 'none',
+        cursor: 'pointer',
+        fontWeight: 'var(--kt-weight-bold)',
+        fontFamily: 'var(--kt-font-sans)',
+        whiteSpace: 'nowrap',
+        padding: 0,
+      }}
+    >
+      View pipeline →
+    </button>
   </div>
 )

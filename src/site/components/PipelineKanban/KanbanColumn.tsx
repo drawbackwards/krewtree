@@ -1,17 +1,15 @@
 import React from 'react'
 import { useDroppable } from '@dnd-kit/core'
-import { Link } from 'react-router-dom'
 import type { CompanyApplicant, KanbanStage } from '../../types'
 import { ChevronDownIcon, ChevronUpIcon } from '../../icons'
 import { KanbanCard } from './KanbanCard'
 import styles from './PipelineKanban.module.css'
 
-const MAX_VISIBLE = 15
+const MAX_VISIBLE = 20
 
 type Props = {
   stage: KanbanStage
   label: string
-  semantic: string
   applicants: CompanyApplicant[]
   isValidDrop?: boolean
   collapsedOnMobile: boolean
@@ -25,7 +23,6 @@ type Props = {
 export const KanbanColumn: React.FC<Props> = ({
   stage,
   label,
-  semantic,
   applicants,
   isValidDrop,
   collapsedOnMobile,
@@ -42,7 +39,6 @@ export const KanbanColumn: React.FC<Props> = ({
   if (isOver && isValidDrop === false) columnClass += ` ${styles.columnInvalidDrop}`
 
   const visible = applicants.slice(0, MAX_VISIBLE)
-  const overflow = applicants.length - MAX_VISIBLE
 
   return (
     <div className={styles.columnWrapper}>
@@ -85,15 +81,6 @@ export const KanbanColumn: React.FC<Props> = ({
           ))}
           {applicants.length === 0 && <div className={styles.emptyColumn} />}
         </div>
-
-        {overflow > 0 && (
-          <Link
-            to={`/site/dashboard/applicants?semantic=${semantic}`}
-            className={styles.overflowLink}
-          >
-            +{overflow} more
-          </Link>
-        )}
       </div>
     </div>
   )
