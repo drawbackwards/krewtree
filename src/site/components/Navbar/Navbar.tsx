@@ -290,7 +290,10 @@ export const Navbar: React.FC = () => {
                           <button
                             className={styles.menuItem}
                             role="menuitem"
-                            onClick={() => setAvatarMenuOpen(false)}
+                            onClick={() => {
+                              setAvatarMenuOpen(false)
+                              navigate('/site/settings')
+                            }}
                           >
                             Organization Settings
                           </button>

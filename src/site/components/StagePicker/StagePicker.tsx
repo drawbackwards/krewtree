@@ -5,15 +5,17 @@ import { ChevronDownIcon } from '../../icons'
 import styles from './StagePicker.module.css'
 
 const STAGE_LABEL: Record<KanbanStage, string> = {
-  new: 'New',
-  reviewed: 'Reviewed',
+  screening: 'Screening',
+  assessment: 'Assessment',
   interview: 'Interview',
   offer: 'Offer',
   hired: 'Hired',
   rejected: 'Rejected',
+  withdrawn: 'Withdrawn',
+  archived: 'Archived',
 }
 
-const ACTIVE_STAGES: KanbanStage[] = ['new', 'reviewed', 'interview', 'offer', 'hired']
+const ACTIVE_STAGES: KanbanStage[] = ['screening', 'assessment', 'interview', 'offer', 'hired']
 
 export interface StagePickerProps {
   stage: KanbanStage

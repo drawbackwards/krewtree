@@ -254,7 +254,17 @@ export type Notification = {
 }
 
 // ---- Kanban Applicant ----
-export type KanbanStage = 'new' | 'reviewed' | 'interview' | 'offer' | 'hired' | 'rejected'
+// Semantic stage types per spec. Active: screening | assessment | interview | offer.
+// Terminal: hired | rejected | withdrawn | archived.
+export type KanbanStage =
+  | 'screening'
+  | 'assessment'
+  | 'interview'
+  | 'offer'
+  | 'hired'
+  | 'rejected'
+  | 'withdrawn'
+  | 'archived'
 export type SlaState = 'none' | 'approaching' | 'breached'
 
 export type KanbanApplicant = {
@@ -307,6 +317,84 @@ export type CompanyApplicant = {
   flagged: boolean
   notes: Array<{ text: string; authorName: string; createdAt: string }>
   preInterviewAnswers?: Array<{ question: string; answer: string }>
+}
+
+// ---- Pipeline task system ----
+
+export type TaskState = 'incomplete' | 'completed' | 'skipped'
+export type TaskSource = 'template' | 'ad_hoc'
+
+export type ApplicationTask = {
+  id: string
+  applicationId: string
+  stageId: string
+  source: TaskSource
+  templateTaskId: string | null
+  label: string
+  isRequired: boolean
+  state: TaskState
+  completedAt: string | null
+  completedBy: string | null
+  skippedAt: string | null
+  skippedBy: string | null
+  notes: string | null
+  dueDate: string | null // ISO date YYYY-MM-DD
+  order: number
+  createdAt: string
+  // Attached message (snapshot from template at instantiation time)
+  messageSubject: string | null
+  messageBody: string | null
+  calendarLink: string | null
+  autoSend: boolean
+  messageSentAt: string | null
+}
+
+export type ApplicationMessage = {
+  id: string
+  applicationId: string
+  applicationTaskId: string | null
+  subject: string
+  body: string
+  calendarLink: string | null
+  sentAt: string
+  sentBy: string | null
+  readAt: string | null
+}
+
+export type StageNote = {
+  applicationId: string
+  stageId: string
+  notes: string | null
+  updatedAt: string
+  updatedBy: string
+}
+
+export type LogEventType =
+  | 'application_created'
+  | 'stage_entered'
+  | 'stage_exited'
+  | 'trigger_fired'
+  | 'task_created'
+  | 'task_completed'
+  | 'task_uncompleted'
+  | 'task_skipped'
+  | 'task_unskipped'
+  | 'task_deleted'
+  | 'stage_notes_updated'
+  | 'application_withdrawn'
+  | 'application_rejected'
+  | 'application_hired'
+  | 'application_archived'
+  | 'shortlisted'
+  | 'unshortlisted'
+
+export type ApplicationLogEvent = {
+  id: string
+  applicationId: string
+  eventType: LogEventType
+  actor: string // user display name or 'System'
+  description: string
+  createdAt: string // ISO
 }
 
 // ---- Job Analytics ----

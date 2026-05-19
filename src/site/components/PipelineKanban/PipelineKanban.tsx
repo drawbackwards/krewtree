@@ -28,14 +28,14 @@ import styles from './PipelineKanban.module.css'
 
 // ── Column definitions ─────────────────────────────────────────────────────
 
-const COLUMNS: Array<{ stage: KanbanStage; label: string; semantic: string }> = [
-  { stage: 'new', label: 'New', semantic: 'screening' },
-  { stage: 'reviewed', label: 'Reviewed', semantic: 'assessment' },
-  { stage: 'interview', label: 'Interview', semantic: 'interview' },
-  { stage: 'offer', label: 'Offer', semantic: 'offer' },
+const COLUMNS: Array<{ stage: KanbanStage; label: string }> = [
+  { stage: 'screening', label: 'Screening' },
+  { stage: 'assessment', label: 'Assessment' },
+  { stage: 'interview', label: 'Interview' },
+  { stage: 'offer', label: 'Offer' },
 ]
 
-const ACTIVE_STAGES = new Set<KanbanStage>(['new', 'reviewed', 'interview', 'offer'])
+const ACTIVE_STAGES = new Set<KanbanStage>(['screening', 'assessment', 'interview', 'offer'])
 
 // ── Undo toast ─────────────────────────────────────────────────────────────
 
@@ -121,12 +121,14 @@ export const PipelineKanban: React.FC<Props> = ({ companyId }) => {
 
   const byStage = useMemo(() => {
     const map: Record<KanbanStage, CompanyApplicant[]> = {
-      new: [],
-      reviewed: [],
+      screening: [],
+      assessment: [],
       interview: [],
       offer: [],
       hired: [],
       rejected: [],
+      withdrawn: [],
+      archived: [],
     }
     for (const a of filtered) map[a.stage]?.push(a)
     return map
@@ -379,6 +381,23 @@ export const PipelineKanban: React.FC<Props> = ({ companyId }) => {
             setApplicants((list) =>
               list.map((a) => (a.id === id ? { ...a, isShortlisted: prev.isShortlisted } : a))
             )
+          }
+        }}
+        onReject={async (applicant) => {
+          const { error } = await rejectApplicant(applicant.id)
+          if (!error) {
+            setApplicants((list) => list.filter((a) => a.id !== applicant.id))
+          }
+        }}
+        onHire={async (applicant) => {
+          const { error } = await hireApplicant(applicant.id)
+          if (!error) {
+            setApplicants((list) => list.filter((a) => a.id !== applicant.id))
+          }
+        }}
+        onChanged={() => {
+          if (slideover) {
+            setApplicants((list) => list.filter((a) => a.id !== slideover.id))
           }
         }}
       />

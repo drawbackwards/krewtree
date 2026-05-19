@@ -3,12 +3,14 @@ import type { KanbanStage } from '../../types'
 import styles from './StagePill.module.css'
 
 const LABELS: Record<KanbanStage, string> = {
-  new: 'New',
-  reviewed: 'Reviewed',
+  screening: 'Screening',
+  assessment: 'Assessment',
   interview: 'Interview',
   offer: 'Offer',
   hired: 'Hired',
   rejected: 'Rejected',
+  withdrawn: 'Withdrawn',
+  archived: 'Archived',
 }
 
 export interface StagePillProps {

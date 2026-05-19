@@ -60,7 +60,7 @@ beforeEach(() => {
 describe('PipelineKanban', () => {
   it('loads applicants and renders them in the right columns', async () => {
     getKanbanApplicantsMock.mockResolvedValue({
-      data: [makeApplicant('a1', 'new'), makeApplicant('a2', 'interview')],
+      data: [makeApplicant('a1', 'screening'), makeApplicant('a2', 'interview')],
       error: null,
     })
 
@@ -78,7 +78,7 @@ describe('PipelineKanban', () => {
 
   it('optimistically moves a card on drag end and reverts on service error', async () => {
     getKanbanApplicantsMock.mockResolvedValue({
-      data: [makeApplicant('a1', 'new')],
+      data: [makeApplicant('a1', 'screening')],
       error: null,
     })
     setApplicantStageMock.mockResolvedValue({ error: 'db_error' })
