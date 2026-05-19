@@ -453,7 +453,15 @@ export type Database = {
           job_id: string
           status: 'Applied' | 'Viewed' | 'Interviewing' | 'Offer' | 'Rejected'
           is_boosted: boolean
-          kanban_stage: 'new' | 'reviewed' | 'interview' | 'offer' | 'hired' | 'rejected'
+          kanban_stage:
+            | 'screening'
+            | 'assessment'
+            | 'interview'
+            | 'offer'
+            | 'hired'
+            | 'rejected'
+            | 'withdrawn'
+            | 'archived'
           notes: string
           interview_answers: Json
           is_shortlisted: boolean
@@ -474,7 +482,15 @@ export type Database = {
           job_id: string
           status?: 'Applied' | 'Viewed' | 'Interviewing' | 'Offer' | 'Rejected'
           is_boosted?: boolean
-          kanban_stage?: 'new' | 'reviewed' | 'interview' | 'offer' | 'hired' | 'rejected'
+          kanban_stage?:
+            | 'screening'
+            | 'assessment'
+            | 'interview'
+            | 'offer'
+            | 'hired'
+            | 'rejected'
+            | 'withdrawn'
+            | 'archived'
           notes?: string
           interview_answers?: Json
           is_shortlisted?: boolean
@@ -528,6 +544,198 @@ export type Database = {
           created_at?: string
         }
         Update: Partial<Database['public']['Tables']['application_events']['Insert']>
+        Relationships: []
+      }
+      company_pipeline_stage: {
+        Row: {
+          id: string
+          company_id: string
+          stage_type: 'screening' | 'assessment' | 'interview' | 'offer'
+          enabled: boolean
+          purpose: string | null
+          sla_hours_approaching: number | null
+          sla_hours_breached: number | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          company_id: string
+          stage_type: 'screening' | 'assessment' | 'interview' | 'offer'
+          enabled?: boolean
+          purpose?: string | null
+          sla_hours_approaching?: number | null
+          sla_hours_breached?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['company_pipeline_stage']['Insert']>
+        Relationships: []
+      }
+      pipeline_stage_task_template: {
+        Row: {
+          id: string
+          company_id: string
+          stage_type: 'screening' | 'assessment' | 'interview' | 'offer'
+          label: string
+          is_required: boolean
+          display_order: number
+          message_subject: string | null
+          message_body: string | null
+          calendar_link: string | null
+          auto_send: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          company_id: string
+          stage_type: 'screening' | 'assessment' | 'interview' | 'offer'
+          label: string
+          is_required?: boolean
+          display_order?: number
+          message_subject?: string | null
+          message_body?: string | null
+          calendar_link?: string | null
+          auto_send?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['pipeline_stage_task_template']['Insert']>
+        Relationships: []
+      }
+      application_task: {
+        Row: {
+          id: string
+          application_id: string
+          stage_type: 'screening' | 'assessment' | 'interview' | 'offer'
+          source: 'template' | 'ad_hoc'
+          template_task_id: string | null
+          label: string
+          is_required: boolean
+          completed_at: string | null
+          completed_by: string | null
+          skipped_at: string | null
+          skipped_by: string | null
+          notes: string | null
+          due_date: string | null
+          display_order: number
+          message_subject: string | null
+          message_body: string | null
+          calendar_link: string | null
+          auto_send: boolean
+          message_sent_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          application_id: string
+          stage_type: 'screening' | 'assessment' | 'interview' | 'offer'
+          source: 'template' | 'ad_hoc'
+          template_task_id?: string | null
+          label: string
+          is_required?: boolean
+          completed_at?: string | null
+          completed_by?: string | null
+          skipped_at?: string | null
+          skipped_by?: string | null
+          notes?: string | null
+          due_date?: string | null
+          display_order?: number
+          message_subject?: string | null
+          message_body?: string | null
+          calendar_link?: string | null
+          auto_send?: boolean
+          message_sent_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['application_task']['Insert']>
+        Relationships: []
+      }
+      application_message: {
+        Row: {
+          id: string
+          application_id: string
+          application_task_id: string | null
+          subject: string
+          body: string
+          calendar_link: string | null
+          sent_at: string
+          sent_by: string | null
+          read_at: string | null
+        }
+        Insert: {
+          id?: string
+          application_id: string
+          application_task_id?: string | null
+          subject: string
+          body: string
+          calendar_link?: string | null
+          sent_at?: string
+          sent_by?: string | null
+          read_at?: string | null
+        }
+        Update: Partial<Database['public']['Tables']['application_message']['Insert']>
+        Relationships: []
+      }
+      application_stage_notes: {
+        Row: {
+          id: string
+          application_id: string
+          stage_type:
+            | 'screening'
+            | 'assessment'
+            | 'interview'
+            | 'offer'
+            | 'hired'
+            | 'rejected'
+            | 'withdrawn'
+            | 'archived'
+          notes: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          id?: string
+          application_id: string
+          stage_type:
+            | 'screening'
+            | 'assessment'
+            | 'interview'
+            | 'offer'
+            | 'hired'
+            | 'rejected'
+            | 'withdrawn'
+            | 'archived'
+          notes?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: Partial<Database['public']['Tables']['application_stage_notes']['Insert']>
+        Relationships: []
+      }
+      application_log: {
+        Row: {
+          id: string
+          application_id: string
+          event_type: string
+          actor: string
+          actor_id: string | null
+          description: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          application_id: string
+          event_type: string
+          actor?: string
+          actor_id?: string | null
+          description: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['application_log']['Insert']>
         Relationships: []
       }
       saved_jobs: {

@@ -1,0 +1,53 @@
+.root {
+  overflow-y: auto;
+  flex: 1;
+  padding: 0 20px;
+}
+
+.loading {
+  padding: 24px 20px;
+  font-size: 13px;
+  color: var(--kt-text-muted);
+}
+
+.empty {
+  padding: 24px 20px;
+  font-size: 13px;
+  color: var(--kt-text-muted);
+  margin: 0;
+}
+
+.row {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--kt-border);
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.rowMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 3px;
+}
+
+.timestamp {
+  font-size: 11px;
+  color: var(--kt-text-muted);
+  font-weight: var(--kt-weight-normal);
+}
+
+.actor {
+  font-size: 12px;
+  font-weight: var(--kt-weight-medium);
+  color: var(--kt-text-muted);
+}
+
+.description {
+  font-size: 13px;
+  color: var(--kt-text);
+  margin: 0;
+  line-height: 1.4;
+}

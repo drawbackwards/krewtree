@@ -33,8 +33,8 @@ import styles from './AllApplicantsPage.module.css'
 
 const STAGE_OPTIONS: Array<{ value: KanbanStage | 'all'; label: string }> = [
   { value: 'all', label: 'All stages' },
-  { value: 'new', label: 'New' },
-  { value: 'reviewed', label: 'Reviewed' },
+  { value: 'screening', label: 'Screening' },
+  { value: 'assessment', label: 'Assessment' },
   { value: 'interview', label: 'Interview' },
   { value: 'offer', label: 'Offer' },
   { value: 'hired', label: 'Hired' },

@@ -22,14 +22,24 @@
   height: 18px;
 }
 
-.new {
+.screening {
   background: var(--kt-info-subtle);
   color: var(--kt-info);
 }
 
-.reviewed {
+.assessment {
   background: var(--kt-teal-subtle);
   color: var(--kt-teal);
+}
+
+.withdrawn {
+  background: var(--kt-secondary);
+  color: var(--kt-text-muted);
+}
+
+.archived {
+  background: var(--kt-secondary);
+  color: var(--kt-text-muted);
 }
 
 .interview {

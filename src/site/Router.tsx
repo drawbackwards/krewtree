@@ -19,6 +19,9 @@ import {
   CompanyApplicantProfilePage,
   ApplicationsPage,
 } from './pages'
+import PipelinePage from './pages/PipelinePage'
+import SettingsLayout from './pages/Settings/SettingsLayout'
+import PipelineSettingsPage from './pages/Settings/PipelineSettingsPage'
 import { LoginPage } from './pages/auth/LoginPage'
 import { SignupRolePage } from './pages/auth/SignupRolePage'
 import { WorkerSignupPage } from './pages/auth/WorkerSignupPage'
@@ -99,6 +102,11 @@ export const SiteRouter: React.FC = () => (
             path="/site/dashboard/applicants/worker/:workerId"
             element={<CompanyApplicantProfilePage />}
           />
+          <Route path="/site/pipeline" element={<PipelinePage />} />
+          <Route path="/site/settings" element={<SettingsLayout />}>
+            <Route index element={<Navigate to="/site/settings/pipeline" replace />} />
+            <Route path="pipeline" element={<PipelineSettingsPage />} />
+          </Route>
           <Route path="/site/post-job" element={<PostJobPage />} />
           <Route path="/site/post-job/:id" element={<PostJobPage />} />
         </Route>

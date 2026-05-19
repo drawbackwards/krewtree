@@ -12,11 +12,26 @@
 import type { CompanyApplicant, KanbanStage } from '../types'
 import { supabase } from '../../lib/supabase'
 import type { Database } from '../../lib/database.types'
+import {
+  instantiateTemplatesForStage,
+  getEnabledStagesForApplication,
+  getCompanyStages,
+  computeSlaState,
+  type CompanyStage,
+  type TemplateStage,
+} from './pipelineService'
 
-// Active pipeline stages (exclude resolved/terminal).
-const ACTIVE_STAGES: KanbanStage[] = ['new', 'reviewed', 'interview', 'offer']
+// Active pipeline stages (exclude terminal).
+const ACTIVE_STAGES: KanbanStage[] = ['screening', 'assessment', 'interview', 'offer']
 
-const STAGE_ORDER: KanbanStage[] = ['new', 'reviewed', 'interview', 'offer', 'hired', 'rejected']
+// DbStage mirrors the Postgres enum in applications.kanban_stage.
+// After migration 20260518000001 runs, DB values match KanbanStage 1:1 —
+// no translation needed; cast is safe.
+type DbStage = Database['public']['Tables']['applications']['Row']['kanban_stage']
+
+function toDbStage(s: KanbanStage): DbStage {
+  return s as unknown as DbStage
+}
 
 // ── Types ─────────────────────────────────────────────────────────────────
 
@@ -114,7 +129,38 @@ function formatJobDuration(start: string | null, end: string | null, isCurrent: 
  * because the DB function stores only the aggregate — the UI still renders
  * a value in both pillars. Revisit if we split the column later.
  */
-function toCompanyApplicant(a: JoinedApplicantRow): CompanyApplicant {
+type StageThresholds = Pick<CompanyStage, 'slaHoursApproaching' | 'slaHoursBreached'>
+type ThresholdMap = Map<TemplateStage, StageThresholds>
+
+async function loadThresholdMap(companyId: string): Promise<ThresholdMap> {
+  const { data } = await getCompanyStages(companyId)
+  const map = new Map<TemplateStage, StageThresholds>()
+  for (const s of data) {
+    map.set(s.stage, {
+      slaHoursApproaching: s.slaHoursApproaching,
+      slaHoursBreached: s.slaHoursBreached,
+    })
+  }
+  return map
+}
+
+function computeSlaForRow(
+  a: JoinedApplicantRow,
+  thresholds?: ThresholdMap
+): 'none' | 'approaching' | 'breached' {
+  if (!thresholds) return 'none'
+  const activeStages = ['screening', 'assessment', 'interview', 'offer']
+  if (!activeStages.includes(a.kanban_stage as string)) return 'none'
+  const t = thresholds.get(a.kanban_stage as TemplateStage)
+  if (!t) return 'none'
+  return computeSlaState(
+    a.status_updated_at ?? a.created_at,
+    t.slaHoursApproaching,
+    t.slaHoursBreached
+  )
+}
+
+function toCompanyApplicant(a: JoinedApplicantRow, thresholds?: ThresholdMap): CompanyApplicant {
   const w = a.worker_profiles
   const j = a.jobs
   const first = w.first_name ?? ''
@@ -167,14 +213,14 @@ function toCompanyApplicant(a: JoinedApplicantRow): CompanyApplicant {
     jobId: j.id,
     jobTitle: j.title,
     jobStatus: j.status as CompanyApplicant['jobStatus'],
-    stage: a.kanban_stage as CompanyApplicant['stage'],
+    stage: a.kanban_stage as KanbanStage,
     matchScore: a.match_score,
     matchBreakdown: { skills: a.match_score, location: a.match_score, availability: 0 },
     isRegulixReady: w.is_regulix_ready,
     isShortlisted: a.is_shortlisted,
     appliedAt: a.created_at,
     stageEnteredAt: a.status_updated_at ?? a.created_at,
-    slaState: 'none' as const,
+    slaState: computeSlaForRow(a, thresholds),
     flagged: false,
     notes: a.application_notes.map((n) => ({
       text: n.text,
@@ -207,17 +253,22 @@ export async function getRecentApplicants(
   companyId: string,
   limit = 5
 ): Promise<{ data: CompanyApplicant[]; error: string | null }> {
-  const { data, error } = await supabase
-    .from('applications')
-    .select(APPLICANT_SELECT)
-    .eq('jobs.company_id', companyId)
-    .in('kanban_stage', ACTIVE_STAGES)
-    .order('created_at', { ascending: false })
-    .limit(limit)
+  const [{ data, error }, thresholds] = await Promise.all([
+    supabase
+      .from('applications')
+      .select(APPLICANT_SELECT)
+      .eq('jobs.company_id', companyId)
+      .in('kanban_stage', ACTIVE_STAGES as unknown as DbStage[])
+      .order('created_at', { ascending: false })
+      .limit(limit),
+    loadThresholdMap(companyId),
+  ])
 
   if (error) return { data: [], error: error.message }
   return {
-    data: (data ?? []).map((row) => toCompanyApplicant(row as unknown as JoinedApplicantRow)),
+    data: (data ?? []).map((row) =>
+      toCompanyApplicant(row as unknown as JoinedApplicantRow, thresholds)
+    ),
     error: null,
   }
 }
@@ -230,16 +281,21 @@ export async function getRecentApplicants(
 export async function getKanbanApplicants(
   companyId: string
 ): Promise<{ data: CompanyApplicant[]; error: string | null }> {
-  const { data, error } = await supabase
-    .from('applications')
-    .select(APPLICANT_SELECT)
-    .eq('jobs.company_id', companyId)
-    .in('kanban_stage', ACTIVE_STAGES)
-    .order('created_at', { ascending: false })
+  const [{ data, error }, thresholds] = await Promise.all([
+    supabase
+      .from('applications')
+      .select(APPLICANT_SELECT)
+      .eq('jobs.company_id', companyId)
+      .in('kanban_stage', ACTIVE_STAGES as unknown as DbStage[])
+      .order('created_at', { ascending: false }),
+    loadThresholdMap(companyId),
+  ])
 
   if (error) return { data: [], error: error.message }
   return {
-    data: (data ?? []).map((row) => toCompanyApplicant(row as unknown as JoinedApplicantRow)),
+    data: (data ?? []).map((row) =>
+      toCompanyApplicant(row as unknown as JoinedApplicantRow, thresholds)
+    ),
     error: null,
   }
 }
@@ -283,7 +339,7 @@ export async function getAllApplicants(
     .select(APPLICANT_SELECT, { count: 'exact' })
     .eq('jobs.company_id', companyId)
 
-  if (filters.stage !== 'all') q = q.eq('kanban_stage', filters.stage)
+  if (filters.stage !== 'all') q = q.eq('kanban_stage', toDbStage(filters.stage as KanbanStage))
   if (filters.jobId !== 'all') q = q.eq('job_id', filters.jobId)
   if (filters.appliedFrom) q = q.gte('created_at', filters.appliedFrom)
   if (filters.appliedTo) q = q.lte('created_at', filters.appliedTo)
@@ -311,7 +367,10 @@ export async function getAllApplicants(
   const { data, error, count } = await q
   if (error) return { data: [], total: 0, error: error.message }
 
-  let rows = (data ?? []).map((row) => toCompanyApplicant(row as unknown as JoinedApplicantRow))
+  const thresholds = await loadThresholdMap(companyId)
+  let rows = (data ?? []).map((row) =>
+    toCompanyApplicant(row as unknown as JoinedApplicantRow, thresholds)
+  )
   // NOTE: `total` (from the server) is pre-search; UI "N of M" may overcount
   // while a search term is active. TODO: push search server-side via .or(...).
   if (filters.search) {
@@ -364,16 +423,21 @@ export async function getWorkerApplicationsAtCompany(
   workerId: string,
   companyId: string
 ): Promise<{ data: CompanyApplicant[]; error: string | null }> {
-  const { data, error } = await supabase
-    .from('applications')
-    .select(APPLICANT_SELECT)
-    .eq('worker_id', workerId)
-    .eq('jobs.company_id', companyId)
-    .order('created_at', { ascending: false })
+  const [{ data, error }, thresholds] = await Promise.all([
+    supabase
+      .from('applications')
+      .select(APPLICANT_SELECT)
+      .eq('worker_id', workerId)
+      .eq('jobs.company_id', companyId)
+      .order('created_at', { ascending: false }),
+    loadThresholdMap(companyId),
+  ])
 
   if (error) return { data: [], error: error.message }
   return {
-    data: (data ?? []).map((row) => toCompanyApplicant(row as unknown as JoinedApplicantRow)),
+    data: (data ?? []).map((row) =>
+      toCompanyApplicant(row as unknown as JoinedApplicantRow, thresholds)
+    ),
     error: null,
   }
 }
@@ -391,18 +455,41 @@ export async function advanceApplicantStage(
   if (error) return { error: error.message }
 
   const current = data.kanban_stage as KanbanStage
-  const idx = STAGE_ORDER.indexOf(current)
-  if (idx < 0 || current === 'hired' || current === 'rejected') {
-    return { error: 'cannot_advance' }
-  }
-  const next = STAGE_ORDER[idx + 1]
+  const terminal: KanbanStage[] = ['hired', 'rejected', 'withdrawn', 'archived']
+  if (terminal.includes(current)) return { error: 'cannot_advance' }
+
+  // Skip disabled stages: pick the next semantic stage that's enabled for this company.
+  const { data: enabledStages } = await getEnabledStagesForApplication(applicationId)
+  const next = computeNextEnabledStage(current, enabledStages)
   if (!next) return { error: 'no_next_stage' }
 
   const { error: updErr } = await supabase
     .from('applications')
-    .update({ kanban_stage: next })
+    .update({ kanban_stage: toDbStage(next) })
     .eq('id', applicationId)
-  return { error: updErr?.message ?? null }
+  if (updErr) return { error: updErr.message }
+
+  await instantiateTemplatesForStage(applicationId, next)
+  return { error: null }
+}
+
+/**
+ * Given the current stage and the set of enabled active stages, returns the
+ * next enabled stage in semantic order. Terminal stages (hired, rejected, etc.)
+ * are never returned — advance into terminal happens via dedicated mutations.
+ */
+export function computeNextEnabledStage(
+  current: KanbanStage,
+  enabledActive: KanbanStage[]
+): KanbanStage | null {
+  const activeOrder: KanbanStage[] = ['screening', 'assessment', 'interview', 'offer']
+  const idx = activeOrder.indexOf(current)
+  if (idx < 0) return null
+  const enabledSet = new Set(enabledActive)
+  for (let i = idx + 1; i < activeOrder.length; i++) {
+    if (enabledSet.has(activeOrder[i])) return activeOrder[i]
+  }
+  return null
 }
 
 export async function setApplicantStage(
@@ -411,15 +498,26 @@ export async function setApplicantStage(
 ): Promise<{ error: string | null }> {
   const { error } = await supabase
     .from('applications')
-    .update({ kanban_stage: stage })
+    .update({ kanban_stage: toDbStage(stage) })
     .eq('id', applicationId)
-  return { error: error?.message ?? null }
+  if (error) return { error: error.message }
+
+  await instantiateTemplatesForStage(applicationId, stage)
+  return { error: null }
 }
 
 export async function rejectApplicant(applicationId: string): Promise<{ error: string | null }> {
   const { error } = await supabase
     .from('applications')
-    .update({ kanban_stage: 'rejected' })
+    .update({ kanban_stage: toDbStage('rejected') })
+    .eq('id', applicationId)
+  return { error: error?.message ?? null }
+}
+
+export async function archiveApplicant(applicationId: string): Promise<{ error: string | null }> {
+  const { error } = await supabase
+    .from('applications')
+    .update({ kanban_stage: toDbStage('archived') })
     .eq('id', applicationId)
   return { error: error?.message ?? null }
 }
@@ -427,7 +525,7 @@ export async function rejectApplicant(applicationId: string): Promise<{ error: s
 export async function hireApplicant(applicationId: string): Promise<{ error: string | null }> {
   const { error } = await supabase
     .from('applications')
-    .update({ kanban_stage: 'hired' })
+    .update({ kanban_stage: toDbStage('hired') })
     .eq('id', applicationId)
   return { error: error?.message ?? null }
 }
@@ -437,9 +535,9 @@ export async function rejectApplicants(
 ): Promise<{ affected: number; error: string | null }> {
   const { data, error } = await supabase
     .from('applications')
-    .update({ kanban_stage: 'rejected' })
+    .update({ kanban_stage: toDbStage('rejected') })
     .in('id', applicationIds)
-    .neq('kanban_stage', 'rejected')
+    .neq('kanban_stage', toDbStage('rejected'))
     .select('id')
   if (error) return { affected: 0, error: error.message }
   return { affected: data?.length ?? 0, error: null }

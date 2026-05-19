@@ -9,7 +9,7 @@
 }
 
 .panel {
-  width: 460px;
+  width: 480px;
   max-width: 100%;
   height: 100vh;
   background: var(--kt-surface);
@@ -40,25 +40,23 @@
   }
 }
 
-/* ── Hero ────────────────────────────────────────────────────────────────── */
+/* ── Identity header ─────────────────────────────────────────────────────── */
 
 .hero {
-  padding: 16px 20px 20px;
+  padding: 16px 20px 14px;
   border-bottom: 1px solid var(--kt-border);
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+  flex-shrink: 0;
 }
 
 .heroTop {
   display: flex;
-  gap: 14px;
+  gap: 12px;
   align-items: flex-start;
 }
 
 .avatar {
-  width: 64px;
-  height: 64px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
   background: var(--kt-primary);
   color: var(--kt-primary-fg);
@@ -66,9 +64,8 @@
   align-items: center;
   justify-content: center;
   font-weight: var(--kt-weight-bold);
-  font-size: var(--kt-text-lg);
+  font-size: var(--kt-text-base);
   flex-shrink: 0;
-  box-shadow: var(--kt-shadow-sm);
 }
 
 .identityText {
@@ -85,7 +82,7 @@
 }
 
 .fullName {
-  font-size: var(--kt-text-lg);
+  font-size: var(--kt-text-base);
   font-weight: var(--kt-weight-bold);
   color: var(--kt-text);
   margin: 0;
@@ -95,7 +92,7 @@
 .trade {
   font-size: var(--kt-text-sm);
   color: var(--kt-text-muted);
-  margin: 0 0 4px;
+  margin: 0 0 2px;
 }
 
 .jobRef {
@@ -109,81 +106,288 @@
   font-weight: var(--kt-weight-semibold);
 }
 
-/* ── Action row ──────────────────────────────────────────────────────────── */
-
-.actionRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
-}
-
-.iconActions {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-/* ── Icon buttons ────────────────────────────────────────────────────────── */
-
-.iconBtn {
+.closeBtn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   border: none;
   border-radius: var(--kt-radius-md);
   background: transparent;
   color: var(--kt-text-muted);
   cursor: pointer;
+  flex-shrink: 0;
   transition:
     background var(--kt-duration-fast) var(--kt-ease),
     color var(--kt-duration-fast) var(--kt-ease);
 }
 
-.iconBtn:hover {
+.closeBtn:hover {
   background: var(--kt-secondary);
   color: var(--kt-text);
 }
 
-.iconBtnActive {
+/* ── Persistent action bar ───────────────────────────────────────────────── */
+
+.actionBar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--kt-border);
+  background: var(--kt-bg-subtle);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.actionBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 12px;
+  height: 30px;
+  font-size: var(--kt-text-sm);
+  font-weight: var(--kt-weight-semibold);
+  font-family: var(--kt-font-sans);
+  border-radius: var(--kt-radius-md);
+  border: 1px solid var(--kt-border);
+  background: var(--kt-surface);
+  color: var(--kt-text);
+  cursor: pointer;
+  transition: background var(--kt-duration-fast) var(--kt-ease);
+  white-space: nowrap;
+}
+
+.actionBtn:hover {
+  background: var(--kt-secondary);
+}
+
+.actionBtnPrimary {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 12px;
+  height: 30px;
+  font-size: var(--kt-text-sm);
+  font-weight: var(--kt-weight-semibold);
+  font-family: var(--kt-font-sans);
+  border-radius: var(--kt-radius-md);
+  border: none;
+  background: var(--kt-primary);
+  color: var(--kt-primary-fg);
+  cursor: pointer;
+  transition: opacity var(--kt-duration-fast) var(--kt-ease);
+  white-space: nowrap;
+}
+
+.actionBtnPrimary:hover {
+  opacity: 0.9;
+}
+
+.actionBtnActive {
+  background: var(--kt-warning-subtle);
+  border-color: transparent;
   color: var(--kt-text);
 }
 
-/* ── Body wrapper (scroll container around shared ApplicantPreviewBody) ── */
+.stageMenu {
+  position: fixed;
+  z-index: 1100;
+  min-width: 220px;
+  background: var(--kt-surface);
+  border: 1px solid var(--kt-border);
+  border-radius: var(--kt-radius-md);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
+  padding: 6px 0;
+  display: flex;
+  flex-direction: column;
+}
 
-.bodyWrap {
+.stageMenuSection {
+  font-size: 11px;
+  font-weight: var(--kt-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--kt-text-muted);
+  padding: 8px 14px 4px;
+}
+
+.stageMenuItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  background: transparent;
+  border: none;
+  text-align: left;
+  font-size: var(--kt-text-sm);
+  color: var(--kt-text);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.stageMenuItem:hover:not(:disabled) {
+  background: var(--kt-surface-raised);
+}
+
+.stageMenuItem:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.stageMenuItemCurrent {
+  font-weight: var(--kt-weight-semibold);
+}
+
+.stageMenuItemDanger {
+  color: var(--kt-danger);
+}
+
+.stageMenuCurrentLabel {
+  font-size: 11px;
+  color: var(--kt-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.stageMenuDivider {
+  height: 1px;
+  background: var(--kt-border);
+  margin: 4px 0;
+}
+
+.actionBtnDanger {
+  color: var(--kt-danger);
+  border-color: var(--kt-danger-subtle);
+}
+
+.actionBtnDanger:hover {
+  background: var(--kt-danger-subtle);
+}
+
+/* ── Tab strip ───────────────────────────────────────────────────────────── */
+
+.tabStrip {
+  display: flex;
+  border-bottom: 1px solid var(--kt-border);
+  flex-shrink: 0;
+}
+
+.tab {
+  padding: 0 16px;
+  height: 40px;
+  font-size: 13px;
+  font-weight: var(--kt-weight-medium);
+  font-family: var(--kt-font-sans);
+  color: var(--kt-text-muted);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: color var(--kt-duration-fast) var(--kt-ease);
+  white-space: nowrap;
+}
+
+.tab:hover {
+  color: var(--kt-text);
+}
+
+.tabActive {
+  color: var(--kt-text);
+  font-weight: var(--kt-weight-semibold);
+  border-bottom-color: var(--kt-navy-500);
+}
+
+/* ── Tab content ─────────────────────────────────────────────────────────── */
+
+.tabContent {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Summary tab — scrollable body */
+
+.summaryScroll {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: 4px 20px 24px;
+  padding: 4px 20px 0;
+  display: flex;
+  flex-direction: column;
 }
 
-/* ── Footer ──────────────────────────────────────────────────────────────── */
-
-.footer {
+.summaryFooter {
   border-top: 1px solid var(--kt-border);
-  padding: 12px 20px;
-  background: var(--kt-bg-subtle);
+  padding: 12px 0;
+  margin-top: auto;
 }
 
 .viewFullLink {
   font-size: var(--kt-text-sm);
-  color: var(--kt-primary);
+  color: var(--kt-navy-500);
   text-decoration: none;
-  font-weight: var(--kt-weight-semibold);
+  font-weight: var(--kt-weight-bold);
 }
 
 .viewFullLink:hover {
   text-decoration: underline;
 }
 
+/* ── Modal helpers ───────────────────────────────────────────────────────── */
+
+.modalBody {
+  font-size: var(--kt-text-sm);
+  color: var(--kt-text);
+  margin: 0;
+  line-height: 1.6;
+}
+
+.modalBtnSecondary {
+  padding: 0 16px;
+  height: 34px;
+  font-size: var(--kt-text-sm);
+  font-weight: var(--kt-weight-semibold);
+  font-family: var(--kt-font-sans);
+  border: 1px solid var(--kt-border);
+  border-radius: var(--kt-radius-md);
+  background: var(--kt-surface);
+  color: var(--kt-text);
+  cursor: pointer;
+}
+
+.modalBtnDanger {
+  padding: 0 16px;
+  height: 34px;
+  font-size: var(--kt-text-sm);
+  font-weight: var(--kt-weight-semibold);
+  font-family: var(--kt-font-sans);
+  border: none;
+  border-radius: var(--kt-radius-md);
+  background: var(--kt-danger);
+  color: #fff;
+  cursor: pointer;
+}
+
+.modalBtnPrimary {
+  padding: 0 16px;
+  height: 34px;
+  font-size: var(--kt-text-sm);
+  font-weight: var(--kt-weight-semibold);
+  font-family: var(--kt-font-sans);
+  border: none;
+  border-radius: var(--kt-radius-md);
+  background: var(--kt-primary);
+  color: var(--kt-primary-fg);
+  cursor: pointer;
+}
+
 /* Mobile — full-screen sheet */
 @media (max-width: 640px) {
   .panel {
     width: 100%;
-    height: 100vh;
     border-left: none;
   }
 }
