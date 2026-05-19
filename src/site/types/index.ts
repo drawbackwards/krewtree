@@ -253,50 +253,34 @@ export type Notification = {
   link: string
 }
 
-// ---- Kanban Applicant ----
-// Semantic stage types per spec. Active: screening | assessment | interview | offer.
-// Terminal: hired | rejected | withdrawn | archived.
-export type KanbanStage =
-  | 'screening'
-  | 'assessment'
-  | 'interview'
-  | 'offer'
-  | 'hired'
-  | 'rejected'
-  | 'withdrawn'
-  | 'archived'
+// ---- Application status (pipeline-foundation spec) ----
+// Active applications have status='active' and a current_stage_id pointing to
+// a stage UUID in the job's pipeline snapshot. Terminal states record how the
+// application ended — the stage that was active at that moment is preserved in
+// current_stage_id for history but the application is no longer "in" a stage.
+export type ApplicationStatus =
+  | 'active'
+  | 'terminal_hired'
+  | 'terminal_rejected'
+  | 'terminal_withdrawn'
+  | 'terminal_archived'
+
 export type SlaState = 'none' | 'approaching' | 'breached'
 
-export type KanbanApplicant = {
-  id: string
-  workerId: string
-  workerName: string
-  workerInitials: string
-  isRegulixReady: boolean
-  performanceScore: number | null
-  jobId: string
-  jobTitle: string
-  stage: KanbanStage
-  appliedDaysAgo: number
-  notes: string
-}
-
 // ---- Company Applicant (for cross-job pipeline views) ----
-// Richer applicant record used by the company dashboard widget and the
-// /site/dashboard/applicants page. Extends the kanban shape with fields the
-// pipeline views need: avatar, full name, match score, shortlist state, etc.
+// Used by the company dashboard widget and /site/dashboard/applicants.
 export type CompanyApplicant = {
   id: string // application id
   workerId: string
   workerFirstName: string
-  workerLastInitial: string // single character
+  workerLastInitial: string
   workerFullName: string
-  workerAvatar: string // url or empty string (falls back to initials)
+  workerAvatar: string // url or empty string
   workerInitials: string
   workerPrimaryTrade: string
   workerLocation: string
   workerAvailability: 'available' | 'limited' | 'unavailable'
-  workerTopSkills: string[] // max 5
+  workerTopSkills: string[]
   workerCertifications: Array<{ name: string; issuer: string; expiresOn: string | null }>
   workerJobHistory: Array<{ employer: string; title: string; duration: string }>
   workerRating: number | null
@@ -306,18 +290,33 @@ export type CompanyApplicant = {
   jobId: string
   jobTitle: string
   jobStatus: Job['status']
-  stage: KanbanStage
+  // Stage identity — UUID from the job's pipeline snapshot
+  currentStageId: string
+  currentStageName: string
+  status: ApplicationStatus
   matchScore: number // 0–100
   matchBreakdown: { skills: number; location: number; availability: number }
   isRegulixReady: boolean
   isShortlisted: boolean
-  currentStageName: string
   appliedAt: string // ISO
   stageEnteredAt: string | null
   slaState: SlaState
   flagged: boolean
   notes: Array<{ text: string; authorName: string; createdAt: string }>
   preInterviewAnswers?: Array<{ question: string; answer: string }>
+}
+
+// Convenience: human-readable label for a terminal status
+export const TERMINAL_LABEL: Record<ApplicationStatus, string> = {
+  active: 'Active',
+  terminal_hired: 'Hired',
+  terminal_rejected: 'Rejected',
+  terminal_withdrawn: 'Withdrawn',
+  terminal_archived: 'Archived',
+}
+
+export function isTerminal(status: ApplicationStatus): boolean {
+  return status !== 'active'
 }
 
 // ---- Pipeline task system ----

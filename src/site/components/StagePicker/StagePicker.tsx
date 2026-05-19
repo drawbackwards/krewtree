@@ -1,39 +1,20 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import type { KanbanStage } from '../../types'
+import type { PipelineStage } from '../../services/pipelineService'
 import { ChevronDownIcon } from '../../icons'
 import styles from './StagePicker.module.css'
 
-const STAGE_LABEL: Record<KanbanStage, string> = {
-  screening: 'Screening',
-  assessment: 'Assessment',
-  interview: 'Interview',
-  offer: 'Offer',
-  hired: 'Hired',
-  rejected: 'Rejected',
-  withdrawn: 'Withdrawn',
-  archived: 'Archived',
-}
-
-const ACTIVE_STAGES: KanbanStage[] = ['screening', 'assessment', 'interview', 'offer', 'hired']
-
-export interface StageOption {
-  value: KanbanStage
-  label: string
-}
-
 export interface StagePickerProps {
-  stage: KanbanStage
-  currentLabel?: string
-  /** When provided, replaces the hardcoded stage list in the dropdown. */
-  stages?: StageOption[]
-  onChange: (stage: KanbanStage) => void
+  currentStageId: string
+  currentStageName: string
+  stages: PipelineStage[]
+  onChange: (stageId: string) => void
   size?: 'sm' | 'md'
 }
 
 export const StagePicker: React.FC<StagePickerProps> = ({
-  stage,
-  currentLabel,
+  currentStageId,
+  currentStageName,
   stages,
   onChange,
   size = 'md',
@@ -62,9 +43,9 @@ export const StagePicker: React.FC<StagePickerProps> = ({
     return () => document.removeEventListener('mousedown', h)
   }, [open])
 
-  const pick = (next: KanbanStage) => {
+  const pick = (stageId: string) => {
     setOpen(false)
-    if (next !== stage) onChange(next)
+    if (stageId !== currentStageId) onChange(stageId)
   }
 
   return (
@@ -73,11 +54,11 @@ export const StagePicker: React.FC<StagePickerProps> = ({
         ref={btnRef}
         type="button"
         onClick={handleToggle}
-        className={[styles.stageBtn, styles[`stage_${stage}`], styles[size]].join(' ')}
+        className={[styles.stageBtn, styles.stageActive, styles[size]].join(' ')}
         aria-haspopup="menu"
         aria-expanded={open}
       >
-        <span className={styles.label}>{currentLabel ?? STAGE_LABEL[stage]}</span>
+        <span className={styles.label}>{currentStageName}</span>
         <ChevronDownIcon size={size === 'sm' ? 10 : 12} />
       </button>
       {open &&
@@ -88,30 +69,19 @@ export const StagePicker: React.FC<StagePickerProps> = ({
             role="menu"
             style={{ top: pos.top, left: pos.left, minWidth: pos.width }}
           >
-            {(stages ?? ACTIVE_STAGES.map((s) => ({ value: s, label: STAGE_LABEL[s] }))).map(
-              (opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  role="menuitem"
-                  onClick={() => pick(opt.value)}
-                  className={[styles.item, opt.value === stage ? styles.itemCurrent : '']
-                    .filter(Boolean)
-                    .join(' ')}
-                >
-                  {opt.label}
-                </button>
-              )
-            )}
-            <div className={styles.divider} />
-            <button
-              type="button"
-              role="menuitem"
-              onClick={() => pick('rejected')}
-              className={[styles.item, styles.itemDanger].join(' ')}
-            >
-              {STAGE_LABEL.rejected}
-            </button>
+            {stages.map((s) => (
+              <button
+                key={s.id}
+                type="button"
+                role="menuitem"
+                onClick={() => pick(s.id)}
+                className={[styles.item, s.id === currentStageId ? styles.itemCurrent : '']
+                  .filter(Boolean)
+                  .join(' ')}
+              >
+                {s.name}
+              </button>
+            ))}
           </div>,
           document.body
         )}

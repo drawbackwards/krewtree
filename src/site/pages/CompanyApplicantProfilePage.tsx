@@ -24,7 +24,8 @@ import {
   setApplicantStage,
   shortlistApplicant,
 } from '../services/applicantService'
-import type { CompanyApplicant, KanbanStage } from '../types'
+import { getPipelineStages, type PipelineStage } from '../services/pipelineService'
+import type { CompanyApplicant } from '../types'
 import { INDUSTRIES } from '../data/industries'
 import styles from './CompanyApplicantProfilePage.module.css'
 
@@ -151,6 +152,7 @@ export const CompanyApplicantProfilePage: React.FC = () => {
 
   const [profile, setProfile] = useState<FullWorkerProfile | null>(null)
   const [applications, setApplications] = useState<CompanyApplicant[]>([])
+  const [stages, setStages] = useState<PipelineStage[]>([])
   const [loading, setLoading] = useState(true)
   const [fetchError, setFetchError] = useState<string | null>(null)
   const [showPast, setShowPast] = useState(false)
@@ -158,6 +160,9 @@ export const CompanyApplicantProfilePage: React.FC = () => {
 
   const load = useCallback(() => {
     if (!workerId || !user?.id) return
+    getPipelineStages(user.id).then(({ data }) => {
+      setStages([...data].sort((a, b) => a.sortOrder - b.sortOrder))
+    })
     Promise.all([
       getFullWorkerProfile(workerId),
       getWorkerApplicationsAtCompany(workerId, user.id),
@@ -189,8 +194,8 @@ export const CompanyApplicantProfilePage: React.FC = () => {
     return (meta.company_name as string) || (meta.first_name as string) || user?.email || 'Unknown'
   }
 
-  const handleStageChange = async (appId: string, stage: KanbanStage) => {
-    await setApplicantStage(appId, stage)
+  const handleStageChange = async (appId: string, stageId: string) => {
+    await setApplicantStage(appId, stageId)
     load()
   }
 
@@ -252,9 +257,9 @@ export const CompanyApplicantProfilePage: React.FC = () => {
     {}
   )
 
-  // ── Split applications: active vs past (hired + rejected) ─────────────────
-  const activeApps = applications.filter((a) => a.stage !== 'hired' && a.stage !== 'rejected')
-  const pastApps = applications.filter((a) => a.stage === 'hired' || a.stage === 'rejected')
+  // ── Split applications: active vs past (terminal) ─────────────────────────
+  const activeApps = applications.filter((a) => a.status === 'active')
+  const pastApps = applications.filter((a) => a.status !== 'active')
 
   return (
     <div className={styles.page}>
@@ -275,8 +280,9 @@ export const CompanyApplicantProfilePage: React.FC = () => {
                 <ApplicationRow
                   key={app.id}
                   applicant={app}
+                  stages={stages}
                   onOpen={() => setOpenAppId(app.id)}
-                  onStageChange={(stage) => handleStageChange(app.id, stage)}
+                  onStageChange={(stageId) => handleStageChange(app.id, stageId)}
                 />
               ))}
               {pastApps.length > 0 && (
@@ -286,8 +292,9 @@ export const CompanyApplicantProfilePage: React.FC = () => {
                       <ApplicationRow
                         key={app.id}
                         applicant={app}
+                        stages={stages}
                         onOpen={() => setOpenAppId(app.id)}
-                        onStageChange={(stage) => handleStageChange(app.id, stage)}
+                        onStageChange={(stageId) => handleStageChange(app.id, stageId)}
                       />
                     ))}
                   <button
@@ -828,8 +835,9 @@ export const CompanyApplicantProfilePage: React.FC = () => {
       {/* Application details modal — mirrors QuickApplyModal's company-side shape */}
       <ApplicationDetailsModal
         applicant={applications.find((a) => a.id === openAppId) ?? null}
+        stages={stages}
         onClose={() => setOpenAppId(null)}
-        onStageChange={(appId, stage) => handleStageChange(appId, stage)}
+        onStageChange={(appId, stageId) => handleStageChange(appId, stageId)}
         onAddNote={(appId, text) => handleAddNote(appId, text)}
       />
     </div>
@@ -840,9 +848,10 @@ export const CompanyApplicantProfilePage: React.FC = () => {
 
 const ApplicationRow: React.FC<{
   applicant: CompanyApplicant
+  stages: PipelineStage[]
   onOpen: () => void
-  onStageChange: (stage: KanbanStage) => void
-}> = ({ applicant, onOpen, onStageChange }) => {
+  onStageChange: (stageId: string) => void
+}> = ({ applicant, stages, onOpen, onStageChange }) => {
   const appliedDate = new Date(applicant.appliedAt).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
@@ -879,7 +888,13 @@ const ApplicationRow: React.FC<{
           onKeyDown={(e) => e.stopPropagation()}
           role="presentation"
         >
-          <StagePicker stage={applicant.stage} onChange={onStageChange} size="sm" />
+          <StagePicker
+            currentStageId={applicant.currentStageId}
+            currentStageName={applicant.currentStageName}
+            stages={stages}
+            onChange={onStageChange}
+            size="sm"
+          />
         </span>
       </div>
       <OpenModalIcon size={14} />
@@ -910,10 +925,11 @@ const OpenModalIcon: React.FC<{ size?: number }> = ({ size = 14 }) => (
 
 const ApplicationDetailsModal: React.FC<{
   applicant: CompanyApplicant | null
+  stages: PipelineStage[]
   onClose: () => void
-  onStageChange: (appId: string, stage: KanbanStage) => void
+  onStageChange: (appId: string, stageId: string) => void
   onAddNote: (appId: string, text: string) => Promise<void>
-}> = ({ applicant, onClose, onStageChange, onAddNote }) => {
+}> = ({ applicant, stages, onClose, onStageChange, onAddNote }) => {
   const [draft, setDraft] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
@@ -951,8 +967,10 @@ const ApplicationDetailsModal: React.FC<{
       description={`Applied ${appliedDate}`}
       headerExtra={
         <StagePicker
-          stage={applicant.stage}
-          onChange={(stage) => onStageChange(applicant.id, stage)}
+          currentStageId={applicant.currentStageId}
+          currentStageName={applicant.currentStageName}
+          stages={stages}
+          onChange={(stageId) => onStageChange(applicant.id, stageId)}
         />
       }
     >

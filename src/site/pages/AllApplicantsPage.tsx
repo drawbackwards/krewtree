@@ -3,15 +3,13 @@ import { createPortal } from 'react-dom'
 import { Link, useSearchParams } from 'react-router-dom'
 import { Modal } from '../../components'
 import { useAuth } from '../context/AuthContext'
-import type { CompanyApplicant, KanbanStage } from '../types'
+import type { CompanyApplicant } from '../types'
 import {
   getAllApplicants,
   getJobFilterOptions,
-  advanceApplicantStage,
-  advanceApplicants,
+  advanceApplicant,
+  bulkReject,
   rejectApplicant,
-  rejectApplicants,
-  setApplicantStage,
   shortlistApplicant,
   shortlistApplicants,
   addApplicantNote,
@@ -28,22 +26,15 @@ import {
   SearchIcon,
   SortIcon,
 } from '../icons'
+import { getPipelineStages } from '../services/pipelineService'
 import { StagePill } from '../components/StagePill/StagePill'
 import { ApplicantSlideover } from '../components/ApplicantSlideover/ApplicantSlideover'
 import { WidgetKanbanView } from '../components/ApplicantsWidget/WidgetKanbanView'
 import styles from './AllApplicantsPage.module.css'
 
-const STAGE_OPTIONS: Array<{ value: KanbanStage | 'all'; label: string }> = [
-  { value: 'all', label: 'All stages' },
-  { value: 'screening', label: 'Screening' },
-  { value: 'assessment', label: 'Assessment' },
-  { value: 'interview', label: 'Interview' },
-  { value: 'offer', label: 'Offer' },
-  { value: 'hired', label: 'Hired' },
-  { value: 'rejected', label: 'Rejected' },
-  { value: 'withdrawn', label: 'Withdrawn' },
-  { value: 'archived', label: 'Archived' },
-]
+// Stage options populated dynamically from pipeline stages — see stageOptions state below.
+// Keeping a static fallback for the "all" sentinel.
+const ALL_STAGES_OPTION = { value: 'all', label: 'All stages' }
 
 const PAGE_SIZES = [25, 50, 100]
 
@@ -120,7 +111,7 @@ const OverflowMenu: React.FC<{ items: OverflowItem[] }> = ({ items }) => {
 // ── Helpers ────────────────────────────────────────────────────────────────
 
 function initFiltersFromParams(params: URLSearchParams): ApplicantFilters {
-  const stage = params.get('stage') as KanbanStage | null
+  const stageId = params.get('stage')
   const jobId = params.get('job')
   const regulix = params.get('regulix') === '1'
   const from = params.get('from')
@@ -130,7 +121,7 @@ function initFiltersFromParams(params: URLSearchParams): ApplicantFilters {
   return {
     ...DEFAULT_FILTERS,
     search,
-    stage: stage ?? 'all',
+    stageId: stageId ?? 'all',
     jobId: jobId ?? 'all',
     regulixOnly: regulix,
     appliedFrom: from ?? null,
@@ -161,6 +152,7 @@ export const AllApplicantsPage: React.FC = () => {
   const [rows, setRows] = useState<CompanyApplicant[]>([])
   const [total, setTotal] = useState(0)
   const [jobOptions, setJobOptions] = useState<Array<{ id: string; title: string }>>([])
+  const [stageOptions, setStageOptions] = useState<Array<{ id: string; name: string }>>([])
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [open, setOpen] = useState<CompanyApplicant | null>(null)
   const [confirmBulkReject, setConfirmBulkReject] = useState(false)
@@ -170,7 +162,7 @@ export const AllApplicantsPage: React.FC = () => {
     const params: Record<string, string> = {}
     if (view !== 'list') params.view = view
     if (filters.search) params.search = filters.search
-    if (filters.stage !== 'all') params.stage = filters.stage
+    if (filters.stageId !== 'all') params.stage = filters.stageId
     if (filters.jobId !== 'all') params.job = filters.jobId
     if (filters.regulixOnly) params.regulix = '1'
     if (filters.appliedFrom) params.from = filters.appliedFrom
@@ -194,6 +186,7 @@ export const AllApplicantsPage: React.FC = () => {
   useEffect(() => {
     if (!user?.id) return
     getJobFilterOptions(user.id).then(({ data }) => setJobOptions(data))
+    getPipelineStages(user.id).then(({ data }) => setStageOptions(data))
   }, [user?.id])
 
   // Clear selection when page/filters/sort change
@@ -249,19 +242,14 @@ export const AllApplicantsPage: React.FC = () => {
   }
 
   // ── Row actions ──────────────────────────────────────────────────────────
-  const handleAdvance = async (id: string) => {
-    await advanceApplicantStage(id)
+  const handleAdvance = async (id: string, currentStageId: string) => {
+    await advanceApplicant(id, currentStageId)
     if (open?.id === id) setOpen(null)
     load()
   }
   const handleReject = async (id: string) => {
     await rejectApplicant(id)
     if (open?.id === id) setOpen(null)
-    load()
-  }
-  const handleSetStage = async (id: string, stage: KanbanStage) => {
-    await setApplicantStage(id, stage)
-    if (open?.id === id) setOpen({ ...open, stage })
     load()
   }
   const handleShortlist = async (id: string) => {
@@ -287,7 +275,9 @@ export const AllApplicantsPage: React.FC = () => {
   const bulkApplicants = useMemo(() => rows.filter((r) => selected.has(r.id)), [rows, selected])
 
   const doBulkAdvance = async () => {
-    await advanceApplicants(bulkIds)
+    // Advance each selected applicant individually (no bulk-advance endpoint)
+    const selected = bulkApplicants
+    await Promise.all(selected.map((a) => advanceApplicant(a.id, a.currentStageId)))
     setSelected(new Set())
     load()
   }
@@ -298,7 +288,7 @@ export const AllApplicantsPage: React.FC = () => {
   }
   const doBulkMessage = () => handleMessage('__bulk__')
   const doBulkReject = async () => {
-    await rejectApplicants(bulkIds)
+    await bulkReject(bulkIds)
     setSelected(new Set())
     setConfirmBulkReject(false)
     load()
@@ -307,7 +297,7 @@ export const AllApplicantsPage: React.FC = () => {
   // ── Filter chips ─────────────────────────────────────────────────────────
   const hasFilters =
     !!filters.search ||
-    filters.stage !== 'all' ||
+    filters.stageId !== 'all' ||
     filters.jobId !== 'all' ||
     filters.regulixOnly ||
     !!filters.appliedFrom ||
@@ -317,9 +307,9 @@ export const AllApplicantsPage: React.FC = () => {
   const chips: Array<{ label: string; onRemove: () => void }> = []
   if (filters.search)
     chips.push({ label: `"${filters.search}"`, onRemove: () => updateFilter('search', '') })
-  if (filters.stage !== 'all') {
-    const stageLabel = STAGE_OPTIONS.find((o) => o.value === filters.stage)?.label ?? filters.stage
-    chips.push({ label: `Stage: ${stageLabel}`, onRemove: () => updateFilter('stage', 'all') })
+  if (filters.stageId !== 'all') {
+    const stageLabel = stageOptions.find((o) => o.id === filters.stageId)?.name ?? filters.stageId
+    chips.push({ label: `Stage: ${stageLabel}`, onRemove: () => updateFilter('stageId', 'all') })
   }
   if (filters.jobId !== 'all') {
     const job = jobOptions.find((j) => j.id === filters.jobId)
@@ -423,13 +413,14 @@ export const AllApplicantsPage: React.FC = () => {
           </div>
           {view === 'list' && (
             <select
-              value={filters.stage}
-              onChange={(e) => updateFilter('stage', e.target.value as KanbanStage | 'all')}
+              value={filters.stageId}
+              onChange={(e) => updateFilter('stageId', e.target.value)}
               className={styles.select}
             >
-              {STAGE_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
+              <option value={ALL_STAGES_OPTION.value}>{ALL_STAGES_OPTION.label}</option>
+              {stageOptions.map((o) => (
+                <option key={o.id} value={o.id}>
+                  {o.name}
                 </option>
               ))}
             </select>
@@ -480,7 +471,7 @@ export const AllApplicantsPage: React.FC = () => {
               .join(' ')}
             onClick={() => {
               updateFilter('showArchived', !filters.showArchived)
-              updateFilter('stage', 'all')
+              updateFilter('stageId', 'all')
             }}
           >
             {filters.showArchived ? 'Hide archived' : 'Show archived'}
@@ -616,10 +607,10 @@ export const AllApplicantsPage: React.FC = () => {
                   const overflowItems: OverflowItem[] = [
                     { label: 'View profile', onClick: () => setOpen(a) },
                   ]
-                  if (a.stage !== 'hired' && a.stage !== 'rejected') {
+                  if (a.status === 'active') {
                     overflowItems.push({
                       label: 'Advance stage',
-                      onClick: () => handleAdvance(a.id),
+                      onClick: () => handleAdvance(a.id, a.currentStageId),
                     })
                   }
                   overflowItems.push(
@@ -630,7 +621,7 @@ export const AllApplicantsPage: React.FC = () => {
                     },
                     { label: 'Add note', onClick: () => handleAddNote(a.id) }
                   )
-                  if (a.stage !== 'rejected') {
+                  if (a.status !== 'terminal_rejected') {
                     overflowItems.push({
                       label: 'Reject',
                       danger: true,
@@ -669,7 +660,7 @@ export const AllApplicantsPage: React.FC = () => {
                         </Link>
                       </div>
                       <div>
-                        <StagePill stage={a.stage} label={a.currentStageName} size="sm" />
+                        <StagePill label={a.currentStageName} status={a.status} size="sm" />
                       </div>
                       <div className={[styles.alignRight, styles.matchCell].join(' ')}>
                         {a.matchScore}%
@@ -762,9 +753,9 @@ export const AllApplicantsPage: React.FC = () => {
       <ApplicantSlideover
         applicant={open}
         onClose={() => setOpen(null)}
-        onSetStage={handleSetStage}
         onMessage={handleMessage}
         onShortlist={handleShortlist}
+        onChanged={load}
       />
 
       {/* Bulk reject confirmation */}

@@ -22,42 +22,19 @@
   height: 18px;
 }
 
-.screening {
+.active {
   background: var(--kt-info-subtle);
   color: var(--kt-info);
 }
 
-.assessment {
-  background: var(--kt-teal-subtle);
-  color: var(--kt-teal);
-}
-
-.withdrawn {
-  background: var(--kt-secondary);
-  color: var(--kt-text-muted);
-}
-
-.archived {
-  background: var(--kt-secondary);
-  color: var(--kt-text-muted);
-}
-
-.interview {
-  background: var(--kt-violet-subtle);
-  color: var(--kt-violet);
-}
-
-.offer {
-  background: var(--kt-warning-subtle);
-  color: var(--kt-warning);
-}
-
-.hired {
+.terminal_hired {
   background: var(--kt-success-subtle);
   color: var(--kt-success);
 }
 
-.rejected {
+.terminal_rejected,
+.terminal_withdrawn,
+.terminal_archived {
   background: var(--kt-secondary);
   color: var(--kt-text-muted);
 }

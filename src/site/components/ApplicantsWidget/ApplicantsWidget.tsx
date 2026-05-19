@@ -3,11 +3,10 @@ import { Link } from 'react-router-dom'
 import type { ApplicantsView } from '../../services/companyPreferenceService'
 import {
   getWidgetApplicants,
-  setApplicantStage,
   shortlistApplicant,
   DEFAULT_WIDGET_FILTERS,
 } from '../../services/applicantService'
-import type { CompanyApplicant, KanbanStage } from '../../types'
+import type { CompanyApplicant } from '../../types'
 import { ApplicantSlideover } from '../ApplicantSlideover/ApplicantSlideover'
 import { ApplicantListView } from './ApplicantListView'
 import { WidgetKanbanView } from './WidgetKanbanView'
@@ -40,14 +39,6 @@ export const ApplicantsWidget: React.FC<Props> = ({ view, onViewChange, companyI
   useEffect(() => {
     fetchApplicants()
   }, [fetchApplicants])
-
-  const handleSetStage = useCallback(
-    async (id: string, stage: KanbanStage) => {
-      await setApplicantStage(id, stage)
-      fetchApplicants()
-    },
-    [fetchApplicants]
-  )
 
   const handleShortlist = useCallback(async (id: string) => {
     await shortlistApplicant(id)
@@ -112,9 +103,9 @@ export const ApplicantsWidget: React.FC<Props> = ({ view, onViewChange, companyI
       <ApplicantSlideover
         applicant={selectedApplicant}
         onClose={() => setSelectedApplicant(null)}
-        onSetStage={handleSetStage}
         onMessage={() => {}}
         onShortlist={handleShortlist}
+        onChanged={fetchApplicants}
       />
     </>
   )

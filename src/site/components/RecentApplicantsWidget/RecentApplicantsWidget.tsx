@@ -92,7 +92,7 @@ export const RecentApplicantsWidget: React.FC<RecentApplicantsWidgetProps> = ({
                     </Link>
                   </div>
                   <div>
-                    <StagePill stage={a.stage} label={a.currentStageName} size="sm" />
+                    <StagePill label={a.currentStageName} status={a.status} size="sm" />
                   </div>
                   <div className={[styles.alignRight, styles.matchCell].join(' ')}>
                     {a.matchScore}%
@@ -114,16 +114,13 @@ export const RecentApplicantsWidget: React.FC<RecentApplicantsWidgetProps> = ({
       <ApplicantSlideover
         applicant={open}
         onClose={() => setOpen(null)}
-        onSetStage={(id, stage) => {
-          void id
-          void stage
-        }}
         onMessage={(id) => {
           void id
         }}
         onShortlist={(id) => {
           void id
         }}
+        onChanged={load}
       />
     </>
   )

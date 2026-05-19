@@ -9,40 +9,15 @@
 // handle both paths uniformly.
 // ============================================================
 
-import type { CompanyApplicant, KanbanStage } from '../types'
+import type { ApplicationStatus, CompanyApplicant } from '../types'
 import { supabase } from '../../lib/supabase'
 import type { Database } from '../../lib/database.types'
-import {
-  instantiateTemplatesForStage,
-  getEnabledStagesForApplication,
-  getCompanyStages,
-  computeSlaState,
-  type CompanyStage,
-  type TemplateStage,
-} from './pipelineService'
+import { getPipelineStages } from './pipelineService'
 
-// Active pipeline stages (exclude terminal).
-const ACTIVE_STAGES: KanbanStage[] = ['screening', 'assessment', 'interview', 'offer']
-
-const STAGE_DISPLAY: Record<string, string> = {
-  screening: 'Screening',
-  assessment: 'Assessment',
-  interview: 'Interview',
-  offer: 'Offer',
-  hired: 'Hired',
-  rejected: 'Rejected',
-  withdrawn: 'Withdrawn',
-  archived: 'Archived',
-}
-
-// DbStage mirrors the Postgres enum in applications.kanban_stage.
-// After migration 20260518000001 runs, DB values match KanbanStage 1:1 —
-// no translation needed; cast is safe.
-type DbStage = Database['public']['Tables']['applications']['Row']['kanban_stage']
-
-function toDbStage(s: KanbanStage): DbStage {
-  return s as unknown as DbStage
-}
+// `company_pipeline` and `pipeline_stage` are not yet in generated DB types.
+// Cast to bypass the type constraint when querying those tables.
+const _db = supabase as unknown as { from: (t: string) => ReturnType<typeof supabase.from> }
+void _db // suppress unused-variable lint; used indirectly via getPipelineStages
 
 // ── Types ─────────────────────────────────────────────────────────────────
 
@@ -50,7 +25,7 @@ export type ApplicantSort = 'applicant' | 'job' | 'match' | 'applied'
 
 export type ApplicantFilters = {
   search: string
-  stage: KanbanStage | 'all'
+  stageId: string | 'all'
   jobId: string | 'all'
   regulixOnly: boolean
   appliedFrom: string | null // ISO
@@ -60,7 +35,7 @@ export type ApplicantFilters = {
 
 export const DEFAULT_FILTERS: ApplicantFilters = {
   search: '',
-  stage: 'all',
+  stageId: 'all',
   jobId: 'all',
   regulixOnly: false,
   appliedFrom: null,
@@ -115,7 +90,6 @@ type JoinedApplicantRow = AppRow & {
   }>
 }
 
-/** Format YYYY-MM(-DD) as "Mon YYYY"; falls back to the raw string. */
 function formatMonthYear(d: string | null | undefined): string {
   if (!d) return ''
   const [yStr, mStr] = d.split('-')
@@ -135,45 +109,10 @@ function formatJobDuration(start: string | null, end: string | null, isCurrent: 
   return `${startLabel} – ${endLabel}`
 }
 
-/**
- * Convert a joined Supabase row into the UI-shaped CompanyApplicant.
- * Regulix ratings are null until the Regulix service is wired.
- * Match breakdown doubles up match_score into both skills and location slots
- * because the DB function stores only the aggregate — the UI still renders
- * a value in both pillars. Revisit if we split the column later.
- */
-type StageThresholds = Pick<CompanyStage, 'slaHoursApproaching' | 'slaHoursBreached'>
-type ThresholdMap = Map<TemplateStage, StageThresholds>
-
-async function loadThresholdMap(companyId: string): Promise<ThresholdMap> {
-  const { data } = await getCompanyStages(companyId)
-  const map = new Map<TemplateStage, StageThresholds>()
-  for (const s of data) {
-    map.set(s.stage, {
-      slaHoursApproaching: s.slaHoursApproaching,
-      slaHoursBreached: s.slaHoursBreached,
-    })
-  }
-  return map
-}
-
-function computeSlaForRow(
+function toCompanyApplicant(
   a: JoinedApplicantRow,
-  thresholds?: ThresholdMap
-): 'none' | 'approaching' | 'breached' {
-  if (!thresholds) return 'none'
-  const activeStages = ['screening', 'assessment', 'interview', 'offer']
-  if (!activeStages.includes(a.kanban_stage as string)) return 'none'
-  const t = thresholds.get(a.kanban_stage as TemplateStage)
-  if (!t) return 'none'
-  return computeSlaState(
-    a.status_updated_at ?? a.created_at,
-    t.slaHoursApproaching,
-    t.slaHoursBreached
-  )
-}
-
-function toCompanyApplicant(a: JoinedApplicantRow, thresholds?: ThresholdMap): CompanyApplicant {
+  stageNameMap: Map<string, string>
+): CompanyApplicant {
   const w = a.worker_profiles
   const j = a.jobs
   const first = w.first_name ?? ''
@@ -183,6 +122,9 @@ function toCompanyApplicant(a: JoinedApplicantRow, thresholds?: ThresholdMap): C
   const answers = Array.isArray(a.interview_answers)
     ? (a.interview_answers as Array<{ question: string; answer: string }>)
     : []
+
+  const currentStageId =
+    ((a as unknown as Record<string, unknown>).current_stage_id as string) ?? ''
 
   return {
     id: a.id,
@@ -214,10 +156,10 @@ function toCompanyApplicant(a: JoinedApplicantRow, thresholds?: ThresholdMap): C
         if (j1.is_current !== j2.is_current) return j1.is_current ? -1 : 1
         return (j2.start_date ?? '').localeCompare(j1.start_date ?? '')
       })
-      .map((j) => ({
-        employer: j.employer_name,
-        title: j.role_title,
-        duration: formatJobDuration(j.start_date, j.end_date, j.is_current),
+      .map((h) => ({
+        employer: h.employer_name,
+        title: h.role_title,
+        duration: formatJobDuration(h.start_date, h.end_date, h.is_current),
       })),
     workerRating: null,
     workerRatingCount: 0,
@@ -226,15 +168,16 @@ function toCompanyApplicant(a: JoinedApplicantRow, thresholds?: ThresholdMap): C
     jobId: j.id,
     jobTitle: j.title,
     jobStatus: j.status as CompanyApplicant['jobStatus'],
-    stage: a.kanban_stage as KanbanStage,
+    currentStageId,
+    currentStageName: stageNameMap.get(currentStageId) ?? '',
+    status: ((a as unknown as Record<string, unknown>).status as ApplicationStatus) ?? 'active',
     matchScore: a.match_score,
     matchBreakdown: { skills: a.match_score, location: a.match_score, availability: 0 },
     isRegulixReady: w.is_regulix_ready,
     isShortlisted: a.is_shortlisted,
-    currentStageName: STAGE_DISPLAY[a.kanban_stage ?? ''] ?? a.kanban_stage ?? '',
     appliedAt: a.created_at,
     stageEnteredAt: a.status_updated_at ?? a.created_at,
-    slaState: computeSlaForRow(a, thresholds),
+    slaState: 'none',
     flagged: false,
     notes: a.application_notes.map((n) => ({
       text: n.text,
@@ -243,6 +186,15 @@ function toCompanyApplicant(a: JoinedApplicantRow, thresholds?: ThresholdMap): C
     })),
     preInterviewAnswers: answers,
   }
+}
+
+async function buildStageNameMap(companyId: string): Promise<Map<string, string>> {
+  const { data } = await getPipelineStages(companyId)
+  const map = new Map<string, string>()
+  for (const s of data) {
+    map.set(s.id, s.name)
+  }
+  return map
 }
 
 const APPLICANT_SELECT = `
@@ -260,55 +212,56 @@ const APPLICANT_SELECT = `
 // ── Queries ───────────────────────────────────────────────────────────────
 
 /**
- * Dashboard widget: most recent applicants in active pipeline stages
- * (excludes hired and rejected). Sorted newest-applied first.
+ * Dashboard widget: most recent applicants in the active pipeline.
+ * Excludes terminal applications (hired, rejected, withdrawn, archived).
+ * Sorted newest-applied first.
  */
 export async function getRecentApplicants(
   companyId: string,
   limit = 5
 ): Promise<{ data: CompanyApplicant[]; error: string | null }> {
-  const [{ data, error }, thresholds] = await Promise.all([
+  const [{ data, error }, stageNameMap] = await Promise.all([
     supabase
       .from('applications')
       .select(APPLICANT_SELECT)
       .eq('jobs.company_id', companyId)
-      .in('kanban_stage', ACTIVE_STAGES as unknown as DbStage[])
+      .eq('status', 'active')
       .order('created_at', { ascending: false })
       .limit(limit),
-    loadThresholdMap(companyId),
+    buildStageNameMap(companyId),
   ])
 
   if (error) return { data: [], error: error.message }
   return {
     data: (data ?? []).map((row) =>
-      toCompanyApplicant(row as unknown as JoinedApplicantRow, thresholds)
+      toCompanyApplicant(row as unknown as JoinedApplicantRow, stageNameMap)
     ),
     error: null,
   }
 }
 
 /**
- * Pipeline kanban board: all applicants in active stages across all jobs
- * for the company. Flat list — caller groups by `stage` client-side.
+ * Pipeline kanban board: all active applicants across all jobs for the
+ * company. Flat list — caller groups by `currentStageId` client-side.
  * Newest-applied first.
  */
 export async function getKanbanApplicants(
   companyId: string
 ): Promise<{ data: CompanyApplicant[]; error: string | null }> {
-  const [{ data, error }, thresholds] = await Promise.all([
+  const [{ data, error }, stageNameMap] = await Promise.all([
     supabase
       .from('applications')
       .select(APPLICANT_SELECT)
       .eq('jobs.company_id', companyId)
-      .in('kanban_stage', ACTIVE_STAGES as unknown as DbStage[])
+      .eq('status', 'active')
       .order('created_at', { ascending: false }),
-    loadThresholdMap(companyId),
+    buildStageNameMap(companyId),
   ])
 
   if (error) return { data: [], error: error.message }
   return {
     data: (data ?? []).map((row) =>
-      toCompanyApplicant(row as unknown as JoinedApplicantRow, thresholds)
+      toCompanyApplicant(row as unknown as JoinedApplicantRow, stageNameMap)
     ),
     error: null,
   }
@@ -328,7 +281,7 @@ export const DEFAULT_WIDGET_FILTERS: WidgetFilters = {
 
 /**
  * Dashboard applicants widget: up to `limit` most recently active applicants
- * in active pipeline stages across all jobs, sorted by last-activity descending.
+ * across all jobs, sorted by last-activity descending.
  * Returns total pre-filter count for "+N more" affordances.
  */
 export async function getWidgetApplicants(
@@ -340,7 +293,7 @@ export async function getWidgetApplicants(
     .from('applications')
     .select(APPLICANT_SELECT, { count: 'exact' })
     .eq('jobs.company_id', companyId)
-    .in('kanban_stage', ACTIVE_STAGES)
+    .eq('status', 'active')
     .order('status_updated_at', { ascending: false })
     .order('created_at', { ascending: false })
     .limit(limit)
@@ -348,10 +301,15 @@ export async function getWidgetApplicants(
   if (filters.jobId !== 'all') q = q.eq('job_id', filters.jobId)
   if (filters.regulixOnly) q = q.eq('worker_profiles.is_regulix_ready', true)
 
-  const { data, error, count } = await q
+  const [{ data, error, count }, stageNameMap] = await Promise.all([
+    q,
+    buildStageNameMap(companyId),
+  ])
   if (error) return { data: [], total: 0, error: error.message }
 
-  let rows = (data ?? []).map((row) => toCompanyApplicant(row as unknown as JoinedApplicantRow))
+  let rows = (data ?? []).map((row) =>
+    toCompanyApplicant(row as unknown as JoinedApplicantRow, stageNameMap)
+  )
 
   if (filters.search) {
     const s = filters.search.toLowerCase()
@@ -365,9 +323,7 @@ export async function getWidgetApplicants(
 
 /**
  * Count applicants that arrived after the given ISO timestamp. Used to render
- * a "# since last login" badge on the dashboard. Counts across ALL stages so
- * freshly-submitted applicants that the employer already moved (reviewed,
- * interview, etc.) still contribute to the "new" count.
+ * a "# since last login" badge on the dashboard.
  */
 export async function countNewApplicantsSince(
   companyId: string,
@@ -402,7 +358,12 @@ export async function getAllApplicants(
     .select(APPLICANT_SELECT, { count: 'exact' })
     .eq('jobs.company_id', companyId)
 
-  if (filters.stage !== 'all') q = q.eq('kanban_stage', toDbStage(filters.stage as KanbanStage))
+  // When showArchived is false only show active applications; otherwise include all statuses.
+  if (!filters.showArchived) {
+    q = q.eq('status', 'active')
+  }
+
+  if (filters.stageId !== 'all') q = q.eq('current_stage_id', filters.stageId)
   if (filters.jobId !== 'all') q = q.eq('job_id', filters.jobId)
   if (filters.appliedFrom) q = q.gte('created_at', filters.appliedFrom)
   if (filters.appliedTo) q = q.lte('created_at', filters.appliedTo)
@@ -427,13 +388,16 @@ export async function getAllApplicants(
   const start = (page - 1) * pageSize
   q = q.range(start, start + pageSize - 1)
 
-  const { data, error, count } = await q
+  const [{ data, error, count }, stageNameMap] = await Promise.all([
+    q,
+    buildStageNameMap(companyId),
+  ])
   if (error) return { data: [], total: 0, error: error.message }
 
-  const thresholds = await loadThresholdMap(companyId)
   let rows = (data ?? []).map((row) =>
-    toCompanyApplicant(row as unknown as JoinedApplicantRow, thresholds)
+    toCompanyApplicant(row as unknown as JoinedApplicantRow, stageNameMap)
   )
+
   // NOTE: `total` (from the server) is pre-search; UI "N of M" may overcount
   // while a search term is active. TODO: push search server-side via .or(...).
   if (filters.search) {
@@ -447,15 +411,14 @@ export async function getAllApplicants(
 }
 
 /**
- * Convenience: unique (jobId, jobTitle) pairs across all applicants. Used to
- * populate the "Job" filter dropdown on the full page.
+ * Convenience: unique (jobId, jobTitle) pairs across all applicants for a
+ * company. Used to populate the "Job" filter dropdown on the full page.
  */
 export async function getJobFilterOptions(
   companyId: string
 ): Promise<{ data: Array<{ id: string; title: string }>; error: string | null }> {
-  // TODO: fetches one row per application to produce N distinct jobs — wasteful
-  // for companies with 1000s of applications. Move to an RPC or view
-  // (SELECT DISTINCT j.id, j.title FROM jobs j JOIN applications a ...) post-MVP.
+  // TODO: fetches one row per application — wasteful for large companies.
+  // Post-MVP: replace with an RPC or view (SELECT DISTINCT j.id, j.title FROM jobs j JOIN applications a ...).
   const { data, error } = await supabase
     .from('applications')
     .select('jobs!inner(id, title)')
@@ -478,28 +441,27 @@ export async function getJobFilterOptions(
 }
 
 /**
- * Company applicant profile page: all applications a given worker has filed
- * at this company, sorted newest-applied first. Used by the per-worker
- * company view so the header strip can list every job this worker applied to.
+ * Returns all applications a given worker has filed at this company.
+ * Sorted newest-applied first. Used by the per-worker company view.
  */
 export async function getWorkerApplicationsAtCompany(
   workerId: string,
   companyId: string
 ): Promise<{ data: CompanyApplicant[]; error: string | null }> {
-  const [{ data, error }, thresholds] = await Promise.all([
+  const [{ data, error }, stageNameMap] = await Promise.all([
     supabase
       .from('applications')
       .select(APPLICANT_SELECT)
       .eq('worker_id', workerId)
       .eq('jobs.company_id', companyId)
       .order('created_at', { ascending: false }),
-    loadThresholdMap(companyId),
+    buildStageNameMap(companyId),
   ])
 
   if (error) return { data: [], error: error.message }
   return {
     data: (data ?? []).map((row) =>
-      toCompanyApplicant(row as unknown as JoinedApplicantRow, thresholds)
+      toCompanyApplicant(row as unknown as JoinedApplicantRow, stageNameMap)
     ),
     error: null,
   }
@@ -507,80 +469,34 @@ export async function getWorkerApplicationsAtCompany(
 
 // ── Mutations ─────────────────────────────────────────────────────────────
 
-export async function advanceApplicantStage(
-  applicationId: string
-): Promise<{ error: string | null }> {
-  const { data, error } = await supabase
-    .from('applications')
-    .select('kanban_stage')
-    .eq('id', applicationId)
-    .single()
-  if (error) return { error: error.message }
-
-  const current = data.kanban_stage as KanbanStage
-  const terminal: KanbanStage[] = ['hired', 'rejected', 'withdrawn', 'archived']
-  if (terminal.includes(current)) return { error: 'cannot_advance' }
-
-  // Skip disabled stages: pick the next semantic stage that's enabled for this company.
-  const { data: enabledStages } = await getEnabledStagesForApplication(applicationId)
-  const next = computeNextEnabledStage(current, enabledStages)
-  if (!next) return { error: 'no_next_stage' }
-
-  const { error: updErr } = await supabase
-    .from('applications')
-    .update({ kanban_stage: toDbStage(next) })
-    .eq('id', applicationId)
-  if (updErr) return { error: updErr.message }
-
-  await instantiateTemplatesForStage(applicationId, next)
-  return { error: null }
-}
-
-/**
- * Given the current stage and the set of enabled active stages, returns the
- * next enabled stage in semantic order. Terminal stages (hired, rejected, etc.)
- * are never returned — advance into terminal happens via dedicated mutations.
- */
-export function computeNextEnabledStage(
-  current: KanbanStage,
-  enabledActive: KanbanStage[]
-): KanbanStage | null {
-  const activeOrder: KanbanStage[] = ['screening', 'assessment', 'interview', 'offer']
-  const idx = activeOrder.indexOf(current)
-  if (idx < 0) return null
-  const enabledSet = new Set(enabledActive)
-  for (let i = idx + 1; i < activeOrder.length; i++) {
-    if (enabledSet.has(activeOrder[i])) return activeOrder[i]
-  }
-  return null
-}
-
-export async function setApplicantStage(
+/** Move an applicant to the next stage by explicit stage UUID. */
+export async function advanceApplicant(
   applicationId: string,
-  stage: KanbanStage
+  nextStageId: string
 ): Promise<{ error: string | null }> {
   const { error } = await supabase
     .from('applications')
-    .update({ kanban_stage: toDbStage(stage) })
+    .update({ current_stage_id: nextStageId } as unknown as Record<string, unknown>)
     .eq('id', applicationId)
-  if (error) return { error: error.message }
+  return { error: error?.message ?? null }
+}
 
-  await instantiateTemplatesForStage(applicationId, stage)
-  return { error: null }
+/** Set an applicant's current stage to any arbitrary stage UUID. */
+export async function setApplicantStage(
+  applicationId: string,
+  stageId: string
+): Promise<{ error: string | null }> {
+  const { error } = await supabase
+    .from('applications')
+    .update({ current_stage_id: stageId } as unknown as Record<string, unknown>)
+    .eq('id', applicationId)
+  return { error: error?.message ?? null }
 }
 
 export async function rejectApplicant(applicationId: string): Promise<{ error: string | null }> {
   const { error } = await supabase
     .from('applications')
-    .update({ kanban_stage: toDbStage('rejected') })
-    .eq('id', applicationId)
-  return { error: error?.message ?? null }
-}
-
-export async function archiveApplicant(applicationId: string): Promise<{ error: string | null }> {
-  const { error } = await supabase
-    .from('applications')
-    .update({ kanban_stage: toDbStage('archived') })
+    .update({ status: 'terminal_rejected' } as unknown as Record<string, unknown>)
     .eq('id', applicationId)
   return { error: error?.message ?? null }
 }
@@ -588,38 +504,30 @@ export async function archiveApplicant(applicationId: string): Promise<{ error: 
 export async function hireApplicant(applicationId: string): Promise<{ error: string | null }> {
   const { error } = await supabase
     .from('applications')
-    .update({ kanban_stage: toDbStage('hired') })
+    .update({ status: 'terminal_hired' } as unknown as Record<string, unknown>)
     .eq('id', applicationId)
   return { error: error?.message ?? null }
 }
 
-export async function rejectApplicants(
+export async function archiveApplicant(applicationId: string): Promise<{ error: string | null }> {
+  const { error } = await supabase
+    .from('applications')
+    .update({ status: 'terminal_archived' } as unknown as Record<string, unknown>)
+    .eq('id', applicationId)
+  return { error: error?.message ?? null }
+}
+
+export async function bulkReject(
   applicationIds: string[]
 ): Promise<{ affected: number; error: string | null }> {
   const { data, error } = await supabase
     .from('applications')
-    .update({ kanban_stage: toDbStage('rejected') })
+    .update({ status: 'terminal_rejected' } as unknown as Record<string, unknown>)
     .in('id', applicationIds)
-    .neq('kanban_stage', toDbStage('rejected'))
+    .neq('status', 'terminal_rejected')
     .select('id')
   if (error) return { affected: 0, error: error.message }
   return { affected: data?.length ?? 0, error: null }
-}
-
-// N+1 round trips (1 SELECT + 1 UPDATE per id). Fine at current bulk sizes
-// (5-20). Post-MVP candidate for a Postgres RPC that advances via CASE in a
-// single statement.
-export async function advanceApplicants(
-  applicationIds: string[]
-): Promise<{ affected: number; failed: string[]; error: string | null }> {
-  let affected = 0
-  const failed: string[] = []
-  for (const id of applicationIds) {
-    const { error } = await advanceApplicantStage(id)
-    if (error) failed.push(id)
-    else affected += 1
-  }
-  return { affected, failed, error: failed.length > 0 ? 'partial_failure' : null }
 }
 
 export async function shortlistApplicant(

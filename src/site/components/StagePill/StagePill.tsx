@@ -1,28 +1,14 @@
 import React from 'react'
-import type { KanbanStage } from '../../types'
+import type { ApplicationStatus } from '../../types'
 import styles from './StagePill.module.css'
 
-const LABELS: Record<KanbanStage, string> = {
-  screening: 'Screening',
-  assessment: 'Assessment',
-  interview: 'Interview',
-  offer: 'Offer',
-  hired: 'Hired',
-  rejected: 'Rejected',
-  withdrawn: 'Withdrawn',
-  archived: 'Archived',
-}
-
 export interface StagePillProps {
-  stage: KanbanStage
-  label?: string
+  label: string
+  status?: ApplicationStatus
   size?: 'sm' | 'md'
 }
 
-export const StagePill: React.FC<StagePillProps> = ({ stage, label, size = 'md' }) => {
-  return (
-    <span className={[styles.pill, styles[stage], styles[size]].join(' ')}>
-      {label ?? LABELS[stage]}
-    </span>
-  )
+export const StagePill: React.FC<StagePillProps> = ({ label, status, size = 'md' }) => {
+  const variant = !status || status === 'active' ? 'active' : status
+  return <span className={[styles.pill, styles[variant], styles[size]].join(' ')}>{label}</span>
 }

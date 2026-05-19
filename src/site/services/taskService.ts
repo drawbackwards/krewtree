@@ -1,25 +1,7 @@
 import { supabase } from '../../lib/supabase'
-import type { KanbanStage } from '../types'
+import type { ApplicationTask } from '../types'
 
 // ── Types ──────────────────────────────────────────────────────────────────
-
-export type ApplicationTask = {
-  id: string
-  applicationId: string
-  stageType: KanbanStage
-  source: 'template' | 'ad_hoc'
-  templateTaskId: string | null
-  label: string
-  isRequired: boolean
-  completedAt: string | null
-  completedBy: string | null
-  skippedAt: string | null
-  skippedBy: string | null
-  notes: string | null
-  dueDate: string | null
-  displayOrder: number
-  createdAt: string
-}
 
 export type LogEntry = {
   id: string
@@ -33,22 +15,32 @@ export type LogEntry = {
 // ── Helpers ────────────────────────────────────────────────────────────────
 
 function toTask(row: Record<string, unknown>): ApplicationTask {
+  const completedAt = (row.completed_at as string | null) ?? null
+  const skippedAt = (row.skipped_at as string | null) ?? null
+  const state = completedAt ? 'completed' : skippedAt ? 'skipped' : 'incomplete'
+
   return {
     id: row.id as string,
     applicationId: row.application_id as string,
-    stageType: row.stage_type as KanbanStage,
+    stageId: row.stage_id as string,
     source: row.source as 'template' | 'ad_hoc',
     templateTaskId: (row.template_task_id as string | null) ?? null,
     label: row.label as string,
     isRequired: row.is_required as boolean,
-    completedAt: (row.completed_at as string | null) ?? null,
+    state,
+    completedAt,
     completedBy: (row.completed_by as string | null) ?? null,
-    skippedAt: (row.skipped_at as string | null) ?? null,
+    skippedAt,
     skippedBy: (row.skipped_by as string | null) ?? null,
     notes: (row.notes as string | null) ?? null,
     dueDate: (row.due_date as string | null) ?? null,
-    displayOrder: row.display_order as number,
+    order: row.display_order as number,
     createdAt: row.created_at as string,
+    messageSubject: (row.message_subject as string | null) ?? null,
+    messageBody: (row.message_body as string | null) ?? null,
+    calendarLink: (row.calendar_link as string | null) ?? null,
+    autoSend: (row.auto_send as boolean | null) ?? false,
+    messageSentAt: (row.message_sent_at as string | null) ?? null,
   }
 }
 
@@ -61,18 +53,21 @@ async function currentUserId(): Promise<string | null> {
 
 export async function getApplicationTasks(
   applicationId: string,
-  stageType: KanbanStage
+  stageId: string
 ): Promise<{ data: ApplicationTask[]; error: string | null }> {
   const { data, error } = await supabase
     .from('application_task')
     .select('*')
     .eq('application_id', applicationId)
-    .eq('stage_type', stageType as unknown as 'screening')
+    .eq('stage_id', stageId)
     .order('display_order', { ascending: true })
     .order('created_at', { ascending: true })
 
   if (error) return { data: [], error: error.message }
-  return { data: (data ?? []).map(toTask), error: null }
+  return {
+    data: (data ?? []).map((row) => toTask(row as unknown as Record<string, unknown>)),
+    error: null,
+  }
 }
 
 export async function completeTask(taskId: string): Promise<{ error: string | null }> {
@@ -155,7 +150,7 @@ export async function updateAdHocTask(
 
 export async function addAdHocTask(
   applicationId: string,
-  stageType: KanbanStage,
+  stageId: string,
   label: string,
   isRequired: boolean,
   dueDate?: string
@@ -164,7 +159,7 @@ export async function addAdHocTask(
     .from('application_task')
     .insert({
       application_id: applicationId,
-      stage_type: stageType as 'screening',
+      stage_id: stageId,
       source: 'ad_hoc',
       label,
       is_required: isRequired,
@@ -175,7 +170,7 @@ export async function addAdHocTask(
     .single()
 
   if (error) return { data: null, error: error.message }
-  return { data: toTask(data), error: null }
+  return { data: toTask(data as unknown as Record<string, unknown>), error: null }
 }
 
 export async function deleteTask(taskId: string): Promise<{ error: string | null }> {
@@ -187,13 +182,13 @@ export async function deleteTask(taskId: string): Promise<{ error: string | null
 
 export async function getStageNotes(
   applicationId: string,
-  stageType: KanbanStage
+  stageId: string
 ): Promise<{ notes: string; error: string | null }> {
   const { data, error } = await supabase
     .from('application_stage_notes')
     .select('notes')
     .eq('application_id', applicationId)
-    .eq('stage_type', stageType as unknown as 'screening')
+    .eq('stage_id', stageId)
     .maybeSingle()
 
   if (error) return { notes: '', error: error.message }
@@ -202,19 +197,19 @@ export async function getStageNotes(
 
 export async function saveStageNotes(
   applicationId: string,
-  stageType: KanbanStage,
+  stageId: string,
   notes: string
 ): Promise<{ error: string | null }> {
   const uid = await currentUserId()
   const { error } = await supabase.from('application_stage_notes').upsert(
     {
       application_id: applicationId,
-      stage_type: stageType,
+      stage_id: stageId,
       notes: notes || null,
       updated_by: uid,
       updated_at: new Date().toISOString(),
     },
-    { onConflict: 'application_id,stage_type' }
+    { onConflict: 'application_id,stage_id' }
   )
   return { error: error?.message ?? null }
 }

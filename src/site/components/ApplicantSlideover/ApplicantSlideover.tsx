@@ -1,45 +1,43 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
-import type { CompanyApplicant, KanbanStage } from '../../types'
+import type { CompanyApplicant, ApplicationStatus } from '../../types'
+import { isTerminal, TERMINAL_LABEL } from '../../types'
 import { CloseIcon, StarIcon, MessageIcon, ChevronDownIcon } from '../../icons'
 import { RegulixBadge } from '../RegulixBadge/RegulixBadge'
 import { Modal } from '../../../components'
 import { ApplicantPreviewBody } from '../ApplicantPreviewBody/ApplicantPreviewBody'
 import { PipelineTab } from './PipelineTab'
-import type { PipelineStageOption } from './PipelineTab'
 import { LogTab } from './LogTab'
-import { getStagesForApplication, getPipelineStages } from '../../services/pipelineService'
-import { archiveApplicant } from '../../services/applicantService'
+import { getPipelineStages, type PipelineStage } from '../../services/pipelineService'
+import {
+  setApplicantStage,
+  rejectApplicant,
+  hireApplicant,
+  archiveApplicant,
+} from '../../services/applicantService'
 import { useAuth } from '../../context/AuthContext'
 import styles from './ApplicantSlideover.module.css'
-
-// Positional order of active kanban_stage enum values — index 0 = first pipeline stage.
-const ACTIVE_ENUM_ORDER: KanbanStage[] = ['screening', 'assessment', 'interview', 'offer']
 
 type Tab = 'summary' | 'pipeline' | 'log'
 
 export interface ApplicantSlideoverProps {
   applicant: CompanyApplicant | null
   onClose: () => void
-  onSetStage: (id: string, stage: KanbanStage) => void
   onMessage: (id: string) => void
   onShortlist: (id: string) => void
   onReject?: (applicant: CompanyApplicant) => void
   onHire?: (applicant: CompanyApplicant) => void
-  onAdvance?: (applicant: CompanyApplicant) => void
   onChanged?: () => void
 }
 
 export const ApplicantSlideover: React.FC<ApplicantSlideoverProps> = ({
   applicant,
   onClose,
-  onSetStage,
   onMessage,
   onShortlist,
   onReject,
   onHire,
-  onAdvance,
   onChanged,
 }) => {
   const open = applicant !== null
@@ -48,38 +46,16 @@ export const ApplicantSlideover: React.FC<ApplicantSlideoverProps> = ({
   const [rejectConfirm, setRejectConfirm] = useState(false)
   const [hireConfirm, setHireConfirm] = useState(false)
   const [archiveConfirm, setArchiveConfirm] = useState(false)
-  const [enabledStages, setEnabledStages] = useState<KanbanStage[]>([
-    'screening',
-    'assessment',
-    'interview',
-    'offer',
-  ])
-  const [stageOptions, setStageOptions] = useState<PipelineStageOption[]>([])
+  const [stageOptions, setStageOptions] = useState<PipelineStage[]>([])
 
-  // Fetch org-level pipeline stage names once per company session.
+  // Fetch org-level pipeline stages once per company session.
   useEffect(() => {
     if (!user?.id) return
     getPipelineStages(user.id).then(({ data }) => {
       const sorted = [...data].sort((a, b) => a.sortOrder - b.sortOrder)
-      const opts: PipelineStageOption[] = ACTIVE_ENUM_ORDER.map((enumVal, i) => ({
-        value: enumVal,
-        label: sorted[i]?.name ?? enumVal,
-      }))
-      setStageOptions(opts)
+      setStageOptions(sorted)
     })
   }, [user?.id])
-
-  useEffect(() => {
-    if (!applicant) return
-    let cancelled = false
-    getStagesForApplication(applicant.id).then(({ data }) => {
-      if (cancelled || data.length === 0) return
-      setEnabledStages(data.filter((s) => s.enabled).map((s) => s.stage) as KanbanStage[])
-    })
-    return () => {
-      cancelled = true
-    }
-  }, [applicant?.id])
 
   const handleKey = useCallback(
     (e: KeyboardEvent) => {
@@ -103,9 +79,9 @@ export const ApplicantSlideover: React.FC<ApplicantSlideoverProps> = ({
 
   if (!open || !applicant) return null
 
-  const handleAdvance = () => {
-    if (onAdvance) onAdvance(applicant)
-    else onSetStage(applicant.id, getNextStage(applicant.stage))
+  const handleAdvance = async (nextStageId: string) => {
+    await setApplicantStage(applicant.id, nextStageId)
+    onChanged?.()
   }
 
   return createPortal(
@@ -142,9 +118,12 @@ export const ApplicantSlideover: React.FC<ApplicantSlideoverProps> = ({
           {/* ── Persistent action bar ────────────────────────────────────── */}
           <div className={styles.actionBar}>
             <StageActionMenu
-              currentStage={applicant.stage}
-              enabledStages={enabledStages}
-              onMoveTo={(stage) => onSetStage(applicant.id, stage)}
+              applicant={applicant}
+              stages={stageOptions}
+              onMoveTo={async (stageId) => {
+                await setApplicantStage(applicant.id, stageId)
+                onChanged?.()
+              }}
               onHire={onHire ? () => setHireConfirm(true) : undefined}
               onReject={onReject ? () => setRejectConfirm(true) : undefined}
               onArchive={() => setArchiveConfirm(true)}
@@ -207,12 +186,7 @@ export const ApplicantSlideover: React.FC<ApplicantSlideoverProps> = ({
               </div>
             )}
             {activeTab === 'pipeline' && (
-              <PipelineTab
-                applicant={applicant}
-                onAdvance={handleAdvance}
-                onSetStage={(stage) => onSetStage(applicant.id, stage)}
-                stages={stageOptions.length > 0 ? stageOptions : undefined}
-              />
+              <PipelineTab applicant={applicant} stages={stageOptions} onAdvance={handleAdvance} />
             )}
             {activeTab === 'log' && <LogTab applicationId={applicant.id} />}
           </div>
@@ -237,9 +211,11 @@ export const ApplicantSlideover: React.FC<ApplicantSlideoverProps> = ({
             <button
               type="button"
               className={styles.modalBtnDanger}
-              onClick={() => {
+              onClick={async () => {
                 setRejectConfirm(false)
+                await rejectApplicant(applicant.id)
                 onReject?.(applicant)
+                onChanged?.()
                 onClose()
               }}
             >
@@ -275,9 +251,11 @@ export const ApplicantSlideover: React.FC<ApplicantSlideoverProps> = ({
             <button
               type="button"
               className={styles.modalBtnPrimary}
-              onClick={() => {
+              onClick={async () => {
                 setHireConfirm(false)
+                await hireApplicant(applicant.id)
                 onHire?.(applicant)
+                onChanged?.()
                 onClose()
               }}
             >
@@ -335,31 +313,18 @@ export const ApplicantSlideover: React.FC<ApplicantSlideoverProps> = ({
 
 // ── StageActionMenu ──────────────────────────────────────────────────────────
 
-const STAGE_LABEL: Record<KanbanStage, string> = {
-  screening: 'Screening',
-  assessment: 'Assessment',
-  interview: 'Interview',
-  offer: 'Offer',
-  hired: 'Hired',
-  rejected: 'Rejected',
-  withdrawn: 'Withdrawn',
-  archived: 'Archived',
-}
-
-const ACTIVE_STAGES: KanbanStage[] = ['screening', 'assessment', 'interview', 'offer']
-
 interface StageActionMenuProps {
-  currentStage: KanbanStage
-  enabledStages: KanbanStage[]
-  onMoveTo: (stage: KanbanStage) => void
+  applicant: CompanyApplicant
+  stages: PipelineStage[]
+  onMoveTo: (stageId: string) => void
   onHire?: () => void
   onReject?: () => void
   onArchive: () => void
 }
 
 const StageActionMenu: React.FC<StageActionMenuProps> = ({
-  currentStage,
-  enabledStages,
+  applicant,
+  stages,
   onMoveTo,
   onHire,
   onReject,
@@ -389,13 +354,15 @@ const StageActionMenu: React.FC<StageActionMenuProps> = ({
     setOpen((v) => !v)
   }
 
-  function pick(stage: KanbanStage) {
+  function pick(stageId: string) {
     setOpen(false)
-    if (stage !== currentStage) onMoveTo(stage)
+    if (stageId !== applicant.currentStageId) onMoveTo(stageId)
   }
 
-  const enabledSet = new Set(enabledStages)
-  const isTerminal = ['hired', 'rejected', 'withdrawn', 'archived'].includes(currentStage)
+  const statusIsTerminal = isTerminal(applicant.status)
+  const currentLabel = statusIsTerminal
+    ? TERMINAL_LABEL[applicant.status as ApplicationStatus]
+    : applicant.currentStageName
 
   return (
     <>
@@ -407,7 +374,7 @@ const StageActionMenu: React.FC<StageActionMenuProps> = ({
         aria-haspopup="menu"
         aria-expanded={open}
       >
-        <span>{STAGE_LABEL[currentStage]}</span>
+        <span>{currentLabel}</span>
         <ChevronDownIcon size={12} />
       </button>
       {open &&
@@ -419,28 +386,26 @@ const StageActionMenu: React.FC<StageActionMenuProps> = ({
             style={{ top: pos.top, left: pos.left }}
           >
             <div className={styles.stageMenuSection}>Move to</div>
-            {ACTIVE_STAGES.map((s) => {
-              const enabled = enabledSet.has(s)
-              const isCurrent = s === currentStage
+            {stages.map((s) => {
+              const isCurrent = s.id === applicant.currentStageId
               return (
                 <button
-                  key={s}
+                  key={s.id}
                   type="button"
                   role="menuitem"
-                  disabled={!enabled || isCurrent}
+                  disabled={isCurrent}
                   className={[styles.stageMenuItem, isCurrent ? styles.stageMenuItemCurrent : '']
                     .filter(Boolean)
                     .join(' ')}
-                  onClick={() => pick(s)}
+                  onClick={() => pick(s.id)}
                 >
-                  <span>{STAGE_LABEL[s]}</span>
+                  <span>{s.name}</span>
                   {isCurrent && <span className={styles.stageMenuCurrentLabel}>Current</span>}
-                  {!enabled && <span className={styles.stageMenuCurrentLabel}>Disabled</span>}
                 </button>
               )
             })}
 
-            {!isTerminal && (onHire || onReject) && (
+            {!statusIsTerminal && (onHire || onReject) && (
               <>
                 <div className={styles.stageMenuDivider} />
                 <div className={styles.stageMenuSection}>Close out</div>
@@ -490,13 +455,4 @@ const StageActionMenu: React.FC<StageActionMenuProps> = ({
         )}
     </>
   )
-}
-
-// ── Helpers ──────────────────────────────────────────────────────────────────
-
-const STAGE_ORDER: KanbanStage[] = ['screening', 'assessment', 'interview', 'offer']
-
-function getNextStage(current: KanbanStage): KanbanStage {
-  const idx = STAGE_ORDER.indexOf(current)
-  return STAGE_ORDER[idx + 1] ?? current
 }

@@ -2,11 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Modal } from '../../../components'
 import type { CompanyApplicant } from '../../types'
-import {
-  advanceApplicantStage,
-  rejectApplicant,
-  hireApplicant,
-} from '../../services/applicantService'
+import { advanceApplicant, rejectApplicant, hireApplicant } from '../../services/applicantService'
 import { DotsHorizontalIcon, RegulixMarkIcon } from '../../icons'
 import styles from './ApplicantListView.module.css'
 
@@ -134,7 +130,7 @@ export const ApplicantListView: React.FC<Props> = ({
   const handleAdvance = useCallback(
     async (a: CompanyApplicant) => {
       closeOverflow()
-      await advanceApplicantStage(a.id)
+      await advanceApplicant(a.id, a.currentStageId)
       onRefresh()
     },
     [closeOverflow, onRefresh]

@@ -202,7 +202,7 @@ export async function submitApplication(
     worker_id: workerId,
     notes: coverNote,
     is_boosted: isBoosted,
-    status: 'Applied' as const,
+    status: 'active' as const,
   }
   const { error } = await supabase
     .from('applications')

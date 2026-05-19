@@ -13,7 +13,7 @@ import {
   type DragStartEvent,
 } from '@dnd-kit/core'
 import { Modal } from '../../../components'
-import type { CompanyApplicant, KanbanStage } from '../../types'
+import type { CompanyApplicant } from '../../types'
 import {
   getWidgetApplicants,
   setApplicantStage,
@@ -29,10 +29,6 @@ import styles from './WidgetKanbanView.module.css'
 
 const DEFAULT_CARDS_PER_COL = 15
 const MAX_FETCH = 200
-
-// Positional order of active kanban_stage enum values.
-// Index 0 = first pipeline stage, index 1 = second, etc.
-const ACTIVE_ENUM_ORDER: KanbanStage[] = ['screening', 'assessment', 'interview', 'offer']
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -194,7 +190,6 @@ type ColumnProps = {
   applicants: CompanyApplicant[]
   totalInStage: number
   cardsPerCol: number
-  stageNameToKanban: Record<string, KanbanStage>
   onOpen: (a: CompanyApplicant) => void
   onReject: (a: CompanyApplicant) => void
   onHire: (a: CompanyApplicant) => void
@@ -205,12 +200,11 @@ const KanbanColumn: React.FC<ColumnProps> = ({
   applicants,
   totalInStage,
   cardsPerCol,
-  stageNameToKanban,
   onOpen,
   onReject,
   onHire,
 }) => {
-  const { setNodeRef, isOver } = useDroppable({ id: stage.name })
+  const { setNodeRef, isOver } = useDroppable({ id: stage.id })
   const visible = applicants.slice(0, cardsPerCol)
   const moreCount = totalInStage - cardsPerCol
 
@@ -231,7 +225,7 @@ const KanbanColumn: React.FC<ColumnProps> = ({
       ))}
       {moreCount > 0 && (
         <Link
-          to={`/site/dashboard/applicants?stage=${encodeURIComponent(stageNameToKanban[stage.name] ?? stage.name.toLowerCase())}`}
+          to={`/site/dashboard/applicants?stageId=${encodeURIComponent(stage.id)}`}
           className={styles.moreLink}
         >
           +{moreCount} more
@@ -288,32 +282,17 @@ export const WidgetKanbanView: React.FC<Props> = ({
     }
   }, [companyId, filters])
 
-  // Build position-based maps: the Nth pipeline stage corresponds to the Nth
-  // active kanban_stage enum value. This bridges the old enum to custom names.
-  const { enumToStageName, stageNameToKanban } = React.useMemo(() => {
-    const sorted = [...stages].sort((a, b) => a.sortOrder - b.sortOrder)
-    const enumToName: Partial<Record<KanbanStage, string>> = {}
-    const nameToEnum: Record<string, KanbanStage> = {}
-    ACTIVE_ENUM_ORDER.forEach((enumVal, i) => {
-      const s = sorted[i]
-      if (s) {
-        enumToName[enumVal] = s.name
-        nameToEnum[s.name] = enumVal
-      }
-    })
-    return { enumToStageName: enumToName, stageNameToKanban: nameToEnum }
-  }, [stages])
-
-  // Group applicants into pipeline columns by positional mapping
+  // Group applicants by currentStageId
   const byStage = React.useMemo(() => {
     const map = new Map<string, CompanyApplicant[]>()
-    for (const s of stages) map.set(s.name, [])
+    for (const s of stages) map.set(s.id, [])
     for (const a of applicants) {
-      const stageName = enumToStageName[a.stage]
-      if (stageName !== undefined) map.get(stageName)?.push(a)
+      if (map.has(a.currentStageId)) {
+        map.get(a.currentStageId)!.push(a)
+      }
     }
     return map
-  }, [stages, applicants, enumToStageName])
+  }, [stages, applicants])
 
   const activeApplicant = activeId ? (applicants.find((a) => a.id === activeId) ?? null) : null
 
@@ -334,47 +313,50 @@ export const WidgetKanbanView: React.FC<Props> = ({
   async function handleDragEnd(e: DragEndEvent) {
     setActiveId(null)
     const appId = String(e.active.id)
-    const targetStageName = e.over ? String(e.over.id) : null
-    if (!targetStageName) return
+    const targetStageId = e.over ? String(e.over.id) : null
+    if (!targetStageId) return
 
     const current = applicants.find((a) => a.id === appId)
-    if (!current || current.currentStageName === targetStageName) return
+    if (!current || current.currentStageId === targetStageId) return
 
-    const targetKanban = stageNameToKanban[targetStageName]
-    if (!targetKanban) {
-      showToast(`"${targetStageName}" stage isn't supported yet.`, () => {})
-      return
-    }
+    const targetStage = stages.find((s) => s.id === targetStageId)
+    if (!targetStage) return
 
-    const prevStage = current.stage
+    const prevStageId = current.currentStageId
     const prevStageName = current.currentStageName
     const name = `${current.workerFirstName} ${current.workerLastInitial}.`
 
     // Optimistic update
     setApplicants((prev) =>
       prev.map((a) =>
-        a.id === appId ? { ...a, stage: targetKanban, currentStageName: targetStageName } : a
+        a.id === appId
+          ? { ...a, currentStageId: targetStageId, currentStageName: targetStage.name }
+          : a
       )
     )
 
-    const { error } = await setApplicantStage(appId, targetKanban)
+    const { error } = await setApplicantStage(appId, targetStageId)
     if (error) {
       // Revert
       setApplicants((prev) =>
         prev.map((a) =>
-          a.id === appId ? { ...a, stage: prevStage, currentStageName: prevStageName } : a
+          a.id === appId
+            ? { ...a, currentStageId: prevStageId, currentStageName: prevStageName }
+            : a
         )
       )
       return
     }
 
-    showToast(`Moved ${name} to ${targetStageName}.`, async () => {
+    showToast(`Moved ${name} to ${targetStage.name}.`, async () => {
       setApplicants((prev) =>
         prev.map((a) =>
-          a.id === appId ? { ...a, stage: prevStage, currentStageName: prevStageName } : a
+          a.id === appId
+            ? { ...a, currentStageId: prevStageId, currentStageName: prevStageName }
+            : a
         )
       )
-      await setApplicantStage(appId, prevStage)
+      await setApplicantStage(appId, prevStageId)
     })
   }
 
@@ -402,7 +384,7 @@ export const WidgetKanbanView: React.FC<Props> = ({
       <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
         <div className={styles.board}>
           {stages.map((stage) => {
-            const colApplicants = byStage.get(stage.name) ?? []
+            const colApplicants = byStage.get(stage.id) ?? []
             return (
               <KanbanColumn
                 key={stage.id}
@@ -410,7 +392,6 @@ export const WidgetKanbanView: React.FC<Props> = ({
                 applicants={colApplicants}
                 totalInStage={colApplicants.length}
                 cardsPerCol={cardsPerCol}
-                stageNameToKanban={stageNameToKanban}
                 onOpen={onOpenApplicant}
                 onReject={(a) => setConfirm({ type: 'reject', applicant: a })}
                 onHire={(a) => setConfirm({ type: 'hire', applicant: a })}

@@ -24,8 +24,6 @@ export type {
   Message,
   Conversation,
   Notification,
-  KanbanStage,
-  KanbanApplicant,
   CompanyApplicant,
   JobAnalytics,
   RegulixStatus,

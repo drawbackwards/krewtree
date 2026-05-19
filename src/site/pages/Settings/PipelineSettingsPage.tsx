@@ -1,39 +1,33 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import {
+  getPipelineStages,
+  addPipelineStage,
+  renamePipelineStage,
+  removePipelineStage,
   getTaskTemplates,
   createTaskTemplate,
   updateTaskTemplate,
   deleteTaskTemplate,
-  getCompanyStages,
-  updateCompanyStage,
+  type PipelineStage,
   type TaskTemplate,
   type TaskTemplatePatch,
-  type TemplateStage,
-  type CompanyStage,
 } from '../../services/pipelineService'
 import styles from './PipelineSettingsPage.module.css'
-
-const STAGES: { stage: TemplateStage; label: string }[] = [
-  { stage: 'screening', label: 'Screening' },
-  { stage: 'assessment', label: 'Assessment' },
-  { stage: 'interview', label: 'Interview' },
-  { stage: 'offer', label: 'Offer' },
-]
 
 const PipelineSettingsPage: React.FC = () => {
   const { user } = useAuth()
   const companyId = user?.id ?? ''
+  const [stages, setStages] = useState<PipelineStage[]>([])
   const [templates, setTemplates] = useState<TaskTemplate[]>([])
-  const [stages, setStages] = useState<CompanyStage[]>([])
   const [loading, setLoading] = useState(true)
 
   const load = useCallback(async () => {
     if (!companyId) return
     setLoading(true)
-    const [t, s] = await Promise.all([getTaskTemplates(companyId), getCompanyStages(companyId)])
+    const [s, t] = await Promise.all([getPipelineStages(companyId), getTaskTemplates(companyId)])
+    setStages([...s.data].sort((a, b) => a.sortOrder - b.sortOrder))
     setTemplates(t.data)
-    setStages(s.data)
     setLoading(false)
   }, [companyId])
 
@@ -41,25 +35,32 @@ const PipelineSettingsPage: React.FC = () => {
     load()
   }, [load])
 
-  async function handleStageUpdate(
-    stage: TemplateStage,
-    patch: {
-      enabled?: boolean
-      purpose?: string | null
-      slaHoursApproaching?: number | null
-      slaHoursBreached?: number | null
-    }
-  ) {
-    setStages((prev) => prev.map((s) => (s.stage === stage ? { ...s, ...patch } : s)))
-    await updateCompanyStage(companyId, stage, patch)
+  async function handleAddStage(name: string) {
+    const { data } = await addPipelineStage(companyId, name)
+    if (data) setStages((prev) => [...prev, data])
   }
 
-  async function handleCreate(stage: TemplateStage, label: string, isRequired: boolean) {
-    const { data } = await createTaskTemplate(companyId, stage, label, isRequired)
+  async function handleRenameStage(stageId: string, name: string) {
+    setStages((prev) => prev.map((s) => (s.id === stageId ? { ...s, name } : s)))
+    await renamePipelineStage(stageId, name)
+  }
+
+  async function handleRemoveStage(stageId: string) {
+    const { error } = await removePipelineStage(stageId)
+    if (error) {
+      window.alert(error)
+      return
+    }
+    setStages((prev) => prev.filter((s) => s.id !== stageId))
+    setTemplates((prev) => prev.filter((t) => t.stageId !== stageId))
+  }
+
+  async function handleCreateTemplate(stageId: string, label: string, isRequired: boolean) {
+    const { data } = await createTaskTemplate(companyId, stageId, label, isRequired)
     if (data) setTemplates((prev) => [...prev, data])
   }
 
-  async function handleUpdate(id: string, patch: TaskTemplatePatch) {
+  async function handleUpdateTemplate(id: string, patch: TaskTemplatePatch) {
     setTemplates((prev) =>
       prev.map((t) => {
         if (t.id !== id) return t
@@ -76,7 +77,7 @@ const PipelineSettingsPage: React.FC = () => {
     await updateTaskTemplate(id, patch)
   }
 
-  async function handleDelete(id: string) {
+  async function handleDeleteTemplate(id: string) {
     setTemplates((prev) => prev.filter((t) => t.id !== id))
     await deleteTaskTemplate(id)
   }
@@ -86,109 +87,117 @@ const PipelineSettingsPage: React.FC = () => {
   return (
     <div>
       <p className={styles.intro}>
-        Define the default tasks your team works through at each pipeline stage. Tasks are copied
-        onto every new applicant when they enter the stage. Marking a task as required will block
-        stage advancement until it&apos;s completed or skipped.
+        Manage your pipeline stages and the default tasks your team works through at each stage.
+        Tasks are copied onto every new applicant when they enter the stage. Marking a task as
+        required will block stage advancement until it&apos;s completed or skipped.
       </p>
 
       {loading ? (
-        <div className={styles.loading}>Loading templates…</div>
+        <div className={styles.loading}>Loading pipeline…</div>
       ) : (
-        <div className={styles.stages}>
-          {STAGES.map(({ stage, label }) => {
-            const stageTemplates = templates
-              .filter((t) => t.stage === stage)
-              .sort((a, b) => a.order - b.order)
-            const stageConfig: CompanyStage = stages.find((s) => s.stage === stage) ?? {
-              id: '',
-              companyId: companyId,
-              stage,
-              enabled: true,
-              purpose: null,
-              slaHoursApproaching: null,
-              slaHoursBreached: null,
-            }
-            return (
-              <StageBlock
-                key={stage}
-                stage={stage}
-                label={label}
-                stageConfig={stageConfig}
-                templates={stageTemplates}
-                onCreate={(text, req) => handleCreate(stage, text, req)}
-                onUpdate={handleUpdate}
-                onDelete={handleDelete}
-                onStageUpdate={(patch) => handleStageUpdate(stage, patch)}
-              />
-            )
-          })}
-        </div>
+        <>
+          <div className={styles.stages}>
+            {stages.map((stage) => {
+              const stageTemplates = templates
+                .filter((t) => t.stageId === stage.id)
+                .sort((a, b) => a.order - b.order)
+              return (
+                <StageBlock
+                  key={stage.id}
+                  stage={stage}
+                  templates={stageTemplates}
+                  onRename={(name) => handleRenameStage(stage.id, name)}
+                  onRemove={() => handleRemoveStage(stage.id)}
+                  onCreate={(label, req) => handleCreateTemplate(stage.id, label, req)}
+                  onUpdate={handleUpdateTemplate}
+                  onDelete={handleDeleteTemplate}
+                />
+              )
+            })}
+          </div>
+          <AddStageRow onAdd={handleAddStage} />
+        </>
       )}
     </div>
   )
 }
 
+// ── Add stage row ─────────────────────────────────────────────────────────────
+
+const AddStageRow: React.FC<{ onAdd: (name: string) => Promise<void> }> = ({ onAdd }) => {
+  const [value, setValue] = useState('')
+  const [busy, setBusy] = useState(false)
+
+  async function submit() {
+    const trimmed = value.trim()
+    if (!trimmed) return
+    setBusy(true)
+    await onAdd(trimmed)
+    setValue('')
+    setBusy(false)
+  }
+
+  return (
+    <div className={styles.addRow}>
+      <input
+        className={styles.addInput}
+        placeholder="Add a new pipeline stage…"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault()
+            submit()
+          }
+        }}
+        disabled={busy}
+      />
+      <button
+        type="button"
+        className={styles.addBtn}
+        onClick={submit}
+        disabled={!value.trim() || busy}
+      >
+        Add stage
+      </button>
+    </div>
+  )
+}
+
+// ── Stage block ───────────────────────────────────────────────────────────────
+
 type StageBlockProps = {
-  stage: TemplateStage
-  label: string
-  stageConfig: CompanyStage
+  stage: PipelineStage
   templates: TaskTemplate[]
+  onRename: (name: string) => Promise<void>
+  onRemove: () => Promise<void>
   onCreate: (label: string, isRequired: boolean) => Promise<void>
   onUpdate: (id: string, patch: TaskTemplatePatch) => Promise<void>
   onDelete: (id: string) => Promise<void>
-  onStageUpdate: (patch: {
-    enabled?: boolean
-    purpose?: string | null
-    slaHoursApproaching?: number | null
-    slaHoursBreached?: number | null
-  }) => Promise<void>
 }
 
 const StageBlock: React.FC<StageBlockProps> = ({
-  label,
-  stageConfig,
+  stage,
   templates,
+  onRename,
+  onRemove,
   onCreate,
   onUpdate,
   onDelete,
-  onStageUpdate,
 }) => {
+  const [editingName, setEditingName] = useState(false)
+  const [nameDraft, setNameDraft] = useState(stage.name)
   const [newLabel, setNewLabel] = useState('')
   const [newRequired, setNewRequired] = useState(false)
-  const [purposeDraft, setPurposeDraft] = useState(stageConfig.purpose ?? '')
-  const [approachingDraft, setApproachingDraft] = useState<string>(
-    stageConfig.slaHoursApproaching != null ? String(stageConfig.slaHoursApproaching) : ''
-  )
-  const [breachedDraft, setBreachedDraft] = useState<string>(
-    stageConfig.slaHoursBreached != null ? String(stageConfig.slaHoursBreached) : ''
-  )
 
-  useEffect(() => {
-    setPurposeDraft(stageConfig.purpose ?? '')
-  }, [stageConfig.purpose])
-
-  useEffect(() => {
-    setApproachingDraft(
-      stageConfig.slaHoursApproaching != null ? String(stageConfig.slaHoursApproaching) : ''
-    )
-  }, [stageConfig.slaHoursApproaching])
-
-  useEffect(() => {
-    setBreachedDraft(
-      stageConfig.slaHoursBreached != null ? String(stageConfig.slaHoursBreached) : ''
-    )
-  }, [stageConfig.slaHoursBreached])
-
-  function commitSla(field: 'approaching' | 'breached', value: string) {
-    const trimmed = value.trim()
-    const parsed = trimmed === '' ? null : Number(trimmed)
-    if (parsed !== null && (!Number.isFinite(parsed) || parsed <= 0)) return
-    const current =
-      field === 'approaching' ? stageConfig.slaHoursApproaching : stageConfig.slaHoursBreached
-    if (parsed === current) return
-    onStageUpdate(
-      field === 'approaching' ? { slaHoursApproaching: parsed } : { slaHoursBreached: parsed }
-    )
+  function commitRename() {
+    const trimmed = nameDraft.trim()
+    if (trimmed && trimmed !== stage.name) {
+      onRename(trimmed)
+    } else {
+      setNameDraft(stage.name)
+    }
+    setEditingName(false)
   }
 
   async function submitNew() {
@@ -199,82 +208,52 @@ const StageBlock: React.FC<StageBlockProps> = ({
     setNewRequired(false)
   }
 
-  function onAddKey(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === 'Enter') {
-      e.preventDefault()
-      submitNew()
-    }
-  }
-
-  function commitPurpose() {
-    const trimmed = purposeDraft.trim()
-    const current = stageConfig.purpose ?? ''
-    if (trimmed !== current) {
-      onStageUpdate({ purpose: trimmed.length > 0 ? trimmed : null })
-    }
-  }
-
   return (
-    <section
-      className={stageConfig.enabled ? styles.stage : `${styles.stage} ${styles.stageDisabled}`}
-    >
+    <section className={styles.stage}>
       <header className={styles.stageHeader}>
         <div className={styles.stageHeaderLeft}>
-          <h2 className={styles.stageLabel}>{label}</h2>
+          {editingName ? (
+            <input
+              className={styles.editInput}
+              value={nameDraft}
+              autoFocus
+              onChange={(e) => setNameDraft(e.target.value)}
+              onBlur={commitRename}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  commitRename()
+                } else if (e.key === 'Escape') {
+                  setNameDraft(stage.name)
+                  setEditingName(false)
+                }
+              }}
+            />
+          ) : (
+            <button
+              type="button"
+              className={styles.stageLabel}
+              onClick={() => setEditingName(true)}
+              style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'text' }}
+            >
+              {stage.name}
+            </button>
+          )}
           <span className={styles.stageCount}>
             {templates.length} {templates.length === 1 ? 'task' : 'tasks'}
           </span>
-          {!stageConfig.enabled && <span className={styles.disabledPill}>Disabled</span>}
         </div>
         <div className={styles.stageHeaderRight}>
-          <label className={styles.enabledToggle}>
-            <input
-              type="checkbox"
-              checked={stageConfig.enabled}
-              onChange={(e) => onStageUpdate({ enabled: e.target.checked })}
-            />
-            Enabled
-          </label>
+          <button
+            type="button"
+            className={`${styles.iconBtn} ${styles.iconBtnDanger}`}
+            onClick={onRemove}
+            aria-label={`Remove ${stage.name} stage`}
+          >
+            Remove
+          </button>
         </div>
       </header>
-
-      <input
-        type="text"
-        className={styles.purposeInput}
-        value={purposeDraft}
-        onChange={(e) => setPurposeDraft(e.target.value)}
-        onBlur={commitPurpose}
-        placeholder={`Why does the ${label} stage exist in your process? (optional)`}
-        maxLength={280}
-      />
-
-      <div className={styles.slaRow}>
-        <span className={styles.slaLabel}>SLA (hours in stage)</span>
-        <label className={styles.slaField}>
-          <span>Warning at</span>
-          <input
-            type="number"
-            min={1}
-            className={styles.slaInput}
-            value={approachingDraft}
-            onChange={(e) => setApproachingDraft(e.target.value)}
-            onBlur={(e) => commitSla('approaching', e.target.value)}
-            placeholder="–"
-          />
-        </label>
-        <label className={styles.slaField}>
-          <span>Breach at</span>
-          <input
-            type="number"
-            min={1}
-            className={styles.slaInput}
-            value={breachedDraft}
-            onChange={(e) => setBreachedDraft(e.target.value)}
-            onBlur={(e) => commitSla('breached', e.target.value)}
-            placeholder="–"
-          />
-        </label>
-      </div>
 
       {templates.length === 0 ? (
         <div className={styles.empty}>No tasks defined yet.</div>
@@ -294,10 +273,15 @@ const StageBlock: React.FC<StageBlockProps> = ({
       <div className={styles.addRow}>
         <input
           className={styles.addInput}
-          placeholder={`Add a task to ${label}…`}
+          placeholder={`Add a task to ${stage.name}…`}
           value={newLabel}
           onChange={(e) => setNewLabel(e.target.value)}
-          onKeyDown={onAddKey}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              submitNew()
+            }
+          }}
         />
         <label className={styles.requiredToggle}>
           <input
@@ -320,6 +304,8 @@ const StageBlock: React.FC<StageBlockProps> = ({
     </section>
   )
 }
+
+// ── Template row ──────────────────────────────────────────────────────────────
 
 type TemplateRowProps = {
   template: TaskTemplate
@@ -382,7 +368,7 @@ const TemplateRow: React.FC<TemplateRowProps> = ({ template, onUpdate, onDelete 
             {template.label}
             {hasMessage && (
               <span className={styles.messageBadge} style={{ marginLeft: 8 }}>
-                ✉ message
+                message
               </span>
             )}
           </button>
@@ -421,6 +407,8 @@ const TemplateRow: React.FC<TemplateRowProps> = ({ template, onUpdate, onDelete 
     </div>
   )
 }
+
+// ── Message panel ─────────────────────────────────────────────────────────────
 
 type MessagePanelProps = {
   template: TaskTemplate
@@ -479,7 +467,7 @@ const MessagePanel: React.FC<MessagePanelProps> = ({ template, onUpdate }) => {
         <span className={styles.messageHint}>
           {template.autoSend
             ? 'Will send instantly on stage entry'
-            : 'You’ll review and send manually from the applicant drawer'}
+            : "You'll review and send manually from the applicant drawer"}
         </span>
       </div>
     </div>

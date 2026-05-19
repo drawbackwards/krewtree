@@ -1,14 +1,17 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import type { CompanyApplicant, KanbanStage } from '../../types'
+import type { CompanyApplicant } from '../../types'
 import { StarIcon, MessageIcon, PersonIcon } from '../../icons'
 import { StagePicker } from '../StagePicker/StagePicker'
 import { ApplicantPreviewBody } from '../ApplicantPreviewBody/ApplicantPreviewBody'
+import { getPipelineStages, type PipelineStage } from '../../services/pipelineService'
+import { setApplicantStage } from '../../services/applicantService'
+import { useAuth } from '../../context/AuthContext'
 import styles from './ApplicantDetailPane.module.css'
 
 export interface ApplicantDetailPaneProps {
   applicant: CompanyApplicant | null
-  onSetStage: (id: string, stage: KanbanStage) => void
+  onSetStage: (id: string, stageId: string) => void
   onMessage: (id: string) => void
   onShortlist: (id: string) => void
 }
@@ -36,6 +39,16 @@ export const ApplicantDetailPane: React.FC<ApplicantDetailPaneProps> = ({
   onMessage,
   onShortlist,
 }) => {
+  const { user } = useAuth()
+  const [stages, setStages] = useState<PipelineStage[]>([])
+
+  useEffect(() => {
+    if (!user?.id) return
+    getPipelineStages(user.id).then(({ data }) => {
+      setStages([...data].sort((a, b) => a.sortOrder - b.sortOrder))
+    })
+  }, [user?.id])
+
   if (!applicant) {
     return (
       <aside className={styles.pane}>
@@ -57,8 +70,13 @@ export const ApplicantDetailPane: React.FC<ApplicantDetailPaneProps> = ({
       <div className={styles.hero}>
         <div className={styles.actionRow}>
           <StagePicker
-            stage={applicant.stage}
-            onChange={(next) => onSetStage(applicant.id, next)}
+            currentStageId={applicant.currentStageId}
+            currentStageName={applicant.currentStageName}
+            stages={stages}
+            onChange={async (nextStageId) => {
+              await setApplicantStage(applicant.id, nextStageId)
+              onSetStage(applicant.id, nextStageId)
+            }}
           />
           <div className={styles.iconActions}>
             <IconButton label="Message" onClick={() => onMessage(applicant.id)}>

@@ -26,38 +26,11 @@ type NoteRow = Database['public']['Tables']['application_stage_notes']['Row']
 type LogRow = Database['public']['Tables']['application_log']['Row']
 type TemplateRow = Database['public']['Tables']['pipeline_stage_task_template']['Row']
 type MessageRow = Database['public']['Tables']['application_message']['Row']
-type CompanyStageRow = Database['public']['Tables']['company_pipeline_stage']['Row']
-
-export type TemplateStage = 'screening' | 'assessment' | 'interview' | 'offer'
-
-export const ACTIVE_STAGES: TemplateStage[] = ['screening', 'assessment', 'interview', 'offer']
-
-export type CompanyStage = {
-  id: string
-  companyId: string
-  stage: TemplateStage
-  enabled: boolean
-  purpose: string | null
-  slaHoursApproaching: number | null
-  slaHoursBreached: number | null
-}
-
-function toCompanyStage(row: CompanyStageRow): CompanyStage {
-  return {
-    id: row.id,
-    companyId: row.company_id,
-    stage: row.stage_type,
-    enabled: row.enabled,
-    purpose: row.purpose,
-    slaHoursApproaching: row.sla_hours_approaching,
-    slaHoursBreached: row.sla_hours_breached,
-  }
-}
 
 export type TaskTemplate = {
   id: string
   companyId: string
-  stage: TemplateStage
+  stageId: string
   label: string
   isRequired: boolean
   order: number
@@ -71,7 +44,7 @@ function toTemplate(row: TemplateRow): TaskTemplate {
   return {
     id: row.id,
     companyId: row.company_id,
-    stage: row.stage_type,
+    stageId: row.stage_id,
     label: row.label,
     isRequired: row.is_required,
     order: row.display_order,
@@ -102,7 +75,7 @@ function toTask(row: TaskRow): ApplicationTask {
   return {
     id: row.id,
     applicationId: row.application_id,
-    stageId: row.stage_type,
+    stageId: row.stage_id,
     source: row.source,
     templateTaskId: row.template_task_id,
     label: row.label,
@@ -127,7 +100,7 @@ function toTask(row: TaskRow): ApplicationTask {
 function toNote(row: NoteRow): StageNote {
   return {
     applicationId: row.application_id,
-    stageId: row.stage_type,
+    stageId: row.stage_id,
     notes: row.notes,
     updatedAt: row.updated_at,
     updatedBy: row.updated_by ?? '',
@@ -169,7 +142,7 @@ export async function getApplicationTasks(
     .from('application_task')
     .select('*')
     .eq('application_id', applicationId)
-    .eq('stage_type', stageId as TaskRow['stage_type'])
+    .eq('stage_id', stageId)
     .order('display_order', { ascending: true })
 
   if (error) return { data: [], error: error.message }
@@ -274,13 +247,13 @@ export async function addAdHocTask(
     .from('application_task')
     .select('id', { count: 'exact', head: true })
     .eq('application_id', applicationId)
-    .eq('stage_type', stageId as TaskRow['stage_type'])
+    .eq('stage_id', stageId)
 
   const { data, error } = await supabase
     .from('application_task')
     .insert({
       application_id: applicationId,
-      stage_type: stageId as TaskRow['stage_type'],
+      stage_id: stageId,
       source: 'ad_hoc',
       label,
       is_required: isRequired,
@@ -378,7 +351,7 @@ export async function getStageNotes(
     .from('application_stage_notes')
     .select('*')
     .eq('application_id', applicationId)
-    .eq('stage_type', stageId as NoteRow['stage_type'])
+    .eq('stage_id', stageId)
     .maybeSingle()
 
   if (error) return { data: null, error: error.message }
@@ -397,11 +370,11 @@ export async function saveStageNotes(
   const { error } = await supabase.from('application_stage_notes').upsert(
     {
       application_id: applicationId,
-      stage_type: stageId as NoteRow['stage_type'],
+      stage_id: stageId,
       notes: notes.trim() || null,
       updated_by: user?.id ?? null,
     },
-    { onConflict: 'application_id,stage_type' }
+    { onConflict: 'application_id,stage_id' }
   )
 
   if (error) return { error: error.message }
@@ -447,13 +420,8 @@ export function getTaskState(task: ApplicationTask): TaskState {
  */
 export async function instantiateTemplatesForStage(
   applicationId: string,
-  stage: TemplateStage | string
+  stageId: string
 ): Promise<{ inserted: number; error: string | null }> {
-  const activeStages: TemplateStage[] = ['screening', 'assessment', 'interview', 'offer']
-  if (!activeStages.includes(stage as TemplateStage)) {
-    return { inserted: 0, error: null }
-  }
-
   // Resolve the company_id for this application
   const { data: appRow, error: appErr } = await supabase
     .from('applications')
@@ -469,7 +437,7 @@ export async function instantiateTemplatesForStage(
     .from('application_task')
     .select('id', { count: 'exact', head: true })
     .eq('application_id', applicationId)
-    .eq('stage_type', stage as TaskRow['stage_type'])
+    .eq('stage_id', stageId)
     .eq('source', 'template')
   if ((count ?? 0) > 0) return { inserted: 0, error: null }
 
@@ -478,14 +446,14 @@ export async function instantiateTemplatesForStage(
     .from('pipeline_stage_task_template')
     .select('*')
     .eq('company_id', companyId)
-    .eq('stage_type', stage as TemplateRow['stage_type'])
+    .eq('stage_id', stageId)
     .order('display_order', { ascending: true })
   if (tplErr) return { inserted: 0, error: tplErr.message }
   if (!templates || templates.length === 0) return { inserted: 0, error: null }
 
   const rows = templates.map((t) => ({
     application_id: applicationId,
-    stage_type: t.stage_type,
+    stage_id: t.stage_id,
     source: 'template' as const,
     template_task_id: t.id,
     label: t.label,
@@ -528,7 +496,7 @@ export async function getTaskTemplates(
     .from('pipeline_stage_task_template')
     .select('*')
     .eq('company_id', companyId)
-    .order('stage_type', { ascending: true })
+    .order('stage_id', { ascending: true })
     .order('display_order', { ascending: true })
 
   if (error) return { data: [], error: error.message }
@@ -537,7 +505,7 @@ export async function getTaskTemplates(
 
 export async function createTaskTemplate(
   companyId: string,
-  stage: TemplateStage,
+  stageId: string,
   label: string,
   isRequired: boolean
 ): Promise<{ data: TaskTemplate | null; error: string | null }> {
@@ -548,13 +516,13 @@ export async function createTaskTemplate(
     .from('pipeline_stage_task_template')
     .select('id', { count: 'exact', head: true })
     .eq('company_id', companyId)
-    .eq('stage_type', stage)
+    .eq('stage_id', stageId)
 
   const { data, error } = await supabase
     .from('pipeline_stage_task_template')
     .insert({
       company_id: companyId,
-      stage_type: stage,
+      stage_id: stageId,
       label: trimmed,
       is_required: isRequired,
       display_order: count ?? 0,
@@ -629,120 +597,6 @@ export async function reorderTaskTemplates(
     if (error) return { error: error.message }
   }
   return { error: null }
-}
-
-// ── Company stage config (enabled + purpose) ─────────────────────────────────
-
-/**
- * Returns the 4 active stage configs for a company. Lazy-seeds default rows
- * (enabled=true, purpose=null) for any stage type that doesn't have a row yet.
- * Order is always: screening, assessment, interview, offer.
- */
-export async function getCompanyStages(
-  companyId: string
-): Promise<{ data: CompanyStage[]; error: string | null }> {
-  const { data: existing, error } = await supabase
-    .from('company_pipeline_stage')
-    .select('*')
-    .eq('company_id', companyId)
-
-  if (error) return { data: [], error: error.message }
-
-  const present = new Map<TemplateStage, CompanyStageRow>()
-  for (const row of existing ?? []) present.set(row.stage_type, row)
-
-  const missing = ACTIVE_STAGES.filter((s) => !present.has(s))
-  if (missing.length > 0) {
-    const { data: inserted, error: insErr } = await supabase
-      .from('company_pipeline_stage')
-      .insert(missing.map((s) => ({ company_id: companyId, stage_type: s })))
-      .select('*')
-    if (insErr) return { data: [], error: insErr.message }
-    for (const row of inserted ?? []) present.set(row.stage_type, row)
-  }
-
-  const ordered = ACTIVE_STAGES.map((s) => toCompanyStage(present.get(s)!))
-  return { data: ordered, error: null }
-}
-
-export async function updateCompanyStage(
-  companyId: string,
-  stage: TemplateStage,
-  patch: {
-    enabled?: boolean
-    purpose?: string | null
-    slaHoursApproaching?: number | null
-    slaHoursBreached?: number | null
-  }
-): Promise<{ error: string | null }> {
-  const dbPatch: Record<string, unknown> = {}
-  if (patch.enabled !== undefined) dbPatch.enabled = patch.enabled
-  if (patch.purpose !== undefined) {
-    const trimmed = patch.purpose?.trim() ?? ''
-    dbPatch.purpose = trimmed.length > 0 ? trimmed : null
-  }
-  if (patch.slaHoursApproaching !== undefined) {
-    dbPatch.sla_hours_approaching = patch.slaHoursApproaching
-  }
-  if (patch.slaHoursBreached !== undefined) {
-    dbPatch.sla_hours_breached = patch.slaHoursBreached
-  }
-
-  const { error } = await supabase
-    .from('company_pipeline_stage')
-    .update(dbPatch)
-    .eq('company_id', companyId)
-    .eq('stage_type', stage)
-
-  return { error: error?.message ?? null }
-}
-
-/**
- * Pure helper: derive an applicant's SLA state from when they entered the stage
- * and the company's per-stage thresholds. Returns 'none' if no thresholds set
- * or if the applicant just entered.
- */
-export function computeSlaState(
-  stageEnteredAt: string | null,
-  approachingHours: number | null,
-  breachedHours: number | null
-): 'none' | 'approaching' | 'breached' {
-  if (!stageEnteredAt) return 'none'
-  const elapsedMs = Date.now() - new Date(stageEnteredAt).getTime()
-  const elapsedHours = elapsedMs / (1000 * 60 * 60)
-  if (breachedHours !== null && elapsedHours >= breachedHours) return 'breached'
-  if (approachingHours !== null && elapsedHours >= approachingHours) return 'approaching'
-  return 'none'
-}
-
-/**
- * For a given application, returns the ordered list of enabled stages.
- * Used by advance-logic to skip disabled stages.
- */
-export async function getEnabledStagesForApplication(
-  applicationId: string
-): Promise<{ data: TemplateStage[]; error: string | null }> {
-  const { data: stages, error } = await getStagesForApplication(applicationId)
-  if (error) return { data: [], error }
-  return { data: stages.filter((s) => s.enabled).map((s) => s.stage), error: null }
-}
-
-/**
- * Full stage configs (enabled + purpose) for the company that owns this application.
- * Used by the Pipeline tab to render purpose and label the advance target.
- */
-export async function getStagesForApplication(
-  applicationId: string
-): Promise<{ data: CompanyStage[]; error: string | null }> {
-  const { data: appRow, error: appErr } = await supabase
-    .from('applications')
-    .select('jobs!inner(company_id)')
-    .eq('id', applicationId)
-    .single()
-  if (appErr || !appRow) return { data: [], error: appErr?.message ?? 'not_found' }
-
-  const companyId = (appRow as unknown as { jobs: { company_id: string } }).jobs.company_id
-  return getCompanyStages(companyId)
 }
 
 // ── Application messages ─────────────────────────────────────────────────────
@@ -991,10 +845,7 @@ export async function renamePipelineStage(
   stageId: string,
   name: string
 ): Promise<{ error: string | null }> {
-  const { error } = await db
-    .from('pipeline_stage')
-    .update({ name: name.trim() })
-    .eq('id', stageId)
+  const { error } = await db.from('pipeline_stage').update({ name: name.trim() }).eq('id', stageId)
   return { error: error?.message ?? null }
 }
 
@@ -1003,7 +854,7 @@ export async function removePipelineStage(stageId: string): Promise<{ error: str
     .from('applications')
     .select('id', { count: 'exact', head: true })
     .eq('current_stage_id', stageId)
-    .eq('status', 'active' as unknown as 'Applied')
+    .eq('status', 'active')
 
   if (count && count > 0) {
     return {

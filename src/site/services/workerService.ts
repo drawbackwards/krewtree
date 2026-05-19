@@ -499,19 +499,9 @@ export type RegulixNudgeData = {
 
 // ── Dashboard Applications ─────────────────────────────────────────────────────
 
-const DB_TO_WORKER_STAGE: Record<string, DashboardApplication['stage']> = {
-  // Current stage values (post-May 2026 rename)
-  screening: 'Applied',
-  assessment: 'In Review',
-  interview: 'In Review',
-  offer: 'In Review',
-  hired: 'Closed',
-  rejected: 'Closed',
-  withdrawn: 'Closed',
-  archived: 'Closed',
-  // Legacy fallbacks (pre-rename rows still in DB)
-  new: 'Applied',
-  reviewed: 'In Review',
+function deriveWorkerStage(status: string): DashboardApplication['stage'] {
+  if (status !== 'active') return 'Closed'
+  return 'Applied'
 }
 
 export async function getDashboardApplications(
@@ -521,7 +511,7 @@ export async function getDashboardApplications(
   const { data, error } = await supabase
     .from('applications')
     .select(
-      'id, kanban_stage, is_boosted, created_at, job_id, jobs(id, title, location, company_profiles(id, name))'
+      'id, status, is_boosted, created_at, job_id, jobs(id, title, location, company_profiles(id, name))'
     )
     .eq('worker_id', userId)
     .order('created_at', { ascending: false })
@@ -545,7 +535,7 @@ export async function getDashboardApplications(
         companyId: j?.company_profiles?.id ?? '',
         companyName: j?.company_profiles?.name ?? '',
         companyLocation: j?.location ?? '',
-        stage: DB_TO_WORKER_STAGE[a.kanban_stage as string] ?? 'Applied',
+        stage: deriveWorkerStage(a.status ?? 'active'),
         appliedAt: a.created_at,
         isBoosted: a.is_boosted,
       }
@@ -563,7 +553,7 @@ export async function withdrawApplication(
 ): Promise<{ error: string | null }> {
   const { error } = await supabase
     .from('applications')
-    .update({ status: 'Rejected', notes: message || reason })
+    .update({ status: 'terminal_withdrawn', notes: message || reason })
     .eq('id', applicationId)
 
   if (error) return { error: error.message }

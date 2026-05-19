@@ -451,17 +451,14 @@ export type Database = {
           id: string
           worker_id: string
           job_id: string
-          status: 'Applied' | 'Viewed' | 'Interviewing' | 'Offer' | 'Rejected'
+          status:
+            | 'active'
+            | 'terminal_hired'
+            | 'terminal_rejected'
+            | 'terminal_withdrawn'
+            | 'terminal_archived'
+          current_stage_id: string | null
           is_boosted: boolean
-          kanban_stage:
-            | 'screening'
-            | 'assessment'
-            | 'interview'
-            | 'offer'
-            | 'hired'
-            | 'rejected'
-            | 'withdrawn'
-            | 'archived'
           notes: string
           interview_answers: Json
           is_shortlisted: boolean
@@ -480,17 +477,14 @@ export type Database = {
           id?: string
           worker_id: string
           job_id: string
-          status?: 'Applied' | 'Viewed' | 'Interviewing' | 'Offer' | 'Rejected'
+          status?:
+            | 'active'
+            | 'terminal_hired'
+            | 'terminal_rejected'
+            | 'terminal_withdrawn'
+            | 'terminal_archived'
+          current_stage_id?: string | null
           is_boosted?: boolean
-          kanban_stage?:
-            | 'screening'
-            | 'assessment'
-            | 'interview'
-            | 'offer'
-            | 'hired'
-            | 'rejected'
-            | 'withdrawn'
-            | 'archived'
           notes?: string
           interview_answers?: Json
           is_shortlisted?: boolean
@@ -546,37 +540,47 @@ export type Database = {
         Update: Partial<Database['public']['Tables']['application_events']['Insert']>
         Relationships: []
       }
-      company_pipeline_stage: {
+      company_pipeline: {
         Row: {
           id: string
           company_id: string
-          stage_type: 'screening' | 'assessment' | 'interview' | 'offer'
-          enabled: boolean
-          purpose: string | null
-          sla_hours_approaching: number | null
-          sla_hours_breached: number | null
           created_at: string
           updated_at: string
         }
         Insert: {
           id?: string
           company_id: string
-          stage_type: 'screening' | 'assessment' | 'interview' | 'offer'
-          enabled?: boolean
-          purpose?: string | null
-          sla_hours_approaching?: number | null
-          sla_hours_breached?: number | null
           created_at?: string
           updated_at?: string
         }
-        Update: Partial<Database['public']['Tables']['company_pipeline_stage']['Insert']>
+        Update: Partial<Database['public']['Tables']['company_pipeline']['Insert']>
+        Relationships: []
+      }
+      pipeline_stage: {
+        Row: {
+          id: string
+          pipeline_id: string
+          name: string
+          sort_order: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          pipeline_id: string
+          name: string
+          sort_order: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['pipeline_stage']['Insert']>
         Relationships: []
       }
       pipeline_stage_task_template: {
         Row: {
           id: string
           company_id: string
-          stage_type: 'screening' | 'assessment' | 'interview' | 'offer'
+          stage_id: string
           label: string
           is_required: boolean
           display_order: number
@@ -590,7 +594,7 @@ export type Database = {
         Insert: {
           id?: string
           company_id: string
-          stage_type: 'screening' | 'assessment' | 'interview' | 'offer'
+          stage_id: string
           label: string
           is_required?: boolean
           display_order?: number
@@ -608,7 +612,7 @@ export type Database = {
         Row: {
           id: string
           application_id: string
-          stage_type: 'screening' | 'assessment' | 'interview' | 'offer'
+          stage_id: string
           source: 'template' | 'ad_hoc'
           template_task_id: string | null
           label: string
@@ -631,7 +635,7 @@ export type Database = {
         Insert: {
           id?: string
           application_id: string
-          stage_type: 'screening' | 'assessment' | 'interview' | 'offer'
+          stage_id: string
           source: 'template' | 'ad_hoc'
           template_task_id?: string | null
           label: string
@@ -684,15 +688,7 @@ export type Database = {
         Row: {
           id: string
           application_id: string
-          stage_type:
-            | 'screening'
-            | 'assessment'
-            | 'interview'
-            | 'offer'
-            | 'hired'
-            | 'rejected'
-            | 'withdrawn'
-            | 'archived'
+          stage_id: string
           notes: string | null
           updated_at: string
           updated_by: string | null
@@ -700,15 +696,7 @@ export type Database = {
         Insert: {
           id?: string
           application_id: string
-          stage_type:
-            | 'screening'
-            | 'assessment'
-            | 'interview'
-            | 'offer'
-            | 'hired'
-            | 'rejected'
-            | 'withdrawn'
-            | 'archived'
+          stage_id: string
           notes?: string | null
           updated_at?: string
           updated_by?: string | null

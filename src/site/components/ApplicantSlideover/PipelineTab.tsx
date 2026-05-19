@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
-import type { ApplicationTask, CompanyApplicant, KanbanStage } from '../../types'
+import type { ApplicationTask, CompanyApplicant } from '../../types'
+import { isTerminal } from '../../types'
 import {
   CheckIcon,
   PlusIcon,
@@ -21,35 +22,11 @@ import {
   saveStageNotes,
   getStageNotes,
   sendApplicationMessage,
-  getStagesForApplication,
+  type PipelineStage,
 } from '../../services/pipelineService'
 import styles from './PipelineTab.module.css'
 
-// ── Stage helpers ────────────────────────────────────────────────────────────
-
-const STAGE_LABEL: Record<KanbanStage, string> = {
-  screening: 'Screening',
-  assessment: 'Assessment',
-  interview: 'Interview',
-  offer: 'Offer',
-  hired: 'Hired',
-  rejected: 'Rejected',
-  withdrawn: 'Withdrawn',
-  archived: 'Archived',
-}
-
-const ACTIVE_ORDER: KanbanStage[] = ['screening', 'assessment', 'interview', 'offer']
-const TERMINAL: KanbanStage[] = ['hired', 'rejected', 'withdrawn', 'archived']
-
-function nextEnabledStage(current: KanbanStage, enabled?: KanbanStage[]): KanbanStage | null {
-  const idx = ACTIVE_ORDER.indexOf(current)
-  if (idx < 0) return null
-  const allowed = enabled && enabled.length > 0 ? new Set(enabled) : new Set(ACTIVE_ORDER)
-  for (let i = idx + 1; i < ACTIVE_ORDER.length; i++) {
-    if (allowed.has(ACTIVE_ORDER[i])) return ACTIVE_ORDER[i]
-  }
-  return null
-}
+// ── Helpers ──────────────────────────────────────────────────────────────────
 
 function formatTimeInStage(enteredAt: string | null): string {
   if (!enteredAt) return ''
@@ -79,24 +56,18 @@ function formatSentAt(iso: string): string {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
-// ── Types ────────────────────────────────────────────────────────────────────
-
-export type PipelineStageOption = { value: KanbanStage; label: string }
-
 // ── Props ────────────────────────────────────────────────────────────────────
 
 interface PipelineTabProps {
   applicant: CompanyApplicant
-  onAdvance: () => void
-  onSetStage: (stage: KanbanStage) => void
-  stages?: PipelineStageOption[]
+  stages: PipelineStage[]
+  onAdvance: (nextStageId: string) => void
 }
 
 // ── Component ────────────────────────────────────────────────────────────────
 
-export const PipelineTab: React.FC<PipelineTabProps> = ({ applicant, onAdvance, stages }) => {
-  const isTerminal = TERMINAL.includes(applicant.stage)
-  const stageId = applicant.stage // mock uses stage as stageId
+export const PipelineTab: React.FC<PipelineTabProps> = ({ applicant, stages, onAdvance }) => {
+  const terminal = isTerminal(applicant.status)
 
   const [tasks, setTasks] = useState<ApplicationTask[]>([])
   const [sendingTask, setSendingTask] = useState<ApplicationTask | null>(null)
@@ -106,30 +77,14 @@ export const PipelineTab: React.FC<PipelineTabProps> = ({ applicant, onAdvance, 
   const [savedIndicator, setSavedIndicator] = useState(false)
   const [addingTask, setAddingTask] = useState(false)
   const [softBlockOpen, setSoftBlockOpen] = useState(false)
-  const [enabledStages, setEnabledStages] = useState<KanbanStage[]>(ACTIVE_ORDER)
-  const [stagePurpose, setStagePurpose] = useState<string | null>(null)
 
-  // Load enabled-stages + current stage purpose
+  // Load tasks and notes when applicant or current stage changes
   useEffect(() => {
     let cancelled = false
-    getStagesForApplication(applicant.id).then(({ data }) => {
-      if (cancelled || data.length === 0) return
-      setEnabledStages(data.filter((s) => s.enabled).map((s) => s.stage) as KanbanStage[])
-      const current = data.find((s) => s.stage === applicant.stage)
-      setStagePurpose(current?.purpose ?? null)
-    })
-    return () => {
-      cancelled = true
-    }
-  }, [applicant.id, applicant.stage])
-
-  // Load tasks and notes on mount / applicant change
-  useEffect(() => {
-    let cancelled = false
-    getApplicationTasks(applicant.id, stageId).then(({ data }) => {
+    getApplicationTasks(applicant.id, applicant.currentStageId).then(({ data }) => {
       if (!cancelled) setTasks(data)
     })
-    getStageNotes(applicant.id, stageId).then(({ data }) => {
+    getStageNotes(applicant.id, applicant.currentStageId).then(({ data }) => {
       if (!cancelled) {
         setStageNotes(data?.notes ?? '')
         setNotesLoaded(true)
@@ -138,7 +93,7 @@ export const PipelineTab: React.FC<PipelineTabProps> = ({ applicant, onAdvance, 
     return () => {
       cancelled = true
     }
-  }, [applicant.id, stageId])
+  }, [applicant.id, applicant.currentStageId])
 
   // ── Task actions ──────────────────────────────────────────────────────────
 
@@ -182,7 +137,13 @@ export const PipelineTab: React.FC<PipelineTabProps> = ({ applicant, onAdvance, 
   }
 
   const handleAddTask = async (label: string, isRequired: boolean, dueDate: string | null) => {
-    const { data } = await addAdHocTask(applicant.id, stageId, label, isRequired, dueDate)
+    const { data } = await addAdHocTask(
+      applicant.id,
+      applicant.currentStageId,
+      label,
+      isRequired,
+      dueDate
+    )
     if (data) setTasks((prev) => [...prev, data])
     setAddingTask(false)
   }
@@ -194,7 +155,7 @@ export const PipelineTab: React.FC<PipelineTabProps> = ({ applicant, onAdvance, 
   const handleNotesBlur = () => {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
     saveTimerRef.current = setTimeout(async () => {
-      await saveStageNotes(applicant.id, stageId, stageNotes)
+      await saveStageNotes(applicant.id, applicant.currentStageId, stageNotes)
       setSavedIndicator(true)
       setTimeout(() => setSavedIndicator(false), 2000)
     }, 300)
@@ -208,22 +169,15 @@ export const PipelineTab: React.FC<PipelineTabProps> = ({ applicant, onAdvance, 
     if (incompletedRequired.length > 0) {
       setSoftBlockOpen(true)
     } else {
-      onAdvance()
+      const next = nextStage
+      if (next) onAdvance(next.id)
     }
   }
 
-  // If dynamic stages are provided, derive next from position; else fall back to enabled stage order.
-  const nextEntry: PipelineStageOption | null = stages
-    ? (() => {
-        const idx = stages.findIndex((s) => s.value === applicant.stage)
-        return idx >= 0 && idx < stages.length - 1 ? stages[idx + 1] : null
-      })()
-    : (() => {
-        const n = nextEnabledStage(applicant.stage, enabledStages)
-        return n ? { value: n, label: STAGE_LABEL[n] } : null
-      })()
-
-  const nextName = nextEntry?.label ?? null
+  // Derive next stage from the ordered stages array
+  const currentIdx = stages.findIndex((s) => s.id === applicant.currentStageId)
+  const nextStage: PipelineStage | null =
+    currentIdx >= 0 && currentIdx < stages.length - 1 ? stages[currentIdx + 1] : null
 
   // ── Render ────────────────────────────────────────────────────────────────
 
@@ -233,24 +187,16 @@ export const PipelineTab: React.FC<PipelineTabProps> = ({ applicant, onAdvance, 
       <div className={styles.body}>
         {/* Stage indicator */}
         <div className={styles.stageBlock}>
-          <span className={styles.stageName}>{STAGE_LABEL[applicant.stage]}</span>
+          <span className={styles.stageName}>{applicant.currentStageName}</span>
           {applicant.stageEnteredAt && (
             <span className={styles.timeInStage}>
               In stage {formatTimeInStage(applicant.stageEnteredAt)}
             </span>
           )}
-          {applicant.slaState === 'approaching' && (
-            <span className={[styles.slaPill, styles.slaPillAmber].join(' ')}>SLA approaching</span>
-          )}
-          {applicant.slaState === 'breached' && (
-            <span className={[styles.slaPill, styles.slaPillRed].join(' ')}>SLA breached</span>
-          )}
         </div>
 
-        {!isTerminal && stagePurpose && <p className={styles.stagePurpose}>{stagePurpose}</p>}
-
         {/* Task list — hidden in terminal stages */}
-        {!isTerminal && (
+        {!terminal && (
           <>
             <div className={styles.taskSection}>
               {tasks.length === 0 && !addingTask ? (
@@ -322,7 +268,7 @@ export const PipelineTab: React.FC<PipelineTabProps> = ({ applicant, onAdvance, 
         )}
 
         {/* Terminal: still show stage notes */}
-        {isTerminal && (
+        {terminal && (
           <div className={styles.notesSection} style={{ marginTop: 16 }}>
             <div className={styles.notesHeader}>
               Notes for this stage
@@ -344,11 +290,11 @@ export const PipelineTab: React.FC<PipelineTabProps> = ({ applicant, onAdvance, 
 
       {/* Sticky inline advance */}
       <div className={styles.advanceBar}>
-        {isTerminal ? (
+        {terminal ? (
           <p className={styles.closedLine}>This application is closed.</p>
-        ) : nextName ? (
+        ) : nextStage ? (
           <button type="button" className={styles.advanceBtn} onClick={handleAdvanceClick}>
-            Advance to {nextName}
+            Advance to {nextStage.name}
           </button>
         ) : (
           <button type="button" className={styles.advanceBtn} onClick={handleAdvanceClick}>
@@ -377,7 +323,7 @@ export const PipelineTab: React.FC<PipelineTabProps> = ({ applicant, onAdvance, 
               className={styles.modalBtnPrimary}
               onClick={() => {
                 setSoftBlockOpen(false)
-                onAdvance()
+                if (nextStage) onAdvance(nextStage.id)
               }}
             >
               Advance anyway
