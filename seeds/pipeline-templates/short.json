@@ -1,0 +1,73 @@
+{
+  "name": "Short",
+  "description": "Suited for fast-turnaround hiring, contract or gig work, single-decision processes.",
+  "stages": [
+    {
+      "name": "Applied",
+      "sort_order": 1,
+      "triggers": [
+        {
+          "event": "stage_entered",
+          "action": "send_worker_notification",
+          "payload": {
+            "message": "Your application has been received. We'll be in touch soon."
+          }
+        }
+      ],
+      "task_template": [
+        {
+          "label": "Review resume / profile",
+          "is_required": true,
+          "display_order": 1
+        },
+        {
+          "label": "Verify Regulix status",
+          "is_required": false,
+          "display_order": 2
+        }
+      ]
+    },
+    {
+      "name": "Review",
+      "sort_order": 2,
+      "triggers": [
+        {
+          "event": "stage_entered",
+          "action": "send_worker_notification",
+          "payload": {
+            "message": "Your application is under review. We may reach out to schedule a conversation."
+          }
+        }
+      ],
+      "task_template": [
+        {
+          "label": "Confirm availability and schedule",
+          "is_required": true,
+          "display_order": 1
+        },
+        {
+          "label": "Leave a note for the hiring decision",
+          "is_required": false,
+          "display_order": 2
+        }
+      ]
+    },
+    {
+      "name": "Offer",
+      "sort_order": 3,
+      "triggers": [],
+      "task_template": [
+        {
+          "label": "Send offer details to worker",
+          "is_required": true,
+          "display_order": 1
+        },
+        {
+          "label": "Confirm start date",
+          "is_required": true,
+          "display_order": 2
+        }
+      ]
+    }
+  ]
+}

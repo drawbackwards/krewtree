@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import type { Json } from '@/lib/database.types'
 import type { Job } from '@site/types'
 import { daysSince } from '@site/utils/date'
 
@@ -218,9 +219,42 @@ export async function submitApplication(
   return { error: null }
 }
 
+async function fetchPipelineSnapshot(companyId: string): Promise<Json> {
+  const db = supabase as unknown as { from: (t: string) => ReturnType<typeof supabase.from> }
+
+  const { data: pipeline } = await db
+    .from('company_pipeline')
+    .select('id')
+    .eq('company_id', companyId)
+    .single()
+
+  const pipelineRow = pipeline as { id: string } | null
+  if (!pipelineRow) return { stages: [] }
+
+  const { data: stages } = await db
+    .from('pipeline_stage')
+    .select('id, name, sort_order')
+    .eq('pipeline_id', pipelineRow.id)
+    .order('sort_order', { ascending: true })
+
+  if (!stages) return { stages: [] }
+
+  return {
+    stages: (stages as Array<{ id: string; name: string; sort_order: number }>).map((s) => ({
+      id: s.id,
+      name: s.name,
+      order: s.sort_order,
+      triggers: [],
+      task_template: [],
+    })),
+  }
+}
+
 export async function createJob(
   params: CreateJobParams
 ): Promise<{ data: { id: string } | null; error: string | null }> {
+  const snapshot = await fetchPipelineSnapshot(params.companyId)
+
   const { data, error } = await supabase
     .from('jobs')
     .insert({
@@ -244,6 +278,7 @@ export async function createJob(
       auto_pause_limit: params.autoPauseLimit,
       closing_at: params.closingAt ?? null,
       status: 'active',
+      pipeline_snapshot: snapshot,
     })
     .select('id')
     .single()

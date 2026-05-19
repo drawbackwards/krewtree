@@ -1,0 +1,336 @@
+.table {
+  width: 100%;
+}
+
+/* Column header row */
+.header {
+  display: grid;
+  grid-template-columns: 24% 22% 14% 10% 12% 1fr;
+  padding: 6px 16px;
+  border-bottom: 1px solid var(--kt-border);
+  background: var(--kt-grey-100);
+}
+
+.headerCell {
+  font-size: 11px;
+  font-weight: var(--kt-weight-semibold);
+  color: var(--kt-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.headerCell.centerAlign {
+  text-align: center;
+}
+
+.headerCell.rightAlign {
+  text-align: right;
+}
+
+/* Row */
+.row {
+  display: grid;
+  grid-template-columns: 24% 22% 14% 10% 12% 1fr;
+  align-items: center;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--kt-border);
+  min-height: 44px;
+  position: relative;
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.row:hover {
+  background: var(--kt-grey-50, var(--kt-secondary));
+}
+
+/* Applicant cell */
+.applicantCell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.applicantCell:hover .applicantName {
+  color: var(--kt-navy-500);
+}
+
+.avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--kt-navy-100, var(--kt-secondary));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: var(--kt-weight-semibold);
+  color: var(--kt-navy-700, var(--kt-text-muted));
+  flex-shrink: 0;
+  overflow: hidden;
+  object-fit: cover;
+}
+
+.avatarImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.applicantName {
+  font-size: 13px;
+  font-weight: var(--kt-weight-medium);
+  color: var(--kt-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 100ms ease;
+}
+
+/* Job cell */
+.jobCell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding-right: 8px;
+}
+
+.jobTitle {
+  font-size: 12px;
+  color: var(--kt-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pausedPill {
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: var(--kt-weight-medium);
+  color: var(--kt-warning, #d97706);
+  background: var(--kt-warning-bg, #fef3c7);
+  border-radius: 4px;
+  padding: 1px 5px;
+  line-height: 1.4;
+}
+
+/* Stage cell */
+.stageCell {
+  font-size: 12px;
+  color: var(--kt-text);
+}
+
+/* Regulix cell */
+.regulixCell {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Last activity cell */
+.activityCell {
+  font-size: 12px;
+  color: var(--kt-text-muted);
+}
+
+/* Actions cell */
+.actionsCell {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.viewBtn {
+  height: 26px;
+  padding: 0 10px;
+  border: 0.5px solid var(--kt-border);
+  border-radius: var(--kt-radius-sm);
+  background: transparent;
+  font-family: var(--kt-font-sans);
+  font-size: 12px;
+  font-weight: var(--kt-weight-medium);
+  color: var(--kt-text);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 100ms ease;
+}
+
+.viewBtn:hover {
+  background: var(--kt-secondary);
+}
+
+.overflowBtn {
+  width: 26px;
+  height: 26px;
+  border: 0.5px solid var(--kt-border);
+  border-radius: var(--kt-radius-sm);
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--kt-text-muted);
+  flex-shrink: 0;
+  transition: background 100ms ease;
+}
+
+.overflowBtn:hover {
+  background: var(--kt-secondary);
+  color: var(--kt-text);
+}
+
+/* Overflow dropdown */
+.overflowDropdown {
+  position: absolute;
+  right: 16px;
+  top: calc(100% - 4px);
+  z-index: 100;
+  background: var(--kt-surface);
+  border: 1px solid var(--kt-border);
+  border-radius: var(--kt-radius-md);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  min-width: 160px;
+  padding: 4px 0;
+}
+
+.overflowItem {
+  width: 100%;
+  padding: 8px 14px;
+  border: none;
+  background: transparent;
+  font-family: var(--kt-font-sans);
+  font-size: 13px;
+  color: var(--kt-text);
+  text-align: left;
+  cursor: pointer;
+  display: block;
+  transition: background 80ms ease;
+}
+
+.overflowItem:hover {
+  background: var(--kt-secondary);
+}
+
+.overflowItem.danger {
+  color: var(--kt-danger, #dc2626);
+}
+
+/* Loading / empty states */
+.loadingRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  font-size: var(--kt-text-sm);
+  color: var(--kt-text-muted);
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  gap: 8px;
+  text-align: center;
+}
+
+.emptyText {
+  font-size: var(--kt-text-sm);
+  color: var(--kt-text-muted);
+  margin: 0;
+}
+
+.emptyLink {
+  font-size: var(--kt-text-sm);
+  font-weight: var(--kt-weight-bold);
+  color: var(--kt-navy-500);
+  text-decoration: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--kt-font-sans);
+  padding: 0;
+}
+
+/* Confirm modal content */
+.confirmBody {
+  font-size: var(--kt-text-sm);
+  color: var(--kt-text);
+  margin: 0 0 20px;
+  line-height: 1.5;
+}
+
+.confirmActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.confirmCancel {
+  height: 36px;
+  padding: 0 16px;
+  border: 1px solid var(--kt-border);
+  border-radius: var(--kt-radius-md);
+  background: transparent;
+  font-family: var(--kt-font-sans);
+  font-size: var(--kt-text-sm);
+  font-weight: var(--kt-weight-medium);
+  color: var(--kt-text);
+  cursor: pointer;
+}
+
+.confirmDanger {
+  height: 36px;
+  padding: 0 16px;
+  border: none;
+  border-radius: var(--kt-radius-md);
+  background: var(--kt-danger, #dc2626);
+  font-family: var(--kt-font-sans);
+  font-size: var(--kt-text-sm);
+  font-weight: var(--kt-weight-medium);
+  color: #fff;
+  cursor: pointer;
+}
+
+/* Mobile */
+@media (max-width: 640px) {
+  .header {
+    display: none;
+  }
+
+  .row {
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto;
+    padding: 10px 16px;
+    gap: 2px 8px;
+  }
+
+  .applicantCell {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .actionsCell {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    align-self: center;
+  }
+  .jobCell {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  /* Hide stage, regulix, activity on mobile */
+  .stageCell,
+  .regulixCell,
+  .activityCell {
+    display: none;
+  }
+}

@@ -452,8 +452,8 @@ export type DashboardApplication = {
   companyId: string
   companyName: string
   companyLocation: string
-  /** Worker-facing stage — maps from DB status */
-  stage: 'Applied' | 'Reviewed' | 'Interview' | 'Offer' | 'Closed'
+  /** Worker-facing stage — derived from kanban_stage */
+  stage: 'Applied' | 'In Review' | 'Closed'
   appliedAt: string
   isBoosted: boolean
 }
@@ -500,12 +500,18 @@ export type RegulixNudgeData = {
 // ── Dashboard Applications ─────────────────────────────────────────────────────
 
 const DB_TO_WORKER_STAGE: Record<string, DashboardApplication['stage']> = {
-  new: 'Applied',
-  reviewed: 'Reviewed',
-  interview: 'Interview',
-  offer: 'Offer',
-  hired: 'Offer',
+  // Current stage values (post-May 2026 rename)
+  screening: 'Applied',
+  assessment: 'In Review',
+  interview: 'In Review',
+  offer: 'In Review',
+  hired: 'Closed',
   rejected: 'Closed',
+  withdrawn: 'Closed',
+  archived: 'Closed',
+  // Legacy fallbacks (pre-rename rows still in DB)
+  new: 'Applied',
+  reviewed: 'In Review',
 }
 
 export async function getDashboardApplications(

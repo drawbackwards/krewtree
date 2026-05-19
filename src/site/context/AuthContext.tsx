@@ -21,7 +21,7 @@ interface AuthState {
     lastName?: string,
     industry?: string,
     companySize?: string
-  ) => Promise<{ error: string | null; persona?: Persona }>
+  ) => Promise<{ error: string | null; persona?: Persona; userId?: string }>
   logout: () => Promise<void>
   resendVerificationEmail: () => Promise<{ error: string | null }>
   /** Initiates an email change — Supabase sends a confirmation link to the new address. */
@@ -38,7 +38,7 @@ const AuthContext = createContext<AuthState>({
   isEmailVerified: false,
   isLoading: true,
   login: async () => ({ error: null, persona: undefined }),
-  signUp: async () => ({ error: null, persona: undefined }),
+  signUp: async () => ({ error: null, persona: undefined, userId: undefined }),
   logout: async () => {},
   resendVerificationEmail: async () => ({ error: null }),
   updateEmail: async () => ({ error: null }),
@@ -110,7 +110,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     lastName = '',
     industry = '',
     companySize = ''
-  ): Promise<{ error: string | null; persona?: Persona }> => {
+  ): Promise<{ error: string | null; persona?: Persona; userId?: string }> => {
     // Pass role + name in metadata — the handle_new_user trigger creates the rows
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -127,9 +127,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       },
     })
     if (error) return { error: error.message }
-    if (!data.user) return { error: 'Sign-up failed — no user returned.' }
+    if (!data.user) return { error: 'Sign-up failed. No user returned.' }
     setPersonaState(role)
-    return { error: null, persona: role }
+    return { error: null, persona: role, userId: data.user.id }
   }
 
   const resendVerificationEmail = async (): Promise<{ error: string | null }> => {

@@ -17,13 +17,27 @@ const STAGE_LABEL: Record<KanbanStage, string> = {
 
 const ACTIVE_STAGES: KanbanStage[] = ['screening', 'assessment', 'interview', 'offer', 'hired']
 
+export interface StageOption {
+  value: KanbanStage
+  label: string
+}
+
 export interface StagePickerProps {
   stage: KanbanStage
+  currentLabel?: string
+  /** When provided, replaces the hardcoded stage list in the dropdown. */
+  stages?: StageOption[]
   onChange: (stage: KanbanStage) => void
   size?: 'sm' | 'md'
 }
 
-export const StagePicker: React.FC<StagePickerProps> = ({ stage, onChange, size = 'md' }) => {
+export const StagePicker: React.FC<StagePickerProps> = ({
+  stage,
+  currentLabel,
+  stages,
+  onChange,
+  size = 'md',
+}) => {
   const [open, setOpen] = useState(false)
   const [pos, setPos] = useState({ top: 0, left: 0, width: 0 })
   const btnRef = useRef<HTMLButtonElement>(null)
@@ -63,7 +77,7 @@ export const StagePicker: React.FC<StagePickerProps> = ({ stage, onChange, size 
         aria-haspopup="menu"
         aria-expanded={open}
       >
-        <span className={styles.label}>{STAGE_LABEL[stage]}</span>
+        <span className={styles.label}>{currentLabel ?? STAGE_LABEL[stage]}</span>
         <ChevronDownIcon size={size === 'sm' ? 10 : 12} />
       </button>
       {open &&
@@ -74,19 +88,21 @@ export const StagePicker: React.FC<StagePickerProps> = ({ stage, onChange, size 
             role="menu"
             style={{ top: pos.top, left: pos.left, minWidth: pos.width }}
           >
-            {ACTIVE_STAGES.map((s) => (
-              <button
-                key={s}
-                type="button"
-                role="menuitem"
-                onClick={() => pick(s)}
-                className={[styles.item, s === stage ? styles.itemCurrent : '']
-                  .filter(Boolean)
-                  .join(' ')}
-              >
-                {STAGE_LABEL[s]}
-              </button>
-            ))}
+            {(stages ?? ACTIVE_STAGES.map((s) => ({ value: s, label: STAGE_LABEL[s] }))).map(
+              (opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  role="menuitem"
+                  onClick={() => pick(opt.value)}
+                  className={[styles.item, opt.value === stage ? styles.itemCurrent : '']
+                    .filter(Boolean)
+                    .join(' ')}
+                >
+                  {opt.label}
+                </button>
+              )
+            )}
             <div className={styles.divider} />
             <button
               type="button"

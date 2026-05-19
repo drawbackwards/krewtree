@@ -311,6 +311,7 @@ export type CompanyApplicant = {
   matchBreakdown: { skills: number; location: number; availability: number }
   isRegulixReady: boolean
   isShortlisted: boolean
+  currentStageName: string
   appliedAt: string // ISO
   stageEnteredAt: string | null
   slaState: SlaState

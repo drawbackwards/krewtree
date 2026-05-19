@@ -49,9 +49,7 @@ type StageCfg = {
 
 const STAGE_CFG: Record<DashboardApplication['stage'], StageCfg> = {
   Applied: { variant: 'secondary', label: 'Applied' },
-  Reviewed: { variant: 'info', label: 'Reviewed' },
-  Interview: { variant: 'warning', label: 'Interview' },
-  Offer: { variant: 'success', label: 'Offer' },
+  'In Review': { variant: 'info', label: 'In Review' },
   Closed: { variant: 'secondary', label: 'Closed' },
 }
 
@@ -421,14 +419,14 @@ export const WorkerDashboard: React.FC = () => {
             value={applications.filter((a) => a.stage !== 'Closed').length}
             icon={<BriefcaseIcon />}
             color="navy"
-            subtext={`${applications.filter((a) => a.stage === 'Reviewed' || a.stage === 'Interview' || a.stage === 'Offer').length} moved forward this week`}
+            subtext={`${applications.filter((a) => a.stage === 'In Review').length} in review`}
           />
           <StatCard
-            label="Interviews scheduled"
-            value={applications.filter((a) => a.stage === 'Interview').length}
+            label="In review"
+            value={applications.filter((a) => a.stage === 'In Review').length}
             icon={<CalendarIcon />}
             color="navy"
-            subtext={`${applications.filter((a) => a.stage === 'Interview').length} new this week`}
+            subtext="Employer has reviewed your application"
           />
           <StatCard
             label="Saved jobs"
@@ -496,7 +494,7 @@ export const WorkerDashboard: React.FC = () => {
             {applications.map((app) => {
               const cfg = STAGE_CFG[app.stage]
               const isBoosted = app.isBoosted || boostedAppIds.has(app.id)
-              const canAction = app.stage !== 'Offer' && app.stage !== 'Closed'
+              const canAction = app.stage !== 'Closed'
 
               const overflowItems: OverflowItem[] = [
                 // Mirrors the inline "View job" CTA so it's reachable from the menu on mobile

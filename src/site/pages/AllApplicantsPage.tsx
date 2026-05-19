@@ -18,6 +18,7 @@ import {
   DEFAULT_FILTERS,
   type ApplicantFilters,
   type ApplicantSort,
+  type WidgetFilters,
 } from '../services/applicantService'
 import {
   CheckSmallIcon,
@@ -28,7 +29,8 @@ import {
   SortIcon,
 } from '../icons'
 import { StagePill } from '../components/StagePill/StagePill'
-import { ApplicantDetailPane } from '../components/ApplicantDetailPane/ApplicantDetailPane'
+import { ApplicantSlideover } from '../components/ApplicantSlideover/ApplicantSlideover'
+import { WidgetKanbanView } from '../components/ApplicantsWidget/WidgetKanbanView'
 import styles from './AllApplicantsPage.module.css'
 
 const STAGE_OPTIONS: Array<{ value: KanbanStage | 'all'; label: string }> = [
@@ -39,6 +41,8 @@ const STAGE_OPTIONS: Array<{ value: KanbanStage | 'all'; label: string }> = [
   { value: 'offer', label: 'Offer' },
   { value: 'hired', label: 'Hired' },
   { value: 'rejected', label: 'Rejected' },
+  { value: 'withdrawn', label: 'Withdrawn' },
+  { value: 'archived', label: 'Archived' },
 ]
 
 const PAGE_SIZES = [25, 50, 100]
@@ -113,17 +117,40 @@ const OverflowMenu: React.FC<{ items: OverflowItem[] }> = ({ items }) => {
   )
 }
 
+// ── Helpers ────────────────────────────────────────────────────────────────
+
+function initFiltersFromParams(params: URLSearchParams): ApplicantFilters {
+  const stage = params.get('stage') as KanbanStage | null
+  const jobId = params.get('job')
+  const regulix = params.get('regulix') === '1'
+  const from = params.get('from')
+  const to = params.get('to')
+  const search = params.get('search') ?? ''
+  const showArchived = params.get('archived') === '1'
+  return {
+    ...DEFAULT_FILTERS,
+    search,
+    stage: stage ?? 'all',
+    jobId: jobId ?? 'all',
+    regulixOnly: regulix,
+    appliedFrom: from ?? null,
+    appliedTo: to ?? null,
+    showArchived,
+  }
+}
+
+// ── Main component ─────────────────────────────────────────────────────────
+
 export const AllApplicantsPage: React.FC = () => {
   const { user } = useAuth()
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
 
-  // Initial jobId pulled from URL (set when arriving from JobPostsPage's
-  // "View applicants" or the dashboard ActiveJobsModule). After mount, the
-  // user manages this via the dropdown — no bidirectional URL sync.
-  const [filters, setFilters] = useState<ApplicantFilters>(() => {
-    const jobIdParam = searchParams.get('jobId')
-    return jobIdParam ? { ...DEFAULT_FILTERS, jobId: jobIdParam } : DEFAULT_FILTERS
-  })
+  const [view, setView] = useState<'list' | 'kanban'>(() =>
+    searchParams.get('view') === 'kanban' ? 'kanban' : 'list'
+  )
+  const [filters, setFilters] = useState<ApplicantFilters>(() =>
+    initFiltersFromParams(searchParams)
+  )
   const [sort, setSort] = useState<{ column: ApplicantSort; direction: 'asc' | 'desc' }>({
     column: 'applied',
     direction: 'desc',
@@ -136,9 +163,21 @@ export const AllApplicantsPage: React.FC = () => {
   const [jobOptions, setJobOptions] = useState<Array<{ id: string; title: string }>>([])
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [open, setOpen] = useState<CompanyApplicant | null>(null)
-
-  // Bulk reject confirmation
   const [confirmBulkReject, setConfirmBulkReject] = useState(false)
+
+  // Sync filters + view to URL (replace so back button stays sensible)
+  useEffect(() => {
+    const params: Record<string, string> = {}
+    if (view !== 'list') params.view = view
+    if (filters.search) params.search = filters.search
+    if (filters.stage !== 'all') params.stage = filters.stage
+    if (filters.jobId !== 'all') params.job = filters.jobId
+    if (filters.regulixOnly) params.regulix = '1'
+    if (filters.appliedFrom) params.from = filters.appliedFrom
+    if (filters.appliedTo) params.to = filters.appliedTo
+    if (filters.showArchived) params.archived = '1'
+    setSearchParams(params, { replace: true })
+  }, [view, filters, setSearchParams])
 
   const load = useCallback(() => {
     if (!user?.id) return
@@ -157,7 +196,7 @@ export const AllApplicantsPage: React.FC = () => {
     getJobFilterOptions(user.id).then(({ data }) => setJobOptions(data))
   }, [user?.id])
 
-  // Clear selection when page/filters/sort change.
+  // Clear selection when page/filters/sort change
   useEffect(() => {
     setSelected(new Set())
   }, [page, filters, sort, pageSize])
@@ -167,10 +206,14 @@ export const AllApplicantsPage: React.FC = () => {
     setPage(1)
   }
 
+  const clearFilters = () => {
+    setFilters(DEFAULT_FILTERS)
+    setPage(1)
+  }
+
   const handleSort = (column: ApplicantSort) => {
     setSort((s) => {
       if (s.column !== column) {
-        // Sensible default direction per column.
         const direction = column === 'match' || column === 'applied' ? 'desc' : 'asc'
         return { column, direction }
       }
@@ -226,7 +269,6 @@ export const AllApplicantsPage: React.FC = () => {
     load()
   }
   const handleMessage = (_id: string) => {
-    // TODO: open messaging UI
     window.alert('Messaging UI not built yet. Navigate to /site/messages to continue.')
   }
   const handleAddNote = async (id: string) => {
@@ -254,9 +296,7 @@ export const AllApplicantsPage: React.FC = () => {
     setSelected(new Set())
     load()
   }
-  const doBulkMessage = () => {
-    handleMessage('__bulk__')
-  }
+  const doBulkMessage = () => handleMessage('__bulk__')
   const doBulkReject = async () => {
     await rejectApplicants(bulkIds)
     setSelected(new Set())
@@ -264,18 +304,49 @@ export const AllApplicantsPage: React.FC = () => {
     load()
   }
 
-  const clearFilters = () => {
-    setFilters(DEFAULT_FILTERS)
-    setPage(1)
-  }
-
+  // ── Filter chips ─────────────────────────────────────────────────────────
   const hasFilters =
-    filters.search ||
+    !!filters.search ||
     filters.stage !== 'all' ||
     filters.jobId !== 'all' ||
     filters.regulixOnly ||
-    filters.appliedFrom ||
-    filters.appliedTo
+    !!filters.appliedFrom ||
+    !!filters.appliedTo ||
+    filters.showArchived
+
+  const chips: Array<{ label: string; onRemove: () => void }> = []
+  if (filters.search)
+    chips.push({ label: `"${filters.search}"`, onRemove: () => updateFilter('search', '') })
+  if (filters.stage !== 'all') {
+    const stageLabel = STAGE_OPTIONS.find((o) => o.value === filters.stage)?.label ?? filters.stage
+    chips.push({ label: `Stage: ${stageLabel}`, onRemove: () => updateFilter('stage', 'all') })
+  }
+  if (filters.jobId !== 'all') {
+    const job = jobOptions.find((j) => j.id === filters.jobId)
+    chips.push({
+      label: `Job: ${job?.title ?? filters.jobId}`,
+      onRemove: () => updateFilter('jobId', 'all'),
+    })
+  }
+  if (filters.regulixOnly)
+    chips.push({ label: 'Regulix Ready', onRemove: () => updateFilter('regulixOnly', false) })
+  if (filters.appliedFrom)
+    chips.push({
+      label: `From: ${filters.appliedFrom}`,
+      onRemove: () => updateFilter('appliedFrom', null),
+    })
+  if (filters.appliedTo)
+    chips.push({
+      label: `To: ${filters.appliedTo}`,
+      onRemove: () => updateFilter('appliedTo', null),
+    })
+
+  // ── Kanban filters (subset of ApplicantFilters) ───────────────────────────
+  const widgetFilters: WidgetFilters = {
+    search: filters.search,
+    jobId: filters.jobId,
+    regulixOnly: filters.regulixOnly,
+  }
 
   // ── Pagination buttons (truncated to max 7) ──────────────────────────────
   const pageButtons = useMemo(() => {
@@ -296,18 +367,43 @@ export const AllApplicantsPage: React.FC = () => {
     return result
   }, [page, totalPages])
 
+  const subtitleText =
+    view === 'kanban'
+      ? `${total} applicant${total === 1 ? '' : 's'} across your pipeline`
+      : total === 0
+        ? 'No applicants'
+        : `Showing ${pageStart}–${pageEnd} of ${total} applicant${total === 1 ? '' : 's'}`
+
   return (
     <div className={styles.page}>
       <div className={styles.container}>
         <Link to="/site/dashboard/company" className={styles.breadcrumb}>
           ← Back to dashboard
         </Link>
+
+        {/* Page header */}
         <header className={styles.pageHeader}>
           <div>
-            <h1 className={styles.title}>All applicants</h1>
-            <p className={styles.subtitle}>
-              Cross-job pipeline across every posting on your company.
-            </p>
+            <h1 className={styles.title}>Applicants</h1>
+            <p className={styles.subtitle}>{subtitleText}</p>
+          </div>
+          <div className={styles.viewToggle} role="group" aria-label="Applicants view">
+            <button
+              type="button"
+              className={`${styles.toggleBtn} ${view === 'list' ? styles.toggleActive : ''}`}
+              onClick={() => setView('list')}
+              aria-pressed={view === 'list'}
+            >
+              List
+            </button>
+            <button
+              type="button"
+              className={`${styles.toggleBtn} ${view === 'kanban' ? styles.toggleActive : ''}`}
+              onClick={() => setView('kanban')}
+              aria-pressed={view === 'kanban'}
+            >
+              Kanban
+            </button>
           </div>
         </header>
 
@@ -325,17 +421,19 @@ export const AllApplicantsPage: React.FC = () => {
               className={styles.searchInput}
             />
           </div>
-          <select
-            value={filters.stage}
-            onChange={(e) => updateFilter('stage', e.target.value as KanbanStage | 'all')}
-            className={styles.select}
-          >
-            {STAGE_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
+          {view === 'list' && (
+            <select
+              value={filters.stage}
+              onChange={(e) => updateFilter('stage', e.target.value as KanbanStage | 'all')}
+              className={styles.select}
+            >
+              {STAGE_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          )}
           <select
             value={filters.jobId}
             onChange={(e) => updateFilter('jobId', e.target.value)}
@@ -356,23 +454,37 @@ export const AllApplicantsPage: React.FC = () => {
             />
             Regulix only
           </label>
-          <div className={styles.dateGroup}>
-            <input
-              type="date"
-              value={filters.appliedFrom ?? ''}
-              onChange={(e) => updateFilter('appliedFrom', e.target.value || null)}
-              className={styles.dateInput}
-              aria-label="Applied from"
-            />
-            <span className={styles.dateSep}>to</span>
-            <input
-              type="date"
-              value={filters.appliedTo ?? ''}
-              onChange={(e) => updateFilter('appliedTo', e.target.value || null)}
-              className={styles.dateInput}
-              aria-label="Applied to"
-            />
-          </div>
+          {view === 'list' && (
+            <div className={styles.dateGroup}>
+              <input
+                type="date"
+                value={filters.appliedFrom ?? ''}
+                onChange={(e) => updateFilter('appliedFrom', e.target.value || null)}
+                className={styles.dateInput}
+                aria-label="Applied from"
+              />
+              <span className={styles.dateSep}>to</span>
+              <input
+                type="date"
+                value={filters.appliedTo ?? ''}
+                onChange={(e) => updateFilter('appliedTo', e.target.value || null)}
+                className={styles.dateInput}
+                aria-label="Applied to"
+              />
+            </div>
+          )}
+          <button
+            type="button"
+            className={[styles.archiveToggle, filters.showArchived ? styles.archiveToggleOn : '']
+              .filter(Boolean)
+              .join(' ')}
+            onClick={() => {
+              updateFilter('showArchived', !filters.showArchived)
+              updateFilter('stage', 'all')
+            }}
+          >
+            {filters.showArchived ? 'Hide archived' : 'Show archived'}
+          </button>
           {hasFilters && (
             <button type="button" className={styles.clearLink} onClick={clearFilters}>
               Clear filters
@@ -380,41 +492,75 @@ export const AllApplicantsPage: React.FC = () => {
           )}
         </div>
 
-        {/* Bulk action bar */}
-        {selected.size > 0 && (
-          <div className={styles.bulkBar}>
-            <span className={styles.bulkCount}>{selected.size} selected</span>
-            <div className={styles.bulkActions}>
-              <button type="button" className={styles.bulkBtn} onClick={doBulkAdvance}>
-                Advance stage
-              </button>
-              <button type="button" className={styles.bulkBtn} onClick={doBulkShortlist}>
-                Shortlist
-              </button>
-              <button type="button" className={styles.bulkBtn} onClick={doBulkMessage}>
-                Message
-              </button>
-              <button
-                type="button"
-                className={[styles.bulkBtn, styles.bulkBtnDanger].join(' ')}
-                onClick={() => setConfirmBulkReject(true)}
-              >
-                Reject
-              </button>
-              <button
-                type="button"
-                className={styles.bulkDeselect}
-                onClick={() => setSelected(new Set())}
-              >
-                Deselect all
-              </button>
-            </div>
+        {/* Filter chips */}
+        {hasFilters && chips.length > 0 && (
+          <div className={styles.chips}>
+            {chips.map((chip) => (
+              <span key={chip.label} className={styles.chip}>
+                {chip.label}
+                <button
+                  type="button"
+                  className={styles.chipRemove}
+                  onClick={chip.onRemove}
+                  aria-label={`Remove filter: ${chip.label}`}
+                >
+                  <CloseIcon size={10} />
+                </button>
+              </span>
+            ))}
+            <button type="button" className={styles.clearAll} onClick={clearFilters}>
+              Clear all
+            </button>
           </div>
         )}
 
-        {/* Split layout: list + detail */}
-        <div className={styles.splitLayout}>
-          <div className={styles.listPane}>
+        {/* Kanban view */}
+        {view === 'kanban' && user?.id && (
+          <div className={styles.kanbanWrapper}>
+            <WidgetKanbanView
+              companyId={user.id}
+              filters={widgetFilters}
+              onOpenApplicant={setOpen}
+              cardsPerCol={50}
+            />
+          </div>
+        )}
+
+        {/* List view */}
+        {view === 'list' && (
+          <>
+            {/* Bulk action bar */}
+            {selected.size > 0 && (
+              <div className={styles.bulkBar}>
+                <span className={styles.bulkCount}>{selected.size} selected</span>
+                <div className={styles.bulkActions}>
+                  <button type="button" className={styles.bulkBtn} onClick={doBulkAdvance}>
+                    Advance stage
+                  </button>
+                  <button type="button" className={styles.bulkBtn} onClick={doBulkShortlist}>
+                    Shortlist
+                  </button>
+                  <button type="button" className={styles.bulkBtn} onClick={doBulkMessage}>
+                    Message
+                  </button>
+                  <button
+                    type="button"
+                    className={[styles.bulkBtn, styles.bulkBtnDanger].join(' ')}
+                    onClick={() => setConfirmBulkReject(true)}
+                  >
+                    Reject
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.bulkDeselect}
+                    onClick={() => setSelected(new Set())}
+                  >
+                    Deselect all
+                  </button>
+                </div>
+              </div>
+            )}
+
             <div className={styles.tableCard}>
               <div className={[styles.row, styles.headerRow].join(' ')}>
                 <div className={styles.checkCell}>
@@ -492,15 +638,10 @@ export const AllApplicantsPage: React.FC = () => {
                     })
                   }
 
-                  const isOpen = open?.id === a.id
                   return (
                     <div
                       key={a.id}
-                      className={[
-                        styles.row,
-                        isSelected ? styles.rowSelected : '',
-                        isOpen ? styles.rowOpen : '',
-                      ]
+                      className={[styles.row, isSelected ? styles.rowSelected : '']
                         .filter(Boolean)
                         .join(' ')}
                     >
@@ -528,7 +669,7 @@ export const AllApplicantsPage: React.FC = () => {
                         </Link>
                       </div>
                       <div>
-                        <StagePill stage={a.stage} size="sm" />
+                        <StagePill stage={a.stage} label={a.currentStageName} size="sm" />
                       </div>
                       <div className={[styles.alignRight, styles.matchCell].join(' ')}>
                         {a.matchScore}%
@@ -614,17 +755,17 @@ export const AllApplicantsPage: React.FC = () => {
                 </div>
               </div>
             </div>
-          </div>
-          <div className={styles.detailPane}>
-            <ApplicantDetailPane
-              applicant={open}
-              onSetStage={handleSetStage}
-              onMessage={handleMessage}
-              onShortlist={handleShortlist}
-            />
-          </div>
-        </div>
+          </>
+        )}
       </div>
+
+      <ApplicantSlideover
+        applicant={open}
+        onClose={() => setOpen(null)}
+        onSetStage={handleSetStage}
+        onMessage={handleMessage}
+        onShortlist={handleShortlist}
+      />
 
       {/* Bulk reject confirmation */}
       <Modal
@@ -671,7 +812,7 @@ export const AllApplicantsPage: React.FC = () => {
   )
 }
 
-// ── Little helper component for sort arrows ─────────────────────────────────
+// ── Sort arrow indicator ─────────────────────────────────────────────────────
 const SortIndicator: React.FC<{ active: boolean; direction: 'asc' | 'desc' }> = ({
   active,
   direction,

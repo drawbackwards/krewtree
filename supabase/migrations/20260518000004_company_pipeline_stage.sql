@@ -5,6 +5,9 @@
 -- Per the spec, "disabled" means the stage is skipped when auto-advancing the
 -- applicant. Backward moves to a disabled stage are blocked (enforced in app
 -- layer). Existing applicants in a now-disabled stage stay put.
+--
+-- NOTE: This table is superseded by the May 2026 pipeline pivot
+-- (company_pipeline + pipeline_stage). It is dropped in 20260519000001.
 
 CREATE TABLE IF NOT EXISTS company_pipeline_stage (
   id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),

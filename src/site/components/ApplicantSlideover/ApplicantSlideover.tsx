@@ -7,10 +7,17 @@ import { RegulixBadge } from '../RegulixBadge/RegulixBadge'
 import { Modal } from '../../../components'
 import { ApplicantPreviewBody } from '../ApplicantPreviewBody/ApplicantPreviewBody'
 import { PipelineTab } from './PipelineTab'
+import type { PipelineStageOption } from './PipelineTab'
 import { LogTab } from './LogTab'
-import { getStagesForApplication } from '../../services/pipelineService'
+import { getStagesForApplication, getPipelineStages } from '../../services/pipelineService'
 import { archiveApplicant } from '../../services/applicantService'
+import { useAuth } from '../../context/AuthContext'
 import styles from './ApplicantSlideover.module.css'
+
+// Positional order of active kanban_stage enum values — index 0 = first pipeline stage.
+const ACTIVE_ENUM_ORDER: KanbanStage[] = ['screening', 'assessment', 'interview', 'offer']
+
+type Tab = 'summary' | 'pipeline' | 'log'
 
 export interface ApplicantSlideoverProps {
   applicant: CompanyApplicant | null
@@ -24,8 +31,6 @@ export interface ApplicantSlideoverProps {
   onChanged?: () => void
 }
 
-type Tab = 'summary' | 'pipeline' | 'log'
-
 export const ApplicantSlideover: React.FC<ApplicantSlideoverProps> = ({
   applicant,
   onClose,
@@ -38,6 +43,7 @@ export const ApplicantSlideover: React.FC<ApplicantSlideoverProps> = ({
   onChanged,
 }) => {
   const open = applicant !== null
+  const { user } = useAuth()
   const [activeTab, setActiveTab] = useState<Tab>('summary')
   const [rejectConfirm, setRejectConfirm] = useState(false)
   const [hireConfirm, setHireConfirm] = useState(false)
@@ -48,6 +54,20 @@ export const ApplicantSlideover: React.FC<ApplicantSlideoverProps> = ({
     'interview',
     'offer',
   ])
+  const [stageOptions, setStageOptions] = useState<PipelineStageOption[]>([])
+
+  // Fetch org-level pipeline stage names once per company session.
+  useEffect(() => {
+    if (!user?.id) return
+    getPipelineStages(user.id).then(({ data }) => {
+      const sorted = [...data].sort((a, b) => a.sortOrder - b.sortOrder)
+      const opts: PipelineStageOption[] = ACTIVE_ENUM_ORDER.map((enumVal, i) => ({
+        value: enumVal,
+        label: sorted[i]?.name ?? enumVal,
+      }))
+      setStageOptions(opts)
+    })
+  }, [user?.id])
 
   useEffect(() => {
     if (!applicant) return
@@ -191,6 +211,7 @@ export const ApplicantSlideover: React.FC<ApplicantSlideoverProps> = ({
                 applicant={applicant}
                 onAdvance={handleAdvance}
                 onSetStage={(stage) => onSetStage(applicant.id, stage)}
+                stages={stageOptions.length > 0 ? stageOptions : undefined}
               />
             )}
             {activeTab === 'log' && <LogTab applicationId={applicant.id} />}

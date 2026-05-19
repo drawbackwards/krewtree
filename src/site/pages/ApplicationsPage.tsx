@@ -18,13 +18,11 @@ type StageCfg = { variant: 'secondary' | 'info' | 'warning' | 'success'; label: 
 
 const STAGE_CFG: Record<DashboardApplication['stage'], StageCfg> = {
   Applied: { variant: 'secondary', label: 'Applied' },
-  Reviewed: { variant: 'info', label: 'Reviewed' },
-  Interview: { variant: 'warning', label: 'Interview' },
-  Offer: { variant: 'success', label: 'Offer' },
+  'In Review': { variant: 'info', label: 'In Review' },
   Closed: { variant: 'secondary', label: 'Closed' },
 }
 
-const STAGE_FILTERS: Stage[] = ['All', 'Applied', 'Reviewed', 'Interview', 'Offer', 'Closed']
+const STAGE_FILTERS: Stage[] = ['All', 'Applied', 'In Review', 'Closed']
 
 const WITHDRAW_REASONS = [
   'Accepted another offer',
@@ -242,7 +240,7 @@ export const ApplicationsPage: React.FC = () => {
           {filtered.map((app) => {
             const cfg = STAGE_CFG[app.stage]
             const isBoosted = app.isBoosted || boostedAppIds.has(app.id)
-            const canAction = app.stage !== 'Offer' && app.stage !== 'Closed'
+            const canAction = app.stage !== 'Closed'
 
             const overflowItems: OverflowItem[] = []
             if (canAction) {

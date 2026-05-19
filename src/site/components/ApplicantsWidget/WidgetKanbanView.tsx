@@ -1,0 +1,503 @@
+import React, { useCallback, useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
+import {
+  DndContext,
+  DragOverlay,
+  MouseSensor,
+  TouchSensor,
+  useDraggable,
+  useDroppable,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+  type DragStartEvent,
+} from '@dnd-kit/core'
+import { Modal } from '../../../components'
+import type { CompanyApplicant, KanbanStage } from '../../types'
+import {
+  getWidgetApplicants,
+  setApplicantStage,
+  rejectApplicant,
+  hireApplicant,
+  type WidgetFilters,
+} from '../../services/applicantService'
+import { getPipelineStages, type PipelineStage } from '../../services/pipelineService'
+import { DotsHorizontalIcon, RegulixMarkIcon } from '../../icons'
+import styles from './WidgetKanbanView.module.css'
+
+// ── Constants ──────────────────────────────────────────────────────────────
+
+const DEFAULT_CARDS_PER_COL = 15
+const MAX_FETCH = 200
+
+// Positional order of active kanban_stage enum values.
+// Index 0 = first pipeline stage, index 1 = second, etc.
+const ACTIVE_ENUM_ORDER: KanbanStage[] = ['screening', 'assessment', 'interview', 'offer']
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+
+function timeInStage(iso: string | null | undefined): string {
+  if (!iso) return ''
+  const diffMs = Date.now() - new Date(iso).getTime()
+  const h = Math.floor(diffMs / 3_600_000)
+  if (h < 24) return `${Math.max(1, h)}h`
+  const d = Math.floor(h / 24)
+  if (d < 14) return `${d}d`
+  return `${Math.floor(d / 7)}w`
+}
+
+// ── Types ──────────────────────────────────────────────────────────────────
+
+type ConfirmModal = { type: 'reject' | 'hire'; applicant: CompanyApplicant }
+type UndoToast = {
+  id: string
+  message: string
+  undo: () => void
+  timerId: ReturnType<typeof setTimeout>
+}
+
+// ── Card ───────────────────────────────────────────────────────────────────
+
+type CardProps = {
+  applicant: CompanyApplicant
+  isDragging?: boolean
+  onOpen: (a: CompanyApplicant) => void
+  onReject: (a: CompanyApplicant) => void
+  onHire: (a: CompanyApplicant) => void
+}
+
+const KanbanCard: React.FC<CardProps> = ({
+  applicant: a,
+  isDragging,
+  onOpen,
+  onReject,
+  onHire,
+}) => {
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!menuOpen) return
+    const h = (e: MouseEvent) => {
+      if (!menuRef.current?.contains(e.target as Node)) setMenuOpen(false)
+    }
+    document.addEventListener('mousedown', h)
+    return () => document.removeEventListener('mousedown', h)
+  }, [menuOpen])
+
+  return (
+    <div
+      className={`${styles.card} ${isDragging ? styles.dragging : ''}`}
+      onClick={() => onOpen(a)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => e.key === 'Enter' && onOpen(a)}
+      style={{ position: 'relative' }}
+    >
+      <div className={styles.cardTop}>
+        {/* Avatar */}
+        <div className={styles.cardAvatar}>
+          {a.workerAvatar ? (
+            <img src={a.workerAvatar} alt="" className={styles.cardAvatarImg} />
+          ) : (
+            a.workerInitials.slice(0, 2)
+          )}
+        </div>
+        {/* Name */}
+        <span className={styles.cardName}>
+          {a.workerFirstName} {a.workerLastInitial}.
+        </span>
+        {/* Regulix badge */}
+        {a.isRegulixReady && <RegulixMarkIcon size={14} />}
+        {/* Overflow menu */}
+        <div ref={menuRef} style={{ position: 'relative', marginLeft: 'auto', flexShrink: 0 }}>
+          <button
+            type="button"
+            className={styles.cardOverflowBtn}
+            data-open={menuOpen}
+            onClick={(e) => {
+              e.stopPropagation()
+              setMenuOpen((v) => !v)
+            }}
+            aria-label="More actions"
+          >
+            <DotsHorizontalIcon size={13} />
+          </button>
+          {menuOpen && (
+            <div className={styles.overflowDropdown} onClick={(e) => e.stopPropagation()}>
+              <button
+                type="button"
+                className={styles.overflowItem}
+                onClick={() => {
+                  setMenuOpen(false)
+                  onOpen(a)
+                }}
+              >
+                Open profile
+              </button>
+              <button
+                type="button"
+                className={`${styles.overflowItem} ${styles.danger}`}
+                onClick={() => {
+                  setMenuOpen(false)
+                  onReject(a)
+                }}
+              >
+                Reject
+              </button>
+              <button
+                type="button"
+                className={`${styles.overflowItem} ${styles.danger}`}
+                onClick={() => {
+                  setMenuOpen(false)
+                  onHire(a)
+                }}
+              >
+                Mark hired
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Job row */}
+      <div className={styles.cardJob}>
+        <span className={styles.cardJobTitle}>{a.jobTitle}</span>
+        {a.jobStatus === 'paused' && <span className={styles.pausedPill}>Paused</span>}
+      </div>
+
+      {/* Status strip */}
+      <div className={styles.cardStrip}>
+        <span className={styles.cardTimeInStage}>{timeInStage(a.stageEnteredAt)}</span>
+      </div>
+    </div>
+  )
+}
+
+// ── Draggable card wrapper ─────────────────────────────────────────────────
+
+const DraggableCard: React.FC<CardProps> = (props) => {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: props.applicant.id,
+  })
+  return (
+    <div ref={setNodeRef} {...listeners} {...attributes}>
+      <KanbanCard {...props} isDragging={isDragging} />
+    </div>
+  )
+}
+
+// ── Droppable column ───────────────────────────────────────────────────────
+
+type ColumnProps = {
+  stage: PipelineStage
+  applicants: CompanyApplicant[]
+  totalInStage: number
+  cardsPerCol: number
+  stageNameToKanban: Record<string, KanbanStage>
+  onOpen: (a: CompanyApplicant) => void
+  onReject: (a: CompanyApplicant) => void
+  onHire: (a: CompanyApplicant) => void
+}
+
+const KanbanColumn: React.FC<ColumnProps> = ({
+  stage,
+  applicants,
+  totalInStage,
+  cardsPerCol,
+  stageNameToKanban,
+  onOpen,
+  onReject,
+  onHire,
+}) => {
+  const { setNodeRef, isOver } = useDroppable({ id: stage.name })
+  const visible = applicants.slice(0, cardsPerCol)
+  const moreCount = totalInStage - cardsPerCol
+
+  return (
+    <div ref={setNodeRef} className={`${styles.column} ${isOver ? styles.dropOver : ''}`}>
+      <div className={styles.colHeader}>
+        <span className={styles.colName}>{stage.name}</span>
+        <span className={styles.colCount}>({totalInStage})</span>
+      </div>
+      {visible.map((a) => (
+        <DraggableCard
+          key={a.id}
+          applicant={a}
+          onOpen={onOpen}
+          onReject={onReject}
+          onHire={onHire}
+        />
+      ))}
+      {moreCount > 0 && (
+        <Link
+          to={`/site/dashboard/applicants?stage=${encodeURIComponent(stageNameToKanban[stage.name] ?? stage.name.toLowerCase())}`}
+          className={styles.moreLink}
+        >
+          +{moreCount} more
+        </Link>
+      )}
+    </div>
+  )
+}
+
+// ── WidgetKanbanView ───────────────────────────────────────────────────────
+
+type Props = {
+  companyId: string
+  filters: WidgetFilters
+  onOpenApplicant: (a: CompanyApplicant) => void
+  cardsPerCol?: number
+}
+
+export const WidgetKanbanView: React.FC<Props> = ({
+  companyId,
+  filters,
+  onOpenApplicant,
+  cardsPerCol = DEFAULT_CARDS_PER_COL,
+}) => {
+  const [stages, setStages] = useState<PipelineStage[]>([])
+  const [applicants, setApplicants] = useState<CompanyApplicant[]>([])
+  const [loading, setLoading] = useState(true)
+  const [activeId, setActiveId] = useState<string | null>(null)
+  const [toast, setToast] = useState<UndoToast | null>(null)
+  const [confirm, setConfirm] = useState<ConfirmModal | null>(null)
+  const [actionPending, setActionPending] = useState(false)
+
+  const mouseSensor = useSensor(MouseSensor, { activationConstraint: { distance: 8 } })
+  const touchSensor = useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } })
+  const sensors = useSensors(mouseSensor, touchSensor)
+
+  // Fetch stages and applicants together on mount / filter change
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+
+    Promise.all([
+      getPipelineStages(companyId),
+      getWidgetApplicants(companyId, filters, MAX_FETCH),
+    ]).then(([stagesRes, applicantsRes]) => {
+      if (cancelled) return
+      setStages(stagesRes.data)
+      setApplicants(applicantsRes.data)
+      setLoading(false)
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [companyId, filters])
+
+  // Build position-based maps: the Nth pipeline stage corresponds to the Nth
+  // active kanban_stage enum value. This bridges the old enum to custom names.
+  const { enumToStageName, stageNameToKanban } = React.useMemo(() => {
+    const sorted = [...stages].sort((a, b) => a.sortOrder - b.sortOrder)
+    const enumToName: Partial<Record<KanbanStage, string>> = {}
+    const nameToEnum: Record<string, KanbanStage> = {}
+    ACTIVE_ENUM_ORDER.forEach((enumVal, i) => {
+      const s = sorted[i]
+      if (s) {
+        enumToName[enumVal] = s.name
+        nameToEnum[s.name] = enumVal
+      }
+    })
+    return { enumToStageName: enumToName, stageNameToKanban: nameToEnum }
+  }, [stages])
+
+  // Group applicants into pipeline columns by positional mapping
+  const byStage = React.useMemo(() => {
+    const map = new Map<string, CompanyApplicant[]>()
+    for (const s of stages) map.set(s.name, [])
+    for (const a of applicants) {
+      const stageName = enumToStageName[a.stage]
+      if (stageName !== undefined) map.get(stageName)?.push(a)
+    }
+    return map
+  }, [stages, applicants, enumToStageName])
+
+  const activeApplicant = activeId ? (applicants.find((a) => a.id === activeId) ?? null) : null
+
+  // Toast helpers
+  function showToast(message: string, undo: () => void) {
+    setToast((prev) => {
+      if (prev) clearTimeout(prev.timerId)
+      const timerId = setTimeout(() => setToast(null), 5000)
+      return { id: String(Date.now()), message, undo, timerId }
+    })
+  }
+
+  // Drag handlers
+  function handleDragStart(e: DragStartEvent) {
+    setActiveId(String(e.active.id))
+  }
+
+  async function handleDragEnd(e: DragEndEvent) {
+    setActiveId(null)
+    const appId = String(e.active.id)
+    const targetStageName = e.over ? String(e.over.id) : null
+    if (!targetStageName) return
+
+    const current = applicants.find((a) => a.id === appId)
+    if (!current || current.currentStageName === targetStageName) return
+
+    const targetKanban = stageNameToKanban[targetStageName]
+    if (!targetKanban) {
+      showToast(`"${targetStageName}" stage isn't supported yet.`, () => {})
+      return
+    }
+
+    const prevStage = current.stage
+    const prevStageName = current.currentStageName
+    const name = `${current.workerFirstName} ${current.workerLastInitial}.`
+
+    // Optimistic update
+    setApplicants((prev) =>
+      prev.map((a) =>
+        a.id === appId ? { ...a, stage: targetKanban, currentStageName: targetStageName } : a
+      )
+    )
+
+    const { error } = await setApplicantStage(appId, targetKanban)
+    if (error) {
+      // Revert
+      setApplicants((prev) =>
+        prev.map((a) =>
+          a.id === appId ? { ...a, stage: prevStage, currentStageName: prevStageName } : a
+        )
+      )
+      return
+    }
+
+    showToast(`Moved ${name} to ${targetStageName}.`, async () => {
+      setApplicants((prev) =>
+        prev.map((a) =>
+          a.id === appId ? { ...a, stage: prevStage, currentStageName: prevStageName } : a
+        )
+      )
+      await setApplicantStage(appId, prevStage)
+    })
+  }
+
+  // Confirm actions
+  const handleConfirm = useCallback(async () => {
+    if (!confirm) return
+    setActionPending(true)
+    const { applicant, type } = confirm
+    setConfirm(null)
+    // Optimistic remove
+    setApplicants((prev) => prev.filter((a) => a.id !== applicant.id))
+    const { error } =
+      type === 'reject' ? await rejectApplicant(applicant.id) : await hireApplicant(applicant.id)
+    if (error) {
+      // Restore on failure
+      setApplicants((prev) => [applicant, ...prev])
+    }
+    setActionPending(false)
+  }, [confirm])
+
+  if (loading) return <div className={styles.loading}>Loading…</div>
+
+  return (
+    <>
+      <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+        <div className={styles.board}>
+          {stages.map((stage) => {
+            const colApplicants = byStage.get(stage.name) ?? []
+            return (
+              <KanbanColumn
+                key={stage.id}
+                stage={stage}
+                applicants={colApplicants}
+                totalInStage={colApplicants.length}
+                cardsPerCol={cardsPerCol}
+                stageNameToKanban={stageNameToKanban}
+                onOpen={onOpenApplicant}
+                onReject={(a) => setConfirm({ type: 'reject', applicant: a })}
+                onHire={(a) => setConfirm({ type: 'hire', applicant: a })}
+              />
+            )
+          })}
+        </div>
+
+        <DragOverlay>
+          {activeApplicant && (
+            <div className={styles.dragGhost}>
+              <div className={styles.cardTop}>
+                <div className={styles.cardAvatar}>
+                  {activeApplicant.workerInitials.slice(0, 2)}
+                </div>
+                <span className={styles.cardName}>
+                  {activeApplicant.workerFirstName} {activeApplicant.workerLastInitial}.
+                </span>
+              </div>
+              <span className={styles.cardJobTitle}>{activeApplicant.jobTitle}</span>
+            </div>
+          )}
+        </DragOverlay>
+      </DndContext>
+
+      {/* Undo toast */}
+      {toast && (
+        <div className={styles.toast} key={toast.id}>
+          <span>{toast.message}</span>
+          <button
+            type="button"
+            className={styles.toastUndo}
+            onClick={() => {
+              clearTimeout(toast.timerId)
+              toast.undo()
+              setToast(null)
+            }}
+          >
+            Undo
+          </button>
+        </div>
+      )}
+
+      {/* Confirm modals */}
+      {confirm?.type === 'reject' && (
+        <Modal open title="Reject applicant" onClose={() => setConfirm(null)}>
+          <p className={styles.confirmBody}>
+            Reject {confirm.applicant.workerFirstName} {confirm.applicant.workerLastInitial}. for{' '}
+            <strong>{confirm.applicant.jobTitle}</strong>? This removes them from your active
+            pipeline.
+          </p>
+          <div className={styles.confirmActions}>
+            <button type="button" className={styles.confirmCancel} onClick={() => setConfirm(null)}>
+              Cancel
+            </button>
+            <button
+              type="button"
+              className={styles.confirmDanger}
+              onClick={handleConfirm}
+              disabled={actionPending}
+            >
+              {actionPending ? 'Rejecting…' : 'Reject'}
+            </button>
+          </div>
+        </Modal>
+      )}
+      {confirm?.type === 'hire' && (
+        <Modal open title="Mark as hired" onClose={() => setConfirm(null)}>
+          <p className={styles.confirmBody}>
+            Mark {confirm.applicant.workerFirstName} {confirm.applicant.workerLastInitial}. as hired
+            for <strong>{confirm.applicant.jobTitle}</strong>?
+          </p>
+          <div className={styles.confirmActions}>
+            <button type="button" className={styles.confirmCancel} onClick={() => setConfirm(null)}>
+              Cancel
+            </button>
+            <button
+              type="button"
+              className={styles.confirmDanger}
+              onClick={handleConfirm}
+              disabled={actionPending}
+            >
+              {actionPending ? 'Marking…' : 'Mark hired'}
+            </button>
+          </div>
+        </Modal>
+      )}
+    </>
+  )
+}

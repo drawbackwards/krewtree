@@ -79,17 +79,22 @@ function formatSentAt(iso: string): string {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
+// ── Types ────────────────────────────────────────────────────────────────────
+
+export type PipelineStageOption = { value: KanbanStage; label: string }
+
 // ── Props ────────────────────────────────────────────────────────────────────
 
 interface PipelineTabProps {
   applicant: CompanyApplicant
   onAdvance: () => void
   onSetStage: (stage: KanbanStage) => void
+  stages?: PipelineStageOption[]
 }
 
 // ── Component ────────────────────────────────────────────────────────────────
 
-export const PipelineTab: React.FC<PipelineTabProps> = ({ applicant, onAdvance }) => {
+export const PipelineTab: React.FC<PipelineTabProps> = ({ applicant, onAdvance, stages }) => {
   const isTerminal = TERMINAL.includes(applicant.stage)
   const stageId = applicant.stage // mock uses stage as stageId
 
@@ -207,7 +212,18 @@ export const PipelineTab: React.FC<PipelineTabProps> = ({ applicant, onAdvance }
     }
   }
 
-  const next = nextEnabledStage(applicant.stage, enabledStages)
+  // If dynamic stages are provided, derive next from position; else fall back to enabled stage order.
+  const nextEntry: PipelineStageOption | null = stages
+    ? (() => {
+        const idx = stages.findIndex((s) => s.value === applicant.stage)
+        return idx >= 0 && idx < stages.length - 1 ? stages[idx + 1] : null
+      })()
+    : (() => {
+        const n = nextEnabledStage(applicant.stage, enabledStages)
+        return n ? { value: n, label: STAGE_LABEL[n] } : null
+      })()
+
+  const nextName = nextEntry?.label ?? null
 
   // ── Render ────────────────────────────────────────────────────────────────
 
@@ -330,9 +346,9 @@ export const PipelineTab: React.FC<PipelineTabProps> = ({ applicant, onAdvance }
       <div className={styles.advanceBar}>
         {isTerminal ? (
           <p className={styles.closedLine}>This application is closed.</p>
-        ) : next ? (
+        ) : nextName ? (
           <button type="button" className={styles.advanceBtn} onClick={handleAdvanceClick}>
-            Advance to {STAGE_LABEL[next]}
+            Advance to {nextName}
           </button>
         ) : (
           <button type="button" className={styles.advanceBtn} onClick={handleAdvanceClick}>
@@ -797,7 +813,7 @@ const SendMessageModal: React.FC<SendMessageModalProps> = ({ task, error, onCanc
     >
       <div className={styles.sendModalBody}>
         <p className={styles.sendModalHint}>
-          This will be saved to the worker’s inbox and recorded in this applicant’s history.
+          This will be saved to the worker's inbox and recorded in this applicant's history.
         </p>
 
         <div className={styles.sendField}>

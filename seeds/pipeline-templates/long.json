@@ -1,0 +1,140 @@
+{
+  "name": "Long",
+  "description": "Suited for multi-step hiring with screening, interviews, and offers.",
+  "stages": [
+    {
+      "name": "Applied",
+      "sort_order": 1,
+      "triggers": [
+        {
+          "event": "stage_entered",
+          "action": "send_worker_notification",
+          "payload": {
+            "message": "Your application has been received. We'll review it and reach out shortly."
+          }
+        }
+      ],
+      "task_template": [
+        {
+          "label": "Review resume / profile",
+          "is_required": true,
+          "display_order": 1
+        },
+        {
+          "label": "Verify Regulix status",
+          "is_required": false,
+          "display_order": 2
+        },
+        {
+          "label": "Check work authorization",
+          "is_required": true,
+          "display_order": 3
+        }
+      ]
+    },
+    {
+      "name": "Phone Screen",
+      "sort_order": 2,
+      "triggers": [
+        {
+          "event": "stage_entered",
+          "action": "send_worker_notification",
+          "payload": {
+            "message": "We'd like to schedule a quick call with you. Check your messages for details."
+          }
+        }
+      ],
+      "task_template": [
+        {
+          "label": "Schedule phone screen",
+          "is_required": true,
+          "display_order": 1
+        },
+        {
+          "label": "Send screening questions in advance",
+          "is_required": false,
+          "display_order": 2
+        },
+        {
+          "label": "Document screen outcome",
+          "is_required": true,
+          "display_order": 3
+        }
+      ]
+    },
+    {
+      "name": "Interview",
+      "sort_order": 3,
+      "triggers": [
+        {
+          "event": "stage_entered",
+          "action": "send_worker_notification",
+          "payload": {
+            "message": "You've been selected for an interview. We'll reach out to schedule."
+          }
+        }
+      ],
+      "task_template": [
+        {
+          "label": "Schedule interview",
+          "is_required": true,
+          "display_order": 1
+        },
+        {
+          "label": "Send interview prep details to worker",
+          "is_required": false,
+          "display_order": 2
+        },
+        {
+          "label": "Complete interview scorecard",
+          "is_required": true,
+          "display_order": 3
+        }
+      ]
+    },
+    {
+      "name": "Reference Check",
+      "sort_order": 4,
+      "triggers": [],
+      "task_template": [
+        {
+          "label": "Request references from worker",
+          "is_required": true,
+          "display_order": 1
+        },
+        {
+          "label": "Complete first reference check",
+          "is_required": true,
+          "display_order": 2
+        },
+        {
+          "label": "Complete second reference check",
+          "is_required": false,
+          "display_order": 3
+        }
+      ]
+    },
+    {
+      "name": "Offer",
+      "sort_order": 5,
+      "triggers": [],
+      "task_template": [
+        {
+          "label": "Prepare offer letter",
+          "is_required": true,
+          "display_order": 1
+        },
+        {
+          "label": "Send offer to worker",
+          "is_required": true,
+          "display_order": 2
+        },
+        {
+          "label": "Confirm start date and onboarding details",
+          "is_required": true,
+          "display_order": 3
+        }
+      ]
+    }
+  ]
+}

@@ -96,13 +96,6 @@
   align-items: stretch;
 }
 
-.row3 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  align-items: start;
-}
-
 @media (max-width: 960px) {
   .layout {
     padding: 20px var(--kt-space-4);
@@ -113,8 +106,7 @@
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .row1,
-  .row3 {
+  .row1 {
     grid-template-columns: 1fr;
   }
 }

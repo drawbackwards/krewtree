@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Badge, Button, Modal } from '../../components'
 import { StatCard } from '../components/StatCard/StatCard'
-import { PipelineKanban } from '../components/PipelineKanban'
-import { RecentApplicantsWidget } from '../components/RecentApplicantsWidget/RecentApplicantsWidget'
+import { ApplicantsWidget } from '../components/ApplicantsWidget/ApplicantsWidget'
 import { NeedsAttentionWidget } from '../components/NeedsAttentionWidget/NeedsAttentionWidget'
 import { WeekCalendarWidget } from '../components/WeekCalendarWidget/WeekCalendarWidget'
 import { RegulixLogo } from '../components/RegulixLogo/RegulixLogo'
@@ -11,6 +10,8 @@ import { BriefcaseIcon, UsersIcon, PersonIcon, RocketIcon, CheckIcon, CloseIcon 
 import { useAuth } from '../context/AuthContext'
 import { getCompanyJobs } from '../services/jobService'
 import { getCompanyDashboardStats } from '../services/companyDashboardService'
+import { getApplicantsView, setApplicantsView } from '../services/companyPreferenceService'
+import type { ApplicantsView } from '../services/companyPreferenceService'
 import type { DashboardStat } from '../services/companyDashboardService'
 import type { StatCardColor } from '../components/StatCard/StatCard'
 import type { Job } from '../types'
@@ -146,20 +147,18 @@ export const CompanyDashboard: React.FC = () => {
   type ModuleConfig = {
     calendar: boolean
     needsAttention: boolean
-    pipeline: boolean
-    recentApplicants: boolean
+    applicants: boolean
     activeJobs: boolean
   }
   const DEFAULT_MODULE_CONFIG: ModuleConfig = {
     calendar: true,
     needsAttention: true,
-    pipeline: true,
-    recentApplicants: true,
+    applicants: true,
     activeJobs: true,
   }
   const [moduleConfig, setModuleConfig] = useState<ModuleConfig>(() => {
     try {
-      const raw = localStorage.getItem('kt_company_modules_v1')
+      const raw = localStorage.getItem('kt_company_modules_v2')
       if (!raw) return DEFAULT_MODULE_CONFIG
       const parsed = JSON.parse(raw) as Partial<ModuleConfig>
       return { ...DEFAULT_MODULE_CONFIG, ...parsed }
@@ -168,13 +167,28 @@ export const CompanyDashboard: React.FC = () => {
     }
   })
 
+  const [applicantsView, setApplicantsViewState] = useState<ApplicantsView>('list')
+
   useEffect(() => {
     try {
-      localStorage.setItem('kt_company_modules_v1', JSON.stringify(moduleConfig))
+      localStorage.setItem('kt_company_modules_v2', JSON.stringify(moduleConfig))
     } catch {
       /* ignore quota errors */
     }
   }, [moduleConfig])
+
+  // Load stored view preference from DB on mount
+  useEffect(() => {
+    if (!user?.id) return
+    getApplicantsView(user.id).then(({ data }) => {
+      if (data) setApplicantsViewState(data)
+    })
+  }, [user?.id])
+
+  const handleViewChange = (v: ApplicantsView) => {
+    setApplicantsViewState(v) // optimistic
+    if (user?.id) setApplicantsView(user.id, v) // async write, silent on failure
+  }
 
   // Boost modal state
   const [boostJobId, setBoostJobId] = useState<string | null>(null)
@@ -276,22 +290,17 @@ export const CompanyDashboard: React.FC = () => {
           </div>
         )}
 
-        {/* Row 2: Pipeline kanban — full width */}
-        {moduleConfig.pipeline && user?.id && <PipelineKanban companyId={user.id} />}
-
-        {/* Row 3: Recent applicants + Active jobs — 1:1, stacks on mobile */}
-        {(moduleConfig.recentApplicants || moduleConfig.activeJobs) && (
-          <div className={dashStyles.row3}>
-            {moduleConfig.recentApplicants && user?.id && (
-              <RecentApplicantsWidget
-                companyId={user.id}
-                lastSignInAt={user.last_sign_in_at ?? null}
-              />
-            )}
-
-            {moduleConfig.activeJobs && <ActiveJobsModule rows={activeJobRows} />}
-          </div>
+        {/* Block 3: Applicants widget — full width */}
+        {moduleConfig.applicants && user?.id && (
+          <ApplicantsWidget
+            companyId={user.id}
+            view={applicantsView}
+            onViewChange={handleViewChange}
+          />
         )}
+
+        {/* Block 4: Jobs widget — full width */}
+        {moduleConfig.activeJobs && <ActiveJobsModule rows={activeJobRows} />}
       </div>
 
       {/* ── Customize panel ─────────────────────────────────────────────── */}
@@ -333,14 +342,9 @@ export const CompanyDashboard: React.FC = () => {
             onChange={(v) => setModuleConfig((c) => ({ ...c, needsAttention: v }))}
           />
           <ToggleRow
-            label="Pipeline"
-            on={moduleConfig.pipeline}
-            onChange={(v) => setModuleConfig((c) => ({ ...c, pipeline: v }))}
-          />
-          <ToggleRow
-            label="Recent applicants"
-            on={moduleConfig.recentApplicants}
-            onChange={(v) => setModuleConfig((c) => ({ ...c, recentApplicants: v }))}
+            label="Applicants"
+            on={moduleConfig.applicants}
+            onChange={(v) => setModuleConfig((c) => ({ ...c, applicants: v }))}
           />
           <ToggleRow
             label="Active jobs"

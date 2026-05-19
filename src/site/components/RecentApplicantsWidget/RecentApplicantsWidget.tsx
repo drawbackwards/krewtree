@@ -92,7 +92,7 @@ export const RecentApplicantsWidget: React.FC<RecentApplicantsWidgetProps> = ({
                     </Link>
                   </div>
                   <div>
-                    <StagePill stage={a.stage} size="sm" />
+                    <StagePill stage={a.stage} label={a.currentStageName} size="sm" />
                   </div>
                   <div className={[styles.alignRight, styles.matchCell].join(' ')}>
                     {a.matchScore}%

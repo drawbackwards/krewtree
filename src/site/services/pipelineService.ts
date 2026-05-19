@@ -18,6 +18,8 @@ import type {
 } from '../types'
 import { supabase } from '../../lib/supabase'
 import type { Database } from '../../lib/database.types'
+import shortTemplate from '../../../seeds/pipeline-templates/short.json'
+import longTemplate from '../../../seeds/pipeline-templates/long.json'
 
 type TaskRow = Database['public']['Tables']['application_task']['Row']
 type NoteRow = Database['public']['Tables']['application_stage_notes']['Row']
@@ -906,4 +908,160 @@ export async function markMessageRead(messageId: string): Promise<{ error: strin
     .eq('id', messageId)
     .is('read_at', null)
   return { error: error?.message ?? null }
+}
+
+// ── Org-level pipeline (company_pipeline + pipeline_stage tables) ─────────────
+//
+// These functions read from the `pipeline_stage` table (joined via
+// `company_pipeline`) which holds fully custom stage names set up during
+// onboarding. This is distinct from `company_pipeline_stage` above which
+// stores per-stage enable/disable/purpose/SLA config keyed on the enum type.
+//
+// `pipeline_stage` and `company_pipeline` are new tables added in migration
+// 20260519000001 and are not yet in the generated database.types.ts. Cast
+// the supabase client to bypass the type constraint.
+const db = supabase as unknown as { from: (t: string) => ReturnType<typeof supabase.from> }
+
+export type PipelineStage = {
+  id: string
+  name: string
+  sortOrder: number
+}
+
+type PipelineStageRow = { id: string; name: string; sort_order: number }
+
+export async function getPipelineStages(
+  companyId: string
+): Promise<{ data: PipelineStage[]; error: string | null }> {
+  const { data, error } = await db
+    .from('pipeline_stage')
+    .select('id, name, sort_order, company_pipeline!inner(company_id)')
+    .eq('company_pipeline.company_id', companyId)
+    .order('sort_order', { ascending: true })
+
+  if (error) return { data: [], error: error.message }
+
+  return {
+    data: (data ?? []).map((r: unknown) => {
+      const row = r as PipelineStageRow
+      return { id: row.id, name: row.name, sortOrder: row.sort_order }
+    }),
+    error: null,
+  }
+}
+
+async function getOrgPipelineId(companyId: string): Promise<string | null> {
+  const { data } = await db
+    .from('company_pipeline')
+    .select('id')
+    .eq('company_id', companyId)
+    .single()
+  return (data as unknown as { id: string } | null)?.id ?? null
+}
+
+export async function addPipelineStage(
+  companyId: string,
+  name: string
+): Promise<{ data: PipelineStage | null; error: string | null }> {
+  const pipelineId = await getOrgPipelineId(companyId)
+  if (!pipelineId) return { data: null, error: 'No pipeline found for this company.' }
+
+  const { data: existing } = await db
+    .from('pipeline_stage')
+    .select('sort_order')
+    .eq('pipeline_id', pipelineId)
+    .order('sort_order', { ascending: false })
+    .limit(1)
+    .single()
+
+  const nextOrder = ((existing as unknown as PipelineStageRow | null)?.sort_order ?? 0) + 1
+
+  const { data, error } = await db
+    .from('pipeline_stage')
+    .insert({ pipeline_id: pipelineId, name: name.trim(), sort_order: nextOrder })
+    .select('id, name, sort_order')
+    .single()
+
+  if (error) return { data: null, error: error.message }
+  const r = data as unknown as PipelineStageRow
+  return { data: { id: r.id, name: r.name, sortOrder: r.sort_order }, error: null }
+}
+
+export async function renamePipelineStage(
+  stageId: string,
+  name: string
+): Promise<{ error: string | null }> {
+  const { error } = await db
+    .from('pipeline_stage')
+    .update({ name: name.trim() })
+    .eq('id', stageId)
+  return { error: error?.message ?? null }
+}
+
+export async function removePipelineStage(stageId: string): Promise<{ error: string | null }> {
+  const { count } = await supabase
+    .from('applications')
+    .select('id', { count: 'exact', head: true })
+    .eq('current_stage_id', stageId)
+    .eq('status', 'active' as unknown as 'Applied')
+
+  if (count && count > 0) {
+    return {
+      error: `${count} active application${count === 1 ? ' is' : 's are'} currently in this stage. Move them first.`,
+    }
+  }
+
+  const { error } = await db.from('pipeline_stage').delete().eq('id', stageId)
+  return { error: error?.message ?? null }
+}
+
+export type PipelineTemplate = 'short' | 'long' | 'build_your_own'
+
+type TemplateSeedStage = { name: string; sort_order: number }
+type TemplateSeed = { stages: TemplateSeedStage[] }
+
+const PIPELINE_TEMPLATES: Record<'short' | 'long', TemplateSeed> = {
+  short: shortTemplate as TemplateSeed,
+  long: longTemplate as TemplateSeed,
+}
+
+async function ensureOrgPipelineExists(companyId: string): Promise<string | null> {
+  const id = await getOrgPipelineId(companyId)
+  if (id) return id
+  const { data } = await db
+    .from('company_pipeline')
+    .insert({ company_id: companyId })
+    .select('id')
+    .single()
+  return (data as unknown as { id: string } | null)?.id ?? null
+}
+
+export async function replacePipelineFromTemplate(
+  companyId: string,
+  template: PipelineTemplate
+): Promise<{ error: string | null }> {
+  const pipelineId = await ensureOrgPipelineExists(companyId)
+  if (!pipelineId) return { error: 'Could not create pipeline for this company.' }
+
+  const { error: deleteError } = await db
+    .from('pipeline_stage')
+    .delete()
+    .eq('pipeline_id', pipelineId)
+  if (deleteError) return { error: deleteError.message }
+
+  let stagesToInsert: Array<{ pipeline_id: string; name: string; sort_order: number }>
+
+  if (template === 'build_your_own') {
+    stagesToInsert = [{ pipeline_id: pipelineId, name: 'Applied', sort_order: 1 }]
+  } else {
+    const seed = PIPELINE_TEMPLATES[template]
+    stagesToInsert = seed.stages.map((s, i) => ({
+      pipeline_id: pipelineId,
+      name: s.name,
+      sort_order: i + 1,
+    }))
+  }
+
+  const { error: insertError } = await db.from('pipeline_stage').insert(stagesToInsert)
+  return { error: insertError?.message ?? null }
 }

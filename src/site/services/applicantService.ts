@@ -24,6 +24,17 @@ import {
 // Active pipeline stages (exclude terminal).
 const ACTIVE_STAGES: KanbanStage[] = ['screening', 'assessment', 'interview', 'offer']
 
+const STAGE_DISPLAY: Record<string, string> = {
+  screening: 'Screening',
+  assessment: 'Assessment',
+  interview: 'Interview',
+  offer: 'Offer',
+  hired: 'Hired',
+  rejected: 'Rejected',
+  withdrawn: 'Withdrawn',
+  archived: 'Archived',
+}
+
 // DbStage mirrors the Postgres enum in applications.kanban_stage.
 // After migration 20260518000001 runs, DB values match KanbanStage 1:1 —
 // no translation needed; cast is safe.
@@ -44,6 +55,7 @@ export type ApplicantFilters = {
   regulixOnly: boolean
   appliedFrom: string | null // ISO
   appliedTo: string | null // ISO
+  showArchived: boolean
 }
 
 export const DEFAULT_FILTERS: ApplicantFilters = {
@@ -53,6 +65,7 @@ export const DEFAULT_FILTERS: ApplicantFilters = {
   regulixOnly: false,
   appliedFrom: null,
   appliedTo: null,
+  showArchived: false,
 }
 
 export type GetAllParams = {
@@ -218,6 +231,7 @@ function toCompanyApplicant(a: JoinedApplicantRow, thresholds?: ThresholdMap): C
     matchBreakdown: { skills: a.match_score, location: a.match_score, availability: 0 },
     isRegulixReady: w.is_regulix_ready,
     isShortlisted: a.is_shortlisted,
+    currentStageName: STAGE_DISPLAY[a.kanban_stage ?? ''] ?? a.kanban_stage ?? '',
     appliedAt: a.created_at,
     stageEnteredAt: a.status_updated_at ?? a.created_at,
     slaState: computeSlaForRow(a, thresholds),
@@ -298,6 +312,55 @@ export async function getKanbanApplicants(
     ),
     error: null,
   }
+}
+
+export type WidgetFilters = {
+  search: string
+  jobId: string | 'all'
+  regulixOnly: boolean
+}
+
+export const DEFAULT_WIDGET_FILTERS: WidgetFilters = {
+  search: '',
+  jobId: 'all',
+  regulixOnly: false,
+}
+
+/**
+ * Dashboard applicants widget: up to `limit` most recently active applicants
+ * in active pipeline stages across all jobs, sorted by last-activity descending.
+ * Returns total pre-filter count for "+N more" affordances.
+ */
+export async function getWidgetApplicants(
+  companyId: string,
+  filters: WidgetFilters = DEFAULT_WIDGET_FILTERS,
+  limit = 15
+): Promise<{ data: CompanyApplicant[]; total: number; error: string | null }> {
+  let q = supabase
+    .from('applications')
+    .select(APPLICANT_SELECT, { count: 'exact' })
+    .eq('jobs.company_id', companyId)
+    .in('kanban_stage', ACTIVE_STAGES)
+    .order('status_updated_at', { ascending: false })
+    .order('created_at', { ascending: false })
+    .limit(limit)
+
+  if (filters.jobId !== 'all') q = q.eq('job_id', filters.jobId)
+  if (filters.regulixOnly) q = q.eq('worker_profiles.is_regulix_ready', true)
+
+  const { data, error, count } = await q
+  if (error) return { data: [], total: 0, error: error.message }
+
+  let rows = (data ?? []).map((row) => toCompanyApplicant(row as unknown as JoinedApplicantRow))
+
+  if (filters.search) {
+    const s = filters.search.toLowerCase()
+    rows = rows.filter(
+      (r) => r.workerFullName.toLowerCase().includes(s) || r.jobTitle.toLowerCase().includes(s)
+    )
+  }
+
+  return { data: rows, total: count ?? rows.length, error: null }
 }
 
 /**

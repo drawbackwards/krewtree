@@ -15,11 +15,14 @@ const LABELS: Record<KanbanStage, string> = {
 
 export interface StagePillProps {
   stage: KanbanStage
+  label?: string
   size?: 'sm' | 'md'
 }
 
-export const StagePill: React.FC<StagePillProps> = ({ stage, size = 'md' }) => {
+export const StagePill: React.FC<StagePillProps> = ({ stage, label, size = 'md' }) => {
   return (
-    <span className={[styles.pill, styles[stage], styles[size]].join(' ')}>{LABELS[stage]}</span>
+    <span className={[styles.pill, styles[stage], styles[size]].join(' ')}>
+      {label ?? LABELS[stage]}
+    </span>
   )
 }

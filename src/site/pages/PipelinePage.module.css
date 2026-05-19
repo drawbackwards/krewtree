@@ -1,0 +1,236 @@
+.content {
+  max-width: 600px;
+}
+
+.header {
+  margin-bottom: 28px;
+}
+
+.title {
+  font-size: var(--kt-text-lg);
+  font-weight: var(--kt-weight-semibold);
+  color: var(--kt-text);
+  margin: 0 0 6px;
+}
+
+.subtitle {
+  font-size: var(--kt-text-sm);
+  color: var(--kt-text-muted);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* ── Sections ── */
+
+.section {
+  background: var(--kt-surface);
+  border-radius: var(--kt-radius-lg);
+  padding: 20px 24px 24px;
+  margin-bottom: 20px;
+}
+
+.sectionTitle {
+  font-size: var(--kt-text-base);
+  font-weight: var(--kt-weight-semibold);
+  color: var(--kt-text);
+  margin: 0 0 4px;
+}
+
+.sectionHint {
+  font-size: var(--kt-text-xs);
+  color: var(--kt-text-muted);
+  margin: 0 0 16px;
+}
+
+/* ── Stage rows ── */
+
+.stageRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--kt-border-subtle);
+}
+
+.stageRow:last-of-type {
+  border-bottom: none;
+}
+
+.stageIndex {
+  font-size: var(--kt-text-xs);
+  color: var(--kt-text-muted);
+  width: 18px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.nameBtn {
+  flex: 1;
+  background: none;
+  border: none;
+  padding: 4px 6px;
+  border-radius: var(--kt-radius-sm);
+  font-size: var(--kt-text-sm);
+  font-weight: var(--kt-weight-medium);
+  color: var(--kt-text);
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.1s;
+}
+
+.nameBtn:hover {
+  background: var(--kt-bg-hover);
+}
+
+.nameInput {
+  flex: 1;
+  padding: 4px 8px;
+  border: 1px solid var(--kt-primary);
+  border-radius: var(--kt-radius-sm);
+  font-size: var(--kt-text-sm);
+  color: var(--kt-text);
+  background: var(--kt-bg);
+  outline: none;
+}
+
+.firstTag {
+  font-size: 10px;
+  font-weight: var(--kt-weight-medium);
+  color: var(--kt-text-muted);
+  background: var(--kt-bg-subtle);
+  border-radius: var(--kt-radius-sm);
+  padding: 1px 6px;
+}
+
+.removeBtn {
+  background: none;
+  border: none;
+  padding: 2px 6px;
+  border-radius: var(--kt-radius-sm);
+  font-size: 16px;
+  line-height: 1;
+  color: var(--kt-text-muted);
+  cursor: pointer;
+  transition:
+    color 0.1s,
+    background 0.1s;
+  flex-shrink: 0;
+}
+
+.removeBtn:hover {
+  color: var(--kt-danger);
+  background: var(--kt-danger-subtle);
+}
+
+/* ── Add row ── */
+
+.addRow {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.addInput {
+  flex: 1;
+  padding: 7px 10px;
+  border: 1px solid var(--kt-border);
+  border-radius: var(--kt-radius-md);
+  font-size: var(--kt-text-sm);
+  color: var(--kt-text);
+  background: var(--kt-bg);
+  outline: none;
+}
+
+.addInput:focus {
+  border-color: var(--kt-primary);
+}
+
+/* ── Loading / empty ── */
+
+.loadingRow,
+.emptyRow {
+  font-size: var(--kt-text-sm);
+  color: var(--kt-text-muted);
+  padding: 12px 0;
+}
+
+/* ── Terminal stages ── */
+
+.terminalList {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.terminalRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--kt-border-subtle);
+}
+
+.terminalRow:last-child {
+  border-bottom: none;
+}
+
+.terminalName {
+  font-size: var(--kt-text-sm);
+  color: var(--kt-text-muted);
+}
+
+.terminalTag {
+  font-size: 10px;
+  font-weight: var(--kt-weight-medium);
+  color: var(--kt-text-muted);
+  background: var(--kt-bg-subtle);
+  border-radius: var(--kt-radius-sm);
+  padding: 1px 6px;
+}
+
+/* ── Template options ── */
+
+.templateOption {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 14px;
+  border: 1px solid var(--kt-border);
+  border-radius: var(--kt-radius-md);
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
+}
+
+.templateOption:hover {
+  border-color: var(--kt-primary);
+  background: var(--kt-primary-subtle);
+}
+
+.templateSelected {
+  border-color: var(--kt-primary);
+  background: var(--kt-primary-subtle);
+}
+
+.templateLabel {
+  font-size: var(--kt-text-sm);
+  font-weight: var(--kt-weight-semibold);
+  color: var(--kt-text);
+}
+
+.templateDesc {
+  font-size: var(--kt-text-xs);
+  color: var(--kt-text-muted);
+}
+
+/* ── Error text ── */
+
+.errorText {
+  font-size: var(--kt-text-xs);
+  color: var(--kt-danger);
+  margin: 6px 0 0;
+}

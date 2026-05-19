@@ -1,0 +1,338 @@
+.board {
+  display: flex;
+  gap: 12px;
+  padding: 14px 16px 16px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  /* Ensure columns stretch to the board height */
+  align-items: flex-start;
+}
+
+/* ── Column ───────────────────────────────────────────────────────────── */
+.column {
+  flex: 1 1 185px;
+  min-width: 185px;
+  background: var(--kt-grey-50, var(--kt-secondary));
+  border-radius: var(--kt-radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+}
+
+.colHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 0 2px 2px;
+}
+
+.colName {
+  font-size: 13px;
+  font-weight: var(--kt-weight-semibold);
+  color: var(--kt-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.colCount {
+  font-size: 13px;
+  font-weight: var(--kt-weight-normal);
+  color: var(--kt-text-muted);
+  flex-shrink: 0;
+}
+
+.moreLink {
+  display: block;
+  font-size: 12px;
+  font-weight: var(--kt-weight-bold);
+  color: var(--kt-navy-500);
+  text-decoration: none;
+  padding: 4px 2px;
+}
+
+/* ── Card ─────────────────────────────────────────────────────────────── */
+.card {
+  background: var(--kt-surface);
+  border: 0.5px solid var(--kt-border);
+  border-radius: var(--kt-radius-md);
+  padding: 10px;
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: box-shadow 120ms ease;
+}
+
+.card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.card.dragging {
+  opacity: 0.4;
+}
+
+.cardTop {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cardAvatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--kt-navy-100, var(--kt-secondary));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: var(--kt-weight-semibold);
+  color: var(--kt-navy-700, var(--kt-text-muted));
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.cardAvatarImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cardName {
+  font-size: 13px;
+  font-weight: var(--kt-weight-medium);
+  color: var(--kt-text);
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cardOverflowBtn {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--kt-text-muted);
+  border-radius: var(--kt-radius-sm);
+  padding: 0;
+  /* Visible on hover (desktop); always visible on mobile via @media */
+  opacity: 0;
+  transition:
+    opacity 100ms ease,
+    background 100ms ease;
+}
+
+.card:hover .cardOverflowBtn,
+.cardOverflowBtn:focus,
+.cardOverflowBtn[data-open='true'] {
+  opacity: 1;
+}
+
+.cardOverflowBtn:hover {
+  background: var(--kt-grey-100);
+}
+
+.cardJob {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+
+.cardJobTitle {
+  font-size: 12px;
+  color: var(--kt-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+}
+
+.pausedPill {
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: var(--kt-weight-medium);
+  color: var(--kt-warning, #d97706);
+  background: var(--kt-warning-bg, #fef3c7);
+  border-radius: 4px;
+  padding: 1px 5px;
+  line-height: 1.4;
+}
+
+.cardStrip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cardTimeInStage {
+  font-size: 11px;
+  color: var(--kt-text-muted);
+}
+
+/* Overflow dropdown (positioned relative to card) */
+.overflowDropdown {
+  position: absolute;
+  top: 8px;
+  right: 0;
+  z-index: 200;
+  background: var(--kt-surface);
+  border: 1px solid var(--kt-border);
+  border-radius: var(--kt-radius-md);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  min-width: 152px;
+  padding: 4px 0;
+}
+
+.overflowItem {
+  width: 100%;
+  padding: 8px 14px;
+  border: none;
+  background: transparent;
+  font-family: var(--kt-font-sans);
+  font-size: 13px;
+  color: var(--kt-text);
+  text-align: left;
+  cursor: pointer;
+  display: block;
+  transition: background 80ms ease;
+}
+
+.overflowItem:hover {
+  background: var(--kt-secondary);
+}
+
+.overflowItem.danger {
+  color: var(--kt-danger, #dc2626);
+}
+
+/* DragOverlay ghost */
+.dragGhost {
+  background: var(--kt-surface);
+  border: 0.5px solid var(--kt-border);
+  border-radius: var(--kt-radius-md);
+  padding: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
+  transform: rotate(2deg);
+  width: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Droppable column hover state */
+.column.dropOver {
+  background: rgba(13, 148, 136, 0.06);
+  outline: 1.5px dashed rgba(13, 148, 136, 0.4);
+}
+
+/* Loading */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  font-size: var(--kt-text-sm);
+  color: var(--kt-text-muted);
+}
+
+/* Undo toast */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--kt-navy-900, #0f172a);
+  color: #fff;
+  border-radius: var(--kt-radius-md);
+  padding: 10px 16px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 500;
+  white-space: nowrap;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.toastUndo {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--kt-font-sans);
+  font-size: 13px;
+  font-weight: var(--kt-weight-bold);
+  color: var(--kt-teal-400, #2dd4bf);
+  padding: 0;
+}
+
+/* Confirm modal */
+.confirmBody {
+  font-size: var(--kt-text-sm);
+  color: var(--kt-text);
+  margin: 0 0 20px;
+  line-height: 1.5;
+}
+
+.confirmActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.confirmCancel {
+  height: 36px;
+  padding: 0 16px;
+  border: 1px solid var(--kt-border);
+  border-radius: var(--kt-radius-md);
+  background: transparent;
+  font-family: var(--kt-font-sans);
+  font-size: var(--kt-text-sm);
+  font-weight: var(--kt-weight-medium);
+  color: var(--kt-text);
+  cursor: pointer;
+}
+
+.confirmDanger {
+  height: 36px;
+  padding: 0 16px;
+  border: none;
+  border-radius: var(--kt-radius-md);
+  background: var(--kt-danger, #dc2626);
+  font-family: var(--kt-font-sans);
+  font-size: var(--kt-text-sm);
+  font-weight: var(--kt-weight-medium);
+  color: #fff;
+  cursor: pointer;
+}
+
+/* Mobile — stack columns vertically */
+@media (max-width: 640px) {
+  .board {
+    flex-direction: column;
+    overflow-x: visible;
+    padding: 12px;
+  }
+
+  .column {
+    flex: none;
+    width: 100%;
+  }
+
+  /* Always show overflow button on mobile */
+  .cardOverflowBtn {
+    opacity: 1;
+  }
+}

@@ -27,7 +27,7 @@ describe('getKanbanApplicants', () => {
       data: [
         {
           id: 'app-1',
-          kanban_stage: 'new',
+          kanban_stage: 'screening',
           match_score: 80,
           is_shortlisted: false,
           interview_answers: [],
@@ -53,7 +53,12 @@ describe('getKanbanApplicants', () => {
 
     expect(fromMock).toHaveBeenCalledWith('applications')
     expect(eqMock).toHaveBeenCalledWith('jobs.company_id', 'company-1')
-    expect(inMock).toHaveBeenCalledWith('kanban_stage', ['new', 'reviewed', 'interview', 'offer'])
+    expect(inMock).toHaveBeenCalledWith('kanban_stage', [
+      'screening',
+      'assessment',
+      'interview',
+      'offer',
+    ])
     expect(result.error).toBeNull()
     expect(result.data).toHaveLength(1)
     expect(result.data[0]).toMatchObject({
@@ -61,7 +66,7 @@ describe('getKanbanApplicants', () => {
       workerFullName: 'Jane Doe',
       workerInitials: 'JD',
       jobTitle: 'Senior Electrician',
-      stage: 'new',
+      stage: 'screening',
     })
   })
 
