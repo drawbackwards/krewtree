@@ -94,6 +94,7 @@ function toTask(row: TaskRow): ApplicationTask {
     calendarLink: row.calendar_link,
     autoSend: row.auto_send,
     messageSentAt: row.message_sent_at,
+    flagged: row.is_flagged,
   }
 }
 
@@ -216,6 +217,28 @@ export async function toggleTaskSkip(
     eventType: skipped ? 'task_skipped' : 'task_unskipped',
     actor: 'You',
     description: skipped ? `Task skipped` : `Task unskipped`,
+  })
+
+  return { error: null }
+}
+
+export async function toggleTaskFlag(
+  applicationId: string,
+  taskId: string,
+  flagged: boolean
+): Promise<{ error: string | null }> {
+  const { error } = await supabase
+    .from('application_task')
+    .update({ is_flagged: flagged })
+    .eq('id', taskId)
+    .eq('application_id', applicationId)
+
+  if (error) return { error: error.message }
+
+  await appendLog(applicationId, {
+    eventType: flagged ? 'task_flagged' : 'task_unflagged',
+    actor: 'You',
+    description: flagged ? 'Task flagged for follow-up' : 'Task unflagged',
   })
 
   return { error: null }

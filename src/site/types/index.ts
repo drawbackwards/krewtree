@@ -304,6 +304,8 @@ export type CompanyApplicant = {
   flagged: boolean
   notes: Array<{ text: string; authorName: string; createdAt: string }>
   preInterviewAnswers?: Array<{ question: string; answer: string }>
+  // Labels of any tasks currently flagged for follow-up. Empty when nothing is flagged.
+  flaggedTaskLabels: string[]
 }
 
 // Convenience: human-readable label for a terminal status
@@ -347,6 +349,7 @@ export type ApplicationTask = {
   calendarLink: string | null
   autoSend: boolean
   messageSentAt: string | null
+  flagged: boolean
 }
 
 export type ApplicationMessage = {
@@ -387,6 +390,8 @@ export type LogEventType =
   | 'application_archived'
   | 'shortlisted'
   | 'unshortlisted'
+  | 'task_flagged'
+  | 'task_unflagged'
 
 export type ApplicationLogEvent = {
   id: string

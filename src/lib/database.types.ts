@@ -629,6 +629,7 @@ export type Database = {
           calendar_link: string | null
           auto_send: boolean
           message_sent_at: string | null
+          is_flagged: boolean
           created_at: string
           updated_at: string
         }
@@ -652,6 +653,7 @@ export type Database = {
           calendar_link?: string | null
           auto_send?: boolean
           message_sent_at?: string | null
+          is_flagged?: boolean
           created_at?: string
           updated_at?: string
         }

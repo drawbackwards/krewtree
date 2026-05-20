@@ -8,12 +8,14 @@ import {
   ClipboardIcon,
   TrashIcon,
   CalendarIcon,
+  FlagFilledIcon,
 } from '../../icons'
-import { Modal } from '../../../components'
+import { Modal, Tooltip } from '../../../components'
 import {
   getApplicationTasks,
   toggleTaskComplete,
   toggleTaskSkip,
+  toggleTaskFlag,
   saveTaskNotes,
   addAdHocTask,
   deleteAdHocTask,
@@ -136,6 +138,12 @@ export const PipelineTab: React.FC<PipelineTabProps> = ({ applicant, stages, onA
     await deleteAdHocTask(applicant.id, task.id)
   }
 
+  const handleToggleFlag = async (task: ApplicationTask) => {
+    const next = !task.flagged
+    setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, flagged: next } : t)))
+    await toggleTaskFlag(applicant.id, task.id, next)
+  }
+
   const handleAddTask = async (label: string, isRequired: boolean, dueDate: string | null) => {
     const { data } = await addAdHocTask(
       applicant.id,
@@ -209,6 +217,7 @@ export const PipelineTab: React.FC<PipelineTabProps> = ({ applicant, stages, onA
                       task={task}
                       onToggleComplete={() => handleToggleComplete(task)}
                       onToggleSkip={() => handleToggleSkip(task)}
+                      onToggleFlag={() => handleToggleFlag(task)}
                       onDelete={task.source === 'ad_hoc' ? () => handleDeleteTask(task) : undefined}
                       onSaveNotes={(notes) => saveTaskNotes(applicant.id, task.id, notes)}
                       onEditAdHoc={
@@ -390,6 +399,7 @@ interface TaskRowProps {
   task: ApplicationTask
   onToggleComplete: () => void
   onToggleSkip: () => void
+  onToggleFlag: () => void
   onDelete?: () => void
   onSaveNotes: (notes: string) => void
   onEditAdHoc?: (patch: { label?: string; isRequired?: boolean; dueDate?: string | null }) => void
@@ -401,6 +411,7 @@ const TaskRow: React.FC<TaskRowProps> = ({
   task,
   onToggleComplete,
   onToggleSkip,
+  onToggleFlag,
   onDelete,
   onSaveNotes,
   onEditAdHoc,
@@ -504,6 +515,13 @@ const TaskRow: React.FC<TaskRowProps> = ({
           </span>
           <div className={styles.taskTags}>
             {task.isRequired && !isSkipped && <span className={styles.requiredPill}>Required</span>}
+            {task.flagged && (
+              <Tooltip content="Flagged for follow-up" position="top">
+                <span className={styles.flagBadge} aria-label="Flagged">
+                  <FlagFilledIcon size={9} />
+                </span>
+              </Tooltip>
+            )}
             {isSkipped && <span className={styles.skippedTag}>Skipped</span>}
             {task.dueDate && (
               <span className={styles.dueDate}>Due {formatDueDate(task.dueDate)}</span>
@@ -594,6 +612,16 @@ const TaskRow: React.FC<TaskRowProps> = ({
                     Unskip
                   </button>
                 )}
+                <button
+                  type="button"
+                  className={styles.overflowItem}
+                  onClick={() => {
+                    setMenuOpen(false)
+                    onToggleFlag()
+                  }}
+                >
+                  {task.flagged ? 'Clear Flag' : 'Flag for follow-up'}
+                </button>
                 {onDelete && (
                   <button
                     type="button"

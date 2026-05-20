@@ -12,7 +12,7 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from '@dnd-kit/core'
-import { Modal } from '../../../components'
+import { Modal, Tooltip } from '../../../components'
 import type { CompanyApplicant } from '../../types'
 import {
   getWidgetApplicants,
@@ -22,7 +22,14 @@ import {
   type WidgetFilters,
 } from '../../services/applicantService'
 import { getPipelineStages, type PipelineStage } from '../../services/pipelineService'
-import { DotsHorizontalIcon, RegulixMarkIcon } from '../../icons'
+import {
+  DotsHorizontalIcon,
+  FlagFilledIcon,
+  HourglassFilledIcon,
+  PauseIcon,
+  RegulixMarkIcon,
+  StarIcon,
+} from '../../icons'
 import styles from './WidgetKanbanView.module.css'
 
 // ── Constants ──────────────────────────────────────────────────────────────
@@ -40,6 +47,16 @@ function timeInStage(iso: string | null | undefined): string {
   const d = Math.floor(h / 24)
   if (d < 14) return `${d}d`
   return `${Math.floor(d / 7)}w`
+}
+
+function flagTooltip(labels: string[]): string {
+  if (labels.length === 0) return 'Flagged for follow-up'
+  if (labels.length === 1) {
+    const label = labels[0]
+    const truncated = label.length > 50 ? `${label.slice(0, 50)}…` : label
+    return `Flagged: "${truncated}"`
+  }
+  return `${labels.length} flagged tasks`
 }
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -99,14 +116,17 @@ const KanbanCard: React.FC<CardProps> = ({
             a.workerInitials.slice(0, 2)
           )}
         </div>
-        {/* Name */}
-        <span className={styles.cardName}>
-          {a.workerFirstName} {a.workerLastInitial}.
-        </span>
-        {/* Regulix badge */}
-        {a.isRegulixReady && <RegulixMarkIcon size={14} />}
+        {/* Identity stack: name + primary trade */}
+        <div className={styles.cardIdentity}>
+          <span className={styles.cardName}>
+            {a.workerFirstName} {a.workerLastInitial}.
+          </span>
+          {a.workerPrimaryTrade && (
+            <span className={styles.cardSubtext}>{a.workerPrimaryTrade}</span>
+          )}
+        </div>
         {/* Overflow menu */}
-        <div ref={menuRef} style={{ position: 'relative', marginLeft: 'auto', flexShrink: 0 }}>
+        <div ref={menuRef} style={{ position: 'relative', flexShrink: 0 }}>
           <button
             type="button"
             className={styles.cardOverflowBtn}
@@ -156,15 +176,69 @@ const KanbanCard: React.FC<CardProps> = ({
         </div>
       </div>
 
-      {/* Job row */}
-      <div className={styles.cardJob}>
-        <span className={styles.cardJobTitle}>{a.jobTitle}</span>
-        {a.jobStatus === 'paused' && <span className={styles.pausedPill}>Paused</span>}
-      </div>
+      {/* Body — indented to align with the identity column above */}
+      <div className={styles.cardBody}>
+        <div className={styles.cardJob}>
+          <span className={styles.cardJobLine}>
+            <span className={styles.cardJobLabel}>Applied to:</span>{' '}
+            <span className={styles.cardJobTitle}>{a.jobTitle}</span>
+          </span>
+          {a.jobStatus === 'paused' && (
+            <Tooltip content="Job is paused — no new applicants" position="top">
+              <span className={styles.pauseIcon} aria-label="Job paused">
+                <PauseIcon size={9} />
+              </span>
+            </Tooltip>
+          )}
+        </div>
 
-      {/* Status strip */}
-      <div className={styles.cardStrip}>
-        <span className={styles.cardTimeInStage}>{timeInStage(a.stageEnteredAt)}</span>
+        <div className={styles.cardFooter}>
+          <div className={styles.cardSignals}>
+            {a.isRegulixReady && (
+              <Tooltip content="Regulix Ready — paperwork complete" position="top">
+                <span className={styles.signalRegulix} aria-label="Regulix Ready">
+                  <RegulixMarkIcon size={12} />
+                </span>
+              </Tooltip>
+            )}
+            {a.isShortlisted && (
+              <Tooltip content="Shortlisted by your team" position="top">
+                <span className={styles.signalShortlist} aria-label="Shortlisted">
+                  <StarIcon size={11} />
+                </span>
+              </Tooltip>
+            )}
+            {a.flagged && (
+              <Tooltip content={flagTooltip(a.flaggedTaskLabels)} position="top">
+                <span className={styles.signalFlag} aria-label="Flagged">
+                  <FlagFilledIcon size={11} />
+                </span>
+              </Tooltip>
+            )}
+            {a.slaState !== 'none' && (
+              <Tooltip
+                content={
+                  a.slaState === 'breached'
+                    ? 'Overdue — has been in this stage too long'
+                    : 'Almost overdue — move soon to stay on track'
+                }
+                position="top"
+              >
+                <span
+                  className={
+                    a.slaState === 'breached'
+                      ? styles.signalSlaBreached
+                      : styles.signalSlaApproaching
+                  }
+                  aria-label={a.slaState === 'breached' ? 'SLA breached' : 'SLA approaching'}
+                >
+                  <HourglassFilledIcon size={11} />
+                </span>
+              </Tooltip>
+            )}
+          </div>
+          <span className={styles.cardTimeInStage}>{timeInStage(a.stageEnteredAt)}</span>
+        </div>
       </div>
     </div>
   )
@@ -273,7 +347,24 @@ export const WidgetKanbanView: React.FC<Props> = ({
     ]).then(([stagesRes, applicantsRes]) => {
       if (cancelled) return
       setStages(stagesRes.data)
-      setApplicants(applicantsRes.data)
+      // TEMP: sessionStorage flag overlays every signal on the first applicant
+      // so we can preview the fully-loaded card state visually.
+      // Toggle in DevTools: sessionStorage.setItem('kt:demoCard', 'full')
+      const isDemo =
+        typeof window !== 'undefined' && window.sessionStorage.getItem('kt:demoCard') === 'full'
+      const data = applicantsRes.data
+      if (isDemo && data.length > 0) {
+        data[0] = {
+          ...data[0],
+          isRegulixReady: true,
+          isShortlisted: true,
+          flagged: true,
+          flaggedTaskLabels: ['Verify references'],
+          slaState: 'breached',
+          jobStatus: 'paused',
+        }
+      }
+      setApplicants(data)
       setLoading(false)
     })
 
@@ -407,9 +498,14 @@ export const WidgetKanbanView: React.FC<Props> = ({
                 <div className={styles.cardAvatar}>
                   {activeApplicant.workerInitials.slice(0, 2)}
                 </div>
-                <span className={styles.cardName}>
-                  {activeApplicant.workerFirstName} {activeApplicant.workerLastInitial}.
-                </span>
+                <div className={styles.cardIdentity}>
+                  <span className={styles.cardName}>
+                    {activeApplicant.workerFirstName} {activeApplicant.workerLastInitial}.
+                  </span>
+                  {activeApplicant.workerPrimaryTrade && (
+                    <span className={styles.cardSubtext}>{activeApplicant.workerPrimaryTrade}</span>
+                  )}
+                </div>
               </div>
               <span className={styles.cardJobTitle}>{activeApplicant.jobTitle}</span>
             </div>

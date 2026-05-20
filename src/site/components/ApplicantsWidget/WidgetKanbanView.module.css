@@ -77,8 +77,8 @@
 
 .cardTop {
   display: flex;
-  align-items: center;
-  gap: 6px;
+  align-items: flex-start;
+  gap: 8px;
 }
 
 .cardAvatar {
@@ -102,15 +102,35 @@
   object-fit: cover;
 }
 
+.cardIdentity {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1;
+  min-width: 0;
+  /* Vertical-center the two text lines against the 32px avatar */
+  justify-content: center;
+  align-self: stretch;
+}
+
 .cardName {
   font-size: 13px;
   font-weight: var(--kt-weight-medium);
   color: var(--kt-text);
-  flex: 1;
   min-width: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  line-height: 1.25;
+}
+
+.cardSubtext {
+  font-size: 11px;
+  color: var(--kt-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.25;
 }
 
 .cardOverflowBtn {
@@ -143,6 +163,16 @@
   background: var(--kt-grey-100);
 }
 
+/* Body wraps the job row + footer and indents them
+   to align with the identity column (avatar 32px + gap 8px). */
+.cardBody {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-left: 40px;
+  min-width: 0;
+}
+
 .cardJob {
   display: flex;
   align-items: center;
@@ -150,36 +180,69 @@
   min-width: 0;
 }
 
-.cardJobTitle {
-  font-size: 12px;
+/* One-line container: holds the "Applied to:" label + title and truncates as a unit. */
+.cardJobLine {
+  flex: 1;
+  min-width: 0;
+  font-size: 11px;
   color: var(--kt-text-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  flex: 1;
-  min-width: 0;
 }
 
-.pausedPill {
+.cardJobLabel {
+  color: var(--kt-text-placeholder, var(--kt-text-muted));
+}
+
+.cardJobTitle {
+  color: var(--kt-text-muted);
+}
+
+.pauseIcon {
   flex-shrink: 0;
-  font-size: 10px;
-  font-weight: var(--kt-weight-medium);
-  color: var(--kt-warning, #d97706);
-  background: var(--kt-warning-bg, #fef3c7);
-  border-radius: 4px;
-  padding: 1px 5px;
-  line-height: 1.4;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--kt-grey-100, var(--kt-secondary));
+  color: var(--kt-grey-700, var(--kt-text-muted));
 }
 
-.cardStrip {
+.cardFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.cardSignals {
   display: flex;
   align-items: center;
   gap: 6px;
+  min-width: 0;
+}
+
+.cardSignals > span,
+.cardSignals > svg {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+}
+
+.signalFlag,
+.signalShortlist,
+.signalSlaApproaching,
+.signalSlaBreached {
+  color: var(--kt-grey-700, var(--kt-text-muted));
 }
 
 .cardTimeInStage {
   font-size: 11px;
   color: var(--kt-text-muted);
+  flex-shrink: 0;
 }
 
 /* Overflow dropdown (positioned relative to card) */

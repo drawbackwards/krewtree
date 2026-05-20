@@ -127,17 +127,20 @@
   cursor: default;
 }
 
-/* Label block */
+/* Label block — task name + inline tags share a row, wrap if cramped */
 .taskLabelBlock {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
 }
 
 .taskLabel {
   font-size: 13px;
   color: var(--kt-text);
   line-height: 1.4;
-  display: block;
 }
 
 .taskLabelCompleted {
@@ -153,7 +156,6 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-top: 3px;
   flex-wrap: wrap;
 }
 
@@ -164,6 +166,18 @@
   border-radius: var(--kt-radius-full);
   background: var(--kt-warning-subtle);
   color: var(--kt-warning);
+}
+
+.flagBadge {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--kt-grey-100, var(--kt-secondary));
+  color: var(--kt-grey-700, var(--kt-text-muted));
 }
 
 .skippedTag {

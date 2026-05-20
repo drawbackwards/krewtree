@@ -88,6 +88,10 @@ type JoinedApplicantRow = AppRow & {
     author_name: string
     created_at: string
   }>
+  application_task: Array<{
+    label: string
+    is_flagged: boolean
+  }>
 }
 
 function formatMonthYear(d: string | null | undefined): string {
@@ -178,7 +182,8 @@ function toCompanyApplicant(
     appliedAt: a.created_at,
     stageEnteredAt: a.status_updated_at ?? a.created_at,
     slaState: 'none',
-    flagged: false,
+    flagged: (a.application_task ?? []).some((t) => t.is_flagged),
+    flaggedTaskLabels: (a.application_task ?? []).filter((t) => t.is_flagged).map((t) => t.label),
     notes: a.application_notes.map((n) => ({
       text: n.text,
       authorName: n.author_name,
@@ -206,7 +211,8 @@ const APPLICANT_SELECT = `
     worker_work_history(employer_name, role_title, start_date, end_date, is_current)
   ),
   jobs!inner(id, title, status, company_id),
-  application_notes(text, author_name, created_at)
+  application_notes(text, author_name, created_at),
+  application_task(label, is_flagged)
 `
 
 // ── Queries ───────────────────────────────────────────────────────────────

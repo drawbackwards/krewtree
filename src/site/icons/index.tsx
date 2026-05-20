@@ -429,7 +429,17 @@ export const StarIcon: React.FC<{ size?: number; color?: string }> = ({
   size = 16,
   color = 'currentColor',
 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill={color} aria-hidden="true">
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill={color}
+    stroke={color}
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
     <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
   </svg>
 )
@@ -1420,5 +1430,63 @@ export const FlagIcon: React.FC<{ size?: number; color?: string }> = ({
   >
     <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
     <line x1="4" y1="22" x2="4" y2="15" />
+  </svg>
+)
+
+export const PauseIcon: React.FC<{ size?: number; color?: string }> = ({
+  size = 16,
+  color = 'currentColor',
+}) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill={color} aria-hidden="true">
+    <rect x="6" y="5" width="4" height="14" rx="1" />
+    <rect x="14" y="5" width="4" height="14" rx="1" />
+  </svg>
+)
+
+/** Filled flag — Lucide flag with body filled. */
+export const FlagFilledIcon: React.FC<{ size?: number; color?: string }> = ({
+  size = 16,
+  color = 'currentColor',
+}) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    stroke={color}
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <path d="M4 15s1 -1 4 -1 5 2 8 2 4 -1 4 -1V3s-1 1 -4 1 -5 -2 -8 -2 -4 1 -4 1z" fill={color} />
+    <path d="m4 22 0 -7" fill="none" />
+  </svg>
+)
+
+/** Filled hourglass — Lucide hourglass with bulbs filled. */
+export const HourglassFilledIcon: React.FC<{ size?: number; color?: string }> = ({
+  size = 16,
+  color = 'currentColor',
+}) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    stroke={color}
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <path d="M5 22h14" fill="none" />
+    <path d="M5 2h14" fill="none" />
+    <path
+      d="M17 22v-4.172a2 2 0 0 0 -0.586 -1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22Z"
+      fill={color}
+    />
+    <path
+      d="M7 2v4.172a2 2 0 0 0 0.586 1.414L12 12l4.414 -4.414A2 2 0 0 0 17 6.172V2Z"
+      fill={color}
+    />
   </svg>
 )

@@ -41,6 +41,7 @@ function toTask(row: Record<string, unknown>): ApplicationTask {
     calendarLink: (row.calendar_link as string | null) ?? null,
     autoSend: (row.auto_send as boolean | null) ?? false,
     messageSentAt: (row.message_sent_at as string | null) ?? null,
+    flagged: (row.is_flagged as boolean | null) ?? false,
   }
 }
 
