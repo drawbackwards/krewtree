@@ -894,25 +894,49 @@ export async function replacePipelineFromTemplate(
   const pipelineId = await ensureOrgPipelineExists(companyId)
   if (!pipelineId) return { error: 'Could not create pipeline for this company.' }
 
-  const { error: deleteError } = await db
+  const { data: existingRaw } = await db
     .from('pipeline_stage')
-    .delete()
+    .select('id, sort_order')
     .eq('pipeline_id', pipelineId)
-  if (deleteError) return { error: deleteError.message }
+    .order('sort_order', { ascending: true })
+  const existing = (existingRaw ?? []) as unknown as Array<{ id: string; sort_order: number }>
 
-  let stagesToInsert: Array<{ pipeline_id: string; name: string; sort_order: number }>
-
+  let newStages: Array<{ id: string; pipeline_id: string; name: string; sort_order: number }>
   if (template === 'build_your_own') {
-    stagesToInsert = [{ pipeline_id: pipelineId, name: 'Applied', sort_order: 1 }]
+    newStages = [
+      { id: crypto.randomUUID(), pipeline_id: pipelineId, name: 'Applied', sort_order: 1 },
+    ]
   } else {
     const seed = PIPELINE_TEMPLATES[template]
-    stagesToInsert = seed.stages.map((s, i) => ({
+    newStages = seed.stages.map((s, i) => ({
+      id: crypto.randomUUID(),
       pipeline_id: pipelineId,
       name: s.name,
       sort_order: i + 1,
     }))
   }
 
-  const { error: insertError } = await db.from('pipeline_stage').insert(stagesToInsert)
+  // Remap applicants from old stage ids to new stage ids by matching sort_order.
+  // Any old stage with no matching sort_order falls through to the last new stage,
+  // so applicants are never orphaned when switching to a shorter pipeline.
+  const lastNewId = newStages[newStages.length - 1].id
+  const newBySortOrder = new Map(newStages.map((s) => [s.sort_order, s.id]))
+  for (const old of existing) {
+    const targetId = newBySortOrder.get(old.sort_order) ?? lastNewId
+    if (old.id === targetId) continue
+    const { error } = await supabase
+      .from('applications')
+      .update({ current_stage_id: targetId } as unknown as Record<string, unknown>)
+      .eq('current_stage_id', old.id)
+    if (error) return { error: `Failed to remap applicants: ${error.message}` }
+  }
+
+  const { error: deleteError } = await db
+    .from('pipeline_stage')
+    .delete()
+    .eq('pipeline_id', pipelineId)
+  if (deleteError) return { error: deleteError.message }
+
+  const { error: insertError } = await db.from('pipeline_stage').insert(newStages)
   return { error: insertError?.message ?? null }
 }

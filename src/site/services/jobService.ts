@@ -197,19 +197,39 @@ export async function submitApplication(
   isBoosted: boolean,
   questionAnswers: Array<{ question: string; answer: string }> = []
 ): Promise<{ error: string | null }> {
+  const { data: jobRow, error: jobErr } = await supabase
+    .from('jobs')
+    .select('company_id')
+    .eq('id', jobId)
+    .single()
+  if (jobErr || !jobRow) return { error: jobErr?.message ?? 'job_not_found' }
+
+  const db = supabase as unknown as { from: (t: string) => ReturnType<typeof supabase.from> }
+  const { data: firstStage } = await db
+    .from('pipeline_stage')
+    .select('id, company_pipeline!inner(company_id)')
+    .eq('company_pipeline.company_id', jobRow.company_id)
+    .order('sort_order', { ascending: true })
+    .limit(1)
+    .single()
+
+  const stageId = (firstStage as { id: string } | null)?.id
+  if (!stageId) return { error: 'no_pipeline_stages' }
+
   const base = {
     job_id: jobId,
     worker_id: workerId,
     notes: coverNote,
     is_boosted: isBoosted,
     status: 'active' as const,
+    current_stage_id: stageId,
   }
   const { error } = await supabase
     .from('applications')
     .insert(
       questionAnswers.length > 0
         ? ({ ...base, interview_answers: questionAnswers } as typeof base)
-        : base
+        : (base as unknown as Record<string, unknown>)
     )
 
   if (error) {
