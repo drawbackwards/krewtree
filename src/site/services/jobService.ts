@@ -216,21 +216,18 @@ export async function submitApplication(
   const stageId = (firstStage as { id: string } | null)?.id
   if (!stageId) return { error: 'no_pipeline_stages' }
 
-  const base = {
+  const payload: Record<string, unknown> = {
     job_id: jobId,
     worker_id: workerId,
     notes: coverNote,
     is_boosted: isBoosted,
-    status: 'active' as const,
+    status: 'active',
     current_stage_id: stageId,
   }
-  const { error } = await supabase
-    .from('applications')
-    .insert(
-      questionAnswers.length > 0
-        ? ({ ...base, interview_answers: questionAnswers } as typeof base)
-        : (base as unknown as Record<string, unknown>)
-    )
+  if (questionAnswers.length > 0) {
+    payload.interview_answers = questionAnswers
+  }
+  const { error } = await db.from('applications').insert(payload)
 
   if (error) {
     if (error.code === '23505') return { error: 'already_applied' }
