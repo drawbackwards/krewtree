@@ -1,7 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Link, useSearchParams } from 'react-router-dom'
-import { Modal } from '../../components'
+import { Modal, Tooltip } from '../../components'
+import { JobCell } from '../components/ApplicantsWidget/cells/JobCell'
+import { StageCell } from '../components/ApplicantsWidget/cells/StageCell'
 import { useAuth } from '../context/AuthContext'
 import type { CompanyApplicant } from '../types'
 import {
@@ -22,12 +24,25 @@ import {
   CheckSmallIcon,
   CloseIcon,
   DotsHorizontalIcon,
+  FlagFilledIcon,
+  HourglassFilledIcon,
   RegulixMarkIcon,
+  RocketIcon,
   SearchIcon,
   SortIcon,
+  StarIcon,
 } from '../icons'
+
+function flagTooltip(labels: string[]): string {
+  if (labels.length === 0) return 'Flagged for follow-up'
+  if (labels.length === 1) {
+    const label = labels[0]
+    const truncated = label.length > 50 ? `${label.slice(0, 50)}…` : label
+    return `Flagged: "${truncated}"`
+  }
+  return `${labels.length} flagged tasks`
+}
 import { getPipelineStages } from '../services/pipelineService'
-import { StagePill } from '../components/StagePill/StagePill'
 import { ApplicantSlideover } from '../components/ApplicantSlideover/ApplicantSlideover'
 import { WidgetKanbanView } from '../components/ApplicantsWidget/WidgetKanbanView'
 import styles from './AllApplicantsPage.module.css'
@@ -174,7 +189,22 @@ export const AllApplicantsPage: React.FC = () => {
   const load = useCallback(() => {
     if (!user?.id) return
     getAllApplicants(user.id, { filters, sort, page, pageSize }).then((res) => {
-      setRows(res.data)
+      const isDemo =
+        typeof window !== 'undefined' && window.sessionStorage.getItem('kt:demoCard') === 'full'
+      const data = res.data
+      if (isDemo && data.length > 0) {
+        data[0] = {
+          ...data[0],
+          isRegulixReady: true,
+          isShortlisted: true,
+          isBoosted: true,
+          flagged: true,
+          flaggedTaskLabels: ['Verify references'],
+          slaState: 'breached',
+          jobStatus: 'paused',
+        }
+      }
+      setRows(data)
       setTotal(res.total)
     })
   }, [user?.id, filters, sort, page, pageSize])
@@ -274,13 +304,6 @@ export const AllApplicantsPage: React.FC = () => {
   const bulkIds = useMemo(() => Array.from(selected), [selected])
   const bulkApplicants = useMemo(() => rows.filter((r) => selected.has(r.id)), [rows, selected])
 
-  const doBulkAdvance = async () => {
-    // Advance each selected applicant individually (no bulk-advance endpoint)
-    const selected = bulkApplicants
-    await Promise.all(selected.map((a) => advanceApplicant(a.id, a.currentStageId)))
-    setSelected(new Set())
-    load()
-  }
   const doBulkShortlist = async () => {
     await shortlistApplicants(bulkIds)
     setSelected(new Set())
@@ -525,9 +548,6 @@ export const AllApplicantsPage: React.FC = () => {
               <div className={styles.bulkBar}>
                 <span className={styles.bulkCount}>{selected.size} selected</span>
                 <div className={styles.bulkActions}>
-                  <button type="button" className={styles.bulkBtn} onClick={doBulkAdvance}>
-                    Advance stage
-                  </button>
                   <button type="button" className={styles.bulkBtn} onClick={doBulkShortlist}>
                     Shortlist
                   </button>
@@ -581,21 +601,13 @@ export const AllApplicantsPage: React.FC = () => {
                 <div>Stage</div>
                 <button
                   type="button"
-                  className={[styles.sortableHeader, styles.alignRight].join(' ')}
-                  onClick={() => handleSort('match')}
-                >
-                  Match{' '}
-                  <SortIndicator active={sort.column === 'match'} direction={sort.direction} />
-                </button>
-                <div className={styles.alignCenter}>Regulix</div>
-                <button
-                  type="button"
                   className={styles.sortableHeader}
                   onClick={() => handleSort('applied')}
                 >
                   Applied{' '}
                   <SortIndicator active={sort.column === 'applied'} direction={sort.direction} />
                 </button>
+                <div aria-hidden="true" />
                 <div />
               </div>
 
@@ -632,7 +644,11 @@ export const AllApplicantsPage: React.FC = () => {
                   return (
                     <div
                       key={a.id}
-                      className={[styles.row, isSelected ? styles.rowSelected : '']
+                      className={[
+                        styles.row,
+                        isSelected ? styles.rowSelected : '',
+                        a.isBoosted ? styles.rowBoosted : '',
+                      ]
                         .filter(Boolean)
                         .join(' ')}
                     >
@@ -646,29 +662,71 @@ export const AllApplicantsPage: React.FC = () => {
                       </div>
                       <div className={styles.applicantCell}>
                         <div className={styles.avatar}>{a.workerInitials}</div>
-                        <button
-                          type="button"
-                          className={styles.applicantName}
-                          onClick={() => setOpen(a)}
-                        >
-                          {a.workerFirstName} {a.workerLastInitial}.
-                        </button>
+                        <div className={styles.applicantText}>
+                          <button
+                            type="button"
+                            className={styles.applicantName}
+                            onClick={() => setOpen(a)}
+                          >
+                            {a.workerFirstName} {a.workerLastInitial}.
+                          </button>
+                          {a.workerPrimaryTrade && (
+                            <span className={styles.applicantTrade}>{a.workerPrimaryTrade}</span>
+                          )}
+                        </div>
                       </div>
-                      <div className={styles.jobCell}>
-                        <Link to={`/site/dashboard/jobs`} className={styles.jobLink}>
-                          {a.jobTitle}
-                        </Link>
-                      </div>
-                      <div>
-                        <StagePill label={a.currentStageName} status={a.status} size="sm" />
-                      </div>
-                      <div className={[styles.alignRight, styles.matchCell].join(' ')}>
-                        {a.matchScore}%
-                      </div>
-                      <div className={styles.alignCenter}>
-                        {a.isRegulixReady ? <RegulixMarkIcon size={16} /> : null}
-                      </div>
+                      <JobCell jobId={a.jobId} jobTitle={a.jobTitle} jobStatus={a.jobStatus} />
+                      <StageCell stageName={a.currentStageName} status={a.status} />
                       <div className={styles.dateCell}>{formatShortDate(a.appliedAt)}</div>
+                      <div className={styles.signalsCell}>
+                        {a.isBoosted && (
+                          <Tooltip content="Boosted application" position="top">
+                            <span className={styles.signalBoosted} aria-label="Boosted">
+                              <RocketIcon size={12} />
+                            </span>
+                          </Tooltip>
+                        )}
+                        {a.isRegulixReady && (
+                          <Tooltip content="Regulix Ready — paperwork complete" position="top">
+                            <span className={styles.signalRegulix} aria-label="Regulix Ready">
+                              <RegulixMarkIcon size={12} />
+                            </span>
+                          </Tooltip>
+                        )}
+                        {a.isShortlisted && (
+                          <Tooltip content="Shortlisted by your team" position="top">
+                            <span className={styles.signalMuted} aria-label="Shortlisted">
+                              <StarIcon size={11} />
+                            </span>
+                          </Tooltip>
+                        )}
+                        {a.flagged && (
+                          <Tooltip content={flagTooltip(a.flaggedTaskLabels)} position="top">
+                            <span className={styles.signalMuted} aria-label="Flagged">
+                              <FlagFilledIcon size={11} />
+                            </span>
+                          </Tooltip>
+                        )}
+                        {a.slaState !== 'none' && (
+                          <Tooltip
+                            content={
+                              a.slaState === 'breached'
+                                ? 'Overdue — has been in this stage too long'
+                                : 'Almost overdue — move soon to stay on track'
+                            }
+                            position="top"
+                          >
+                            <span
+                              className={styles.signalMuted}
+                              aria-label={
+                                a.slaState === 'breached' ? 'SLA breached' : 'SLA approaching'
+                              }
+                            >
+                              <HourglassFilledIcon size={11} />
+                            </span>
+                          </Tooltip>
+                        )}
+                      </div>
                       <div className={styles.actionsCell}>
                         <button
                           type="button"

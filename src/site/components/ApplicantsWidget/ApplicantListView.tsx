@@ -1,24 +1,34 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
-import { Modal } from '../../../components'
+import { Modal, Tooltip } from '../../../components'
 import type { CompanyApplicant } from '../../types'
 import { advanceApplicant, rejectApplicant, hireApplicant } from '../../services/applicantService'
-import { DotsHorizontalIcon, RegulixMarkIcon } from '../../icons'
+import {
+  DotsHorizontalIcon,
+  FlagFilledIcon,
+  HourglassFilledIcon,
+  RegulixMarkIcon,
+  RocketIcon,
+  StarIcon,
+} from '../../icons'
+import { JobCell } from './cells/JobCell'
+import { StageCell } from './cells/StageCell'
 import styles from './ApplicantListView.module.css'
+
+function flagTooltip(labels: string[]): string {
+  if (labels.length === 0) return 'Flagged for follow-up'
+  if (labels.length === 1) {
+    const label = labels[0]
+    const truncated = label.length > 50 ? `${label.slice(0, 50)}…` : label
+    return `Flagged: "${truncated}"`
+  }
+  return `${labels.length} flagged tasks`
+}
 
 // ── Helpers ───────────────────────────────────────────────────────────────
 
-function relativeTime(iso: string | null | undefined): string {
-  if (!iso) return ''
-  const diffMs = Date.now() - new Date(iso).getTime()
-  const diffMin = Math.floor(diffMs / 60_000)
-  if (diffMin < 60) return diffMin <= 1 ? '1m ago' : `${diffMin}m ago`
-  const diffH = Math.floor(diffMin / 60)
-  if (diffH < 24) return `${diffH}h ago`
-  const diffD = Math.floor(diffH / 24)
-  if (diffD < 30) return `${diffD}d ago`
-  const diffW = Math.floor(diffD / 7)
-  if (diffW < 8) return `${diffW}w ago`
+function formatAppliedDate(iso: string): string {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
@@ -32,6 +42,7 @@ type Props = {
   loading: boolean
   hasJobs: boolean
   onOpenApplicant: (a: CompanyApplicant) => void
+  onShortlist: (a: CompanyApplicant) => void
   onRefresh: () => void
 }
 
@@ -45,69 +56,70 @@ const Avatar: React.FC<{ url: string; initials: string }> = ({ url, initials }) 
 
 // ── Overflow menu ──────────────────────────────────────────────────────────
 
-type OverflowMenuProps = {
-  open: boolean
-  onToggle: () => void
-  onAdvance: () => void
-  onReject: () => void
-  onHire: () => void
-  onOpen: () => void
-}
+type OverflowItem = { label: string; danger?: boolean; onClick: () => void }
 
-const OverflowMenu: React.FC<OverflowMenuProps> = ({
-  open,
-  onToggle,
-  onAdvance,
-  onReject,
-  onHire,
-  onOpen,
-}) => {
-  const ref = useRef<HTMLDivElement>(null)
+const OverflowMenu: React.FC<{ items: OverflowItem[] }> = ({ items }) => {
+  const [open, setOpen] = useState(false)
+  const [pos, setPos] = useState({ top: 0, right: 0 })
+  const btnRef = useRef<HTMLButtonElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  const handleToggle = () => {
+    if (!open && btnRef.current) {
+      const r = btnRef.current.getBoundingClientRect()
+      setPos({ top: r.bottom + 4, right: window.innerWidth - r.right })
+    }
+    setOpen((v) => !v)
+  }
 
   useEffect(() => {
     if (!open) return
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) onToggle()
+    const h = (e: MouseEvent) => {
+      if (btnRef.current?.contains(e.target as Node) || menuRef.current?.contains(e.target as Node))
+        return
+      setOpen(false)
     }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [open, onToggle])
+    document.addEventListener('mousedown', h)
+    return () => document.removeEventListener('mousedown', h)
+  }, [open])
 
   return (
-    <div ref={ref} style={{ position: 'relative' }}>
+    <>
       <button
+        ref={btnRef}
         type="button"
         className={styles.overflowBtn}
-        onClick={onToggle}
+        onClick={handleToggle}
         aria-label="More actions"
       >
         <DotsHorizontalIcon size={14} />
       </button>
-      {open && (
-        <div className={styles.overflowDropdown}>
-          <button type="button" className={styles.overflowItem} onClick={onAdvance}>
-            Advance stage
-          </button>
-          <button type="button" className={styles.overflowItem} onClick={onOpen}>
-            Open profile
-          </button>
-          <button
-            type="button"
-            className={`${styles.overflowItem} ${styles.danger}`}
-            onClick={onReject}
+      {open &&
+        createPortal(
+          <div
+            ref={menuRef}
+            className={styles.overflowMenu}
+            style={{ top: pos.top, right: pos.right }}
           >
-            Reject
-          </button>
-          <button
-            type="button"
-            className={`${styles.overflowItem} ${styles.danger}`}
-            onClick={onHire}
-          >
-            Mark hired
-          </button>
-        </div>
-      )}
-    </div>
+            {items.map((item) => (
+              <button
+                key={item.label}
+                type="button"
+                className={[styles.overflowItem, item.danger ? styles.danger : '']
+                  .filter(Boolean)
+                  .join(' ')}
+                onClick={() => {
+                  item.onClick()
+                  setOpen(false)
+                }}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>,
+          document.body
+        )}
+    </>
   )
 }
 
@@ -119,21 +131,18 @@ export const ApplicantListView: React.FC<Props> = ({
   loading,
   hasJobs,
   onOpenApplicant,
+  onShortlist,
   onRefresh,
 }) => {
-  const [openOverflowId, setOpenOverflowId] = useState<string | null>(null)
   const [confirm, setConfirm] = useState<ConfirmModal | null>(null)
   const [actionPending, setActionPending] = useState(false)
 
-  const closeOverflow = useCallback(() => setOpenOverflowId(null), [])
-
   const handleAdvance = useCallback(
     async (a: CompanyApplicant) => {
-      closeOverflow()
       await advanceApplicant(a.id, a.currentStageId)
       onRefresh()
     },
-    [closeOverflow, onRefresh]
+    [onRefresh]
   )
 
   const handleConfirmAction = useCallback(async () => {
@@ -178,8 +187,9 @@ export const ApplicantListView: React.FC<Props> = ({
           <span className={styles.headerCell}>Applicant</span>
           <span className={styles.headerCell}>Job</span>
           <span className={styles.headerCell}>Stage</span>
-          <span className={`${styles.headerCell} ${styles.centerAlign}`}>Reg.</span>
-          <span className={styles.headerCell}>Activity</span>
+          <span className={styles.headerCell}>Applied</span>
+          <span className={styles.headerCell} aria-hidden="true" />
+
           <span className={`${styles.headerCell} ${styles.rightAlign}`}>
             {total > applicants.length ? `${applicants.length} of ${total}` : ''}
           </span>
@@ -187,7 +197,11 @@ export const ApplicantListView: React.FC<Props> = ({
 
         {/* Rows */}
         {applicants.map((a) => (
-          <div key={a.id} className={styles.row} role="row">
+          <div
+            key={a.id}
+            className={`${styles.row} ${a.isBoosted ? styles.boosted : ''}`}
+            role="row"
+          >
             {/* Applicant */}
             <div
               className={styles.applicantCell}
@@ -197,27 +211,73 @@ export const ApplicantListView: React.FC<Props> = ({
               onKeyDown={(e) => e.key === 'Enter' && onOpenApplicant(a)}
             >
               <Avatar url={a.workerAvatar} initials={a.workerInitials} />
-              <span className={styles.applicantName}>
-                {a.workerFirstName} {a.workerLastInitial}.
-              </span>
+              <div className={styles.applicantText}>
+                <span className={styles.applicantName}>
+                  {a.workerFirstName} {a.workerLastInitial}.
+                </span>
+                {a.workerPrimaryTrade && (
+                  <span className={styles.applicantTrade}>{a.workerPrimaryTrade}</span>
+                )}
+              </div>
             </div>
 
             {/* Job */}
-            <div className={styles.jobCell}>
-              <span className={styles.jobTitle}>{a.jobTitle}</span>
-              {a.jobStatus === 'paused' && <span className={styles.pausedPill}>Paused</span>}
-            </div>
+            <JobCell jobId={a.jobId} jobTitle={a.jobTitle} jobStatus={a.jobStatus} />
 
             {/* Stage */}
-            <div className={styles.stageCell}>{a.currentStageName}</div>
+            <StageCell stageName={a.currentStageName} status={a.status} />
 
-            {/* Regulix Ready */}
-            <div className={styles.regulixCell}>
-              {a.isRegulixReady && <RegulixMarkIcon size={16} />}
+            {/* Applied date */}
+            <div className={styles.appliedCell}>{formatAppliedDate(a.appliedAt)}</div>
+
+            {/* Signals */}
+            <div className={styles.signalsCell}>
+              {a.isBoosted && (
+                <Tooltip content="Boosted application" position="top">
+                  <span className={styles.signalBoosted} aria-label="Boosted">
+                    <RocketIcon size={12} />
+                  </span>
+                </Tooltip>
+              )}
+              {a.isRegulixReady && (
+                <Tooltip content="Regulix Ready — paperwork complete" position="top">
+                  <span className={styles.signalRegulix} aria-label="Regulix Ready">
+                    <RegulixMarkIcon size={12} />
+                  </span>
+                </Tooltip>
+              )}
+              {a.isShortlisted && (
+                <Tooltip content="Shortlisted by your team" position="top">
+                  <span className={styles.signalMuted} aria-label="Shortlisted">
+                    <StarIcon size={11} />
+                  </span>
+                </Tooltip>
+              )}
+              {a.flagged && (
+                <Tooltip content={flagTooltip(a.flaggedTaskLabels)} position="top">
+                  <span className={styles.signalMuted} aria-label="Flagged">
+                    <FlagFilledIcon size={11} />
+                  </span>
+                </Tooltip>
+              )}
+              {a.slaState !== 'none' && (
+                <Tooltip
+                  content={
+                    a.slaState === 'breached'
+                      ? 'Overdue — has been in this stage too long'
+                      : 'Almost overdue — move soon to stay on track'
+                  }
+                  position="top"
+                >
+                  <span
+                    className={styles.signalMuted}
+                    aria-label={a.slaState === 'breached' ? 'SLA breached' : 'SLA approaching'}
+                  >
+                    <HourglassFilledIcon size={11} />
+                  </span>
+                </Tooltip>
+              )}
             </div>
-
-            {/* Last activity */}
-            <div className={styles.activityCell}>{relativeTime(a.stageEnteredAt)}</div>
 
             {/* Actions */}
             <div className={styles.actionsCell}>
@@ -225,21 +285,24 @@ export const ApplicantListView: React.FC<Props> = ({
                 View
               </button>
               <OverflowMenu
-                open={openOverflowId === a.id}
-                onToggle={() => setOpenOverflowId((prev) => (prev === a.id ? null : a.id))}
-                onAdvance={() => handleAdvance(a)}
-                onReject={() => {
-                  closeOverflow()
-                  setConfirm({ type: 'reject', applicant: a })
-                }}
-                onHire={() => {
-                  closeOverflow()
-                  setConfirm({ type: 'hire', applicant: a })
-                }}
-                onOpen={() => {
-                  closeOverflow()
-                  onOpenApplicant(a)
-                }}
+                items={[
+                  { label: 'Open profile', onClick: () => onOpenApplicant(a) },
+                  { label: 'Advance stage', onClick: () => handleAdvance(a) },
+                  {
+                    label: a.isShortlisted ? 'Unshortlist' : 'Shortlist',
+                    onClick: () => onShortlist(a),
+                  },
+                  {
+                    label: 'Reject',
+                    danger: true,
+                    onClick: () => setConfirm({ type: 'reject', applicant: a }),
+                  },
+                  {
+                    label: 'Mark hired',
+                    danger: true,
+                    onClick: () => setConfirm({ type: 'hire', applicant: a }),
+                  },
+                ]}
               />
             </div>
           </div>

@@ -10,7 +10,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <BrowserRouter>
       <ErrorBoundary>
-        <ToastProvider position="top-right">
+        <ToastProvider position="bottom-right">
           <App />
         </ToastProvider>
       </ErrorBoundary>

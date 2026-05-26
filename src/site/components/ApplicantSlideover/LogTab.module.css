@@ -1,7 +1,119 @@
+/* Log entries render as structured rows:
+   1. Headline row — StagePill + action verb + task name (task name bolded)
+   2. Optional gray note box (only on note events) — matches the
+      task note style from PipelineTab so notes feel like the same
+      object whether you're looking at them in-place or in the log
+   3. Footer — timestamp */
+
 .root {
-  overflow-y: auto;
-  flex: 1;
-  padding: 0 20px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 12px 20px 0;
+}
+
+.headerTitle {
+  font-size: 12px;
+  font-weight: var(--kt-weight-semibold);
+  color: var(--kt-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-right: auto;
+}
+
+.addNoteBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: var(--kt-weight-semibold);
+  font-family: var(--kt-font-sans);
+  color: var(--kt-navy-500);
+  background: transparent;
+  border: none;
+  border-radius: var(--kt-radius-md);
+  cursor: pointer;
+}
+
+.addNoteBtn:hover {
+  background: var(--kt-bg-subtle);
+}
+
+.noteForm {
+  margin: 12px 20px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.noteTextarea {
+  width: 100%;
+  padding: 8px 10px;
+  font-size: 13px;
+  font-family: var(--kt-font-sans);
+  border: 1px solid var(--kt-border);
+  border-radius: var(--kt-radius-md);
+  color: var(--kt-text);
+  background: var(--kt-surface);
+  resize: vertical;
+  box-sizing: border-box;
+  line-height: 1.45;
+}
+
+.noteActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.noteCancelBtn {
+  height: 30px;
+  padding: 0 14px;
+  font-size: 12px;
+  font-weight: var(--kt-weight-medium);
+  font-family: var(--kt-font-sans);
+  color: var(--kt-text-muted);
+  background: transparent;
+  border: none;
+  border-radius: var(--kt-radius-md);
+  cursor: pointer;
+}
+
+.noteCancelBtn:hover:not(:disabled) {
+  color: var(--kt-text);
+}
+
+.noteSaveBtn {
+  height: 30px;
+  padding: 0 14px;
+  font-size: 12px;
+  font-weight: var(--kt-weight-semibold);
+  font-family: var(--kt-font-sans);
+  border: none;
+  border-radius: var(--kt-radius-md);
+  background: var(--kt-primary);
+  color: var(--kt-primary-fg);
+  cursor: pointer;
+  transition: opacity var(--kt-duration-fast) var(--kt-ease);
+}
+
+.noteSaveBtn:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.noteSaveBtn:disabled,
+.noteCancelBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .loading {
@@ -17,37 +129,60 @@
   margin: 0;
 }
 
-.row {
-  padding: 10px 0;
-  border-bottom: 1px solid var(--kt-border);
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  overflow-y: auto;
 }
 
-.row:last-child {
-  border-bottom: none;
+.item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
-.rowMeta {
+.headlineRow {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 3px;
+  flex-wrap: wrap;
+}
+
+.headline {
+  font-size: 13px;
+  color: var(--kt-text);
+  margin: 0;
+  line-height: 1.45;
+}
+
+.headline strong {
+  font-weight: var(--kt-weight-semibold);
+}
+
+/* Gray card around the note body — same surface as the in-place
+   task note (PipelineTab `taskNoteBody`). */
+.noteBox {
+  padding: 8px 10px;
+  background: var(--kt-bg-subtle);
+  border-radius: var(--kt-radius-md);
+  font-size: 12px;
+  color: var(--kt-text);
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .timestamp {
   font-size: 11px;
   color: var(--kt-text-muted);
-  font-weight: var(--kt-weight-normal);
-}
-
-.actor {
-  font-size: 12px;
-  font-weight: var(--kt-weight-medium);
-  color: var(--kt-text-muted);
-}
-
-.description {
-  font-size: 13px;
-  color: var(--kt-text);
-  margin: 0;
-  line-height: 1.4;
 }

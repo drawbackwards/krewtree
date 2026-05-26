@@ -621,7 +621,6 @@ export type Database = {
           completed_by: string | null
           skipped_at: string | null
           skipped_by: string | null
-          notes: string | null
           due_date: string | null
           display_order: number
           message_subject: string | null
@@ -645,7 +644,6 @@ export type Database = {
           completed_by?: string | null
           skipped_at?: string | null
           skipped_by?: string | null
-          notes?: string | null
           due_date?: string | null
           display_order?: number
           message_subject?: string | null
@@ -658,6 +656,30 @@ export type Database = {
           updated_at?: string
         }
         Update: Partial<Database['public']['Tables']['application_task']['Insert']>
+        Relationships: []
+      }
+      application_task_note: {
+        Row: {
+          id: string
+          application_task_id: string
+          application_id: string
+          body: string
+          created_at: string
+          created_by: string | null
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          id?: string
+          application_task_id: string
+          application_id: string
+          body: string
+          created_at?: string
+          created_by?: string | null
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: Partial<Database['public']['Tables']['application_task_note']['Insert']>
         Relationships: []
       }
       application_message: {
@@ -714,6 +736,9 @@ export type Database = {
           actor: string
           actor_id: string | null
           description: string
+          stage_id: string | null
+          task_label: string | null
+          note_body: string | null
           created_at: string
         }
         Insert: {
@@ -723,6 +748,9 @@ export type Database = {
           actor?: string
           actor_id?: string | null
           description: string
+          stage_id?: string | null
+          task_label?: string | null
+          note_body?: string | null
           created_at?: string
         }
         Update: Partial<Database['public']['Tables']['application_log']['Insert']>

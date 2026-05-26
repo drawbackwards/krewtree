@@ -12,7 +12,7 @@
 import type { ApplicationStatus, CompanyApplicant } from '../types'
 import { supabase } from '../../lib/supabase'
 import type { Database } from '../../lib/database.types'
-import { getPipelineStages } from './pipelineService'
+import { getPipelineStages, instantiateTemplatesForStage } from './pipelineService'
 
 // `company_pipeline` and `pipeline_stage` are not yet in generated DB types.
 // Cast to bypass the type constraint when querying those tables.
@@ -179,12 +179,13 @@ function toCompanyApplicant(
     matchBreakdown: { skills: a.match_score, location: a.match_score, availability: 0 },
     isRegulixReady: w.is_regulix_ready,
     isShortlisted: a.is_shortlisted,
+    isBoosted: a.is_boosted,
     appliedAt: a.created_at,
     stageEnteredAt: a.status_updated_at ?? a.created_at,
     slaState: 'none',
     flagged: (a.application_task ?? []).some((t) => t.is_flagged),
     flaggedTaskLabels: (a.application_task ?? []).filter((t) => t.is_flagged).map((t) => t.label),
-    notes: a.application_notes.map((n) => ({
+    notes: (a.application_notes ?? []).map((n) => ({
       text: n.text,
       authorName: n.author_name,
       createdAt: n.created_at,
@@ -202,6 +203,9 @@ async function buildStageNameMap(companyId: string): Promise<Map<string, string>
   return map
 }
 
+// Full row shape, including the worker's skills/certs/work-history and notes.
+// Only the slideover detail view (getApplicantDetail) needs these nested
+// relations — they are expensive to fetch per applicant.
 const APPLICANT_SELECT = `
   *,
   worker_profiles!inner(
@@ -212,6 +216,19 @@ const APPLICANT_SELECT = `
   ),
   jobs!inner(id, title, status, company_id),
   application_notes(text, author_name, created_at),
+  application_task(label, is_flagged)
+`
+
+// Lightweight row shape for the dashboard list/kanban widgets, which render
+// only name, avatar, job, stage, and signal icons (flags). Drops the worker's
+// skills/certs/work-history and notes — those load on demand via
+// getApplicantDetail when the slideover opens.
+const WIDGET_SELECT = `
+  *,
+  worker_profiles!inner(
+    id, first_name, last_name, avatar_url, primary_trade, city, region, is_regulix_ready
+  ),
+  jobs!inner(id, title, status, company_id),
   application_task(label, is_flagged)
 `
 
@@ -229,7 +246,7 @@ export async function getRecentApplicants(
   const [{ data, error }, stageNameMap] = await Promise.all([
     supabase
       .from('applications')
-      .select(APPLICANT_SELECT)
+      .select(WIDGET_SELECT)
       .eq('jobs.company_id', companyId)
       .eq('status', 'active')
       .order('created_at', { ascending: false })
@@ -257,7 +274,7 @@ export async function getKanbanApplicants(
   const [{ data, error }, stageNameMap] = await Promise.all([
     supabase
       .from('applications')
-      .select(APPLICANT_SELECT)
+      .select(WIDGET_SELECT)
       .eq('jobs.company_id', companyId)
       .eq('status', 'active')
       .order('created_at', { ascending: false }),
@@ -269,6 +286,29 @@ export async function getKanbanApplicants(
     data: (data ?? []).map((row) =>
       toCompanyApplicant(row as unknown as JoinedApplicantRow, stageNameMap)
     ),
+    error: null,
+  }
+}
+
+/**
+ * Full detail for a single applicant, including the worker's skills,
+ * certifications, and work history. Used by the slideover summary tab, which
+ * opens from the lightweight list/kanban widgets and hydrates the heavy
+ * relations on demand.
+ */
+export async function getApplicantDetail(
+  applicationId: string,
+  companyId: string
+): Promise<{ data: CompanyApplicant | null; error: string | null }> {
+  const [{ data, error }, stageNameMap] = await Promise.all([
+    supabase.from('applications').select(APPLICANT_SELECT).eq('id', applicationId).maybeSingle(),
+    buildStageNameMap(companyId),
+  ])
+
+  if (error) return { data: null, error: error.message }
+  if (!data) return { data: null, error: null }
+  return {
+    data: toCompanyApplicant(data as unknown as JoinedApplicantRow, stageNameMap),
     error: null,
   }
 }
@@ -297,7 +337,7 @@ export async function getWidgetApplicants(
 ): Promise<{ data: CompanyApplicant[]; total: number; error: string | null }> {
   let q = supabase
     .from('applications')
-    .select(APPLICANT_SELECT, { count: 'exact' })
+    .select(WIDGET_SELECT, { count: 'exact' })
     .eq('jobs.company_id', companyId)
     .eq('status', 'active')
     .order('status_updated_at', { ascending: false })
@@ -484,7 +524,9 @@ export async function advanceApplicant(
     .from('applications')
     .update({ current_stage_id: nextStageId } as unknown as Record<string, unknown>)
     .eq('id', applicationId)
-  return { error: error?.message ?? null }
+  if (error) return { error: error.message }
+  await instantiateTemplatesForStage(applicationId, nextStageId)
+  return { error: null }
 }
 
 /** Set an applicant's current stage to any arbitrary stage UUID. */
@@ -496,7 +538,9 @@ export async function setApplicantStage(
     .from('applications')
     .update({ current_stage_id: stageId } as unknown as Record<string, unknown>)
     .eq('id', applicationId)
-  return { error: error?.message ?? null }
+  if (error) return { error: error.message }
+  await instantiateTemplatesForStage(applicationId, stageId)
+  return { error: null }
 }
 
 export async function rejectApplicant(applicationId: string): Promise<{ error: string | null }> {

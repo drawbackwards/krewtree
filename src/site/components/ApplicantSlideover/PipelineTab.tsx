@@ -1,30 +1,22 @@
 import React, { useEffect, useRef, useState } from 'react'
-import type { ApplicationTask, CompanyApplicant } from '../../types'
+import type { ApplicationTask, ApplicationTaskNote, CompanyApplicant } from '../../types'
 import { isTerminal } from '../../types'
-import {
-  CheckIcon,
-  PlusIcon,
-  DotsHorizontalIcon,
-  ClipboardIcon,
-  TrashIcon,
-  CalendarIcon,
-  FlagFilledIcon,
-} from '../../icons'
+import { CheckIcon, PlusIcon, DotsHorizontalIcon, ClipboardIcon, FlagFilledIcon } from '../../icons'
 import { Modal, Tooltip } from '../../../components'
+import type { PipelineStage } from '../../services/pipelineService'
 import {
   getApplicationTasks,
   toggleTaskComplete,
   toggleTaskSkip,
   toggleTaskFlag,
-  saveTaskNotes,
+  addTaskNote,
+  editTaskNote,
   addAdHocTask,
   deleteAdHocTask,
   editAdHocTask,
-  editTemplateDueDate,
-  saveStageNotes,
-  getStageNotes,
   sendApplicationMessage,
-  type PipelineStage,
+  instantiateTemplatesForStage,
+  countBlockingRequiredTasks,
 } from '../../services/pipelineService'
 import styles from './PipelineTab.module.css'
 
@@ -32,19 +24,12 @@ import styles from './PipelineTab.module.css'
 
 function formatTimeInStage(enteredAt: string | null): string {
   if (!enteredAt) return ''
-  const ms = Date.now() - new Date(enteredAt).getTime()
-  const days = Math.floor(ms / (1000 * 60 * 60 * 24))
-  if (days === 0) return 'Today'
-  if (days < 7) return `${days}d`
-  const weeks = Math.floor(days / 7)
-  const remDays = days % 7
-  return remDays > 0 ? `${weeks}w ${remDays}d` : `${weeks}w`
-}
-
-function formatDueDate(iso: string | null): string {
-  if (!iso) return ''
-  const d = new Date(iso)
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  const diffMs = Date.now() - new Date(enteredAt).getTime()
+  const h = Math.floor(diffMs / 3_600_000)
+  if (h < 24) return `${Math.max(1, h)}h`
+  const d = Math.floor(h / 24)
+  if (d < 14) return `${d}d`
+  return `${Math.floor(d / 7)}w`
 }
 
 function formatSentAt(iso: string): string {
@@ -63,39 +48,65 @@ function formatSentAt(iso: string): string {
 interface PipelineTabProps {
   applicant: CompanyApplicant
   stages: PipelineStage[]
-  onAdvance: (nextStageId: string) => void
+  // Reports the live count of incomplete required tasks for the current stage so
+  // the drawer's stage control can gate forward moves as tasks change here.
+  onRequiredCountChange?: (count: number) => void
+  // Notifies the parent that applicant-level data changed (e.g. a task flag),
+  // so the dashboard list/kanban can refetch and reflect it without a reload.
+  onChanged?: () => void
 }
 
 // ── Component ────────────────────────────────────────────────────────────────
 
-export const PipelineTab: React.FC<PipelineTabProps> = ({ applicant, stages, onAdvance }) => {
+export const PipelineTab: React.FC<PipelineTabProps> = ({
+  applicant,
+  onRequiredCountChange,
+  onChanged,
+}) => {
   const terminal = isTerminal(applicant.status)
 
   const [tasks, setTasks] = useState<ApplicationTask[]>([])
+  const [loaded, setLoaded] = useState(false)
   const [sendingTask, setSendingTask] = useState<ApplicationTask | null>(null)
   const [sendError, setSendError] = useState<string | null>(null)
-  const [stageNotes, setStageNotes] = useState('')
-  const [notesLoaded, setNotesLoaded] = useState(false)
-  const [savedIndicator, setSavedIndicator] = useState(false)
   const [addingTask, setAddingTask] = useState(false)
-  const [softBlockOpen, setSoftBlockOpen] = useState(false)
 
-  // Load tasks and notes when applicant or current stage changes
+  // Load tasks when applicant or current stage changes
   useEffect(() => {
     let cancelled = false
-    getApplicationTasks(applicant.id, applicant.currentStageId).then(({ data }) => {
-      if (!cancelled) setTasks(data)
+    const stageId = applicant.currentStageId
+    if (!stageId) return
+    setLoaded(false)
+
+    // Show existing tasks as soon as they load — don't block the list on
+    // template instantiation.
+    getApplicationTasks(applicant.id, stageId).then(({ data }) => {
+      if (cancelled) return
+      setTasks(data)
+      setLoaded(true)
     })
-    getStageNotes(applicant.id, applicant.currentStageId).then(({ data }) => {
-      if (!cancelled) {
-        setStageNotes(data?.notes ?? '')
-        setNotesLoaded(true)
-      }
+
+    // Backfill stage-task templates for applicants who entered the stage before
+    // the auto-instantiate hook landed. Runs off the critical path (no-op if
+    // already instantiated); only refetch when it actually created tasks.
+    instantiateTemplatesForStage(applicant.id, stageId).then((res) => {
+      if (cancelled || res.inserted === 0) return
+      getApplicationTasks(applicant.id, stageId).then(({ data }) => {
+        if (!cancelled) setTasks(data)
+      })
     })
+
     return () => {
       cancelled = true
     }
   }, [applicant.id, applicant.currentStageId])
+
+  // Keep the drawer's stage gate in sync as tasks are completed/skipped/added.
+  // Wait for the initial load so the empty starting state doesn't clobber the
+  // gate value the slideover already seeded.
+  useEffect(() => {
+    if (loaded) onRequiredCountChange?.(countBlockingRequiredTasks(tasks))
+  }, [tasks, loaded, onRequiredCountChange])
 
   // ── Task actions ──────────────────────────────────────────────────────────
 
@@ -142,50 +153,14 @@ export const PipelineTab: React.FC<PipelineTabProps> = ({ applicant, stages, onA
     const next = !task.flagged
     setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, flagged: next } : t)))
     await toggleTaskFlag(applicant.id, task.id, next)
+    onChanged?.()
   }
 
-  const handleAddTask = async (label: string, isRequired: boolean, dueDate: string | null) => {
-    const { data } = await addAdHocTask(
-      applicant.id,
-      applicant.currentStageId,
-      label,
-      isRequired,
-      dueDate
-    )
+  const handleAddTask = async (label: string, isRequired: boolean) => {
+    const { data } = await addAdHocTask(applicant.id, applicant.currentStageId, label, isRequired)
     if (data) setTasks((prev) => [...prev, data])
     setAddingTask(false)
   }
-
-  // ── Stage notes ───────────────────────────────────────────────────────────
-
-  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  const handleNotesBlur = () => {
-    if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
-    saveTimerRef.current = setTimeout(async () => {
-      await saveStageNotes(applicant.id, applicant.currentStageId, stageNotes)
-      setSavedIndicator(true)
-      setTimeout(() => setSavedIndicator(false), 2000)
-    }, 300)
-  }
-
-  // ── Advance logic ─────────────────────────────────────────────────────────
-
-  const incompletedRequired = tasks.filter((t) => t.isRequired && t.state === 'incomplete')
-
-  const handleAdvanceClick = () => {
-    if (incompletedRequired.length > 0) {
-      setSoftBlockOpen(true)
-    } else {
-      const next = nextStage
-      if (next) onAdvance(next.id)
-    }
-  }
-
-  // Derive next stage from the ordered stages array
-  const currentIdx = stages.findIndex((s) => s.id === applicant.currentStageId)
-  const nextStage: PipelineStage | null =
-    currentIdx >= 0 && currentIdx < stages.length - 1 ? stages[currentIdx + 1] : null
 
   // ── Render ────────────────────────────────────────────────────────────────
 
@@ -198,7 +173,7 @@ export const PipelineTab: React.FC<PipelineTabProps> = ({ applicant, stages, onA
           <span className={styles.stageName}>{applicant.currentStageName}</span>
           {applicant.stageEnteredAt && (
             <span className={styles.timeInStage}>
-              In stage {formatTimeInStage(applicant.stageEnteredAt)}
+              {formatTimeInStage(applicant.stageEnteredAt)}
             </span>
           )}
         </div>
@@ -219,7 +194,31 @@ export const PipelineTab: React.FC<PipelineTabProps> = ({ applicant, stages, onA
                       onToggleSkip={() => handleToggleSkip(task)}
                       onToggleFlag={() => handleToggleFlag(task)}
                       onDelete={task.source === 'ad_hoc' ? () => handleDeleteTask(task) : undefined}
-                      onSaveNotes={(notes) => saveTaskNotes(applicant.id, task.id, notes)}
+                      onAddNote={async (body) => {
+                        const { data } = await addTaskNote(applicant.id, task.id, body)
+                        if (data) {
+                          setTasks((prev) =>
+                            prev.map((t) =>
+                              t.id === task.id ? { ...t, notes: [...t.notes, data] } : t
+                            )
+                          )
+                        }
+                      }}
+                      onEditNote={async (noteId, body) => {
+                        const { data } = await editTaskNote(applicant.id, noteId, body)
+                        if (data) {
+                          setTasks((prev) =>
+                            prev.map((t) =>
+                              t.id === task.id
+                                ? {
+                                    ...t,
+                                    notes: t.notes.map((n) => (n.id === noteId ? data : n)),
+                                  }
+                                : t
+                            )
+                          )
+                        }
+                      }}
                       onEditAdHoc={
                         task.source === 'ad_hoc'
                           ? (patch) => {
@@ -230,12 +229,6 @@ export const PipelineTab: React.FC<PipelineTabProps> = ({ applicant, stages, onA
                             }
                           : undefined
                       }
-                      onEditDueDate={(dueDate) => {
-                        setTasks((prev) =>
-                          prev.map((t) => (t.id === task.id ? { ...t, dueDate } : t))
-                        )
-                        editTemplateDueDate(applicant.id, task.id, dueDate)
-                      }}
                       onOpenSendMessage={() => setSendingTask(task)}
                     />
                   ))}
@@ -255,106 +248,9 @@ export const PipelineTab: React.FC<PipelineTabProps> = ({ applicant, stages, onA
                 </button>
               )}
             </div>
-
-            {/* Stage notes */}
-            <div className={styles.notesSection}>
-              <div className={styles.notesHeader}>
-                Notes for this stage
-                {savedIndicator && <span className={styles.savedIndicator}>Saved</span>}
-              </div>
-              {notesLoaded && (
-                <textarea
-                  className={styles.notesTextarea}
-                  value={stageNotes}
-                  onChange={(e) => setStageNotes(e.target.value)}
-                  onBlur={handleNotesBlur}
-                  placeholder="Add observations, context, or anything that doesn't fit a specific task..."
-                  rows={3}
-                />
-              )}
-            </div>
           </>
         )}
-
-        {/* Terminal: still show stage notes */}
-        {terminal && (
-          <div className={styles.notesSection} style={{ marginTop: 16 }}>
-            <div className={styles.notesHeader}>
-              Notes for this stage
-              {savedIndicator && <span className={styles.savedIndicator}>Saved</span>}
-            </div>
-            {notesLoaded && (
-              <textarea
-                className={styles.notesTextarea}
-                value={stageNotes}
-                onChange={(e) => setStageNotes(e.target.value)}
-                onBlur={handleNotesBlur}
-                placeholder="Add a final observation..."
-                rows={3}
-              />
-            )}
-          </div>
-        )}
       </div>
-
-      {/* Sticky inline advance */}
-      <div className={styles.advanceBar}>
-        {terminal ? (
-          <p className={styles.closedLine}>This application is closed.</p>
-        ) : nextStage ? (
-          <button type="button" className={styles.advanceBtn} onClick={handleAdvanceClick}>
-            Advance to {nextStage.name}
-          </button>
-        ) : (
-          <button type="button" className={styles.advanceBtn} onClick={handleAdvanceClick}>
-            Mark hired
-          </button>
-        )}
-      </div>
-
-      {/* Soft-block modal */}
-      <Modal
-        open={softBlockOpen}
-        onClose={() => setSoftBlockOpen(false)}
-        size="sm"
-        title="Required tasks are incomplete"
-        footer={
-          <div style={{ display: 'flex', gap: 'var(--kt-space-3)' }}>
-            <button
-              type="button"
-              className={styles.modalBtnSecondary}
-              onClick={() => setSoftBlockOpen(false)}
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              className={styles.modalBtnPrimary}
-              onClick={() => {
-                setSoftBlockOpen(false)
-                if (nextStage) onAdvance(nextStage.id)
-              }}
-            >
-              Advance anyway
-            </button>
-          </div>
-        }
-      >
-        <div className={styles.softBlockBody}>
-          <p className={styles.softBlockText}>
-            {incompletedRequired.length} required task
-            {incompletedRequired.length !== 1 ? 's are' : ' is'} incomplete. Advance anyway?
-          </p>
-          <ul className={styles.softBlockList}>
-            {incompletedRequired.slice(0, 5).map((t) => (
-              <li key={t.id}>{t.label}</li>
-            ))}
-            {incompletedRequired.length > 5 && (
-              <li className={styles.softBlockMore}>+{incompletedRequired.length - 5} more</li>
-            )}
-          </ul>
-        </div>
-      </Modal>
 
       {sendingTask && (
         <SendMessageModal
@@ -401,9 +297,9 @@ interface TaskRowProps {
   onToggleSkip: () => void
   onToggleFlag: () => void
   onDelete?: () => void
-  onSaveNotes: (notes: string) => void
-  onEditAdHoc?: (patch: { label?: string; isRequired?: boolean; dueDate?: string | null }) => void
-  onEditDueDate?: (dueDate: string | null) => void
+  onAddNote: (body: string) => Promise<void>
+  onEditNote: (noteId: string, body: string) => Promise<void>
+  onEditAdHoc?: (patch: { label?: string; isRequired?: boolean }) => void
   onOpenSendMessage?: () => void
 }
 
@@ -413,18 +309,34 @@ const TaskRow: React.FC<TaskRowProps> = ({
   onToggleSkip,
   onToggleFlag,
   onDelete,
-  onSaveNotes,
+  onAddNote,
+  onEditNote,
   onEditAdHoc,
-  onEditDueDate,
   onOpenSendMessage,
 }) => {
-  const [notesOpen, setNotesOpen] = useState(false)
-  const [notesValue, setNotesValue] = useState(task.notes ?? '')
+  const isCompleted = task.state === 'completed'
+  const isSkipped = task.state === 'skipped'
+  const noteCount = task.notes.length
+
+  // Default expanded only for active tasks that already have notes. Completed
+  // and skipped tasks start collapsed so the timeline doesn't clutter the
+  // "done" portion of the list.
+  const [notesExpanded, setNotesExpanded] = useState(
+    () => !isCompleted && !isSkipped && noteCount > 0
+  )
+  const [draft, setDraft] = useState('')
+  const [savingNote, setSavingNote] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [editing, setEditing] = useState(false)
   const [editLabel, setEditLabel] = useState(task.label)
   const [editRequired, setEditRequired] = useState(task.isRequired)
   const menuRef = useRef<HTMLDivElement>(null)
+
+  // Auto-collapse when the task is marked complete or skipped. Reopens are
+  // a deliberate user action.
+  useEffect(() => {
+    if (isCompleted || isSkipped) setNotesExpanded(false)
+  }, [isCompleted, isSkipped])
 
   useEffect(() => {
     if (!menuOpen) return
@@ -435,17 +347,23 @@ const TaskRow: React.FC<TaskRowProps> = ({
     return () => document.removeEventListener('mousedown', h)
   }, [menuOpen])
 
-  const handleNotesBlur = () => {
-    onSaveNotes(notesValue)
+  const draftReady = draft.trim().length > 0
+
+  const handleAddNote = async () => {
+    if (!draftReady || savingNote) return
+    setSavingNote(true)
+    try {
+      await onAddNote(draft)
+      setDraft('')
+    } finally {
+      setSavingNote(false)
+    }
   }
 
   const handleEditSave = () => {
     onEditAdHoc?.({ label: editLabel, isRequired: editRequired })
     setEditing(false)
   }
-
-  const isCompleted = task.state === 'completed'
-  const isSkipped = task.state === 'skipped'
 
   if (editing) {
     return (
@@ -523,9 +441,6 @@ const TaskRow: React.FC<TaskRowProps> = ({
               </Tooltip>
             )}
             {isSkipped && <span className={styles.skippedTag}>Skipped</span>}
-            {task.dueDate && (
-              <span className={styles.dueDate}>Due {formatDueDate(task.dueDate)}</span>
-            )}
             {task.messageSubject && task.messageSentAt && (
               <span className={styles.sentPill}>Sent {formatSentAt(task.messageSentAt)}</span>
             )}
@@ -539,17 +454,27 @@ const TaskRow: React.FC<TaskRowProps> = ({
 
         {/* Right side controls */}
         <div className={styles.taskActions}>
-          {/* Notes icon */}
+          {/* Notes toggle — clipboard icon + count badge, doubles as expand/collapse */}
           <button
             type="button"
-            className={[styles.notesIcon, task.notes ? styles.notesIconFilled : '']
+            className={[
+              styles.notesToggle,
+              noteCount > 0 ? styles.notesToggleFilled : '',
+              notesExpanded ? styles.notesToggleOpen : '',
+            ]
               .filter(Boolean)
               .join(' ')}
-            onClick={() => setNotesOpen((v) => !v)}
-            aria-label="Task notes"
-            title="Task notes"
+            onClick={() => setNotesExpanded((v) => !v)}
+            aria-expanded={notesExpanded}
+            aria-label={
+              notesExpanded
+                ? `Collapse notes${noteCount > 0 ? ` (${noteCount})` : ''}`
+                : `Expand notes${noteCount > 0 ? ` (${noteCount})` : ''}`
+            }
+            title={noteCount === 0 ? 'Add note' : `${noteCount} note${noteCount === 1 ? '' : 's'}`}
           >
             <ClipboardIcon size={14} />
+            {noteCount > 0 && <span className={styles.notesCountBadge}>{noteCount}</span>}
           </button>
 
           {/* Overflow menu */}
@@ -575,19 +500,6 @@ const TaskRow: React.FC<TaskRowProps> = ({
                   >
                     Edit
                   </button>
-                )}
-                {!onEditAdHoc && onEditDueDate && (
-                  <label className={styles.overflowItem} style={{ cursor: 'pointer' }}>
-                    Edit due date
-                    <input
-                      type="date"
-                      style={{ display: 'none' }}
-                      onChange={(e) => {
-                        setMenuOpen(false)
-                        onEditDueDate(e.target.value || null)
-                      }}
-                    />
-                  </label>
                 )}
                 {!isSkipped ? (
                   <button
@@ -623,17 +535,19 @@ const TaskRow: React.FC<TaskRowProps> = ({
                   {task.flagged ? 'Clear Flag' : 'Flag for follow-up'}
                 </button>
                 {onDelete && (
-                  <button
-                    type="button"
-                    className={[styles.overflowItem, styles.overflowItemDanger].join(' ')}
-                    onClick={() => {
-                      setMenuOpen(false)
-                      onDelete()
-                    }}
-                  >
-                    <TrashIcon size={13} />
-                    Delete
-                  </button>
+                  <>
+                    <div className={styles.overflowDivider} />
+                    <button
+                      type="button"
+                      className={[styles.overflowItem, styles.overflowItemDanger].join(' ')}
+                      onClick={() => {
+                        setMenuOpen(false)
+                        onDelete()
+                      }}
+                    >
+                      Delete
+                    </button>
+                  </>
                 )}
               </div>
             )}
@@ -641,39 +555,177 @@ const TaskRow: React.FC<TaskRowProps> = ({
         </div>
       </div>
 
-      {/* Inline notes expand */}
-      {notesOpen && (
-        <textarea
-          className={styles.taskNotesArea}
-          value={notesValue}
-          onChange={(e) => setNotesValue(e.target.value)}
-          onBlur={handleNotesBlur}
-          placeholder="Add a note for this task..."
-          rows={2}
-          autoFocus
-        />
+      {/* Notes timeline + add form — both gated behind the expand toggle */}
+      {notesExpanded && (
+        <>
+          {task.notes.length > 0 && (
+            <ul className={styles.taskNotesList}>
+              {task.notes.map((note) => (
+                <NoteItem key={note.id} note={note} onEdit={onEditNote} />
+              ))}
+            </ul>
+          )}
+
+          <div className={styles.taskNotesEditor}>
+            <textarea
+              className={styles.taskNotesArea}
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              placeholder="Add a note for this task..."
+              rows={2}
+            />
+            <div className={styles.taskNotesActions}>
+              <button
+                type="button"
+                className={styles.taskNotesSaveBtn}
+                onClick={handleAddNote}
+                disabled={!draftReady || savingNote}
+              >
+                {savingNote ? 'Saving…' : 'Add note'}
+              </button>
+            </div>
+          </div>
+        </>
       )}
     </div>
   )
 }
 
+// ── NoteItem ─────────────────────────────────────────────────────────────────
+//
+// One row in the notes timeline. Renders the body + timestamp by default; on
+// hover, an "Edit" link appears in the footer. Click → swap to a textarea
+// with Save / Cancel. Saving calls back to the parent which round-trips to
+// the DB and updates local state with the returned row (so the "(edited)"
+// indicator and edit timestamp appear without a refetch).
+
+interface NoteItemProps {
+  note: ApplicationTaskNote
+  onEdit: (noteId: string, body: string) => Promise<void>
+}
+
+const NoteItem: React.FC<NoteItemProps> = ({ note, onEdit }) => {
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(note.body)
+  const [saving, setSaving] = useState(false)
+
+  // If the parent passes a new note reference (e.g. after a successful save),
+  // reset the draft so a subsequent edit starts from the latest body.
+  useEffect(() => {
+    if (!editing) setDraft(note.body)
+  }, [note.body, editing])
+
+  const dirty = draft.trim() !== note.body.trim()
+
+  const handleSave = async () => {
+    if (!dirty || saving || !draft.trim()) return
+    setSaving(true)
+    try {
+      await onEdit(note.id, draft)
+      setEditing(false)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (editing) {
+    return (
+      <li className={styles.taskNoteItem}>
+        <textarea
+          className={styles.taskNoteEditArea}
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          rows={2}
+          autoFocus
+        />
+        <div className={styles.taskNoteEditActions}>
+          <button
+            type="button"
+            className={styles.taskNoteSaveBtn}
+            onClick={handleSave}
+            disabled={!dirty || saving || !draft.trim()}
+          >
+            {saving ? 'Saving…' : 'Save'}
+          </button>
+          <button
+            type="button"
+            className={styles.taskNoteCancelBtn}
+            onClick={() => {
+              setDraft(note.body)
+              setEditing(false)
+            }}
+            disabled={saving}
+          >
+            Cancel
+          </button>
+        </div>
+      </li>
+    )
+  }
+
+  return (
+    <li className={styles.taskNoteItem}>
+      <p className={styles.taskNoteBody}>{note.body}</p>
+      <div className={styles.taskNoteFooter}>
+        <time
+          className={styles.taskNoteTime}
+          dateTime={note.createdAt}
+          title={formatFullDateTime(note.createdAt)}
+        >
+          {formatNoteTimestamp(note.createdAt)}
+        </time>
+        {note.updatedAt && (
+          <span
+            className={styles.taskNoteEditedTag}
+            title={`Edited ${formatFullDateTime(note.updatedAt)}`}
+          >
+            (edited {formatNoteTimestamp(note.updatedAt)})
+          </span>
+        )}
+        <button type="button" className={styles.taskNoteEditLink} onClick={() => setEditing(true)}>
+          Edit
+        </button>
+      </div>
+    </li>
+  )
+}
+
+// ── Time helpers used by TaskRow notes timeline ──────────────────────────────
+
+// Wall-clock timestamp shown on every note row. The user asked for the
+// actual time, not a relative "X ago" string. Format: "May 22, 2026 · 1:30 PM"
+function formatNoteTimestamp(iso: string): string {
+  const d = new Date(iso)
+  const date = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  const time = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+  return `${date} · ${time}`
+}
+
+function formatFullDateTime(iso: string): string {
+  return new Date(iso).toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  })
+}
+
 // ── AddTaskForm ──────────────────────────────────────────────────────────────
 
 interface AddTaskFormProps {
-  onSave: (label: string, isRequired: boolean, dueDate: string | null) => void
+  onSave: (label: string, isRequired: boolean) => void
   onCancel: () => void
 }
 
 const AddTaskForm: React.FC<AddTaskFormProps> = ({ onSave, onCancel }) => {
   const [label, setLabel] = useState('')
   const [isRequired, setIsRequired] = useState(false)
-  const [dueDate, setDueDate] = useState('')
-  const [showDueDate, setShowDueDate] = useState(false)
 
   const handleSubmit = () => {
     const trimmed = label.trim()
     if (!trimmed) return
-    onSave(trimmed, isRequired, dueDate || null)
+    onSave(trimmed, isRequired)
   }
 
   return (
@@ -693,23 +745,6 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onSave, onCancel }) => {
       />
 
       <div className={styles.addTaskMeta}>
-        {!showDueDate ? (
-          <button
-            type="button"
-            className={styles.addDueDateLink}
-            onClick={() => setShowDueDate(true)}
-          >
-            <CalendarIcon size={12} />
-            Add due date
-          </button>
-        ) : (
-          <input
-            type="date"
-            className={styles.dueDateInput}
-            value={dueDate}
-            onChange={(e) => setDueDate(e.target.value)}
-          />
-        )}
         <label className={styles.addRequiredLabel}>
           <input
             type="checkbox"

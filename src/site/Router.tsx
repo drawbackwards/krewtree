@@ -105,8 +105,11 @@ export const SiteRouter: React.FC = () => (
           <Route path="/site/pipeline" element={<PipelinePage />} />
           <Route path="/site/settings" element={<SettingsLayout />}>
             <Route index element={<Navigate to="/site/settings/pipeline" replace />} />
-            <Route path="pipeline" element={<PipelinePage />} />
-            <Route path="pipeline-tasks" element={<PipelineSettingsPage />} />
+            <Route path="pipeline" element={<PipelineSettingsPage />} />
+            <Route
+              path="pipeline-tasks"
+              element={<Navigate to="/site/settings/pipeline" replace />}
+            />
           </Route>
           <Route path="/site/post-job" element={<PostJobPage />} />
           <Route path="/site/post-job/:id" element={<PostJobPage />} />

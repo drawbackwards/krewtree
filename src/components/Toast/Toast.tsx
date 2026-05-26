@@ -41,7 +41,7 @@ export function useToast() {
 }
 
 const toastIcons: Partial<Record<ToastVariant, React.ReactNode>> = {
-  success: <SuccessCircleIcon size={18} color="var(--kt-success)" />,
+  success: <SuccessCircleIcon size={18} color="var(--kt-success-fg, #ffffff)" />,
   warning: <WarningTriangleIcon size={18} color="var(--kt-warning)" />,
   danger: <DangerCircleIcon size={18} color="var(--kt-danger)" />,
   info: <InfoCircleIcon size={18} color="var(--kt-navy-500)" />,

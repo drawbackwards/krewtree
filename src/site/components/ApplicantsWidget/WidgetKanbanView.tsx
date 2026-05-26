@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import {
   DndContext,
@@ -19,15 +20,23 @@ import {
   setApplicantStage,
   rejectApplicant,
   hireApplicant,
+  archiveApplicant,
+  shortlistApplicant,
   type WidgetFilters,
 } from '../../services/applicantService'
-import { getPipelineStages, type PipelineStage } from '../../services/pipelineService'
+import {
+  getPipelineStages,
+  getBlockingRequiredCount,
+  isForwardStageMove,
+  type PipelineStage,
+} from '../../services/pipelineService'
 import {
   DotsHorizontalIcon,
   FlagFilledIcon,
   HourglassFilledIcon,
   PauseIcon,
   RegulixMarkIcon,
+  RocketIcon,
   StarIcon,
 } from '../../icons'
 import styles from './WidgetKanbanView.module.css'
@@ -61,11 +70,11 @@ function flagTooltip(labels: string[]): string {
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
-type ConfirmModal = { type: 'reject' | 'hire'; applicant: CompanyApplicant }
+type ConfirmModal = { type: 'reject' | 'hire' | 'archive'; applicant: CompanyApplicant }
 type UndoToast = {
   id: string
   message: string
-  undo: () => void
+  undo?: () => void
   timerId: ReturnType<typeof setTimeout>
 }
 
@@ -75,24 +84,41 @@ type CardProps = {
   applicant: CompanyApplicant
   isDragging?: boolean
   onOpen: (a: CompanyApplicant) => void
+  onShortlist: (a: CompanyApplicant) => void
   onReject: (a: CompanyApplicant) => void
   onHire: (a: CompanyApplicant) => void
+  onArchive: (a: CompanyApplicant) => void
 }
 
 const KanbanCard: React.FC<CardProps> = ({
   applicant: a,
   isDragging,
   onOpen,
+  onShortlist,
   onReject,
   onHire,
+  onArchive,
 }) => {
   const [menuOpen, setMenuOpen] = useState(false)
+  const [menuPos, setMenuPos] = useState({ top: 0, right: 0 })
+  const btnRef = useRef<HTMLButtonElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
+
+  const handleToggleMenu = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!menuOpen && btnRef.current) {
+      const r = btnRef.current.getBoundingClientRect()
+      setMenuPos({ top: r.bottom + 4, right: window.innerWidth - r.right })
+    }
+    setMenuOpen((v) => !v)
+  }
 
   useEffect(() => {
     if (!menuOpen) return
     const h = (e: MouseEvent) => {
-      if (!menuRef.current?.contains(e.target as Node)) setMenuOpen(false)
+      if (btnRef.current?.contains(e.target as Node) || menuRef.current?.contains(e.target as Node))
+        return
+      setMenuOpen(false)
     }
     document.addEventListener('mousedown', h)
     return () => document.removeEventListener('mousedown', h)
@@ -100,7 +126,7 @@ const KanbanCard: React.FC<CardProps> = ({
 
   return (
     <div
-      className={`${styles.card} ${isDragging ? styles.dragging : ''}`}
+      className={`${styles.card} ${isDragging ? styles.dragging : ''} ${a.isBoosted ? styles.boosted : ''}`}
       onClick={() => onOpen(a)}
       role="button"
       tabIndex={0}
@@ -126,21 +152,24 @@ const KanbanCard: React.FC<CardProps> = ({
           )}
         </div>
         {/* Overflow menu */}
-        <div ref={menuRef} style={{ position: 'relative', flexShrink: 0 }}>
-          <button
-            type="button"
-            className={styles.cardOverflowBtn}
-            data-open={menuOpen}
-            onClick={(e) => {
-              e.stopPropagation()
-              setMenuOpen((v) => !v)
-            }}
-            aria-label="More actions"
-          >
-            <DotsHorizontalIcon size={13} />
-          </button>
-          {menuOpen && (
-            <div className={styles.overflowDropdown} onClick={(e) => e.stopPropagation()}>
+        <button
+          ref={btnRef}
+          type="button"
+          className={styles.cardOverflowBtn}
+          data-open={menuOpen}
+          onClick={handleToggleMenu}
+          aria-label="More actions"
+        >
+          <DotsHorizontalIcon size={13} />
+        </button>
+        {menuOpen &&
+          createPortal(
+            <div
+              ref={menuRef}
+              className={styles.overflowDropdown}
+              style={{ top: menuPos.top, right: menuPos.right }}
+              onClick={(e) => e.stopPropagation()}
+            >
               <button
                 type="button"
                 className={styles.overflowItem}
@@ -153,6 +182,37 @@ const KanbanCard: React.FC<CardProps> = ({
               </button>
               <button
                 type="button"
+                className={styles.overflowItem}
+                onClick={() => {
+                  setMenuOpen(false)
+                  onShortlist(a)
+                }}
+              >
+                {a.isShortlisted ? 'Unshortlist' : 'Shortlist'}
+              </button>
+              <button
+                type="button"
+                className={styles.overflowItem}
+                onClick={() => {
+                  setMenuOpen(false)
+                  onHire(a)
+                }}
+              >
+                Mark hired
+              </button>
+              <button
+                type="button"
+                className={styles.overflowItem}
+                onClick={() => {
+                  setMenuOpen(false)
+                  onArchive(a)
+                }}
+              >
+                Archive
+              </button>
+              <div className={styles.overflowDivider} role="separator" />
+              <button
+                type="button"
                 className={`${styles.overflowItem} ${styles.danger}`}
                 onClick={() => {
                   setMenuOpen(false)
@@ -161,19 +221,9 @@ const KanbanCard: React.FC<CardProps> = ({
               >
                 Reject
               </button>
-              <button
-                type="button"
-                className={`${styles.overflowItem} ${styles.danger}`}
-                onClick={() => {
-                  setMenuOpen(false)
-                  onHire(a)
-                }}
-              >
-                Mark hired
-              </button>
-            </div>
+            </div>,
+            document.body
           )}
-        </div>
       </div>
 
       {/* Body — indented to align with the identity column above */}
@@ -194,6 +244,13 @@ const KanbanCard: React.FC<CardProps> = ({
 
         <div className={styles.cardFooter}>
           <div className={styles.cardSignals}>
+            {a.isBoosted && (
+              <Tooltip content="Boosted application" position="top">
+                <span className={styles.signalBoosted} aria-label="Boosted">
+                  <RocketIcon size={12} />
+                </span>
+              </Tooltip>
+            )}
             {a.isRegulixReady && (
               <Tooltip content="Regulix Ready — paperwork complete" position="top">
                 <span className={styles.signalRegulix} aria-label="Regulix Ready">
@@ -265,8 +322,10 @@ type ColumnProps = {
   totalInStage: number
   cardsPerCol: number
   onOpen: (a: CompanyApplicant) => void
+  onShortlist: (a: CompanyApplicant) => void
   onReject: (a: CompanyApplicant) => void
   onHire: (a: CompanyApplicant) => void
+  onArchive: (a: CompanyApplicant) => void
 }
 
 const KanbanColumn: React.FC<ColumnProps> = ({
@@ -275,8 +334,10 @@ const KanbanColumn: React.FC<ColumnProps> = ({
   totalInStage,
   cardsPerCol,
   onOpen,
+  onShortlist,
   onReject,
   onHire,
+  onArchive,
 }) => {
   const { setNodeRef, isOver } = useDroppable({ id: stage.id })
   const visible = applicants.slice(0, cardsPerCol)
@@ -293,8 +354,10 @@ const KanbanColumn: React.FC<ColumnProps> = ({
           key={a.id}
           applicant={a}
           onOpen={onOpen}
+          onShortlist={onShortlist}
           onReject={onReject}
           onHire={onHire}
+          onArchive={onArchive}
         />
       ))}
       {moreCount > 0 && (
@@ -316,6 +379,9 @@ type Props = {
   filters: WidgetFilters
   onOpenApplicant: (a: CompanyApplicant) => void
   cardsPerCol?: number
+  // Bumped by the parent on external mutations (e.g. drawer shortlist /
+  // stage change). When it changes we re-fetch so the cards stay in sync.
+  refreshTick?: number
 }
 
 export const WidgetKanbanView: React.FC<Props> = ({
@@ -323,6 +389,7 @@ export const WidgetKanbanView: React.FC<Props> = ({
   filters,
   onOpenApplicant,
   cardsPerCol = DEFAULT_CARDS_PER_COL,
+  refreshTick = 0,
 }) => {
   const [stages, setStages] = useState<PipelineStage[]>([])
   const [applicants, setApplicants] = useState<CompanyApplicant[]>([])
@@ -358,6 +425,7 @@ export const WidgetKanbanView: React.FC<Props> = ({
           ...data[0],
           isRegulixReady: true,
           isShortlisted: true,
+          isBoosted: true,
           flagged: true,
           flaggedTaskLabels: ['Verify references'],
           slaState: 'breached',
@@ -371,7 +439,7 @@ export const WidgetKanbanView: React.FC<Props> = ({
     return () => {
       cancelled = true
     }
-  }, [companyId, filters])
+  }, [companyId, filters, refreshTick])
 
   // Group applicants by currentStageId
   const byStage = React.useMemo(() => {
@@ -388,7 +456,7 @@ export const WidgetKanbanView: React.FC<Props> = ({
   const activeApplicant = activeId ? (applicants.find((a) => a.id === activeId) ?? null) : null
 
   // Toast helpers
-  function showToast(message: string, undo: () => void) {
+  function showToast(message: string, undo?: () => void) {
     setToast((prev) => {
       if (prev) clearTimeout(prev.timerId)
       const timerId = setTimeout(() => setToast(null), 5000)
@@ -416,6 +484,19 @@ export const WidgetKanbanView: React.FC<Props> = ({
     const prevStageId = current.currentStageId
     const prevStageName = current.currentStageName
     const name = `${current.workerFirstName} ${current.workerLastInitial}.`
+
+    // Required-task gate: block advancement to a later stage while the current
+    // stage still has incomplete required tasks. Backward moves are unrestricted.
+    if (isForwardStageMove(stages, prevStageId, targetStageId)) {
+      const blocking = await getBlockingRequiredCount(appId, prevStageId)
+      if (blocking > 0) {
+        const currentStageName = current.currentStageName
+        showToast(
+          `Complete the required tasks in ${currentStageName} before moving ${name} forward.`
+        )
+        return
+      }
+    }
 
     // Optimistic update
     setApplicants((prev) =>
@@ -451,6 +532,21 @@ export const WidgetKanbanView: React.FC<Props> = ({
     })
   }
 
+  const handleShortlist = useCallback(async (applicant: CompanyApplicant) => {
+    // Optimistic toggle
+    setApplicants((prev) =>
+      prev.map((a) => (a.id === applicant.id ? { ...a, isShortlisted: !a.isShortlisted } : a))
+    )
+    const { error } = await shortlistApplicant(applicant.id)
+    if (error) {
+      setApplicants((prev) =>
+        prev.map((a) =>
+          a.id === applicant.id ? { ...a, isShortlisted: applicant.isShortlisted } : a
+        )
+      )
+    }
+  }, [])
+
   // Confirm actions
   const handleConfirm = useCallback(async () => {
     if (!confirm) return
@@ -460,7 +556,11 @@ export const WidgetKanbanView: React.FC<Props> = ({
     // Optimistic remove
     setApplicants((prev) => prev.filter((a) => a.id !== applicant.id))
     const { error } =
-      type === 'reject' ? await rejectApplicant(applicant.id) : await hireApplicant(applicant.id)
+      type === 'reject'
+        ? await rejectApplicant(applicant.id)
+        : type === 'hire'
+          ? await hireApplicant(applicant.id)
+          : await archiveApplicant(applicant.id)
     if (error) {
       // Restore on failure
       setApplicants((prev) => [applicant, ...prev])
@@ -484,8 +584,10 @@ export const WidgetKanbanView: React.FC<Props> = ({
                 totalInStage={colApplicants.length}
                 cardsPerCol={cardsPerCol}
                 onOpen={onOpenApplicant}
+                onShortlist={handleShortlist}
                 onReject={(a) => setConfirm({ type: 'reject', applicant: a })}
                 onHire={(a) => setConfirm({ type: 'hire', applicant: a })}
+                onArchive={(a) => setConfirm({ type: 'archive', applicant: a })}
               />
             )
           })}
@@ -517,17 +619,19 @@ export const WidgetKanbanView: React.FC<Props> = ({
       {toast && (
         <div className={styles.toast} key={toast.id}>
           <span>{toast.message}</span>
-          <button
-            type="button"
-            className={styles.toastUndo}
-            onClick={() => {
-              clearTimeout(toast.timerId)
-              toast.undo()
-              setToast(null)
-            }}
-          >
-            Undo
-          </button>
+          {toast.undo && (
+            <button
+              type="button"
+              className={styles.toastUndo}
+              onClick={() => {
+                clearTimeout(toast.timerId)
+                toast.undo?.()
+                setToast(null)
+              }}
+            >
+              Undo
+            </button>
+          )}
         </div>
       )}
 
@@ -571,6 +675,28 @@ export const WidgetKanbanView: React.FC<Props> = ({
               disabled={actionPending}
             >
               {actionPending ? 'Marking…' : 'Mark hired'}
+            </button>
+          </div>
+        </Modal>
+      )}
+      {confirm?.type === 'archive' && (
+        <Modal open title="Archive this applicant?" onClose={() => setConfirm(null)}>
+          <p className={styles.confirmBody}>
+            Archiving moves {confirm.applicant.workerFirstName}{' '}
+            {confirm.applicant.workerLastInitial}. off the active board. You can find them again
+            with the Archived filter. Proceed?
+          </p>
+          <div className={styles.confirmActions}>
+            <button type="button" className={styles.confirmCancel} onClick={() => setConfirm(null)}>
+              Cancel
+            </button>
+            <button
+              type="button"
+              className={styles.confirmDanger}
+              onClick={handleConfirm}
+              disabled={actionPending}
+            >
+              {actionPending ? 'Archiving…' : 'Archive'}
             </button>
           </div>
         </Modal>

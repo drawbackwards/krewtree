@@ -21,6 +21,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
   border-bottom: 1px solid var(--kt-border);
   margin-bottom: 16px;
@@ -30,13 +31,12 @@
   font-size: 15px;
   font-weight: var(--kt-weight-semibold);
   color: var(--kt-text);
-  display: block;
-  width: 100%;
 }
 
 .timeInStage {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--kt-text-muted);
+  flex-shrink: 0;
 }
 
 .stagePurpose {
@@ -189,11 +189,6 @@
   color: var(--kt-text-muted);
 }
 
-.dueDate {
-  font-size: 11px;
-  color: var(--kt-text-muted);
-}
-
 .sentPill {
   font-size: 11px;
   font-weight: var(--kt-weight-medium);
@@ -316,12 +311,17 @@
   flex-shrink: 0;
 }
 
-.notesIcon {
-  width: 26px;
-  height: 26px;
-  display: flex;
+/* Notes toggle — left-side clipboard icon with count badge.
+   Sits between checkbox and label; doubles as expand/collapse trigger. */
+.notesToggle {
+  position: relative;
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
+  gap: 4px;
+  height: 22px;
+  padding: 0 6px;
+  margin-top: -1px;
+  flex-shrink: 0;
   border: none;
   background: transparent;
   color: var(--kt-text-muted);
@@ -332,13 +332,25 @@
     color var(--kt-duration-fast) var(--kt-ease);
 }
 
-.notesIcon:hover {
+.notesToggle:hover {
   background: var(--kt-secondary);
   color: var(--kt-text);
 }
 
-.notesIconFilled {
+.notesToggleFilled {
   color: var(--kt-text);
+}
+
+.notesToggleOpen {
+  background: var(--kt-secondary);
+  color: var(--kt-text);
+}
+
+.notesCountBadge {
+  font-size: 11px;
+  font-weight: var(--kt-weight-semibold);
+  font-family: var(--kt-font-sans);
+  line-height: 1;
 }
 
 .overflowWrap {
@@ -401,10 +413,27 @@
   color: var(--kt-danger);
 }
 
-/* Inline notes textarea */
+.overflowDivider {
+  height: 1px;
+  margin: 4px 0;
+  background: var(--kt-border);
+}
+
+/* Add-note form. Indented to align with the notes list (which is offset
+   26px to clear the checkbox column). Vertical padding gives the textarea
+   breathing room above and below. */
+.taskNotesEditor {
+  margin-top: 8px;
+  margin-bottom: 4px;
+  margin-left: 26px;
+  padding: 8px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .taskNotesArea {
   width: 100%;
-  margin-top: 6px;
   padding: 8px;
   font-size: 13px;
   font-family: var(--kt-font-sans);
@@ -414,6 +443,177 @@
   color: var(--kt-text);
   resize: vertical;
   box-sizing: border-box;
+}
+
+.taskNotesActions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.taskNotesSaveBtn {
+  height: 26px;
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: var(--kt-weight-semibold);
+  font-family: var(--kt-font-sans);
+  border: none;
+  border-radius: var(--kt-radius-md);
+  background: var(--kt-primary);
+  color: var(--kt-primary-fg);
+  cursor: pointer;
+}
+
+.taskNotesSaveBtn:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.taskNotesSaveBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.taskNotesCancelBtn {
+  font-size: 12px;
+  color: var(--kt-text-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--kt-font-sans);
+  padding: 0 6px;
+}
+
+.taskNotesCancelBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Notes timeline — append-only list of saved notes per task */
+.taskNotesList {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  margin-left: 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.taskNoteItem {
+  padding: 8px 10px;
+  background: var(--kt-bg-subtle);
+  border-radius: var(--kt-radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.taskNoteBody {
+  font-size: 12px;
+  color: var(--kt-text);
+  line-height: 1.45;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+/* Footer: timestamp, optional "(edited)" tag, and hover-revealed Edit link */
+.taskNoteFooter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.taskNoteTime {
+  font-size: 11px;
+  color: var(--kt-text-muted);
+}
+
+.taskNoteEditedTag {
+  font-size: 11px;
+  color: var(--kt-text-muted);
+}
+
+.taskNoteEditLink {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: var(--kt-weight-bold);
+  color: var(--kt-navy-500);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: var(--kt-font-sans);
+  opacity: 0;
+  transition: opacity var(--kt-duration-fast) var(--kt-ease);
+}
+
+.taskNoteEditLink:hover,
+.taskNoteEditLink:focus-visible {
+  text-decoration: underline;
+}
+
+.taskNoteItem:hover .taskNoteEditLink,
+.taskNoteItem:focus-within .taskNoteEditLink {
+  opacity: 1;
+}
+
+/* Edit mode: textarea + Save/Cancel inside the note row */
+.taskNoteEditArea {
+  width: 100%;
+  padding: 8px;
+  font-size: 12px;
+  font-family: var(--kt-font-sans);
+  border-radius: var(--kt-radius-md);
+  border: 1px solid var(--kt-border);
+  background: var(--kt-surface);
+  color: var(--kt-text);
+  resize: vertical;
+  box-sizing: border-box;
+  line-height: 1.45;
+}
+
+.taskNoteEditActions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.taskNoteSaveBtn {
+  height: 24px;
+  padding: 0 10px;
+  font-size: 11px;
+  font-weight: var(--kt-weight-semibold);
+  font-family: var(--kt-font-sans);
+  border: none;
+  border-radius: var(--kt-radius-md);
+  background: var(--kt-primary);
+  color: var(--kt-primary-fg);
+  cursor: pointer;
+}
+
+.taskNoteSaveBtn:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.taskNoteSaveBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.taskNoteCancelBtn {
+  font-size: 11px;
+  color: var(--kt-text-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--kt-font-sans);
+  padding: 0 4px;
+}
+
+.taskNoteCancelBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* Task row edit form */
@@ -496,9 +696,13 @@
 
 .addTaskForm {
   margin-top: 10px;
+  padding: 12px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
+  background: var(--kt-bg-subtle);
+  border: 1px solid var(--kt-border);
+  border-radius: var(--kt-radius-md);
 }
 
 .addTaskInput {
@@ -515,36 +719,9 @@
 
 .addTaskMeta {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.addDueDateLink {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px;
-  color: var(--kt-text-muted);
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-family: var(--kt-font-sans);
-  padding: 0;
-}
-
-.addDueDateLink:hover {
-  color: var(--kt-text);
-}
-
-.dueDateInput {
-  font-size: 12px;
-  font-family: var(--kt-font-sans);
-  border: 1px solid var(--kt-border);
-  border-radius: var(--kt-radius-sm);
-  padding: 3px 6px;
-  color: var(--kt-text);
-  background: var(--kt-surface);
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
 }
 
 .addRequiredLabel {
@@ -560,6 +737,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  padding-top: 4px;
 }
 
 .addTaskSaveBtn {
@@ -633,19 +811,16 @@
   line-height: 1.5;
 }
 
-/* ── Sticky advance bar ──────────────────────────────────────────────────── */
-
-.advanceBar {
-  flex-shrink: 0;
-  padding: 12px 20px;
-  border-top: 1px solid var(--kt-border);
-  background: var(--kt-surface);
+.notesActions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
 }
 
-.advanceBtn {
-  width: 100%;
-  height: 34px;
-  font-size: 13px;
+.notesSaveBtn {
+  height: 30px;
+  padding: 0 14px;
+  font-size: 12px;
   font-weight: var(--kt-weight-semibold);
   font-family: var(--kt-font-sans);
   border: none;
@@ -656,74 +831,11 @@
   transition: opacity var(--kt-duration-fast) var(--kt-ease);
 }
 
-.advanceBtn:hover {
+.notesSaveBtn:hover:not(:disabled) {
   opacity: 0.9;
 }
 
-.closedLine {
-  font-size: 12px;
-  color: var(--kt-text-muted);
-  text-align: center;
-  margin: 0;
-  font-style: italic;
-}
-
-/* ── Soft-block modal content ───────────────────────────────────────────── */
-
-.softBlockBody {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.softBlockText {
-  font-size: var(--kt-text-sm);
-  color: var(--kt-text);
-  margin: 0;
-}
-
-.softBlockList {
-  margin: 0;
-  padding: 0 0 0 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.softBlockList li {
-  font-size: 13px;
-  color: var(--kt-text);
-}
-
-.softBlockMore {
-  font-size: 12px;
-  color: var(--kt-text-muted);
-  list-style: none;
-  margin-left: -16px;
-}
-
-.modalBtnSecondary {
-  padding: 0 16px;
-  height: 34px;
-  font-size: var(--kt-text-sm);
-  font-weight: var(--kt-weight-semibold);
-  font-family: var(--kt-font-sans);
-  border: 1px solid var(--kt-border);
-  border-radius: var(--kt-radius-md);
-  background: var(--kt-surface);
-  color: var(--kt-text);
-  cursor: pointer;
-}
-
-.modalBtnPrimary {
-  padding: 0 16px;
-  height: 34px;
-  font-size: var(--kt-text-sm);
-  font-weight: var(--kt-weight-semibold);
-  font-family: var(--kt-font-sans);
-  border: none;
-  border-radius: var(--kt-radius-md);
-  background: var(--kt-primary);
-  color: var(--kt-primary-fg);
-  cursor: pointer;
+.notesSaveBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }

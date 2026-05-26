@@ -75,6 +75,10 @@
   opacity: 0.4;
 }
 
+.card.boosted {
+  border-color: var(--kt-olive-600);
+}
+
 .cardTop {
   display: flex;
   align-items: flex-start;
@@ -239,24 +243,27 @@
   color: var(--kt-grey-700, var(--kt-text-muted));
 }
 
+.signalBoosted {
+  color: var(--kt-olive-600);
+}
+
 .cardTimeInStage {
   font-size: 11px;
   color: var(--kt-text-muted);
   flex-shrink: 0;
 }
 
-/* Overflow dropdown (positioned relative to card) */
+/* Overflow dropdown — portaled to body, positioned via inline top/right. */
 .overflowDropdown {
-  position: absolute;
-  top: 8px;
-  right: 0;
-  z-index: 200;
+  position: fixed;
+  z-index: 1000;
   background: var(--kt-surface);
-  border: 1px solid var(--kt-border);
+  border: 0.5px solid var(--kt-border);
   border-radius: var(--kt-radius-md);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  min-width: 152px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  min-width: 160px;
   padding: 4px 0;
+  overflow: hidden;
 }
 
 .overflowItem {
@@ -279,6 +286,12 @@
 
 .overflowItem.danger {
   color: var(--kt-danger, #dc2626);
+}
+
+.overflowDivider {
+  height: 1px;
+  background: var(--kt-border);
+  margin: 4px 0;
 }
 
 /* DragOverlay ghost */

@@ -10,6 +10,7 @@
 
 import type {
   ApplicationTask,
+  ApplicationTaskNote,
   ApplicationLogEvent,
   ApplicationMessage,
   StageNote,
@@ -22,6 +23,7 @@ import shortTemplate from '../../../seeds/pipeline-templates/short.json'
 import longTemplate from '../../../seeds/pipeline-templates/long.json'
 
 type TaskRow = Database['public']['Tables']['application_task']['Row']
+type TaskNoteRow = Database['public']['Tables']['application_task_note']['Row']
 type NoteRow = Database['public']['Tables']['application_stage_notes']['Row']
 type LogRow = Database['public']['Tables']['application_log']['Row']
 type TemplateRow = Database['public']['Tables']['pipeline_stage_task_template']['Row']
@@ -85,7 +87,7 @@ function toTask(row: TaskRow): ApplicationTask {
     completedBy: row.completed_by,
     skippedAt: row.skipped_at,
     skippedBy: row.skipped_by,
-    notes: row.notes,
+    notes: [],
     dueDate: row.due_date,
     order: row.display_order,
     createdAt: row.created_at,
@@ -95,6 +97,19 @@ function toTask(row: TaskRow): ApplicationTask {
     autoSend: row.auto_send,
     messageSentAt: row.message_sent_at,
     flagged: row.is_flagged,
+  }
+}
+
+function toTaskNote(row: TaskNoteRow): ApplicationTaskNote {
+  return {
+    id: row.id,
+    applicationTaskId: row.application_task_id,
+    applicationId: row.application_id,
+    body: row.body,
+    createdAt: row.created_at,
+    createdBy: row.created_by,
+    updatedAt: row.updated_at,
+    updatedBy: row.updated_by,
   }
 }
 
@@ -115,6 +130,9 @@ function toLogEvent(row: LogRow): ApplicationLogEvent {
     eventType: row.event_type as LogEventType,
     actor: row.actor,
     description: row.description,
+    taskLabel: row.task_label,
+    noteBody: row.note_body,
+    stageId: row.stage_id,
     createdAt: row.created_at,
   }
 }
@@ -123,13 +141,23 @@ function toLogEvent(row: LogRow): ApplicationLogEvent {
 
 async function appendLog(
   applicationId: string,
-  event: { eventType: LogEventType; actor: string; description: string }
+  event: {
+    eventType: LogEventType
+    actor: string
+    description: string
+    stageId?: string | null
+    taskLabel?: string | null
+    noteBody?: string | null
+  }
 ): Promise<void> {
   await supabase.from('application_log').insert({
     application_id: applicationId,
     event_type: event.eventType,
     actor: event.actor,
     description: event.description,
+    stage_id: event.stageId ?? null,
+    task_label: event.taskLabel ?? null,
+    note_body: event.noteBody ?? null,
   })
 }
 
@@ -139,15 +167,26 @@ export async function getApplicationTasks(
   applicationId: string,
   stageId: string
 ): Promise<{ data: ApplicationTask[]; error: string | null }> {
+  // Tasks + their notes in one round trip via an embedded select, ordered so
+  // notes read oldest-first within each task.
   const { data, error } = await supabase
     .from('application_task')
-    .select('*')
+    .select('*, application_task_note(*)')
     .eq('application_id', applicationId)
     .eq('stage_id', stageId)
     .order('display_order', { ascending: true })
+    .order('created_at', { ascending: true, referencedTable: 'application_task_note' })
 
   if (error) return { data: [], error: error.message }
-  return { data: (data ?? []).map(toTask), error: null }
+
+  const rows = (data ?? []) as unknown as Array<TaskRow & { application_task_note: TaskNoteRow[] }>
+  const tasks = rows.map((row) => {
+    const task = toTask(row)
+    task.notes = (row.application_task_note ?? []).map(toTaskNote)
+    return task
+  })
+
+  return { data: tasks, error: null }
 }
 
 // ── Task mutations ───────────────────────────────────────────────────────────
@@ -170,18 +209,23 @@ export async function toggleTaskComplete(
       }
     : { completed_at: null, completed_by: null }
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('application_task')
     .update(patch)
     .eq('id', taskId)
     .eq('application_id', applicationId)
+    .select('stage_id, label')
+    .single()
 
   if (error) return { error: error.message }
 
+  const label = data?.label ?? 'Task'
   await appendLog(applicationId, {
     eventType: completed ? 'task_completed' : 'task_uncompleted',
     actor: 'You',
-    description: completed ? `Task completed` : `Task marked incomplete`,
+    description: completed ? `${label} completed` : `${label} marked incomplete`,
+    stageId: data?.stage_id ?? null,
+    taskLabel: label,
   })
 
   return { error: null }
@@ -205,18 +249,23 @@ export async function toggleTaskSkip(
       }
     : { skipped_at: null, skipped_by: null }
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('application_task')
     .update(patch)
     .eq('id', taskId)
     .eq('application_id', applicationId)
+    .select('stage_id, label')
+    .single()
 
   if (error) return { error: error.message }
 
+  const label = data?.label ?? 'Task'
   await appendLog(applicationId, {
     eventType: skipped ? 'task_skipped' : 'task_unskipped',
     actor: 'You',
-    description: skipped ? `Task skipped` : `Task unskipped`,
+    description: skipped ? `${label} skipped` : `${label} unskipped`,
+    stageId: data?.stage_id ?? null,
+    taskLabel: label,
   })
 
   return { error: null }
@@ -227,44 +276,120 @@ export async function toggleTaskFlag(
   taskId: string,
   flagged: boolean
 ): Promise<{ error: string | null }> {
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('application_task')
     .update({ is_flagged: flagged })
     .eq('id', taskId)
     .eq('application_id', applicationId)
+    .select('stage_id, label')
+    .single()
 
   if (error) return { error: error.message }
 
+  const label = data?.label ?? 'Task'
   await appendLog(applicationId, {
     eventType: flagged ? 'task_flagged' : 'task_unflagged',
     actor: 'You',
-    description: flagged ? 'Task flagged for follow-up' : 'Task unflagged',
+    description: flagged ? `${label} flagged for follow-up` : `${label} unflagged`,
+    stageId: data?.stage_id ?? null,
+    taskLabel: label,
   })
 
   return { error: null }
 }
 
-export async function saveTaskNotes(
+export async function addTaskNote(
   applicationId: string,
   taskId: string,
-  notes: string
-): Promise<{ error: string | null }> {
-  const { error } = await supabase
-    .from('application_task')
-    .update({ notes: notes.trim() || null })
-    .eq('id', taskId)
-    .eq('application_id', applicationId)
+  body: string
+): Promise<{ data: ApplicationTaskNote | null; error: string | null }> {
+  const trimmed = body.trim()
+  if (!trimmed) return { data: null, error: 'empty_note' }
 
-  if (error) return { error: error.message }
-  return { error: null }
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  const { data, error } = await supabase
+    .from('application_task_note')
+    .insert({
+      application_task_id: taskId,
+      application_id: applicationId,
+      body: trimmed,
+      created_by: user?.id ?? null,
+    })
+    .select('*')
+    .single()
+
+  if (error || !data) return { data: null, error: error?.message ?? 'insert_failed' }
+
+  const { data: taskRow } = await supabase
+    .from('application_task')
+    .select('label, stage_id')
+    .eq('id', taskId)
+    .single()
+
+  await appendLog(applicationId, {
+    eventType: 'task_note_added',
+    actor: 'You',
+    description: taskRow?.label ? `Note added on ${taskRow.label}` : 'Note added',
+    stageId: taskRow?.stage_id ?? null,
+    taskLabel: taskRow?.label ?? null,
+    noteBody: trimmed,
+  })
+
+  return { data: toTaskNote(data), error: null }
+}
+
+export async function editTaskNote(
+  applicationId: string,
+  noteId: string,
+  body: string
+): Promise<{ data: ApplicationTaskNote | null; error: string | null }> {
+  const trimmed = body.trim()
+  if (!trimmed) return { data: null, error: 'empty_note' }
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  const { data, error } = await supabase
+    .from('application_task_note')
+    .update({
+      body: trimmed,
+      updated_at: new Date().toISOString(),
+      updated_by: user?.id ?? null,
+    })
+    .eq('id', noteId)
+    .eq('application_id', applicationId)
+    .select('*')
+    .single()
+
+  if (error || !data) return { data: null, error: error?.message ?? 'update_failed' }
+
+  const { data: taskRow } = await supabase
+    .from('application_task')
+    .select('label, stage_id')
+    .eq('id', data.application_task_id)
+    .single()
+
+  await appendLog(applicationId, {
+    eventType: 'task_note_edited',
+    actor: 'You',
+    description: taskRow?.label ? `Note edited on ${taskRow.label}` : 'Note edited',
+    stageId: taskRow?.stage_id ?? null,
+    taskLabel: taskRow?.label ?? null,
+    noteBody: trimmed,
+  })
+
+  return { data: toTaskNote(data), error: null }
 }
 
 export async function addAdHocTask(
   applicationId: string,
   stageId: string,
   label: string,
-  isRequired: boolean,
-  dueDate: string | null
+  isRequired: boolean
 ): Promise<{ data: ApplicationTask | null; error: string | null }> {
   const { count } = await supabase
     .from('application_task')
@@ -280,7 +405,6 @@ export async function addAdHocTask(
       source: 'ad_hoc',
       label,
       is_required: isRequired,
-      due_date: dueDate,
       display_order: count ?? 0,
     })
     .select('*')
@@ -291,7 +415,9 @@ export async function addAdHocTask(
   await appendLog(applicationId, {
     eventType: 'task_created',
     actor: 'You',
-    description: `Added task: ${label}`,
+    description: `${label} added`,
+    stageId,
+    taskLabel: label,
   })
 
   return { data: toTask(data), error: null }
@@ -303,7 +429,7 @@ export async function deleteAdHocTask(
 ): Promise<{ error: string | null }> {
   const { data: existing, error: fetchErr } = await supabase
     .from('application_task')
-    .select('label, source')
+    .select('label, source, stage_id')
     .eq('id', taskId)
     .eq('application_id', applicationId)
     .single()
@@ -322,7 +448,9 @@ export async function deleteAdHocTask(
   await appendLog(applicationId, {
     eventType: 'task_deleted',
     actor: 'You',
-    description: `Deleted task: ${existing.label}`,
+    description: `${existing.label} deleted`,
+    stageId: existing.stage_id ?? null,
+    taskLabel: existing.label,
   })
 
   return { error: null }
@@ -331,12 +459,11 @@ export async function deleteAdHocTask(
 export async function editAdHocTask(
   applicationId: string,
   taskId: string,
-  patch: { label?: string; isRequired?: boolean; dueDate?: string | null }
+  patch: { label?: string; isRequired?: boolean }
 ): Promise<{ error: string | null }> {
   const dbPatch: Record<string, unknown> = {}
   if (patch.label !== undefined) dbPatch.label = patch.label
   if (patch.isRequired !== undefined) dbPatch.is_required = patch.isRequired
-  if (patch.dueDate !== undefined) dbPatch.due_date = patch.dueDate
 
   const { error } = await supabase
     .from('application_task')
@@ -344,21 +471,6 @@ export async function editAdHocTask(
     .eq('id', taskId)
     .eq('application_id', applicationId)
     .eq('source', 'ad_hoc')
-
-  if (error) return { error: error.message }
-  return { error: null }
-}
-
-export async function editTemplateDueDate(
-  applicationId: string,
-  taskId: string,
-  dueDate: string | null
-): Promise<{ error: string | null }> {
-  const { error } = await supabase
-    .from('application_task')
-    .update({ due_date: dueDate })
-    .eq('id', taskId)
-    .eq('application_id', applicationId)
 
   if (error) return { error: error.message }
   return { error: null }
@@ -406,6 +518,8 @@ export async function saveStageNotes(
     eventType: 'stage_notes_updated',
     actor: 'You',
     description: 'Stage notes updated',
+    stageId,
+    noteBody: notes.trim() || null,
   })
 
   return { error: null }
@@ -426,10 +540,65 @@ export async function getApplicationLog(
   return { data: (data ?? []).map(toLogEvent), error: null }
 }
 
+export async function addLogNote(
+  applicationId: string,
+  body: string
+): Promise<{ data: ApplicationLogEvent | null; error: string | null }> {
+  const trimmed = body.trim()
+  if (!trimmed) return { data: null, error: 'empty_note' }
+
+  const { data, error } = await supabase
+    .from('application_log')
+    .insert({
+      application_id: applicationId,
+      event_type: 'note_added',
+      actor: 'You',
+      description: 'Note added',
+      note_body: trimmed,
+      stage_id: null,
+    })
+    .select('*')
+    .single()
+
+  if (error || !data) return { data: null, error: error?.message ?? 'insert_failed' }
+  return { data: toLogEvent(data), error: null }
+}
+
 // ── Task state helper ────────────────────────────────────────────────────────
 
 export function getTaskState(task: ApplicationTask): TaskState {
   return task.state
+}
+
+// ── Stage-advancement gating ──────────────────────────────────────────────────
+//
+// A required task blocks advancing to a later stage until it is completed or
+// explicitly skipped. Skipping clears the "Required" pill in the UI, so a
+// skipped required task is treated as resolved — only 'incomplete' ones block.
+
+export function countBlockingRequiredTasks(tasks: ApplicationTask[]): number {
+  return tasks.filter((t) => t.isRequired && t.state === 'incomplete').length
+}
+
+export async function getBlockingRequiredCount(
+  applicationId: string,
+  stageId: string
+): Promise<number> {
+  const { data } = await getApplicationTasks(applicationId, stageId)
+  return countBlockingRequiredTasks(data)
+}
+
+// True when `toStageId` sits later in the pipeline than `fromStageId`. Backward
+// and sideways moves are never gated — only forward advancement is.
+export function isForwardStageMove(
+  stages: PipelineStage[],
+  fromStageId: string,
+  toStageId: string
+): boolean {
+  const from = stages.find((s) => s.id === fromStageId)
+  const to = stages.find((s) => s.id === toStageId)
+  if (!from || !to) return false
+  return to.sortOrder > from.sortOrder
 }
 
 // ── Template instantiation ───────────────────────────────────────────────────
@@ -441,7 +610,23 @@ export function getTaskState(task: ApplicationTask): TaskState {
  *
  * Only active stages have templates — terminal stages skip silently.
  */
+const instantiateInflight = new Map<string, Promise<{ inserted: number; error: string | null }>>()
+
 export async function instantiateTemplatesForStage(
+  applicationId: string,
+  stageId: string
+): Promise<{ inserted: number; error: string | null }> {
+  const key = `${applicationId}:${stageId}`
+  const existing = instantiateInflight.get(key)
+  if (existing) return existing
+  const promise = instantiateTemplatesForStageImpl(applicationId, stageId).finally(() => {
+    instantiateInflight.delete(key)
+  })
+  instantiateInflight.set(key, promise)
+  return promise
+}
+
+async function instantiateTemplatesForStageImpl(
   applicationId: string,
   stageId: string
 ): Promise<{ inserted: number; error: string | null }> {
@@ -685,12 +870,16 @@ export async function sendApplicationMessage(
       eventType: 'task_completed',
       actor: 'You',
       description: `Sent: ${subject}`,
+      stageId: task.stage_id ?? null,
+      taskLabel: task.label ?? null,
     })
   } else {
     await appendLog(task.application_id, {
       eventType: 'task_completed',
       actor: 'System',
       description: `Auto-sent: ${subject}`,
+      stageId: task.stage_id ?? null,
+      taskLabel: task.label ?? null,
     })
   }
 
@@ -803,28 +992,57 @@ export type PipelineStage = {
   id: string
   name: string
   sortOrder: number
+  isActive: boolean
 }
 
-type PipelineStageRow = { id: string; name: string; sort_order: number }
+type PipelineStageRow = { id: string; name: string; sort_order: number; is_active: boolean }
+
+// Session cache for the active-stages read, keyed by companyId. Stages change
+// only via the settings mutations below, each of which calls clearStageCache(),
+// so a cached read can't go stale within a session. Only the default
+// (active-only) variant is cached; includeInactive reads always hit the DB so
+// the settings editor sees fresh state.
+const activeStagesCache = new Map<string, PipelineStage[]>()
+
+export function clearStageCache(companyId?: string): void {
+  if (companyId) activeStagesCache.delete(companyId)
+  else activeStagesCache.clear()
+}
 
 export async function getPipelineStages(
-  companyId: string
+  companyId: string,
+  opts: { includeInactive?: boolean } = {}
 ): Promise<{ data: PipelineStage[]; error: string | null }> {
-  const { data, error } = await db
+  if (!opts.includeInactive) {
+    const cached = activeStagesCache.get(companyId)
+    if (cached) return { data: [...cached], error: null }
+  }
+
+  let query = db
     .from('pipeline_stage')
-    .select('id, name, sort_order, company_pipeline!inner(company_id)')
+    .select('id, name, sort_order, is_active, company_pipeline!inner(company_id)')
     .eq('company_pipeline.company_id', companyId)
     .order('sort_order', { ascending: true })
 
+  if (!opts.includeInactive) query = query.eq('is_active', true)
+
+  const { data, error } = await query
+
   if (error) return { data: [], error: error.message }
 
-  return {
-    data: (data ?? []).map((r: unknown) => {
-      const row = r as PipelineStageRow
-      return { id: row.id, name: row.name, sortOrder: row.sort_order }
-    }),
-    error: null,
-  }
+  const stages = (data ?? []).map((r: unknown) => {
+    const row = r as PipelineStageRow
+    return {
+      id: row.id,
+      name: row.name,
+      sortOrder: row.sort_order,
+      isActive: row.is_active,
+    }
+  })
+
+  if (!opts.includeInactive) activeStagesCache.set(companyId, stages)
+
+  return { data: [...stages], error: null }
 }
 
 async function getOrgPipelineId(companyId: string): Promise<string | null> {
@@ -856,12 +1074,16 @@ export async function addPipelineStage(
   const { data, error } = await db
     .from('pipeline_stage')
     .insert({ pipeline_id: pipelineId, name: name.trim(), sort_order: nextOrder })
-    .select('id, name, sort_order')
+    .select('id, name, sort_order, is_active')
     .single()
 
   if (error) return { data: null, error: error.message }
+  clearStageCache(companyId)
   const r = data as unknown as PipelineStageRow
-  return { data: { id: r.id, name: r.name, sortOrder: r.sort_order }, error: null }
+  return {
+    data: { id: r.id, name: r.name, sortOrder: r.sort_order, isActive: r.is_active },
+    error: null,
+  }
 }
 
 export async function renamePipelineStage(
@@ -869,7 +1091,69 @@ export async function renamePipelineStage(
   name: string
 ): Promise<{ error: string | null }> {
   const { error } = await db.from('pipeline_stage').update({ name: name.trim() }).eq('id', stageId)
+  if (!error) clearStageCache()
   return { error: error?.message ?? null }
+}
+
+export async function setPipelineStageActive(
+  stageId: string,
+  isActive: boolean
+): Promise<{ error: string | null }> {
+  if (!isActive) {
+    const count = await countActiveApplicationsInStage(stageId)
+    if (count > 0) {
+      return {
+        error: `${count} active application${count === 1 ? ' is' : 's are'} currently in this stage. Move them first.`,
+      }
+    }
+  }
+
+  const { error } = await db
+    .from('pipeline_stage')
+    .update({ is_active: isActive })
+    .eq('id', stageId)
+  if (!error) clearStageCache()
+  return { error: error?.message ?? null }
+}
+
+export async function countActiveApplicationsInStage(stageId: string): Promise<number> {
+  const { count } = await supabase
+    .from('applications')
+    .select('id', { count: 'exact', head: true })
+    .eq('current_stage_id', stageId)
+    .eq('status', 'active')
+  return count ?? 0
+}
+
+export async function bulkMoveApplicationsBetweenStages(
+  fromStageId: string,
+  toStageId: string
+): Promise<{ moved: number; error: string | null }> {
+  if (fromStageId === toStageId) return { moved: 0, error: 'same_stage' }
+
+  const { data, error } = await supabase
+    .from('applications')
+    .update({ current_stage_id: toStageId } as unknown as Record<string, unknown>)
+    .eq('current_stage_id', fromStageId)
+    .eq('status', 'active')
+    .select('id')
+
+  if (error) return { moved: 0, error: error.message }
+  return { moved: data?.length ?? 0, error: null }
+}
+
+export async function reorderPipelineStages(
+  stageIdsInOrder: string[]
+): Promise<{ error: string | null }> {
+  for (let i = 0; i < stageIdsInOrder.length; i++) {
+    const { error } = await db
+      .from('pipeline_stage')
+      .update({ sort_order: i + 1 })
+      .eq('id', stageIdsInOrder[i])
+    if (error) return { error: error.message }
+  }
+  clearStageCache()
+  return { error: null }
 }
 
 export async function removePipelineStage(stageId: string): Promise<{ error: string | null }> {
@@ -885,7 +1169,15 @@ export async function removePipelineStage(stageId: string): Promise<{ error: str
     }
   }
 
+  // Task templates reference the stage by id but have no FK cascade, so remove them explicitly.
+  const { error: tplError } = await supabase
+    .from('pipeline_stage_task_template')
+    .delete()
+    .eq('stage_id', stageId)
+  if (tplError) return { error: tplError.message }
+
   const { error } = await db.from('pipeline_stage').delete().eq('id', stageId)
+  if (!error) clearStageCache()
   return { error: error?.message ?? null }
 }
 
@@ -961,5 +1253,6 @@ export async function replacePipelineFromTemplate(
   if (deleteError) return { error: deleteError.message }
 
   const { error: insertError } = await db.from('pipeline_stage').insert(newStages)
+  if (!insertError) clearStageCache(companyId)
   return { error: insertError?.message ?? null }
 }

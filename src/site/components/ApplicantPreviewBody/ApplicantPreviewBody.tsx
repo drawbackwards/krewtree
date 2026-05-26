@@ -8,19 +8,6 @@ export interface ApplicantPreviewBodyProps {
   applicant: CompanyApplicant
 }
 
-function formatNoteTime(iso: string): string {
-  const then = new Date(iso).getTime()
-  const diffMs = Date.now() - then
-  const mins = Math.floor(diffMs / 60_000)
-  if (mins < 1) return 'just now'
-  if (mins < 60) return `${mins}m ago`
-  const hrs = Math.floor(mins / 60)
-  if (hrs < 24) return `${hrs}h ago`
-  const days = Math.floor(hrs / 24)
-  if (days < 7) return `${days}d ago`
-  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-}
-
 export const ApplicantPreviewBody: React.FC<ApplicantPreviewBodyProps> = ({ applicant }) => {
   const hasRatings = applicant.workerRating !== null || applicant.workerRegulixRating !== null
 
@@ -33,17 +20,44 @@ export const ApplicantPreviewBody: React.FC<ApplicantPreviewBodyProps> = ({ appl
           <span className={styles.matchPct}>{applicant.matchScore}%</span>
         </div>
         <div className={styles.breakdown}>
-          <div className={styles.breakdownRow}>
-            <span>Skills</span>
-            <span>{applicant.matchBreakdown.skills}%</span>
+          <div className={styles.breakdownCell}>
+            <span className={styles.breakdownLabel}>Skills</span>
+            <span
+              className={[
+                styles.breakdownValue,
+                applicant.matchBreakdown.skills === 0 ? styles.breakdownValueZero : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+            >
+              {applicant.matchBreakdown.skills}%
+            </span>
           </div>
-          <div className={styles.breakdownRow}>
-            <span>Location</span>
-            <span>{applicant.matchBreakdown.location}%</span>
+          <div className={styles.breakdownCell}>
+            <span className={styles.breakdownLabel}>Location</span>
+            <span
+              className={[
+                styles.breakdownValue,
+                applicant.matchBreakdown.location === 0 ? styles.breakdownValueZero : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+            >
+              {applicant.matchBreakdown.location}%
+            </span>
           </div>
-          <div className={styles.breakdownRow}>
-            <span>Availability</span>
-            <span>{applicant.matchBreakdown.availability}%</span>
+          <div className={styles.breakdownCell}>
+            <span className={styles.breakdownLabel}>Availability</span>
+            <span
+              className={[
+                styles.breakdownValue,
+                applicant.matchBreakdown.availability === 0 ? styles.breakdownValueZero : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+            >
+              {applicant.matchBreakdown.availability}%
+            </span>
           </div>
         </div>
       </section>
@@ -160,23 +174,6 @@ export const ApplicantPreviewBody: React.FC<ApplicantPreviewBodyProps> = ({ appl
               </span>
             </div>
           </div>
-        </section>
-      )}
-
-      {/* Notes */}
-      {applicant.notes.length > 0 && (
-        <section className={styles.section}>
-          <h3 className={styles.sectionHeading}>Notes</h3>
-          <ul className={styles.notesList}>
-            {applicant.notes.map((n, i) => (
-              <li key={i} className={styles.note}>
-                <p className={styles.noteText}>{n.text}</p>
-                <p className={styles.noteCaption}>
-                  {n.authorName} · {formatNoteTime(n.createdAt)}
-                </p>
-              </li>
-            ))}
-          </ul>
         </section>
       )}
     </div>

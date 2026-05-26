@@ -12,6 +12,8 @@ dist/
 
 # Claude Code — local permissions cache (machine-specific, not for version control)
 .claude/settings.local.json
+# Claude Code — isolated agent worktrees (local-only, not for version control)
+.claude/worktrees/
 
 # Superpowers — isolated worktrees and brainstorm/scratch state
 .worktrees/

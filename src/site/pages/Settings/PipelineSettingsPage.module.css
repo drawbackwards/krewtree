@@ -21,7 +21,7 @@
 
 .stageHeader {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   margin-bottom: 8px;
   gap: 12px;
@@ -29,7 +29,7 @@
 
 .stageHeaderLeft {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 10px;
 }
 
@@ -51,30 +51,59 @@
   gap: 8px;
 }
 
-.enabledToggle {
-  display: inline-flex;
+.overflowBtn {
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: var(--kt-radius-sm);
+  background: transparent;
+  display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: var(--kt-font-size-sm);
-  color: var(--kt-text);
+  justify-content: center;
   cursor: pointer;
-  user-select: none;
-}
-
-.enabledToggle input {
-  cursor: pointer;
-  margin: 0;
-}
-
-.disabledPill {
-  font-size: 11px;
-  font-weight: var(--kt-weight-bold);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
   color: var(--kt-text-muted);
-  background: var(--kt-secondary, #f1efe9);
-  padding: 2px 8px;
-  border-radius: var(--kt-radius-full);
+  flex-shrink: 0;
+  transition: background 100ms ease;
+}
+
+.overflowBtn:hover {
+  background: var(--kt-secondary);
+  color: var(--kt-text);
+}
+
+/* Overflow dropdown — portaled to body, positioned via inline style */
+.overflowMenu {
+  position: fixed;
+  z-index: 1000;
+  background: var(--kt-surface);
+  border: 0.5px solid var(--kt-border);
+  border-radius: var(--kt-radius-md);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  min-width: 160px;
+  padding: 4px 0;
+  overflow: hidden;
+}
+
+.overflowItem {
+  width: 100%;
+  padding: 8px 14px;
+  border: none;
+  background: transparent;
+  font-family: var(--kt-font-sans);
+  font-size: 13px;
+  color: var(--kt-text);
+  text-align: left;
+  cursor: pointer;
+  display: block;
+  transition: background 80ms ease;
+}
+
+.overflowItem:hover {
+  background: var(--kt-secondary);
+}
+
+.overflowItem.overflowDanger {
+  color: var(--kt-danger, #dc2626);
 }
 
 .purposeInput {
@@ -174,10 +203,50 @@
 
 .taskRow {
   display: grid;
-  grid-template-columns: 1fr auto auto auto;
+  grid-template-columns: auto 1fr auto auto;
   align-items: center;
   gap: 12px;
   padding: 8px 10px;
+}
+
+.dragHandle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  padding: 2px;
+  color: var(--kt-text-muted);
+  cursor: grab;
+  border-radius: 4px;
+  touch-action: none;
+}
+
+.dragHandle:hover {
+  color: var(--kt-text);
+  background: var(--kt-surface);
+}
+
+.dragHandle:active {
+  cursor: grabbing;
+}
+
+.stageDragging {
+  opacity: 0.4;
+}
+
+.stageDropTarget {
+  outline: 2px dashed var(--kt-navy-500);
+  outline-offset: -2px;
+}
+
+.taskDragging {
+  opacity: 0.4;
+}
+
+.taskDropTarget {
+  outline: 2px dashed var(--kt-navy-500);
+  outline-offset: -2px;
 }
 
 .messagePanel {
@@ -392,4 +461,47 @@
   color: var(--kt-text-muted);
   padding: 24px 0;
   text-align: center;
+}
+
+/* ── Bulk move modal ── */
+
+.bulkMoveBody {
+  padding: 8px 0 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.bulkMoveText {
+  font-size: var(--kt-font-size-sm);
+  color: var(--kt-text);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.bulkMoveSelect {
+  font-family: inherit;
+  font-size: var(--kt-font-size-sm);
+  color: var(--kt-text);
+  background: var(--kt-surface);
+  border: 1px solid var(--kt-border);
+  border-radius: var(--kt-radius-md);
+  padding: 8px 12px;
+}
+
+.bulkMoveSelect:focus {
+  outline: none;
+  border-color: var(--kt-navy-500);
+}
+
+.bulkMoveError {
+  font-size: var(--kt-font-size-xs);
+  color: var(--kt-danger);
+  margin: 0;
+}
+
+.bulkMoveActions {
+  display: flex;
+  gap: 8px;
+  padding-top: 4px;
 }

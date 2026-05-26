@@ -10,12 +10,32 @@
 }
 
 /* ---- Positions ---- */
-.top-right     { top: var(--kt-space-4); right: var(--kt-space-4); }
-.top-left      { top: var(--kt-space-4); left: var(--kt-space-4); }
-.top-center    { top: var(--kt-space-4); left: 50%; transform: translateX(-50%); }
-.bottom-right  { bottom: var(--kt-space-4); right: var(--kt-space-4); }
-.bottom-left   { bottom: var(--kt-space-4); left: var(--kt-space-4); }
-.bottom-center { bottom: var(--kt-space-4); left: 50%; transform: translateX(-50%); }
+.top-right {
+  top: var(--kt-space-4);
+  right: var(--kt-space-4);
+}
+.top-left {
+  top: var(--kt-space-4);
+  left: var(--kt-space-4);
+}
+.top-center {
+  top: var(--kt-space-4);
+  left: 50%;
+  transform: translateX(-50%);
+}
+.bottom-right {
+  bottom: var(--kt-space-4);
+  right: var(--kt-space-4);
+}
+.bottom-left {
+  bottom: var(--kt-space-4);
+  left: var(--kt-space-4);
+}
+.bottom-center {
+  bottom: var(--kt-space-4);
+  left: 50%;
+  transform: translateX(-50%);
+}
 
 /* ---- Toast item ---- */
 .toast {
@@ -29,17 +49,17 @@
   box-shadow: var(--kt-shadow-lg);
   pointer-events: all;
   min-width: 260px;
-  animation: toastIn var(--kt-duration-base) var(--kt-ease);
 }
 
-@keyframes toastIn {
-  from { opacity: 0; transform: translateY(-8px) scale(0.97); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
+.icon {
+  flex-shrink: 0;
+  margin-top: 1px;
 }
 
-.icon { flex-shrink: 0; margin-top: 1px; }
-
-.content { flex: 1; min-width: 0; }
+.content {
+  flex: 1;
+  min-width: 0;
+}
 
 .title {
   font-size: var(--kt-text-md);
@@ -67,10 +87,35 @@
   transition: color var(--kt-duration-fast) var(--kt-ease);
   flex-shrink: 0;
 }
-.closeBtn:hover { color: var(--kt-text); }
+.closeBtn:hover {
+  color: var(--kt-text);
+}
 
-/* ---- Variant accent stripe ---- */
-.success { border-left: 3px solid var(--kt-success); }
-.warning { border-left: 3px solid var(--kt-warning); }
-.danger  { border-left: 3px solid var(--kt-danger); }
-.info    { border-left: 3px solid var(--kt-info); }
+/* ---- Variants ---- */
+.success {
+  background-color: var(--kt-success);
+  border-color: var(--kt-success);
+  color: var(--kt-success-fg, #ffffff);
+}
+.success .title,
+.success .description {
+  color: var(--kt-success-fg, #ffffff);
+}
+.success .closeBtn {
+  color: var(--kt-success-fg, #ffffff);
+  opacity: 0.85;
+}
+.success .closeBtn:hover {
+  color: var(--kt-success-fg, #ffffff);
+  opacity: 1;
+}
+
+.warning {
+  border-left: 3px solid var(--kt-warning);
+}
+.danger {
+  border-left: 3px solid var(--kt-danger);
+}
+.info {
+  border-left: 3px solid var(--kt-info);
+}

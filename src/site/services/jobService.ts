@@ -44,7 +44,7 @@ type DbJob = {
     review_count: number
   } | null
   job_analytics: { views_total: number } | null
-  applications: Array<{ id: string }>
+  applications: Array<{ count: number }>
 }
 
 export type CreateJobParams = {
@@ -82,7 +82,7 @@ const JOB_SELECT = `
   experience_level, pre_interview_questions, urgent_hiring, regulix_preferred, auto_pause_limit, closing_at,
   company_profiles(id, name, logo_url, location, industry, is_verified, description, size, website, avg_rating, review_count),
   job_analytics(views_total),
-  applications(id)
+  applications(count)
 `
 
 function mapJob(j: DbJob): Job {
@@ -116,7 +116,7 @@ function mapJob(j: DbJob): Job {
     skills: j.skills ?? [],
     isSponsored: j.is_sponsored,
     regulixReadyApplicants: j.regulix_ready_applicants,
-    totalApplicants: Array.isArray(j.applications) ? j.applications.length : j.total_applicants,
+    totalApplicants: j.applications?.[0]?.count ?? j.total_applicants,
     viewCount: j.job_analytics?.views_total ?? 0,
     postedDaysAgo: daysSince(j.created_at),
     createdAt: j.created_at,
@@ -252,6 +252,7 @@ async function fetchPipelineSnapshot(companyId: string): Promise<Json> {
     .from('pipeline_stage')
     .select('id, name, sort_order')
     .eq('pipeline_id', pipelineRow.id)
+    .eq('is_active', true)
     .order('sort_order', { ascending: true })
 
   if (!stages) return { stages: [] }

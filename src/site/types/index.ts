@@ -298,6 +298,7 @@ export type CompanyApplicant = {
   matchBreakdown: { skills: number; location: number; availability: number }
   isRegulixReady: boolean
   isShortlisted: boolean
+  isBoosted: boolean
   appliedAt: string // ISO
   stageEnteredAt: string | null
   slaState: SlaState
@@ -339,7 +340,7 @@ export type ApplicationTask = {
   completedBy: string | null
   skippedAt: string | null
   skippedBy: string | null
-  notes: string | null
+  notes: ApplicationTaskNote[]
   dueDate: string | null // ISO date YYYY-MM-DD
   order: number
   createdAt: string
@@ -350,6 +351,17 @@ export type ApplicationTask = {
   autoSend: boolean
   messageSentAt: string | null
   flagged: boolean
+}
+
+export type ApplicationTaskNote = {
+  id: string
+  applicationTaskId: string
+  applicationId: string
+  body: string
+  createdAt: string
+  createdBy: string | null
+  updatedAt: string | null
+  updatedBy: string | null
 }
 
 export type ApplicationMessage = {
@@ -384,6 +396,9 @@ export type LogEventType =
   | 'task_unskipped'
   | 'task_deleted'
   | 'stage_notes_updated'
+  | 'task_note_added'
+  | 'task_note_edited'
+  | 'note_added'
   | 'application_withdrawn'
   | 'application_rejected'
   | 'application_hired'
@@ -399,6 +414,12 @@ export type ApplicationLogEvent = {
   eventType: LogEventType
   actor: string // user display name or 'System'
   description: string
+  // Snapshots taken at write time so renames / edits to the underlying
+  // task or note don't rewrite history. `taskLabel` is set for any
+  // task-related event; `noteBody` is set for note add/edit events.
+  taskLabel: string | null
+  noteBody: string | null
+  stageId: string | null
   createdAt: string // ISO
 }
 

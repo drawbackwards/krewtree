@@ -24,6 +24,8 @@ export const ApplicantsWidget: React.FC<Props> = ({ view, onViewChange, companyI
   const [loading, setLoading] = useState(true)
   const [hasJobs, setHasJobs] = useState(false)
   const [selectedApplicant, setSelectedApplicant] = useState<CompanyApplicant | null>(null)
+  // Bumped on any external mutation so child views (kanban, list) can refetch.
+  const [refreshTick, setRefreshTick] = useState(0)
 
   const fetchApplicants = useCallback(async () => {
     setLoading(true)
@@ -40,12 +42,30 @@ export const ApplicantsWidget: React.FC<Props> = ({ view, onViewChange, companyI
     fetchApplicants()
   }, [fetchApplicants])
 
-  const handleShortlist = useCallback(async (id: string) => {
-    await shortlistApplicant(id)
-    setSelectedApplicant((prev) =>
-      prev?.id === id ? { ...prev, isShortlisted: !prev.isShortlisted } : prev
-    )
-  }, [])
+  const handleShortlist = useCallback(
+    async (id: string) => {
+      // Optimistic: flip the open drawer's button state immediately.
+      setSelectedApplicant((prev) =>
+        prev?.id === id ? { ...prev, isShortlisted: !prev.isShortlisted } : prev
+      )
+      const { error } = await shortlistApplicant(id)
+      if (error) {
+        // Revert on failure.
+        setSelectedApplicant((prev) =>
+          prev?.id === id ? { ...prev, isShortlisted: !prev.isShortlisted } : prev
+        )
+        return
+      }
+      fetchApplicants()
+      setRefreshTick((t) => t + 1)
+    },
+    [fetchApplicants]
+  )
+
+  const handleDrawerChanged = useCallback(() => {
+    fetchApplicants()
+    setRefreshTick((t) => t + 1)
+  }, [fetchApplicants])
 
   return (
     <>
@@ -88,6 +108,7 @@ export const ApplicantsWidget: React.FC<Props> = ({ view, onViewChange, companyI
               loading={loading}
               hasJobs={hasJobs}
               onOpenApplicant={setSelectedApplicant}
+              onShortlist={(a) => handleShortlist(a.id)}
               onRefresh={() => fetchApplicants()}
             />
           ) : (
@@ -95,6 +116,7 @@ export const ApplicantsWidget: React.FC<Props> = ({ view, onViewChange, companyI
               companyId={companyId}
               filters={DEFAULT_WIDGET_FILTERS}
               onOpenApplicant={setSelectedApplicant}
+              refreshTick={refreshTick}
             />
           )}
         </div>
@@ -105,7 +127,7 @@ export const ApplicantsWidget: React.FC<Props> = ({ view, onViewChange, companyI
         onClose={() => setSelectedApplicant(null)}
         onMessage={() => {}}
         onShortlist={handleShortlist}
-        onChanged={fetchApplicants}
+        onChanged={handleDrawerChanged}
       />
     </>
   )

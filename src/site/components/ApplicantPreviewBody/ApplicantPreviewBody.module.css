@@ -3,26 +3,23 @@
   flex-direction: column;
 }
 
-/* ── Section (flat, no card chrome) ──────────────────────────────────────── */
+/* ── Section ─────────────────────────────────────────────────────────────── */
 
 .section {
-  padding: 24px 0;
-  border-top: 1px solid var(--kt-border);
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  margin-bottom: 32px;
 }
 
-.section:first-child {
-  border-top: none;
-  padding-top: 20px;
+.section:last-child {
+  margin-bottom: 0;
 }
 
 .sectionHeading {
   font-size: var(--kt-text-base);
   font-weight: var(--kt-weight-semibold);
   color: var(--kt-text);
-  margin: 0;
+  margin: 0 0 10px;
 }
 
 /* ── Match score ─────────────────────────────────────────────────────────── */
@@ -32,31 +29,50 @@
   align-items: baseline;
   justify-content: space-between;
   gap: var(--kt-space-4);
+  margin-bottom: 8px;
+}
+
+.matchRow .sectionHeading {
+  margin: 0;
 }
 
 .matchPct {
-  font-size: var(--kt-text-2xl);
+  font-size: 24px;
   font-weight: var(--kt-weight-bold);
   color: var(--kt-text);
   line-height: 1;
 }
 
 .breakdown {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+  padding: 10px 12px;
+  background: var(--kt-bg-subtle);
+  border-radius: var(--kt-radius-md);
 }
 
-.breakdownRow {
+.breakdownCell {
   display: flex;
-  justify-content: space-between;
-  font-size: var(--kt-text-sm);
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.breakdownLabel {
+  font-size: 11px;
   color: var(--kt-text-muted);
 }
 
-.breakdownRow span:last-child {
+.breakdownValue {
+  font-size: 13px;
   color: var(--kt-text);
   font-weight: var(--kt-weight-semibold);
+}
+
+.breakdownValueZero {
+  color: var(--kt-text-muted);
+  font-weight: var(--kt-weight-medium);
 }
 
 /* ── Skills strip — mirrors profile page ─────────────────────────────────── */
@@ -81,7 +97,46 @@
   font-weight: var(--kt-weight-medium);
 }
 
-/* ── Timeline ────────────────────────────────────────────────────────────── */
+/* ── Pre-apply Q&A ──────────────────────────────────────────────────────── */
+
+.qaList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.qaItem {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 10px;
+}
+
+.qaItem:last-child {
+  margin-bottom: 0;
+}
+
+.qaQuestion {
+  font-size: 12px;
+  color: var(--kt-text-muted);
+  margin: 0 0 2px;
+  line-height: 1.4;
+}
+
+.qaAnswer {
+  font-size: 13px;
+  color: var(--kt-text);
+  margin: 0;
+  line-height: 1.55;
+}
+
+.qaAnswerEmpty {
+  color: var(--kt-text-muted);
+  font-style: italic;
+}
+
+/* ── Timeline (work experience) ──────────────────────────────────────────── */
 
 .timeline {
   display: flex;
@@ -105,7 +160,6 @@
   height: 8px;
   border-radius: 50%;
   background: var(--kt-success);
-  border: 2px solid var(--kt-success-subtle);
   margin-top: 5px;
   flex-shrink: 0;
 }
@@ -120,7 +174,7 @@
 .timelineContent {
   flex: 1;
   min-width: 0;
-  padding-bottom: 14px;
+  padding-bottom: 12px;
 }
 
 .timelineRow:last-child .timelineContent {
@@ -128,14 +182,14 @@
 }
 
 .jobTitle {
-  font-size: var(--kt-text-sm);
+  font-size: 13px;
   font-weight: var(--kt-weight-semibold);
   color: var(--kt-text);
   margin: 0 0 2px;
 }
 
 .jobMeta {
-  font-size: var(--kt-text-xs);
+  font-size: 12px;
   color: var(--kt-text-muted);
   margin: 0;
 }
@@ -164,22 +218,24 @@
 }
 
 .certName {
-  font-size: var(--kt-text-sm);
-  font-weight: var(--kt-weight-semibold);
+  font-size: 13px;
+  font-weight: var(--kt-weight-medium);
   color: var(--kt-text);
   margin: 0 0 2px;
 }
 
 .certIssuer {
-  font-size: var(--kt-text-xs);
+  font-size: 12px;
   color: var(--kt-text-muted);
   margin: 0;
 }
 
 .certMeta {
   flex-shrink: 0;
-  font-size: var(--kt-text-xs);
+  font-size: 11px;
   color: var(--kt-text-muted);
+  white-space: nowrap;
+  text-align: right;
 }
 
 /* ── Ratings ─────────────────────────────────────────────────────────────── */
@@ -194,7 +250,7 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  padding: 12px;
+  padding: 10px 12px;
   background: var(--kt-bg-subtle);
   border-radius: var(--kt-radius-md);
 }
@@ -203,7 +259,7 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-size: var(--kt-text-xs);
+  font-size: 11px;
   color: var(--kt-text-muted);
   font-weight: var(--kt-weight-semibold);
   text-transform: uppercase;
@@ -211,82 +267,13 @@
 }
 
 .ratingValue {
-  font-size: var(--kt-text-2xl);
-  font-weight: var(--kt-weight-bold);
+  font-size: 22px;
+  font-weight: var(--kt-weight-medium);
   color: var(--kt-text);
   line-height: 1.1;
 }
 
 .ratingMeta {
-  font-size: var(--kt-text-xs);
+  font-size: 11px;
   color: var(--kt-text-muted);
-}
-
-/* ── Pre-apply Q&A ──────────────────────────────────────────────────────── */
-
-.qaList {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.qaItem {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.qaQuestion {
-  font-size: var(--kt-text-xs);
-  font-weight: var(--kt-weight-semibold);
-  color: var(--kt-text-muted);
-  margin: 0;
-  line-height: 1.4;
-}
-
-.qaAnswer {
-  font-size: var(--kt-text-sm);
-  color: var(--kt-text);
-  margin: 0;
-  line-height: 1.55;
-}
-
-.qaAnswerEmpty {
-  color: var(--kt-text-muted);
-  font-style: italic;
-}
-
-/* ── Notes ──────────────────────────────────────────────────────────────── */
-
-.notesList {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.note {
-  padding-left: 10px;
-  border-left: 2px solid var(--kt-accent);
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.noteText {
-  font-size: var(--kt-text-sm);
-  color: var(--kt-text);
-  line-height: 1.5;
-  margin: 0;
-}
-
-.noteCaption {
-  font-size: var(--kt-text-xs);
-  color: var(--kt-text-muted);
-  margin: 0;
 }

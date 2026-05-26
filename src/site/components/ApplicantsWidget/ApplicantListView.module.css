@@ -5,7 +5,7 @@
 /* Column header row */
 .header {
   display: grid;
-  grid-template-columns: 24% 22% 14% 10% 12% 1fr;
+  grid-template-columns: 24% 20% 14% 10% 110px 1fr;
   padding: 6px 16px;
   border-bottom: 1px solid var(--kt-border);
   background: var(--kt-grey-100);
@@ -30,7 +30,7 @@
 /* Row */
 .row {
   display: grid;
-  grid-template-columns: 24% 22% 14% 10% 12% 1fr;
+  grid-template-columns: 24% 20% 14% 10% 110px 1fr;
   align-items: center;
   padding: 8px 16px;
   border-bottom: 1px solid var(--kt-border);
@@ -44,6 +44,14 @@
 
 .row:hover {
   background: var(--kt-grey-50, var(--kt-secondary));
+}
+
+.row.boosted {
+  background: var(--kt-olive-50);
+}
+
+.row.boosted:hover {
+  background: var(--kt-olive-100);
 }
 
 /* Applicant cell */
@@ -82,6 +90,13 @@
   border-radius: 50%;
 }
 
+.applicantText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.25;
+}
+
 .applicantName {
   font-size: 13px;
   font-weight: var(--kt-weight-medium);
@@ -92,49 +107,38 @@
   transition: color 100ms ease;
 }
 
-/* Job cell */
-.jobCell {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-  padding-right: 8px;
-}
-
-.jobTitle {
-  font-size: 12px;
+.applicantTrade {
+  font-size: 11px;
   color: var(--kt-text-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.pausedPill {
-  flex-shrink: 0;
-  font-size: 10px;
-  font-weight: var(--kt-weight-medium);
-  color: var(--kt-warning, #d97706);
-  background: var(--kt-warning-bg, #fef3c7);
-  border-radius: 4px;
-  padding: 1px 5px;
-  line-height: 1.4;
-}
-
-/* Stage cell */
-.stageCell {
-  font-size: 12px;
-  color: var(--kt-text);
-}
-
-/* Regulix cell */
-.regulixCell {
+/* Signals cell */
+.signalsCell {
   display: flex;
-  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.signalsCell > span {
+  flex-shrink: 0;
+  display: inline-flex;
   align-items: center;
 }
 
-/* Last activity cell */
-.activityCell {
+.signalBoosted {
+  color: var(--kt-olive-600);
+}
+
+.signalMuted {
+  color: var(--kt-grey-700, var(--kt-text-muted));
+}
+
+/* Applied date cell */
+.appliedCell {
   font-size: 12px;
   color: var(--kt-text-muted);
 }
@@ -169,7 +173,7 @@
 .overflowBtn {
   width: 26px;
   height: 26px;
-  border: 0.5px solid var(--kt-border);
+  border: none;
   border-radius: var(--kt-radius-sm);
   background: transparent;
   display: flex;
@@ -186,18 +190,17 @@
   color: var(--kt-text);
 }
 
-/* Overflow dropdown */
-.overflowDropdown {
-  position: absolute;
-  right: 16px;
-  top: calc(100% - 4px);
-  z-index: 100;
+/* Overflow dropdown — portaled to body, positioned via inline style */
+.overflowMenu {
+  position: fixed;
+  z-index: 1000;
   background: var(--kt-surface);
-  border: 1px solid var(--kt-border);
+  border: 0.5px solid var(--kt-border);
   border-radius: var(--kt-radius-md);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   min-width: 160px;
   padding: 4px 0;
+  overflow: hidden;
 }
 
 .overflowItem {
@@ -313,24 +316,23 @@
     gap: 2px 8px;
   }
 
-  .applicantCell {
+  /* Row children: 1=applicant, 2=job, 3=stage, 4=applied, 5=signals, 6=actions */
+  .row > *:nth-child(1) {
     grid-column: 1;
     grid-row: 1;
+  }
+  .row > *:nth-child(2) {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  .row > *:nth-child(3),
+  .row > *:nth-child(4),
+  .row > *:nth-child(5) {
+    display: none;
   }
   .actionsCell {
     grid-column: 2;
     grid-row: 1 / span 2;
     align-self: center;
-  }
-  .jobCell {
-    grid-column: 1;
-    grid-row: 2;
-  }
-
-  /* Hide stage, regulix, activity on mobile */
-  .stageCell,
-  .regulixCell,
-  .activityCell {
-    display: none;
   }
 }

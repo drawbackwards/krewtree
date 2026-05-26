@@ -1,20 +1,25 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import type { CompanyApplicant, ApplicationStatus } from '../../types'
 import { isTerminal, TERMINAL_LABEL } from '../../types'
-import { CloseIcon, StarIcon, MessageIcon, ChevronDownIcon } from '../../icons'
+import { CloseIcon, StarIcon, MessageIcon, ChevronDownIcon, DotsHorizontalIcon } from '../../icons'
 import { RegulixBadge } from '../RegulixBadge/RegulixBadge'
 import { Modal } from '../../../components'
 import { ApplicantPreviewBody } from '../ApplicantPreviewBody/ApplicantPreviewBody'
 import { PipelineTab } from './PipelineTab'
 import { LogTab } from './LogTab'
-import { getPipelineStages, type PipelineStage } from '../../services/pipelineService'
+import {
+  getPipelineStages,
+  getBlockingRequiredCount,
+  type PipelineStage,
+} from '../../services/pipelineService'
 import {
   setApplicantStage,
   rejectApplicant,
   hireApplicant,
   archiveApplicant,
+  getApplicantDetail,
 } from '../../services/applicantService'
 import { useAuth } from '../../context/AuthContext'
 import styles from './ApplicantSlideover.module.css'
@@ -31,6 +36,27 @@ export interface ApplicantSlideoverProps {
   onChanged?: () => void
 }
 
+// ── Helpers ──────────────────────────────────────────────────────────────
+
+function formatAppliedShort(iso: string): string {
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
+function formatTimeInStage(iso: string | null): string {
+  if (!iso) return ''
+  const ms = Date.now() - new Date(iso).getTime()
+  if (ms < 0) return ''
+  const mins = Math.floor(ms / 60_000)
+  if (mins < 60) return `${Math.max(mins, 1)}m`
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24) return `${hrs}h`
+  const days = Math.floor(hrs / 24)
+  if (days < 7) return `${days}d`
+  const weeks = Math.floor(days / 7)
+  const remDays = days % 7
+  return remDays > 0 ? `${weeks}w ${remDays}d` : `${weeks}w`
+}
+
 export const ApplicantSlideover: React.FC<ApplicantSlideoverProps> = ({
   applicant,
   onClose,
@@ -42,11 +68,20 @@ export const ApplicantSlideover: React.FC<ApplicantSlideoverProps> = ({
 }) => {
   const open = applicant !== null
   const { user } = useAuth()
+  const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<Tab>('summary')
   const [rejectConfirm, setRejectConfirm] = useState(false)
   const [hireConfirm, setHireConfirm] = useState(false)
   const [archiveConfirm, setArchiveConfirm] = useState(false)
   const [stageOptions, setStageOptions] = useState<PipelineStage[]>([])
+  // Count of incomplete required tasks in the applicant's current stage. Gates
+  // forward stage moves in the StagePillControl. Seeded from a fetch on open,
+  // then kept live by PipelineTab as the user completes/skips tasks.
+  const [requiredIncomplete, setRequiredIncomplete] = useState(0)
+  // The list/kanban widgets load a lightweight applicant (no skills, certs, or
+  // work history). Fetch the full record on open so the summary tab can render
+  // those sections; falls back to the lightweight prop until it arrives.
+  const [detail, setDetail] = useState<CompanyApplicant | null>(null)
 
   // Fetch org-level pipeline stages once per company session.
   useEffect(() => {
@@ -56,6 +91,38 @@ export const ApplicantSlideover: React.FC<ApplicantSlideoverProps> = ({
       setStageOptions(sorted)
     })
   }, [user?.id])
+
+  // Seed the required-task gate whenever a different applicant or stage opens.
+  const applicantId = applicant?.id
+  const currentStageId = applicant?.currentStageId
+  useEffect(() => {
+    if (!applicantId || !currentStageId) {
+      setRequiredIncomplete(0)
+      return
+    }
+    let cancelled = false
+    getBlockingRequiredCount(applicantId, currentStageId).then((n) => {
+      if (!cancelled) setRequiredIncomplete(n)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [applicantId, currentStageId])
+
+  // Hydrate the full applicant (skills, certs, work history) for the summary tab.
+  useEffect(() => {
+    if (!applicantId || !user?.id) {
+      setDetail(null)
+      return
+    }
+    let cancelled = false
+    getApplicantDetail(applicantId, user.id).then(({ data }) => {
+      if (!cancelled) setDetail(data)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [applicantId, user?.id])
 
   const handleKey = useCallback(
     (e: KeyboardEvent) => {
@@ -79,30 +146,66 @@ export const ApplicantSlideover: React.FC<ApplicantSlideoverProps> = ({
 
   if (!open || !applicant) return null
 
-  const handleAdvance = async (nextStageId: string) => {
-    await setApplicantStage(applicant.id, nextStageId)
-    onChanged?.()
-  }
-
   return createPortal(
     <>
       <div className={styles.overlay} onClick={onClose} role="dialog" aria-modal="true">
         <aside className={styles.panel} onClick={(e) => e.stopPropagation()}>
           {/* ── Identity header ──────────────────────────────────────────── */}
           <div className={styles.hero}>
-            <div className={styles.heroTop}>
-              <div className={styles.avatar}>{applicant.workerInitials}</div>
-              <div className={styles.identityText}>
-                <div className={styles.nameRow}>
-                  <h2 className={styles.fullName}>{applicant.workerFullName}</h2>
-                  {applicant.isRegulixReady && <RegulixBadge size="sm" />}
-                </div>
-                {applicant.workerPrimaryTrade && (
-                  <p className={styles.trade}>{applicant.workerPrimaryTrade}</p>
-                )}
-                <p className={styles.jobRef}>
-                  Applied for <strong>{applicant.jobTitle}</strong>
-                </p>
+            <div className={styles.heroActions}>
+              <div className={styles.iconGroup}>
+                <button
+                  type="button"
+                  className={styles.iconBtn}
+                  onClick={() => onMessage(applicant.id)}
+                  aria-label="Message applicant"
+                >
+                  <MessageIcon size={16} />
+                </button>
+                <button
+                  type="button"
+                  className={[styles.iconBtn, applicant.isShortlisted ? styles.iconBtnActive : '']
+                    .filter(Boolean)
+                    .join(' ')}
+                  onClick={() => onShortlist(applicant.id)}
+                  aria-pressed={applicant.isShortlisted}
+                  aria-label={
+                    applicant.isShortlisted ? 'Remove from shortlist' : 'Add to shortlist'
+                  }
+                >
+                  <StarIcon
+                    size={16}
+                    color={applicant.isShortlisted ? 'var(--kt-warning)' : undefined}
+                  />
+                </button>
+                <OverflowMenu
+                  items={[
+                    {
+                      label: 'Open full profile',
+                      onClick: () => {
+                        navigate(`/site/dashboard/applicants/worker/${applicant.workerId}`)
+                        onClose()
+                      },
+                    },
+                    ...(isTerminal(applicant.status)
+                      ? []
+                      : [{ label: 'Mark hired', onClick: () => setHireConfirm(true) }]),
+                    {
+                      label: 'Archive',
+                      onClick: () => setArchiveConfirm(true),
+                    },
+                    { divider: true },
+                    ...(isTerminal(applicant.status)
+                      ? []
+                      : [
+                          {
+                            label: 'Reject',
+                            danger: true,
+                            onClick: () => setRejectConfirm(true),
+                          },
+                        ]),
+                  ]}
+                />
               </div>
               <button
                 type="button"
@@ -110,46 +213,35 @@ export const ApplicantSlideover: React.FC<ApplicantSlideoverProps> = ({
                 onClick={onClose}
                 aria-label="Close"
               >
-                <CloseIcon size={16} />
+                <CloseIcon size={18} />
               </button>
             </div>
-          </div>
-
-          {/* ── Persistent action bar ────────────────────────────────────── */}
-          <div className={styles.actionBar}>
-            <StageActionMenu
-              applicant={applicant}
-              stages={stageOptions}
-              onMoveTo={async (stageId) => {
-                await setApplicantStage(applicant.id, stageId)
-                onChanged?.()
-              }}
-              onHire={onHire ? () => setHireConfirm(true) : undefined}
-              onReject={onReject ? () => setRejectConfirm(true) : undefined}
-              onArchive={() => setArchiveConfirm(true)}
-            />
-            <button
-              type="button"
-              className={styles.actionBtn}
-              onClick={() => onMessage(applicant.id)}
-            >
-              <MessageIcon size={14} />
-              Message
-            </button>
-            <button
-              type="button"
-              className={[styles.actionBtn, applicant.isShortlisted ? styles.actionBtnActive : '']
-                .filter(Boolean)
-                .join(' ')}
-              onClick={() => onShortlist(applicant.id)}
-              aria-pressed={applicant.isShortlisted}
-            >
-              <StarIcon
-                size={14}
-                color={applicant.isShortlisted ? 'var(--kt-warning)' : undefined}
-              />
-              {applicant.isShortlisted ? 'Shortlisted' : 'Shortlist'}
-            </button>
+            <div className={styles.heroTop}>
+              <div className={styles.avatar}>{applicant.workerInitials}</div>
+              <div className={styles.identityText}>
+                <div className={styles.nameRow}>
+                  <h2 className={styles.fullName}>{applicant.workerFullName}</h2>
+                  {applicant.isRegulixReady && <RegulixBadge size="sm" />}
+                </div>
+                <p className={styles.jobRef}>
+                  Applied for <strong>{applicant.jobTitle}</strong>
+                  {' · '}
+                  {formatAppliedShort(applicant.appliedAt)}
+                </p>
+                <div className={styles.stageRow}>
+                  <span className={styles.stageRowLabel}>Stage</span>
+                  <StagePillControl
+                    applicant={applicant}
+                    stages={stageOptions}
+                    requiredIncomplete={requiredIncomplete}
+                    onMoveTo={async (stageId) => {
+                      await setApplicantStage(applicant.id, stageId)
+                      onChanged?.()
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* ── Tab strip ────────────────────────────────────────────────── */}
@@ -174,21 +266,20 @@ export const ApplicantSlideover: React.FC<ApplicantSlideoverProps> = ({
           <div className={styles.tabContent}>
             {activeTab === 'summary' && (
               <div className={styles.summaryScroll}>
-                <ApplicantPreviewBody applicant={applicant} />
-                <div className={styles.summaryFooter}>
-                  <Link
-                    to={`/site/dashboard/applicants/worker/${applicant.workerId}`}
-                    className={styles.viewFullLink}
-                  >
-                    View full profile →
-                  </Link>
-                </div>
+                <ApplicantPreviewBody
+                  applicant={detail && detail.id === applicant.id ? detail : applicant}
+                />
               </div>
             )}
             {activeTab === 'pipeline' && (
-              <PipelineTab applicant={applicant} stages={stageOptions} onAdvance={handleAdvance} />
+              <PipelineTab
+                applicant={applicant}
+                stages={stageOptions}
+                onRequiredCountChange={setRequiredIncomplete}
+                onChanged={onChanged}
+              />
             )}
-            {activeTab === 'log' && <LogTab applicationId={applicant.id} />}
+            {activeTab === 'log' && <LogTab applicationId={applicant.id} stages={stageOptions} />}
           </div>
         </aside>
       </div>
@@ -311,27 +402,27 @@ export const ApplicantSlideover: React.FC<ApplicantSlideoverProps> = ({
   )
 }
 
-// ── StageActionMenu ──────────────────────────────────────────────────────────
+// ── StagePillControl ────────────────────────────────────────────────────────
+//
+// The application-control surface: shows current stage + time-in-stage, and
+// opens a dropdown of pipeline stages plus terminal actions (Reject / Mark
+// hired). This is the *only* stage-advancement control in the drawer.
 
-interface StageActionMenuProps {
+interface StagePillControlProps {
   applicant: CompanyApplicant
   stages: PipelineStage[]
+  requiredIncomplete: number
   onMoveTo: (stageId: string) => void
-  onHire?: () => void
-  onReject?: () => void
-  onArchive: () => void
 }
 
-const StageActionMenu: React.FC<StageActionMenuProps> = ({
+const StagePillControl: React.FC<StagePillControlProps> = ({
   applicant,
   stages,
+  requiredIncomplete,
   onMoveTo,
-  onHire,
-  onReject,
-  onArchive,
 }) => {
   const [open, setOpen] = useState(false)
-  const [pos, setPos] = useState({ top: 0, left: 0 })
+  const [pos, setPos] = useState({ top: 0, left: 0, width: 0 })
   const btnRef = useRef<HTMLButtonElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -349,7 +440,7 @@ const StageActionMenu: React.FC<StageActionMenuProps> = ({
   function toggle() {
     if (!open && btnRef.current) {
       const r = btnRef.current.getBoundingClientRect()
-      setPos({ top: r.bottom + 4, left: r.left })
+      setPos({ top: r.bottom + 4, left: r.left, width: r.width })
     }
     setOpen((v) => !v)
   }
@@ -359,22 +450,34 @@ const StageActionMenu: React.FC<StageActionMenuProps> = ({
     if (stageId !== applicant.currentStageId) onMoveTo(stageId)
   }
 
+  // Forward stages are locked while the current stage has incomplete required
+  // tasks. Backward moves stay open so a mis-step can always be corrected.
+  const currentStage = stages.find((s) => s.id === applicant.currentStageId)
+  const gateForward = requiredIncomplete > 0
+
   const statusIsTerminal = isTerminal(applicant.status)
   const currentLabel = statusIsTerminal
     ? TERMINAL_LABEL[applicant.status as ApplicationStatus]
     : applicant.currentStageName
+  const variantClass = !statusIsTerminal
+    ? ''
+    : applicant.status === 'terminal_hired'
+      ? styles.stagePillHired
+      : styles.stagePillNeutral
+  const timeInStage = statusIsTerminal ? '' : formatTimeInStage(applicant.stageEnteredAt)
 
   return (
     <>
       <button
         ref={btnRef}
         type="button"
-        className={styles.actionBtnPrimary}
+        className={[styles.stagePill, variantClass].filter(Boolean).join(' ')}
         onClick={toggle}
         aria-haspopup="menu"
         aria-expanded={open}
       >
         <span>{currentLabel}</span>
+        {timeInStage && <span className={styles.stageTime}>· {timeInStage}</span>}
         <ChevronDownIcon size={12} />
       </button>
       {open &&
@@ -383,73 +486,124 @@ const StageActionMenu: React.FC<StageActionMenuProps> = ({
             ref={menuRef}
             className={styles.stageMenu}
             role="menu"
-            style={{ top: pos.top, left: pos.left }}
+            style={{ top: pos.top, left: pos.left, minWidth: pos.width }}
           >
-            <div className={styles.stageMenuSection}>Move to</div>
+            <div className={styles.stageMenuSection}>Move to stage</div>
             {stages.map((s) => {
               const isCurrent = s.id === applicant.currentStageId
+              const isForward = currentStage ? s.sortOrder > currentStage.sortOrder : false
+              const locked = isForward && gateForward
               return (
                 <button
                   key={s.id}
                   type="button"
                   role="menuitem"
-                  disabled={isCurrent}
-                  className={[styles.stageMenuItem, isCurrent ? styles.stageMenuItemCurrent : '']
+                  className={[styles.stageMenuItem, locked ? styles.stageMenuItemLocked : '']
                     .filter(Boolean)
                     .join(' ')}
-                  onClick={() => pick(s.id)}
+                  onClick={() => !locked && pick(s.id)}
+                  disabled={locked}
+                  aria-current={isCurrent || undefined}
+                  title={locked ? 'Complete required tasks in the current stage first' : undefined}
                 >
+                  <span
+                    className={[
+                      styles.menuStageDot,
+                      isCurrent ? styles.menuStageDotFilled : styles.menuStageDotOutline,
+                    ]
+                      .filter(Boolean)
+                      .join(' ')}
+                  />
                   <span>{s.name}</span>
-                  {isCurrent && <span className={styles.stageMenuCurrentLabel}>Current</span>}
                 </button>
               )
             })}
 
-            {!statusIsTerminal && (onHire || onReject) && (
-              <>
-                <div className={styles.stageMenuDivider} />
-                <div className={styles.stageMenuSection}>Close out</div>
-                {onHire && (
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className={styles.stageMenuItem}
-                    onClick={() => {
-                      setOpen(false)
-                      onHire()
-                    }}
-                  >
-                    Mark hired
-                  </button>
-                )}
-                {onReject && (
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className={[styles.stageMenuItem, styles.stageMenuItemDanger].join(' ')}
-                    onClick={() => {
-                      setOpen(false)
-                      onReject()
-                    }}
-                  >
-                    Reject
-                  </button>
-                )}
-              </>
+            {gateForward && (
+              <p className={styles.stageMenuHint}>
+                Complete required tasks to unlock later stages.
+              </p>
             )}
+          </div>,
+          document.body
+        )}
+    </>
+  )
+}
 
-            <div className={styles.stageMenuDivider} />
-            <button
-              type="button"
-              role="menuitem"
-              className={styles.stageMenuItem}
-              onClick={() => {
-                setOpen(false)
-                onArchive()
-              }}
-            >
-              Archive
-            </button>
+// ── OverflowMenu ───────────────────────────────────────────────────────────
+//
+// Auxiliary actions only. Stage-change actions live in the StagePillControl.
+
+type OverflowItem = { label: string; danger?: boolean; onClick: () => void } | { divider: true }
+
+const OverflowMenu: React.FC<{ items: OverflowItem[] }> = ({ items }) => {
+  const [open, setOpen] = useState(false)
+  const [pos, setPos] = useState({ top: 0, right: 0 })
+  const btnRef = useRef<HTMLButtonElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const h = (e: MouseEvent) => {
+      if (btnRef.current?.contains(e.target as Node) || menuRef.current?.contains(e.target as Node))
+        return
+      setOpen(false)
+    }
+    document.addEventListener('mousedown', h)
+    return () => document.removeEventListener('mousedown', h)
+  }, [open])
+
+  function toggle() {
+    if (!open && btnRef.current) {
+      const r = btnRef.current.getBoundingClientRect()
+      setPos({ top: r.bottom + 4, right: window.innerWidth - r.right })
+    }
+    setOpen((v) => !v)
+  }
+
+  return (
+    <>
+      <button
+        ref={btnRef}
+        type="button"
+        className={styles.iconBtn}
+        onClick={toggle}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label="More actions"
+      >
+        <DotsHorizontalIcon size={16} />
+      </button>
+      {open &&
+        createPortal(
+          <div
+            ref={menuRef}
+            className={styles.overflowMenu}
+            role="menu"
+            style={{ top: pos.top, right: pos.right }}
+          >
+            {items.map((item, i) => {
+              if ('divider' in item) {
+                return <div key={`d-${i}`} className={styles.overflowDivider} />
+              }
+              return (
+                <button
+                  key={item.label}
+                  type="button"
+                  role="menuitem"
+                  className={[styles.overflowItem, item.danger ? styles.overflowItemDanger : '']
+                    .filter(Boolean)
+                    .join(' ')}
+                  onClick={() => {
+                    setOpen(false)
+                    item.onClick()
+                  }}
+                >
+                  {item.label}
+                </button>
+              )
+            })}
           </div>,
           document.body
         )}
