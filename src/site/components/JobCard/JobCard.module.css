@@ -130,6 +130,17 @@
   flex-shrink: 0;
 }
 
+.distancePill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: var(--kt-text-xs);
+  font-weight: var(--kt-weight-semibold);
+  background: var(--kt-olive-50, var(--kt-secondary));
+  color: var(--kt-olive-800, var(--kt-navy-600));
+}
+
 .description {
   font-size: var(--kt-text-sm);
   color: var(--kt-text-muted);

@@ -211,6 +211,14 @@ export async function getRecommendedJobs(
 
 // ── Full Worker Profile (view page) ───────────────────────────────────────────
 
+export type WorkerReference = {
+  id: string
+  name: string
+  company: string
+  phone: string | null
+  email: string | null
+}
+
 export type FullWorkerProfile = {
   firstName: string
   lastName: string
@@ -245,6 +253,12 @@ export type FullWorkerProfile = {
     industryId: string | null
     description: string
   }[]
+  /** References visible to the caller per RLS — empty for viewers without access. */
+  references: WorkerReference[]
+  /** Total reference count (denorm on worker_profiles); shown as public indicator. */
+  referencesCount: number
+  /** Non-null while section-level consent is active. */
+  referencesConsentConfirmedAt: string | null
 }
 
 export async function getFullWorkerProfile(
@@ -258,11 +272,12 @@ export async function getFullWorkerProfile(
     socialLinksRes,
     workHistoryRes,
     resumeRes,
+    referencesRes,
   ] = await Promise.all([
     supabase
       .from('worker_profiles')
       .select(
-        'first_name, last_name, city, region, phone, primary_trade, bio, avatar_url, is_regulix_ready, performance_score, profile_complete_pct, total_hours_worked'
+        'first_name, last_name, city, region, phone, primary_trade, bio, avatar_url, is_regulix_ready, performance_score, profile_complete_pct, total_hours_worked, references_count, references_consent_confirmed_at'
       )
       .eq('id', userId)
       .single(),
@@ -290,6 +305,13 @@ export async function getFullWorkerProfile(
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle(),
+    // RLS returns 0 rows for viewers without access; full rows for owner +
+    // companies the worker has applied to (when consent is confirmed).
+    supabase
+      .from('worker_references')
+      .select('id, name, company, phone, email')
+      .eq('worker_id', userId)
+      .order('created_at', { ascending: true }),
   ])
 
   if (profileRes.error) return { data: null, error: profileRes.error.message }
@@ -343,7 +365,45 @@ export async function getFullWorkerProfile(
         industryId: r.industry_id,
         description: r.description,
       })),
+      references: (referencesRes.data ?? []).map((r) => ({
+        id: r.id,
+        name: r.name,
+        company: r.company,
+        phone: r.phone,
+        email: r.email,
+      })),
+      referencesCount: p.references_count ?? 0,
+      referencesConsentConfirmedAt: p.references_consent_confirmed_at ?? null,
     },
+    error: null,
+  }
+}
+
+// ── Worker References (company-side read) ─────────────────────────────────────
+
+/**
+ * Fetch a worker's references. RLS returns rows only for the owner OR for
+ * companies the worker has applied to (and only while section-level consent
+ * is confirmed). Other viewers receive an empty array, not an error.
+ */
+export async function getWorkerReferences(
+  workerId: string
+): Promise<{ data: WorkerReference[]; error: string | null }> {
+  const { data, error } = await supabase
+    .from('worker_references')
+    .select('id, name, company, phone, email')
+    .eq('worker_id', workerId)
+    .order('created_at', { ascending: true })
+
+  if (error) return { data: [], error: error.message }
+  return {
+    data: (data ?? []).map((r) => ({
+      id: r.id,
+      name: r.name,
+      company: r.company,
+      phone: r.phone,
+      email: r.email,
+    })),
     error: null,
   }
 }
@@ -433,6 +493,13 @@ export type UpsertWorkerProfileParams = {
     industry_id: string | null
     description: string
   }[]
+  p_references: {
+    name: string
+    company: string
+    phone: string | null
+    email: string | null
+  }[]
+  p_references_consent: boolean
 }
 
 export async function upsertWorkerProfile(
@@ -488,7 +555,7 @@ export type WorkerCompleteness = {
   hasSkills: boolean
   hasWorkHistory: boolean
   hasCerts: boolean
-  hasResume: boolean
+  hasReferences: boolean
   hasSocialLinks: boolean
 }
 
@@ -836,7 +903,7 @@ export async function getNewJobsForYou(
 export async function getWorkerCompleteness(
   userId: string
 ): Promise<{ data: WorkerCompleteness | null; error: string | null }> {
-  const [skillsRes, workHistRes, certsRes, resumeRes, socialRes] = await Promise.all([
+  const [skillsRes, workHistRes, certsRes, referencesRes, socialRes] = await Promise.all([
     supabase
       .from('worker_skills')
       .select('id', { count: 'exact', head: true })
@@ -850,7 +917,7 @@ export async function getWorkerCompleteness(
       .select('id', { count: 'exact', head: true })
       .eq('worker_id', userId),
     supabase
-      .from('worker_resumes')
+      .from('worker_references')
       .select('id', { count: 'exact', head: true })
       .eq('worker_id', userId),
     supabase
@@ -872,7 +939,7 @@ export async function getWorkerCompleteness(
       hasSkills: (skillsRes.count ?? 0) > 0,
       hasWorkHistory: (workHistRes.count ?? 0) > 0,
       hasCerts: (certsRes.count ?? 0) > 0,
-      hasResume: (resumeRes.count ?? 0) > 0,
+      hasReferences: (referencesRes.count ?? 0) > 0,
       hasSocialLinks: (socialRes.count ?? 0) > 0,
     },
     error: null,

@@ -56,6 +56,14 @@
   flex-shrink: 0;
 }
 
+/* Wrapper for the standalone R mark — no pill chrome, just the glyph. */
+.mark {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
 /* ---- Pulse animation (optional, for CTAs) ---- */
 .pulse {
   animation: regulix-pulse 2s ease-in-out infinite;

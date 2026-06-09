@@ -1,0 +1,23 @@
+/* Small affiliation pill displayed beside the worker's name in drawers to mark
+ * that the company has them in their Krew. Sits alongside the RegulixBadge in
+ * the hero — they read as a paired set, so heights line up at sm. */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 20px;
+  padding: 0 8px;
+  background: var(--kt-navy-50);
+  color: var(--kt-navy-500);
+  border-radius: var(--kt-radius-md);
+  font-size: var(--kt-text-xs);
+  font-weight: var(--kt-weight-semibold);
+  white-space: nowrap;
+}
+
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}

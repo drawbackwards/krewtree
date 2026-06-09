@@ -231,9 +231,11 @@ const IndustrySkillsCard: React.FC<{
               fontSize: 'var(--kt-text-sm)',
               color: 'var(--kt-text-muted)',
               margin: '0 0 12px',
+              lineHeight: 1.55,
             }}
           >
-            Add skills so employers can find you.
+            Skills are the primary way companies match workers to jobs. Add at least one skill to
+            save your profile.
           </p>
 
           <SkillSearchInput industryId={industryId} selectedIds={selectedIds} onAdd={addSkill} />

@@ -4,7 +4,7 @@ import type { CompanyApplicant } from '../../types'
 import { getRecentApplicants, countNewApplicantsSince } from '../../services/applicantService'
 import { PersonIcon } from '../../icons'
 import { StagePill } from '../StagePill/StagePill'
-import { ApplicantSlideover } from '../ApplicantSlideover/ApplicantSlideover'
+import { useDrawerStack } from '../DrawerSystem/DrawerStackContext'
 import styles from './RecentApplicantsWidget.module.css'
 
 export interface RecentApplicantsWidgetProps {
@@ -20,7 +20,7 @@ export const RecentApplicantsWidget: React.FC<RecentApplicantsWidgetProps> = ({
 }) => {
   const [rows, setRows] = useState<CompanyApplicant[]>([])
   const [newCount, setNewCount] = useState(0)
-  const [open, setOpen] = useState<CompanyApplicant | null>(null)
+  const { openDrawer } = useDrawerStack()
 
   // "Since last login" reference timestamp. Prefer the Supabase session's
   // last_sign_in_at. Fall back to "24 hours ago" so the badge still surfaces
@@ -81,7 +81,14 @@ export const RecentApplicantsWidget: React.FC<RecentApplicantsWidgetProps> = ({
                     <button
                       type="button"
                       className={styles.applicantName}
-                      onClick={() => setOpen(a)}
+                      onClick={() =>
+                        openDrawer({
+                          type: 'application',
+                          applicationId: a.id,
+                          preloadedApplicant: a,
+                          onWrite: load,
+                        })
+                      }
                     >
                       {a.workerFirstName} {a.workerLastInitial}.
                     </button>
@@ -110,18 +117,6 @@ export const RecentApplicantsWidget: React.FC<RecentApplicantsWidgetProps> = ({
           )}
         </div>
       </div>
-
-      <ApplicantSlideover
-        applicant={open}
-        onClose={() => setOpen(null)}
-        onMessage={(id) => {
-          void id
-        }}
-        onShortlist={(id) => {
-          void id
-        }}
-        onChanged={load}
-      />
     </>
   )
 }

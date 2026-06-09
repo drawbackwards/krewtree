@@ -1,108 +1,223 @@
-import React, { useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
-import { Button, Divider } from '../../components'
-import { JobCard } from '../components/JobCard/JobCard'
-import { ReviewCard } from '../components/ReviewCard/ReviewCard'
-import type { CompanyReview } from '../types'
+import React, { useEffect, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import { Badge, Button, Modal, Textarea } from '../../components'
 import {
-  StarIcon,
-  StarOutlineIcon,
-  VerifiedShieldIcon,
-  LocationIcon,
-  UsersIcon,
+  BuildingIcon,
   CalendarIcon,
-  CheckIcon,
+  FlagIcon,
+  GlobeIcon,
+  LocationIcon,
+  PhoneIcon,
+  UsersIcon,
+  VerifiedShieldIcon,
 } from '../icons'
-// TODO: replace with real Supabase query by company id
-import { companies, jobs, companyDetails, companyReviews } from '../data/mock'
+import { getPublicCompanyProfile, reportPhoto } from '../services/companyService'
+import type { PublicCompanyProfile } from '../services/companyService'
+import { getIndustryById, INDUSTRIES } from '../data/industries'
+import { getLicenseTypeById } from '../data/licenseTypes'
+import { BENEFIT_GROUPS, CONTRACT_TYPE_OPTIONS } from './CompanyProfileEdit/types'
+
+const CURRENT_YEAR = 2026
+
+const industryLabel = (slug: string): string => {
+  const found = INDUSTRIES.find((i) => i.slug === slug) ?? getIndustryById(slug)
+  return found?.name ?? slug
+}
+
+const benefitLabel = (value: string): string => {
+  for (const group of BENEFIT_GROUPS) {
+    const b = group.benefits.find((b) => b.value === value)
+    if (b) return b.label
+  }
+  return value
+}
+
+const contractTypeLabel = (value: string): string =>
+  CONTRACT_TYPE_OPTIONS.find((c) => c.value === value)?.label ?? value
+
+const licenseStatusBadge = (status: string, expirationDate: string | null): React.ReactNode => {
+  const today = new Date().toISOString().slice(0, 10)
+  if (expirationDate && expirationDate < today) {
+    return <Badge variant="warning">Expired</Badge>
+  }
+  if (status === 'verified') return <Badge variant="success">Verified</Badge>
+  if (status === 'pending') return <Badge variant="warning">Verifying…</Badge>
+  if (status === 'failed') return <Badge variant="danger">Could not verify</Badge>
+  return null
+}
+
+const SocialLink: React.FC<{ url: string; label: string }> = ({ url, label }) => (
+  <a
+    href={url}
+    target="_blank"
+    rel="noopener noreferrer"
+    style={{
+      color: 'var(--kt-navy-500)',
+      fontWeight: 'var(--kt-weight-bold)',
+      textDecoration: 'none',
+      fontSize: 'var(--kt-text-sm)',
+    }}
+  >
+    {label}
+  </a>
+)
+
+const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
+  <section
+    style={{
+      background: 'var(--kt-surface)',
+      border: '1px solid var(--kt-border)',
+      borderRadius: 'var(--kt-radius-lg)',
+      padding: 24,
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 16,
+    }}
+  >
+    <h2
+      style={{
+        fontSize: 'var(--kt-text-lg)',
+        fontWeight: 'var(--kt-weight-bold)',
+        color: 'var(--kt-text)',
+        margin: 0,
+      }}
+    >
+      {title}
+    </h2>
+    {children}
+  </section>
+)
+
+const RegulixPlaceholder: React.FC<{ kind: 'badge' | 'stats' }> = ({ kind }) => (
+  <div
+    style={{
+      background: 'var(--kt-bg-subtle)',
+      border: '1px dashed var(--kt-border)',
+      borderRadius: 'var(--kt-radius-md)',
+      padding: 16,
+      textAlign: 'center',
+      color: 'var(--kt-text-muted)',
+      fontSize: 'var(--kt-text-sm)',
+    }}
+  >
+    {kind === 'badge' ? 'Regulix integration coming soon.' : 'Regulix stats coming soon.'}
+  </div>
+)
 
 export const CompanyProfilePage: React.FC = () => {
   const { id } = useParams<{ id: string }>()
-  const company = companies.find((c) => c.id === id) ?? companies[0]
-  const detail = companyDetails.find((d) => d.companyId === company.id) ?? companyDetails[0]
-  const companyJobs = jobs.filter((j) => j.companyId === company.id)
-  const [reviews, setReviews] = useState<CompanyReview[]>(
-    companyReviews.filter((r) => r.companyId === company.id)
-  )
-  const [activeTab, setActiveTab] = useState<'about' | 'reviews' | 'jobs'>('about')
-  const [showReviewForm, setShowReviewForm] = useState(false)
-  const [reviewForm, setReviewForm] = useState({
-    rating: 5,
-    title: '',
-    body: '',
-    pros: '',
-    cons: '',
-    recommend: true,
-  })
-  const [reviewSubmitted, setReviewSubmitted] = useState(false)
+  const navigate = useNavigate()
+  const [data, setData] = useState<PublicCompanyProfile | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [notFound, setNotFound] = useState(false)
+  const [activeTab, setActiveTab] = useState<'about' | 'jobs'>('about')
+  const [reportPhotoId, setReportPhotoId] = useState<string | null>(null)
+  const [reportReason, setReportReason] = useState('')
+  const [reportStatus, setReportStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
+  const [reportError, setReportError] = useState('')
 
-  const avgRating =
-    reviews.length > 0
-      ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length
-      : detail.avgRating
-
-  const ratingDist = [5, 4, 3, 2, 1].map((star) => ({
-    star,
-    count: reviews.filter((r) => r.rating === star).length,
-    pct:
-      reviews.length > 0
-        ? (reviews.filter((r) => r.rating === star).length / reviews.length) * 100
-        : 0,
-  }))
-
-  const handleSubmitReview = () => {
-    if (!reviewForm.title || !reviewForm.body) return
-    const newReview: CompanyReview = {
-      id: `cr-new-${Date.now()}`,
-      workerId: 'w1',
-      workerName: 'Marcus T.',
-      workerInitials: 'MT',
-      companyId: company.id,
-      rating: reviewForm.rating,
-      title: reviewForm.title,
-      body: reviewForm.body,
-      pros: reviewForm.pros,
-      cons: reviewForm.cons,
-      recommend: reviewForm.recommend,
-      datedMonthsAgo: 0,
-      isVerified: true,
-    }
-    setReviews((prev) => [newReview, ...prev])
-    setReviewSubmitted(true)
-    setShowReviewForm(false)
-    setActiveTab('reviews')
+  const openReport = (photoId: string) => {
+    setReportPhotoId(photoId)
+    setReportReason('')
+    setReportStatus('idle')
+    setReportError('')
   }
 
-  const tabStyle = (tab: string) =>
-    ({
-      padding: '10px 20px',
-      border: 'none',
-      borderBottom: `2px solid ${activeTab === tab ? 'var(--kt-primary)' : 'transparent'}`,
-      background: 'transparent',
-      color: activeTab === tab ? 'var(--kt-text)' : 'var(--kt-text-muted)',
-      fontWeight: activeTab === tab ? 'var(--kt-weight-semibold)' : 'var(--kt-weight-normal)',
-      fontSize: 'var(--kt-text-sm)',
-      cursor: 'pointer',
-      fontFamily: 'var(--kt-font-sans)',
-      transition: 'color 0.15s',
-    }) as React.CSSProperties
+  const closeReport = () => {
+    if (reportStatus === 'sending') return
+    setReportPhotoId(null)
+  }
+
+  const submitReport = async () => {
+    if (!reportPhotoId) return
+    setReportStatus('sending')
+    const { error } = await reportPhoto(reportPhotoId, reportReason)
+    if (error) {
+      setReportStatus('error')
+      setReportError(error)
+      return
+    }
+    setReportStatus('sent')
+  }
+
+  useEffect(() => {
+    if (!id) return
+    setLoading(true)
+    getPublicCompanyProfile(id).then(({ data, error }) => {
+      setLoading(false)
+      if (error || !data) {
+        setNotFound(true)
+        return
+      }
+      setData(data)
+    })
+  }, [id])
+
+  if (loading) {
+    return (
+      <div
+        style={{
+          minHeight: '100vh',
+          background: 'var(--kt-bg)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: 'var(--kt-text-muted)',
+        }}
+      >
+        Loading…
+      </div>
+    )
+  }
+
+  if (notFound || !data) {
+    return (
+      <div
+        style={{
+          minHeight: '100vh',
+          background: 'var(--kt-bg)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 12,
+        }}
+      >
+        <h1 style={{ margin: 0 }}>Company not found</h1>
+        <p style={{ color: 'var(--kt-text-muted)', margin: 0 }}>
+          This company may have been deleted or moved.
+        </p>
+        <Button variant="outline" onClick={() => navigate('/site/jobs')}>
+          Browse jobs
+        </Button>
+      </div>
+    )
+  }
+
+  const yearsInBusiness =
+    data.founded && data.founded >= 1800 && data.founded <= CURRENT_YEAR
+      ? CURRENT_YEAR - data.founded
+      : null
+
+  const serviceAreaText = data.service_area_override?.trim()
+    ? data.service_area_override
+    : `Within ${data.service_area_radius} miles of ${data.hq_city || 'HQ'}`
+
+  const locationLabel =
+    data.hq_full_address || [data.hq_city, data.hq_state].filter(Boolean).join(', ')
+
+  const initials = data.name.slice(0, 2).toUpperCase()
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--kt-bg)' }}>
-      {/* Hero Banner */}
+      {/* Hero */}
       <div style={{ background: 'var(--kt-surface)', borderBottom: '1px solid var(--kt-border)' }}>
-        <div
-          style={{
-            height: 140,
-            background: 'var(--kt-grey-100)',
-          }}
-        />
+        <div style={{ height: 140, background: 'var(--kt-grey-100)' }} />
         <div
           style={{
             maxWidth: 960,
             margin: '0 auto',
-            padding: '0 var(--kt-space-6)',
-            paddingBottom: 28,
+            padding: '0 var(--kt-space-6) 28px',
           }}
         >
           <div
@@ -114,7 +229,6 @@ export const CompanyProfilePage: React.FC = () => {
               flexWrap: 'wrap',
             }}
           >
-            {/* Logo */}
             <div
               style={{
                 width: 80,
@@ -130,11 +244,20 @@ export const CompanyProfilePage: React.FC = () => {
                 border: '4px solid var(--kt-white)',
                 flexShrink: 0,
                 boxShadow: 'var(--kt-shadow-sm)',
+                overflow: 'hidden',
               }}
             >
-              {company.name.slice(0, 2).toUpperCase()}
+              {data.logo_url ? (
+                <img
+                  src={data.logo_url}
+                  alt={data.name}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+              ) : (
+                initials
+              )}
             </div>
-            <div style={{ flex: 1, paddingBottom: 4 }}>
+            <div style={{ flex: 1, paddingBottom: 4, minWidth: 0 }}>
               <div
                 style={{
                   display: 'flex',
@@ -152,77 +275,71 @@ export const CompanyProfilePage: React.FC = () => {
                     margin: 0,
                   }}
                 >
-                  {company.name}
+                  {data.name}
                 </h1>
-                {company.isVerified && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <VerifiedShieldIcon size={16} color="var(--kt-olive-600)" />
-                    <span
-                      style={{
-                        fontSize: 'var(--kt-text-xs)',
-                        color: 'var(--kt-accent)',
-                        fontWeight: 'var(--kt-weight-medium)',
-                      }}
-                    >
-                      Verified
-                    </span>
-                  </div>
+                {data.is_verified && (
+                  <span
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      fontSize: 'var(--kt-text-xs)',
+                      color: 'var(--kt-accent)',
+                      fontWeight: 'var(--kt-weight-medium)',
+                    }}
+                  >
+                    <VerifiedShieldIcon size={14} color="var(--kt-olive-600)" /> Verified
+                  </span>
                 )}
               </div>
-              <p
-                style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text-muted)', margin: 0 }}
+              {data.tagline && (
+                <p
+                  style={{
+                    fontSize: 'var(--kt-text-sm)',
+                    color: 'var(--kt-text-muted)',
+                    margin: 0,
+                  }}
+                >
+                  {data.tagline}
+                </p>
+              )}
+              <div
+                style={{
+                  display: 'flex',
+                  gap: 16,
+                  marginTop: 8,
+                  flexWrap: 'wrap',
+                  fontSize: 'var(--kt-text-xs)',
+                  color: 'var(--kt-text-muted)',
+                  alignItems: 'center',
+                }}
               >
-                {detail.tagline}
-              </p>
-              <div style={{ display: 'flex', gap: 16, marginTop: 8, flexWrap: 'wrap' }}>
-                <span style={{ fontSize: 'var(--kt-text-xs)', color: 'var(--kt-text-muted)' }}>
-                  <LocationIcon size={14} /> {detail.headquarters}
-                </span>
-                <span style={{ fontSize: 'var(--kt-text-xs)', color: 'var(--kt-text-muted)' }}>
-                  <UsersIcon size={14} /> {detail.teamSize} employees
-                </span>
-                <span style={{ fontSize: 'var(--kt-text-xs)', color: 'var(--kt-text-muted)' }}>
-                  <CalendarIcon size={14} /> Founded {detail.founded}
-                </span>
+                {locationLabel && (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                    <LocationIcon size={14} /> {locationLabel}
+                  </span>
+                )}
+                {data.industry && (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                    <BuildingIcon size={14} /> {industryLabel(data.industry)}
+                  </span>
+                )}
+                {data.founded && (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                    <CalendarIcon size={14} /> Founded {data.founded}
+                  </span>
+                )}
+                {data.size && (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                    <UsersIcon size={14} /> {data.size} employees
+                  </span>
+                )}
               </div>
             </div>
-            {/* Stats */}
-            <div style={{ display: 'flex', gap: 20, paddingBottom: 4, flexShrink: 0 }}>
-              <div style={{ textAlign: 'center' }}>
-                <div
-                  style={{
-                    fontSize: 'var(--kt-text-lg)',
-                    fontWeight: 'var(--kt-weight-bold)',
-                    color: 'var(--kt-text)',
-                  }}
-                >
-                  {avgRating.toFixed(1)}
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'center', gap: 1, marginBottom: 2 }}>
-                  {[1, 2, 3, 4, 5].map((s) =>
-                    s <= Math.round(avgRating) ? (
-                      <StarIcon key={s} size={16} color="var(--kt-warning)" />
-                    ) : (
-                      <StarOutlineIcon key={s} size={16} color="var(--kt-warning)" />
-                    )
-                  )}
-                </div>
-                <div style={{ fontSize: '10px', color: 'var(--kt-text-muted)' }}>
-                  {reviews.length} reviews
-                </div>
-              </div>
-              <div style={{ textAlign: 'center' }}>
-                <div
-                  style={{
-                    fontSize: 'var(--kt-text-lg)',
-                    fontWeight: 'var(--kt-weight-bold)',
-                    color: 'var(--kt-text)',
-                  }}
-                >
-                  {companyJobs.length}
-                </div>
-                <div style={{ fontSize: '10px', color: 'var(--kt-text-muted)' }}>Open Jobs</div>
-              </div>
+            <div style={{ display: 'flex', gap: 8, paddingBottom: 4 }}>
+              <Button variant="primary" onClick={() => navigate('/site/messages')}>
+                Message company
+              </Button>
             </div>
           </div>
         </div>
@@ -244,15 +361,30 @@ export const CompanyProfilePage: React.FC = () => {
             margin: '0 auto',
             padding: '0 var(--kt-space-6)',
             display: 'flex',
+            gap: 8,
           }}
         >
-          {(['about', 'reviews', 'jobs'] as const).map((tab) => (
-            <button key={tab} style={tabStyle(tab)} onClick={() => setActiveTab(tab)}>
+          {(['about', 'jobs'] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              style={{
+                padding: '12px 20px',
+                border: 'none',
+                borderBottom: `2px solid ${
+                  activeTab === tab ? 'var(--kt-primary)' : 'transparent'
+                }`,
+                background: 'transparent',
+                color: activeTab === tab ? 'var(--kt-text)' : 'var(--kt-text-muted)',
+                fontWeight: activeTab === tab ? 'var(--kt-weight-bold)' : 'var(--kt-weight-medium)',
+                fontSize: 'var(--kt-text-sm)',
+                cursor: 'pointer',
+                fontFamily: 'var(--kt-font-sans)',
+              }}
+            >
               {tab === 'about'
                 ? 'About'
-                : tab === 'reviews'
-                  ? `Reviews (${reviews.length})`
-                  : `Jobs (${companyJobs.length})`}
+                : `Jobs${data.jobs.length ? ` · ${data.jobs.length}` : ''}`}
             </button>
           ))}
         </div>
@@ -263,583 +395,393 @@ export const CompanyProfilePage: React.FC = () => {
         style={{
           maxWidth: 960,
           margin: '0 auto',
-          padding: '28px var(--kt-space-6)',
+          padding: '24px var(--kt-space-6) 48px',
           display: 'flex',
-          gap: 24,
-          alignItems: 'flex-start',
+          flexDirection: 'column',
+          gap: 16,
         }}
       >
-        <div style={{ flex: 1, minWidth: 0 }}>
-          {/* ABOUT TAB */}
-          {activeTab === 'about' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              {/* Culture */}
-              <div
-                style={{
-                  background: 'var(--kt-surface)',
-                  border: '1px solid var(--kt-border)',
-                  borderRadius: 'var(--kt-radius-lg)',
-                  padding: 24,
-                }}
-              >
-                <h2
-                  style={{
-                    fontSize: 'var(--kt-text-md)',
-                    fontWeight: 'var(--kt-weight-semibold)',
-                    color: 'var(--kt-text)',
-                    marginBottom: 12,
-                  }}
-                >
-                  Culture
-                </h2>
+        {activeTab === 'about' && (
+          <>
+            {data.description && (
+              <Section title="About">
                 <p
                   style={{
-                    fontSize: 'var(--kt-text-sm)',
-                    color: 'var(--kt-text)',
-                    lineHeight: 1.7,
-                  }}
-                >
-                  {detail.culture}
-                </p>
-              </div>
-
-              {/* Mission */}
-              <div
-                style={{
-                  background: 'var(--kt-surface)',
-                  border: '1px solid var(--kt-border)',
-                  borderRadius: 'var(--kt-radius-lg)',
-                  padding: 24,
-                }}
-              >
-                <h2
-                  style={{
-                    fontSize: 'var(--kt-text-md)',
-                    fontWeight: 'var(--kt-weight-semibold)',
-                    color: 'var(--kt-text)',
-                    marginBottom: 12,
-                  }}
-                >
-                  Mission
-                </h2>
-                <p
-                  style={{
-                    fontSize: 'var(--kt-text-sm)',
-                    color: 'var(--kt-text)',
-                    lineHeight: 1.7,
-                    fontStyle: 'italic',
-                  }}
-                >
-                  {detail.mission}
-                </p>
-              </div>
-
-              {/* Benefits */}
-              <div
-                style={{
-                  background: 'var(--kt-surface)',
-                  border: '1px solid var(--kt-border)',
-                  borderRadius: 'var(--kt-radius-lg)',
-                  padding: 24,
-                }}
-              >
-                <h2
-                  style={{
-                    fontSize: 'var(--kt-text-md)',
-                    fontWeight: 'var(--kt-weight-semibold)',
-                    color: 'var(--kt-text)',
-                    marginBottom: 16,
-                  }}
-                >
-                  Benefits
-                </h2>
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
-                    gap: 12,
-                  }}
-                >
-                  {detail.benefits.map((b) => (
-                    <div
-                      key={b.label}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 10,
-                        padding: '12px 14px',
-                        borderRadius: 'var(--kt-radius-md)',
-                        border: '1px solid var(--kt-border)',
-                        background: 'var(--kt-bg)',
-                      }}
-                    >
-                      <span style={{ fontSize: '20px' }}>{b.icon}</span>
-                      <span
-                        style={{
-                          fontSize: 'var(--kt-text-xs)',
-                          fontWeight: 'var(--kt-weight-medium)',
-                          color: 'var(--kt-text)',
-                        }}
-                      >
-                        {b.label}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Photos */}
-              <div
-                style={{
-                  background: 'var(--kt-surface)',
-                  border: '1px solid var(--kt-border)',
-                  borderRadius: 'var(--kt-radius-lg)',
-                  padding: 24,
-                }}
-              >
-                <h2
-                  style={{
-                    fontSize: 'var(--kt-text-md)',
-                    fontWeight: 'var(--kt-weight-semibold)',
-                    color: 'var(--kt-text)',
-                    marginBottom: 16,
-                  }}
-                >
-                  Photos
-                </h2>
-                <div style={{ display: 'flex', gap: 12 }}>
-                  {detail.photoEmojis.map((emoji, i) => (
-                    <div
-                      key={i}
-                      style={{
-                        flex: 1,
-                        aspectRatio: '1',
-                        borderRadius: 'var(--kt-radius-md)',
-                        background: 'var(--kt-bg)',
-                        border: '1px solid var(--kt-border)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '40px',
-                      }}
-                    >
-                      {emoji}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Perks */}
-              <div
-                style={{
-                  background: 'var(--kt-surface)',
-                  border: '1px solid var(--kt-border)',
-                  borderRadius: 'var(--kt-radius-lg)',
-                  padding: 24,
-                }}
-              >
-                <h2
-                  style={{
-                    fontSize: 'var(--kt-text-md)',
-                    fontWeight: 'var(--kt-weight-semibold)',
-                    color: 'var(--kt-text)',
-                    marginBottom: 12,
-                  }}
-                >
-                  Perks
-                </h2>
-                <ul
-                  style={{
-                    listStyle: 'none',
-                    padding: 0,
                     margin: 0,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 8,
+                    whiteSpace: 'pre-wrap',
+                    fontSize: 'var(--kt-text-sm)',
+                    color: 'var(--kt-text)',
+                    lineHeight: 1.6,
                   }}
                 >
-                  {detail.perks.map((perk) => (
-                    <li
-                      key={perk}
+                  {data.description}
+                </p>
+                {yearsInBusiness !== null && (
+                  <p
+                    style={{
+                      margin: 0,
+                      fontSize: 'var(--kt-text-xs)',
+                      color: 'var(--kt-text-muted)',
+                    }}
+                  >
+                    In business {yearsInBusiness} {yearsInBusiness === 1 ? 'year' : 'years'}.
+                  </p>
+                )}
+              </Section>
+            )}
+
+            <Section title="Service area">
+              <p style={{ margin: 0, fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text)' }}>
+                {serviceAreaText}
+              </p>
+              {data.additional_locations.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <p
+                    style={{
+                      margin: 0,
+                      fontSize: 'var(--kt-text-xs)',
+                      fontWeight: 'var(--kt-weight-bold)',
+                      color: 'var(--kt-text-muted)',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.04em',
+                    }}
+                  >
+                    Other locations
+                  </p>
+                  {data.additional_locations.map((loc) => (
+                    <p
+                      key={loc.id}
+                      style={{ margin: 0, fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text)' }}
+                    >
+                      {loc.name && <strong>{loc.name}</strong>}
+                      {loc.name && ' · '}
+                      {[loc.city, loc.state].filter(Boolean).join(', ')}
+                    </p>
+                  ))}
+                </div>
+              )}
+            </Section>
+
+            {(data.phone || data.website) && (
+              <Section title="Contact">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {data.phone && (
+                    <span
                       style={{
-                        display: 'flex',
+                        display: 'inline-flex',
                         alignItems: 'center',
                         gap: 8,
                         fontSize: 'var(--kt-text-sm)',
-                        color: 'var(--kt-text)',
                       }}
                     >
-                      <CheckIcon size={14} color="var(--kt-olive-600)" />
-                      {perk}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          )}
-
-          {/* REVIEWS TAB */}
-          {activeTab === 'reviews' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              {/* Rating breakdown */}
-              <div
-                style={{
-                  background: 'var(--kt-surface)',
-                  border: '1px solid var(--kt-border)',
-                  borderRadius: 'var(--kt-radius-lg)',
-                  padding: 24,
-                }}
-              >
-                <div style={{ display: 'flex', gap: 32, alignItems: 'center', flexWrap: 'wrap' }}>
-                  <div style={{ textAlign: 'center', flexShrink: 0 }}>
-                    <div
+                      <PhoneIcon size={14} /> {data.phone}
+                    </span>
+                  )}
+                  {data.website && (
+                    <span
                       style={{
-                        fontSize: '48px',
-                        fontWeight: 'var(--kt-weight-bold)',
-                        color: 'var(--kt-text)',
-                        lineHeight: 1,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 8,
+                        fontSize: 'var(--kt-text-sm)',
                       }}
                     >
-                      {avgRating.toFixed(1)}
-                    </div>
-                    <div
-                      style={{ display: 'flex', justifyContent: 'center', gap: 2, margin: '6px 0' }}
-                    >
-                      {[1, 2, 3, 4, 5].map((s) =>
-                        s <= Math.round(avgRating) ? (
-                          <StarIcon key={s} size={16} color="var(--kt-warning)" />
-                        ) : (
-                          <StarOutlineIcon key={s} size={16} color="var(--kt-warning)" />
-                        )
-                      )}
-                    </div>
-                    <div style={{ fontSize: 'var(--kt-text-xs)', color: 'var(--kt-text-muted)' }}>
-                      {reviews.length} reviews
-                    </div>
-                  </div>
-                  <div style={{ flex: 1, minWidth: 200 }}>
-                    {ratingDist.map(({ star, count, pct }) => (
-                      <div
-                        key={star}
-                        style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}
-                      >
-                        <span
-                          style={{
-                            fontSize: 'var(--kt-text-xs)',
-                            color: 'var(--kt-text-muted)',
-                            width: 30,
-                          }}
-                        >
-                          {star} <StarIcon size={12} color="var(--kt-warning)" />
-                        </span>
-                        <div
-                          style={{
-                            flex: 1,
-                            height: 8,
-                            background: 'var(--kt-border)',
-                            borderRadius: 4,
-                            overflow: 'hidden',
-                          }}
-                        >
-                          <div
-                            style={{
-                              height: '100%',
-                              width: `${pct}%`,
-                              background: 'var(--kt-warning)',
-                              borderRadius: 4,
-                              transition: 'width 0.3s',
-                            }}
-                          />
-                        </div>
-                        <span
-                          style={{
-                            fontSize: 'var(--kt-text-xs)',
-                            color: 'var(--kt-text-muted)',
-                            width: 20,
-                          }}
-                        >
-                          {count}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                {!reviewSubmitted && (
-                  <div style={{ marginTop: 20 }}>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowReviewForm(!showReviewForm)}
-                    >
-                      {showReviewForm ? 'Cancel' : '+ Write a Review'}
-                    </Button>
-                  </div>
-                )}
-                {reviewSubmitted && (
-                  <div
-                    style={{
-                      marginTop: 16,
-                      padding: '10px 14px',
-                      background: 'color-mix(in srgb, var(--kt-success) 10%, transparent)',
-                      borderRadius: 'var(--kt-radius-md)',
-                      fontSize: 'var(--kt-text-sm)',
-                      color: 'var(--kt-success)',
-                    }}
-                  >
-                    <CheckIcon size={14} /> Your review has been submitted!
-                  </div>
-                )}
-              </div>
-
-              {/* Review form */}
-              {showReviewForm && (
-                <div
-                  style={{
-                    background: 'var(--kt-surface)',
-                    border: '1px solid var(--kt-border)',
-                    borderRadius: 'var(--kt-radius-lg)',
-                    padding: 24,
-                  }}
-                >
-                  <h3
-                    style={{
-                      fontSize: 'var(--kt-text-md)',
-                      fontWeight: 'var(--kt-weight-semibold)',
-                      color: 'var(--kt-text)',
-                      marginBottom: 16,
-                    }}
-                  >
-                    Write a Review
-                  </h3>
-                  {/* Star picker */}
-                  <div style={{ marginBottom: 16 }}>
-                    <label
-                      style={{
-                        display: 'block',
-                        fontSize: 'var(--kt-text-xs)',
-                        fontWeight: 'var(--kt-weight-semibold)',
-                        color: 'var(--kt-text-muted)',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.5px',
-                        marginBottom: 8,
-                      }}
-                    >
-                      Rating
-                    </label>
-                    <div style={{ display: 'flex', gap: 4 }}>
-                      {[1, 2, 3, 4, 5].map((s) => (
-                        <button
-                          key={s}
-                          onClick={() => setReviewForm((f) => ({ ...f, rating: s }))}
-                          style={{
-                            background: 'none',
-                            border: 'none',
-                            cursor: 'pointer',
-                            padding: 2,
-                          }}
-                        >
-                          {s <= reviewForm.rating ? (
-                            <StarIcon size={16} color="var(--kt-warning)" />
-                          ) : (
-                            <StarOutlineIcon size={16} color="var(--kt-warning)" />
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  {[
-                    { key: 'title', label: 'Title', placeholder: 'e.g., Great crew, solid pay' },
-                    { key: 'body', label: 'Your Review', placeholder: 'Share your experience...' },
-                    { key: 'pros', label: 'Pros', placeholder: 'What did you like?' },
-                    { key: 'cons', label: 'Cons', placeholder: 'What could be better?' },
-                  ].map(({ key, label, placeholder }) => (
-                    <div key={key} style={{ marginBottom: 14 }}>
-                      <label
+                      <GlobeIcon size={14} />
+                      <a
+                        href={data.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
                         style={{
-                          display: 'block',
-                          fontSize: 'var(--kt-text-xs)',
-                          fontWeight: 'var(--kt-weight-semibold)',
-                          color: 'var(--kt-text-muted)',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.5px',
-                          marginBottom: 6,
+                          color: 'var(--kt-navy-500)',
+                          fontWeight: 'var(--kt-weight-bold)',
+                          textDecoration: 'none',
                         }}
                       >
-                        {label}
-                      </label>
-                      {key === 'body' ? (
-                        <textarea
-                          value={(reviewForm as unknown as Record<string, string>)[key]}
-                          onChange={(e) => setReviewForm((f) => ({ ...f, [key]: e.target.value }))}
-                          placeholder={placeholder}
-                          rows={3}
+                        {data.website.replace(/^https?:\/\//, '')}
+                      </a>
+                    </span>
+                  )}
+                </div>
+              </Section>
+            )}
+
+            {data.photos.length > 0 && (
+              <Section title="Photos">
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+                    gap: 12,
+                  }}
+                >
+                  {data.photos.map((p) => (
+                    <figure
+                      key={p.id}
+                      style={{ margin: 0, display: 'flex', flexDirection: 'column', gap: 6 }}
+                    >
+                      <div style={{ position: 'relative' }}>
+                        <img
+                          src={p.url}
+                          alt={p.caption || 'Company photo'}
                           style={{
                             width: '100%',
-                            resize: 'vertical',
-                            padding: '8px 12px',
-                            border: '1px solid var(--kt-border)',
+                            aspectRatio: '1 / 1',
+                            objectFit: 'cover',
                             borderRadius: 'var(--kt-radius-md)',
-                            background: 'var(--kt-bg)',
-                            color: 'var(--kt-text)',
-                            fontFamily: 'var(--kt-font-sans)',
-                            fontSize: 'var(--kt-text-sm)',
+                            background: 'var(--kt-bg-subtle)',
                           }}
                         />
-                      ) : (
-                        <input
-                          type="text"
-                          value={(reviewForm as unknown as Record<string, string>)[key]}
-                          onChange={(e) => setReviewForm((f) => ({ ...f, [key]: e.target.value }))}
-                          placeholder={placeholder}
+                        <button
+                          type="button"
+                          onClick={() => openReport(p.id)}
+                          aria-label="Report this photo"
+                          title="Report this photo"
                           style={{
-                            width: '100%',
-                            padding: '8px 12px',
-                            border: '1px solid var(--kt-border)',
-                            borderRadius: 'var(--kt-radius-md)',
-                            background: 'var(--kt-bg)',
-                            color: 'var(--kt-text)',
+                            position: 'absolute',
+                            top: 6,
+                            right: 6,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 4,
+                            padding: '4px 8px',
+                            background: 'rgba(0, 0, 0, 0.55)',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: 'var(--kt-radius-sm)',
+                            cursor: 'pointer',
+                            fontSize: 11,
                             fontFamily: 'var(--kt-font-sans)',
-                            fontSize: 'var(--kt-text-sm)',
                           }}
-                        />
+                        >
+                          <FlagIcon size={11} color="white" /> Report
+                        </button>
+                      </div>
+                      {p.caption && (
+                        <figcaption
+                          style={{
+                            fontSize: 'var(--kt-text-xs)',
+                            color: 'var(--kt-text-muted)',
+                          }}
+                        >
+                          {p.caption}
+                        </figcaption>
                       )}
-                    </div>
+                    </figure>
                   ))}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-                    <input
-                      type="checkbox"
-                      id="recommend"
-                      checked={reviewForm.recommend}
-                      onChange={(e) =>
-                        setReviewForm((f) => ({ ...f, recommend: e.target.checked }))
-                      }
-                    />
-                    <label
-                      htmlFor="recommend"
+                </div>
+              </Section>
+            )}
+
+            {data.licenses.length > 0 && (
+              <Section title="Licenses & credentials">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {data.licenses.map((l) => {
+                    const typeLabel = getLicenseTypeById(l.license_type)?.label ?? l.license_type
+                    return (
+                      <div
+                        key={l.id}
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          padding: '10px 0',
+                          borderBottom: '1px solid var(--kt-border)',
+                        }}
+                      >
+                        <div>
+                          <p
+                            style={{
+                              margin: 0,
+                              fontSize: 'var(--kt-text-sm)',
+                              fontWeight: 'var(--kt-weight-medium)',
+                              color: 'var(--kt-text)',
+                            }}
+                          >
+                            {typeLabel}{' '}
+                            <span style={{ color: 'var(--kt-text-muted)' }}>
+                              · {l.jurisdiction}
+                            </span>
+                          </p>
+                          <p
+                            style={{
+                              margin: 0,
+                              fontSize: 'var(--kt-text-xs)',
+                              color: 'var(--kt-text-muted)',
+                            }}
+                          >
+                            License #{l.license_number}
+                            {l.expiration_date && ` · expires ${l.expiration_date}`}
+                          </p>
+                        </div>
+                        {licenseStatusBadge(l.verification_status, l.expiration_date)}
+                      </div>
+                    )
+                  })}
+                </div>
+              </Section>
+            )}
+
+            {data.benefits.length > 0 && (
+              <Section title="Benefits & perks">
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  {data.benefits.map((b) => (
+                    <Badge key={b} variant="neutral">
+                      {benefitLabel(b)}
+                    </Badge>
+                  ))}
+                </div>
+              </Section>
+            )}
+
+            {data.contract_types.length > 0 && (
+              <Section title="Typical contract types">
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  {data.contract_types.map((c) => (
+                    <Badge key={c} variant="secondary">
+                      {contractTypeLabel(c)}
+                    </Badge>
+                  ))}
+                </div>
+              </Section>
+            )}
+
+            {data.additional_industries.length > 0 && (
+              <Section title="Industries">
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  <Badge variant="primary">{industryLabel(data.industry)}</Badge>
+                  {data.additional_industries.map((slug) => (
+                    <Badge key={slug} variant="neutral">
+                      {industryLabel(slug)}
+                    </Badge>
+                  ))}
+                </div>
+              </Section>
+            )}
+
+            {(data.facebook_url ||
+              data.instagram_url ||
+              data.linkedin_url ||
+              data.youtube_url ||
+              data.tiktok_url) && (
+              <Section title="Social">
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16 }}>
+                  {data.facebook_url && <SocialLink url={data.facebook_url} label="Facebook" />}
+                  {data.instagram_url && <SocialLink url={data.instagram_url} label="Instagram" />}
+                  {data.linkedin_url && <SocialLink url={data.linkedin_url} label="LinkedIn" />}
+                  {data.youtube_url && <SocialLink url={data.youtube_url} label="YouTube" />}
+                  {data.tiktok_url && <SocialLink url={data.tiktok_url} label="TikTok" />}
+                </div>
+              </Section>
+            )}
+
+            {/* Regulix placeholder — spec §4.6 */}
+            <Section title="Regulix">
+              <RegulixPlaceholder kind={data.regulix_connected ? 'stats' : 'badge'} />
+            </Section>
+          </>
+        )}
+
+        {activeTab === 'jobs' && (
+          <Section title={`Open jobs · ${data.jobs.length}`}>
+            {data.jobs.length === 0 ? (
+              <p
+                style={{ margin: 0, color: 'var(--kt-text-muted)', fontSize: 'var(--kt-text-sm)' }}
+              >
+                No open jobs right now. Check back soon.
+              </p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {data.jobs.map((j) => (
+                  <button
+                    key={j.id}
+                    onClick={() => navigate(`/site/jobs/${j.id}`)}
+                    style={{
+                      textAlign: 'left',
+                      background: 'var(--kt-surface)',
+                      border: '1px solid var(--kt-border)',
+                      borderRadius: 'var(--kt-radius-md)',
+                      padding: 14,
+                      cursor: 'pointer',
+                      fontFamily: 'var(--kt-font-sans)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 4,
+                    }}
+                  >
+                    <strong style={{ fontSize: 'var(--kt-text-md)', color: 'var(--kt-text)' }}>
+                      {j.title}
+                    </strong>
+                    <span
                       style={{
-                        fontSize: 'var(--kt-text-sm)',
-                        color: 'var(--kt-text)',
-                        cursor: 'pointer',
+                        fontSize: 'var(--kt-text-xs)',
+                        color: 'var(--kt-text-muted)',
                       }}
                     >
-                      I recommend this employer
-                    </label>
-                  </div>
-                  <Button variant="primary" size="md" onClick={handleSubmitReview}>
-                    Submit Review
-                  </Button>
-                </div>
-              )}
-
-              {/* Review list */}
-              {reviews.map((r) => (
-                <ReviewCard key={r.id} review={r} />
-              ))}
-              {reviews.length === 0 && (
-                <div
-                  style={{
-                    textAlign: 'center',
-                    padding: '40px 20px',
-                    color: 'var(--kt-text-muted)',
-                    fontSize: 'var(--kt-text-sm)',
-                  }}
-                >
-                  No reviews yet. Be the first to write one!
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* JOBS TAB */}
-          {activeTab === 'jobs' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {companyJobs.map((job) => (
-                <JobCard key={job.id} job={job} compact={false} />
-              ))}
-              {companyJobs.length === 0 && (
-                <div
-                  style={{
-                    textAlign: 'center',
-                    padding: '40px 20px',
-                    color: 'var(--kt-text-muted)',
-                    fontSize: 'var(--kt-text-sm)',
-                  }}
-                >
-                  No open positions at this time.
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Sidebar */}
-        <div
-          style={{
-            width: 240,
-            flexShrink: 0,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 16,
-            position: 'sticky',
-            top: 120,
-          }}
-        >
-          <div
-            style={{
-              background: 'var(--kt-surface)',
-              border: '1px solid var(--kt-border)',
-              borderRadius: 'var(--kt-radius-lg)',
-              padding: 18,
-            }}
-          >
-            <h3
-              style={{
-                fontSize: 'var(--kt-text-xs)',
-                fontWeight: 'var(--kt-weight-semibold)',
-                color: 'var(--kt-text)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px',
-                marginBottom: 14,
-              }}
-            >
-              Company Info
-            </h3>
-            {[
-              { label: 'Location', value: detail.headquarters },
-              { label: 'Team Size', value: `${detail.teamSize} employees` },
-              { label: 'Founded', value: String(detail.founded) },
-              { label: 'Industry', value: company.industry },
-            ].map(({ label, value }) => (
-              <div key={label} style={{ marginBottom: 10 }}>
-                <div
-                  style={{
-                    fontSize: 'var(--kt-text-xs)',
-                    color: 'var(--kt-text-muted)',
-                    marginBottom: 2,
-                  }}
-                >
-                  {label}
-                </div>
-                <div
-                  style={{
-                    fontSize: 'var(--kt-text-sm)',
-                    color: 'var(--kt-text)',
-                    fontWeight: 'var(--kt-weight-medium)',
-                  }}
-                >
-                  {value}
-                </div>
+                      {j.location || locationLabel}
+                      {j.industry && ` · ${j.industry}`}
+                      {j.type && ` · ${j.type}`}
+                    </span>
+                  </button>
+                ))}
               </div>
-            ))}
-          </div>
-          <Divider />
-          <Link to="/site/jobs" style={{ textDecoration: 'none' }}>
-            <Button variant="ghost" size="sm" style={{ width: '100%' }}>
-              ← Back to Jobs
-            </Button>
-          </Link>
-        </div>
+            )}
+          </Section>
+        )}
       </div>
+
+      {/* Photo report modal — spec §4.5 */}
+      <Modal
+        open={!!reportPhotoId}
+        onClose={closeReport}
+        size="sm"
+        title={reportStatus === 'sent' ? 'Thanks for the report' : 'Report this photo'}
+        footer={
+          reportStatus === 'sent' ? (
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <Button variant="primary" onClick={closeReport}>
+                Close
+              </Button>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+              <Button variant="ghost" onClick={closeReport} disabled={reportStatus === 'sending'}>
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                onClick={submitReport}
+                disabled={reportStatus === 'sending'}
+              >
+                {reportStatus === 'sending' ? 'Sending…' : 'Submit report'}
+              </Button>
+            </div>
+          )
+        }
+      >
+        {reportStatus === 'sent' ? (
+          <p style={{ margin: 0, fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text)' }}>
+            We logged your report. Our team will review reported content as moderation tools come
+            online.
+          </p>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <p style={{ margin: 0, fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text)' }}>
+              Tell us briefly what's wrong with this photo. Reports are sent to the krewtree team.
+            </p>
+            <Textarea
+              value={reportReason}
+              onChange={(e) => setReportReason(e.target.value)}
+              placeholder="e.g. offensive content, not the company's work, misleading…"
+              rows={4}
+            />
+            {reportStatus === 'error' && (
+              <p style={{ margin: 0, fontSize: 'var(--kt-text-sm)', color: 'var(--kt-danger)' }}>
+                {reportError}
+              </p>
+            )}
+          </div>
+        )}
+      </Modal>
     </div>
   )
 }

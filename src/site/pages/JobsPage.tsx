@@ -7,6 +7,13 @@ import type { SavedSearch, Job } from '../types'
 import { industries, locationRegions } from '../data/mock'
 import { getJobs, getAppliedJobIds } from '../services/jobService'
 import {
+  getCityCoords,
+  getWorkerCoords,
+  haversineMi,
+  searchCities,
+  type CityOption,
+} from '../services/locationService'
+import {
   getSavedSearches,
   createSavedSearch,
   deleteSavedSearch,
@@ -106,6 +113,229 @@ const CheckFilter = ({
   </label>
 )
 
+// ─── DistanceFilter sub-component ────────────────────────────────────────────
+// City typeahead + radius radio group. Used in both the desktop sidebar and
+// the mobile drawer. When no city is picked, the worker's saved coords (if
+// any) are used as the anchor.
+type DistanceFilterProps = {
+  nearCity: string | null
+  nearState: string | null
+  radiusMi: number | null
+  hasWorkerCoords: boolean
+  cityInput: string
+  setCityInput: (v: string) => void
+  citySuggestions: CityOption[]
+  cityPickerOpen: boolean
+  setCityPickerOpen: (v: boolean) => void
+  onPickCity: (city: string, state: string) => void
+  onClearCity: () => void
+  onSetRadius: (mi: number | null) => void
+}
+
+const DistanceFilter: React.FC<DistanceFilterProps> = ({
+  nearCity,
+  nearState,
+  radiusMi,
+  hasWorkerCoords,
+  cityInput,
+  setCityInput,
+  citySuggestions,
+  cityPickerOpen,
+  setCityPickerOpen,
+  onPickCity,
+  onClearCity,
+  onSetRadius,
+}) => {
+  const RADII: Array<number | null> = [null, 10, 25, 50, 100]
+  return (
+    <FilterSection title="Distance">
+      <div style={{ position: 'relative', marginBottom: 10 }}>
+        {nearCity && nearState ? (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '5px 6px 5px 10px',
+              border: '1.5px solid var(--kt-primary)',
+              background: 'var(--kt-primary-subtle)',
+              color: 'var(--kt-primary)',
+              borderRadius: 'var(--kt-radius-md)',
+              fontSize: 'var(--kt-text-sm)',
+            }}
+          >
+            <span
+              style={{
+                flex: 1,
+                fontWeight: 'var(--kt-weight-semibold)',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+            >
+              {nearCity}, {nearState}
+            </span>
+            <button
+              type="button"
+              onClick={onClearCity}
+              aria-label="Reset to your saved location"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 20,
+                height: 20,
+                border: 'none',
+                background: 'transparent',
+                color: 'var(--kt-primary)',
+                cursor: 'pointer',
+                fontSize: 12,
+                borderRadius: '50%',
+                flexShrink: 0,
+              }}
+            >
+              ✕
+            </button>
+          </div>
+        ) : (
+          <>
+            <input
+              type="text"
+              value={cityInput}
+              onChange={(e) => setCityInput(e.target.value)}
+              onFocus={() => setCityPickerOpen(true)}
+              onBlur={() => setTimeout(() => setCityPickerOpen(false), 150)}
+              placeholder={hasWorkerCoords ? 'Near you, or type a city…' : 'Type a city…'}
+              style={{
+                width: '100%',
+                padding: '7px 10px',
+                border: '1px solid var(--kt-border)',
+                borderRadius: 'var(--kt-radius-sm)',
+                background: 'var(--kt-surface)',
+                color: 'var(--kt-text)',
+                fontFamily: 'var(--kt-font-sans)',
+                fontSize: 'var(--kt-text-sm)',
+                outline: 'none',
+                boxSizing: 'border-box',
+              }}
+            />
+            {cityPickerOpen && citySuggestions.length > 0 && (
+              <ul
+                role="listbox"
+                style={{
+                  position: 'absolute',
+                  top: 'calc(100% + 4px)',
+                  left: 0,
+                  right: 0,
+                  background: 'var(--kt-surface)',
+                  border: '1px solid var(--kt-border)',
+                  borderRadius: 'var(--kt-radius-md)',
+                  boxShadow: 'var(--kt-shadow-md)',
+                  margin: 0,
+                  padding: 4,
+                  listStyle: 'none',
+                  zIndex: 50,
+                  maxHeight: 240,
+                  overflowY: 'auto',
+                }}
+              >
+                {citySuggestions.map((c) => (
+                  <li key={`${c.state}-${c.city}`}>
+                    <button
+                      type="button"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => onPickCity(c.city, c.state)}
+                      style={{
+                        display: 'block',
+                        width: '100%',
+                        textAlign: 'left',
+                        padding: '6px 10px',
+                        background: 'transparent',
+                        border: 'none',
+                        borderRadius: 'var(--kt-radius-sm)',
+                        fontFamily: 'var(--kt-font-sans)',
+                        fontSize: 'var(--kt-text-sm)',
+                        color: 'var(--kt-text)',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {c.city}, {c.state}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </>
+        )}
+      </div>
+
+      {hasWorkerCoords || nearCity ? (
+        RADII.map((mi) => {
+          const checked = (mi === null && radiusMi === null) || radiusMi === mi
+          return (
+            <label
+              key={String(mi)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '5px 0',
+                cursor: 'pointer',
+              }}
+            >
+              <span
+                aria-hidden="true"
+                style={{
+                  width: 16,
+                  height: 16,
+                  borderRadius: '50%',
+                  border: `2px solid ${checked ? 'var(--kt-accent)' : 'var(--kt-border-strong)'}`,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}
+              >
+                {checked && (
+                  <span
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: '50%',
+                      background: 'var(--kt-accent)',
+                    }}
+                  />
+                )}
+              </span>
+              <input
+                type="radio"
+                name="job-radius"
+                checked={checked}
+                onChange={() => onSetRadius(mi)}
+                style={{ display: 'none' }}
+              />
+              <span style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text)' }}>
+                {mi === null ? 'Any' : `${mi} miles`}
+              </span>
+            </label>
+          )
+        })
+      ) : (
+        <p
+          style={{
+            margin: '0 0 8px',
+            fontSize: 'var(--kt-text-xs)',
+            color: 'var(--kt-text-placeholder)',
+            fontStyle: 'italic',
+          }}
+        >
+          Pick a city above (or set your profile city) to filter by distance.
+        </p>
+      )}
+    </FilterSection>
+  )
+}
+
 export const JobsPage: React.FC = () => {
   const { user } = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -124,7 +354,19 @@ export const JobsPage: React.FC = () => {
   const payRangeIdx = Number(searchParams.get('pay') ?? '0')
   const regulixOnly = searchParams.get('regulix') === '1'
   const sponsoredOnly = searchParams.get('sponsored') === '1'
-  const sortBy = (searchParams.get('sort') ?? 'recent') as 'recent' | 'pay' | 'applicants'
+  const sortBy = (searchParams.get('sort') ?? 'recent') as
+    | 'recent'
+    | 'pay'
+    | 'applicants'
+    | 'nearest'
+  // Distance anchor: defaults to the worker's saved city when unset.
+  const nearParam = searchParams.get('near') ?? ''
+  const [nearCity, nearState] = useMemo(() => {
+    const m = /^([^,]+?)\s*,\s*([A-Za-z]{2})$/.exec(nearParam.trim())
+    return m ? [m[1], m[2].toUpperCase()] : [null, null]
+  }, [nearParam])
+  const radiusParam = Number(searchParams.get('radius') ?? '')
+  const radiusMi: number | null = [10, 25, 50, 100].includes(radiusParam) ? radiusParam : null
   const page = Number(searchParams.get('page') ?? '1')
 
   // ---- Jobs data ----
@@ -155,6 +397,73 @@ export const JobsPage: React.FC = () => {
     })
   }, [user])
 
+  // ---- Distance anchor: worker's home coords are the default; the city
+  // picker can override via ?near=City, ST. We resolve the anchor here and
+  // run the Haversine math client-side over the already-fetched jobs.
+  const [workerCoords, setWorkerCoords] = useState<{
+    latitude: number
+    longitude: number
+  } | null>(null)
+  const [workerCoordsChecked, setWorkerCoordsChecked] = useState(false)
+  const [pickedCityCoords, setPickedCityCoords] = useState<{
+    latitude: number
+    longitude: number
+  } | null>(null)
+
+  useEffect(() => {
+    getWorkerCoords().then(({ data }) => {
+      setWorkerCoords(data)
+      setWorkerCoordsChecked(true)
+    })
+  }, [])
+
+  // Resolve the picked city to lat/lng when ?near= changes.
+  useEffect(() => {
+    if (!nearCity || !nearState) {
+      setPickedCityCoords(null)
+      return
+    }
+    getCityCoords(nearCity, nearState).then(({ data }) => setPickedCityCoords(data))
+  }, [nearCity, nearState])
+
+  const anchorCoords = pickedCityCoords ?? workerCoords
+  const hasAnchor = anchorCoords !== null
+
+  // ---- City typeahead state for the picker.
+  const [cityInput, setCityInput] = useState('')
+  const [citySuggestions, setCitySuggestions] = useState<CityOption[]>([])
+  const [cityPickerOpen, setCityPickerOpen] = useState(false)
+
+  useEffect(() => {
+    if (cityInput.trim().length < 2) {
+      setCitySuggestions([])
+      return
+    }
+    const t = setTimeout(() => {
+      searchCities(cityInput).then(({ data }) => setCitySuggestions(data))
+    }, 200)
+    return () => clearTimeout(t)
+  }, [cityInput])
+
+  // Self-heal: drop ?sort=nearest / ?radius=N when no anchor is resolvable
+  // so a stale URL from a prior worker-profile state doesn't strand the user.
+  useEffect(() => {
+    if (!workerCoordsChecked) return
+    if (hasAnchor) return
+    const stuckSort = sortBy === 'nearest'
+    const stuckRadius = radiusMi !== null
+    if (!stuckSort && !stuckRadius) return
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev)
+        if (stuckSort) next.delete('sort')
+        if (stuckRadius) next.delete('radius')
+        return next
+      },
+      { replace: true }
+    )
+  }, [workerCoordsChecked, hasAnchor, sortBy, radiusMi, setSearchParams])
+
   // ---- Local UI state (not URL-syncable) ----
   const [locationView, setLocationView] = useState(false)
   const [quickApplyJob, setQuickApplyJob] = useState<Job | null>(null)
@@ -165,7 +474,9 @@ export const JobsPage: React.FC = () => {
     selectedTypes.length +
     (regulixOnly ? 1 : 0) +
     (sponsoredOnly ? 1 : 0) +
-    (payRangeIdx > 0 ? 1 : 0)
+    (payRangeIdx > 0 ? 1 : 0) +
+    (radiusMi != null ? 1 : 0) +
+    (nearCity != null ? 1 : 0)
 
   const handleResetFilters = () => setSearchParams({}, { replace: true })
 
@@ -245,7 +556,27 @@ export const JobsPage: React.FC = () => {
     const pr = PAY_RANGES[payRangeIdx]
     if (pr.min > 0 || pr.max < Infinity)
       list = list.filter((j) => j.payMin >= pr.min && j.payMax <= pr.max + 5)
+
+    // Distance compute / filter. Attach distanceMi to a fresh copy of each
+    // matching job so JobCard can render the pill without us mutating the
+    // cached `jobsList` rows.
+    if (anchorCoords) {
+      const { latitude: aLat, longitude: aLng } = anchorCoords
+      list = list.map((j) => {
+        if (j.latitude == null || j.longitude == null) return { ...j, distanceMi: null }
+        return { ...j, distanceMi: haversineMi(aLat, aLng, j.latitude, j.longitude) }
+      })
+      if (radiusMi != null) {
+        list = list.filter((j) => j.distanceMi != null && j.distanceMi <= radiusMi)
+      }
+    }
+
     list = [...list].sort((a, b) => {
+      if (sortBy === 'nearest') {
+        return (
+          (a.distanceMi ?? Number.POSITIVE_INFINITY) - (b.distanceMi ?? Number.POSITIVE_INFINITY)
+        )
+      }
       if (sortBy === 'recent') return a.postedDaysAgo - b.postedDaysAgo
       if (sortBy === 'pay') return b.payMax - a.payMax
       return b.totalApplicants - a.totalApplicants
@@ -260,6 +591,8 @@ export const JobsPage: React.FC = () => {
     sponsoredOnly,
     payRangeIdx,
     sortBy,
+    anchorCoords,
+    radiusMi,
   ])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
@@ -743,6 +1076,27 @@ export const JobsPage: React.FC = () => {
 
               <div style={{ height: 1, background: 'var(--kt-border)', margin: '16px 0' }} />
 
+              <DistanceFilter
+                nearCity={nearCity}
+                nearState={nearState}
+                radiusMi={radiusMi}
+                hasWorkerCoords={workerCoords !== null}
+                cityInput={cityInput}
+                setCityInput={setCityInput}
+                citySuggestions={citySuggestions}
+                cityPickerOpen={cityPickerOpen}
+                setCityPickerOpen={setCityPickerOpen}
+                onPickCity={(c, s) => {
+                  updateFilters({ near: `${c}, ${s}` })
+                  setCityInput('')
+                  setCityPickerOpen(false)
+                }}
+                onClearCity={() => updateFilters({ near: null })}
+                onSetRadius={(mi) => updateFilters({ radius: mi === null ? null : String(mi) })}
+              />
+
+              <div style={{ height: 1, background: 'var(--kt-border)', margin: '16px 0' }} />
+
               <FilterSection title="Special">
                 <CheckFilter
                   label="Regulix Ready Applicants"
@@ -908,27 +1262,43 @@ export const JobsPage: React.FC = () => {
                   <span style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text-muted)' }}>
                     Sort:
                   </span>
-                  {(['recent', 'pay', 'applicants'] as const).map((s) => (
-                    <button
-                      key={s}
-                      onClick={() => updateFilters({ sort: s === 'recent' ? null : s })}
-                      style={{
-                        padding: '5px 12px',
-                        borderRadius: 'var(--kt-radius-full)',
-                        border: `1.5px solid ${sortBy === s ? 'var(--kt-primary)' : 'var(--kt-border)'}`,
-                        background: sortBy === s ? 'var(--kt-primary-subtle)' : 'transparent',
-                        color: sortBy === s ? 'var(--kt-primary)' : 'var(--kt-text-muted)',
-                        fontWeight:
-                          sortBy === s ? 'var(--kt-weight-semibold)' : 'var(--kt-weight-normal)',
-                        fontSize: 'var(--kt-text-sm)',
-                        cursor: 'pointer',
-                        fontFamily: 'var(--kt-font-sans)',
-                        transition: 'all var(--kt-duration-fast)',
-                      }}
-                    >
-                      {s === 'recent' ? 'Most Recent' : s === 'pay' ? 'Highest Pay' : 'Popular'}
-                    </button>
-                  ))}
+                  {(['recent', 'nearest', 'pay', 'applicants'] as const).map((s) => {
+                    const disabled = s === 'nearest' && !hasAnchor
+                    return (
+                      <button
+                        key={s}
+                        onClick={() => updateFilters({ sort: s === 'recent' ? null : s })}
+                        disabled={disabled}
+                        title={
+                          disabled
+                            ? 'Pick a city or set your profile location to enable Nearest sort'
+                            : undefined
+                        }
+                        style={{
+                          padding: '5px 12px',
+                          borderRadius: 'var(--kt-radius-full)',
+                          border: `1.5px solid ${sortBy === s ? 'var(--kt-primary)' : 'var(--kt-border)'}`,
+                          background: sortBy === s ? 'var(--kt-primary-subtle)' : 'transparent',
+                          color: sortBy === s ? 'var(--kt-primary)' : 'var(--kt-text-muted)',
+                          fontWeight:
+                            sortBy === s ? 'var(--kt-weight-semibold)' : 'var(--kt-weight-normal)',
+                          fontSize: 'var(--kt-text-sm)',
+                          cursor: disabled ? 'not-allowed' : 'pointer',
+                          opacity: disabled ? 0.55 : 1,
+                          fontFamily: 'var(--kt-font-sans)',
+                          transition: 'all var(--kt-duration-fast)',
+                        }}
+                      >
+                        {s === 'recent'
+                          ? 'Most Recent'
+                          : s === 'nearest'
+                            ? 'Nearest'
+                            : s === 'pay'
+                              ? 'Highest Pay'
+                              : 'Popular'}
+                      </button>
+                    )
+                  })}
                 </div>
               </div>
 
@@ -1274,6 +1644,28 @@ export const JobsPage: React.FC = () => {
 
               <div style={{ height: 1, background: 'var(--kt-border)', margin: '16px 0' }} />
 
+              {/* Distance */}
+              <DistanceFilter
+                nearCity={nearCity}
+                nearState={nearState}
+                radiusMi={radiusMi}
+                hasWorkerCoords={workerCoords !== null}
+                cityInput={cityInput}
+                setCityInput={setCityInput}
+                citySuggestions={citySuggestions}
+                cityPickerOpen={cityPickerOpen}
+                setCityPickerOpen={setCityPickerOpen}
+                onPickCity={(c, s) => {
+                  updateFilters({ near: `${c}, ${s}` })
+                  setCityInput('')
+                  setCityPickerOpen(false)
+                }}
+                onClearCity={() => updateFilters({ near: null })}
+                onSetRadius={(mi) => updateFilters({ radius: mi === null ? null : String(mi) })}
+              />
+
+              <div style={{ height: 1, background: 'var(--kt-border)', margin: '16px 0' }} />
+
               {/* Special */}
               <FilterSection title="Special">
                 <CheckFilter
@@ -1292,40 +1684,51 @@ export const JobsPage: React.FC = () => {
 
           {drawerType === 'sort' && (
             <div style={{ paddingTop: 4 }}>
-              {(['recent', 'pay', 'applicants'] as const).map((s) => (
-                <button
-                  key={s}
-                  className={[styles.sortOption, sortBy === s ? styles.sortActive : '']
-                    .filter(Boolean)
-                    .join(' ')}
-                  onClick={() => updateFilters({ sort: s === 'recent' ? null : s })}
-                >
-                  <div
-                    style={{
-                      width: 18,
-                      height: 18,
-                      borderRadius: '50%',
-                      border: `2px solid ${sortBy === s ? 'var(--kt-primary)' : 'var(--kt-border-strong)'}`,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
-                    }}
+              {(['recent', 'nearest', 'pay', 'applicants'] as const).map((s) => {
+                const disabled = s === 'nearest' && !hasAnchor
+                return (
+                  <button
+                    key={s}
+                    disabled={disabled}
+                    className={[styles.sortOption, sortBy === s ? styles.sortActive : '']
+                      .filter(Boolean)
+                      .join(' ')}
+                    onClick={() => updateFilters({ sort: s === 'recent' ? null : s })}
+                    style={disabled ? { opacity: 0.55, cursor: 'not-allowed' } : undefined}
                   >
-                    {sortBy === s && (
-                      <div
-                        style={{
-                          width: 8,
-                          height: 8,
-                          borderRadius: '50%',
-                          background: 'var(--kt-primary)',
-                        }}
-                      />
-                    )}
-                  </div>
-                  {s === 'recent' ? 'Most Recent' : s === 'pay' ? 'Highest Pay' : 'Most Applied'}
-                </button>
-              ))}
+                    <div
+                      style={{
+                        width: 18,
+                        height: 18,
+                        borderRadius: '50%',
+                        border: `2px solid ${sortBy === s ? 'var(--kt-primary)' : 'var(--kt-border-strong)'}`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                      }}
+                    >
+                      {sortBy === s && (
+                        <div
+                          style={{
+                            width: 8,
+                            height: 8,
+                            borderRadius: '50%',
+                            background: 'var(--kt-primary)',
+                          }}
+                        />
+                      )}
+                    </div>
+                    {s === 'recent'
+                      ? 'Most Recent'
+                      : s === 'nearest'
+                        ? 'Nearest'
+                        : s === 'pay'
+                          ? 'Highest Pay'
+                          : 'Most Applied'}
+                  </button>
+                )
+              })}
             </div>
           )}
         </div>

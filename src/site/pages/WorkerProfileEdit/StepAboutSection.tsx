@@ -102,6 +102,7 @@ export const StepAboutSection: React.FC<{
         value={data.primaryTrade}
         onChange={(e) => onChange({ ...data, primaryTrade: e.target.value })}
         placeholder="e.g. Journeyman Carpenter, Registered Nurse"
+        required
       />
 
       <div>

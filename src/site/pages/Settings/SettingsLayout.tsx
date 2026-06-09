@@ -5,6 +5,23 @@ import styles from './SettingsLayout.module.css'
 type NavItem = { to: string; label: string }
 
 const ORG_NAV: NavItem[] = [{ to: '/site/settings/pipeline', label: 'Pipeline' }]
+const ACCOUNT_NAV: NavItem[] = [{ to: '/site/settings/account', label: 'Account & billing' }]
+
+const NavList: React.FC<{ items: NavItem[] }> = ({ items }) => (
+  <>
+    {items.map((item) => (
+      <NavLink
+        key={item.to}
+        to={item.to}
+        className={({ isActive }) =>
+          isActive ? `${styles.navLink} ${styles.navLinkActive}` : styles.navLink
+        }
+      >
+        {item.label}
+      </NavLink>
+    ))}
+  </>
+)
 
 const SettingsLayout: React.FC = () => {
   return (
@@ -13,17 +30,9 @@ const SettingsLayout: React.FC = () => {
       <div className={styles.shell}>
         <nav className={styles.nav} aria-label="Settings navigation">
           <div className={styles.navSection}>Organization</div>
-          {ORG_NAV.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={({ isActive }) =>
-                isActive ? `${styles.navLink} ${styles.navLinkActive}` : styles.navLink
-              }
-            >
-              {item.label}
-            </NavLink>
-          ))}
+          <NavList items={ORG_NAV} />
+          <div className={styles.navSection}>Account</div>
+          <NavList items={ACCOUNT_NAV} />
         </nav>
         <main className={styles.content}>
           <Outlet />

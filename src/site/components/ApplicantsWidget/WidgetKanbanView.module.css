@@ -253,6 +253,10 @@
   flex-shrink: 0;
 }
 
+.cardAppliedLabel {
+  color: var(--kt-text-placeholder, var(--kt-text-muted));
+}
+
 /* Overflow dropdown — portaled to body, positioned via inline top/right. */
 .overflowDropdown {
   position: fixed;

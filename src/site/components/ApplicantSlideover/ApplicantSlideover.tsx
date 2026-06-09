@@ -1,11 +1,11 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import type { CompanyApplicant, ApplicationStatus } from '../../types'
 import { isTerminal, TERMINAL_LABEL } from '../../types'
 import { CloseIcon, StarIcon, MessageIcon, ChevronDownIcon, DotsHorizontalIcon } from '../../icons'
 import { RegulixBadge } from '../RegulixBadge/RegulixBadge'
-import { Modal } from '../../../components'
+import { Modal, useToast } from '../../../components'
 import { ApplicantPreviewBody } from '../ApplicantPreviewBody/ApplicantPreviewBody'
 import { PipelineTab } from './PipelineTab'
 import { LogTab } from './LogTab'
@@ -19,21 +19,35 @@ import {
   rejectApplicant,
   hireApplicant,
   archiveApplicant,
+  shortlistApplicant,
   getApplicantDetail,
 } from '../../services/applicantService'
+import {
+  addWorkerToKrew,
+  getKrewRelationship,
+  type WorkerRelationshipSummary,
+} from '../../services/krewService'
 import { useAuth } from '../../context/AuthContext'
+import type { ApplicationDrawerEntry } from '../DrawerSystem/DrawerStackContext'
+import { KrewBadge } from '../KrewBadge/KrewBadge'
 import styles from './ApplicantSlideover.module.css'
 
 type Tab = 'summary' | 'pipeline' | 'log'
 
+// NOTE — this component is the ApplicationDrawer of the drawer-stack spec. The
+// file is named ApplicantSlideover for historical reasons; rename is a follow-up.
+// It renders content only: the surrounding scrim/panel/animation lives in
+// DrawerShell, which DrawerSystem wraps around this output.
+
 export interface ApplicantSlideoverProps {
-  applicant: CompanyApplicant | null
+  entry: ApplicationDrawerEntry
+  /** Called when the user wants to close this drawer (close button click).
+   *  Wired by DrawerSystem to popDrawer. */
   onClose: () => void
-  onMessage: (id: string) => void
-  onShortlist: (id: string) => void
-  onReject?: (applicant: CompanyApplicant) => void
-  onHire?: (applicant: CompanyApplicant) => void
-  onChanged?: () => void
+  /** When provided (drawer is the top of a stacked pair), renders a "Back to
+   *  [label]" affordance in the hero action row. */
+  onBack?: () => void
+  backLabel?: string
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────
@@ -58,30 +72,27 @@ function formatTimeInStage(iso: string | null): string {
 }
 
 export const ApplicantSlideover: React.FC<ApplicantSlideoverProps> = ({
-  applicant,
+  entry,
   onClose,
-  onMessage,
-  onShortlist,
-  onReject,
-  onHire,
-  onChanged,
+  onBack,
+  backLabel,
 }) => {
-  const open = applicant !== null
   const { user } = useAuth()
   const navigate = useNavigate()
-  const [activeTab, setActiveTab] = useState<Tab>('summary')
+  const { toast } = useToast()
+  const defaultTab: Tab = entry.defaultTab ?? 'summary'
+  const [activeTab, setActiveTab] = useState<Tab>(defaultTab)
   const [rejectConfirm, setRejectConfirm] = useState(false)
   const [hireConfirm, setHireConfirm] = useState(false)
   const [archiveConfirm, setArchiveConfirm] = useState(false)
   const [stageOptions, setStageOptions] = useState<PipelineStage[]>([])
-  // Count of incomplete required tasks in the applicant's current stage. Gates
-  // forward stage moves in the StagePillControl. Seeded from a fetch on open,
-  // then kept live by PipelineTab as the user completes/skips tasks.
   const [requiredIncomplete, setRequiredIncomplete] = useState(0)
-  // The list/kanban widgets load a lightweight applicant (no skills, certs, or
-  // work history). Fetch the full record on open so the summary tab can render
-  // those sections; falls back to the lightweight prop until it arrives.
-  const [detail, setDetail] = useState<CompanyApplicant | null>(null)
+  // Bootstrap from the preload (zero-flicker open), then replace with the
+  // hydrated detail (skills, certs, work history) once the fetch returns.
+  const [applicant, setApplicant] = useState<CompanyApplicant | null>(
+    entry.preloadedApplicant ?? null
+  )
+  const [relationship, setRelationship] = useState<WorkerRelationshipSummary | null>(null)
 
   // Fetch org-level pipeline stages once per company session.
   useEffect(() => {
@@ -92,196 +103,271 @@ export const ApplicantSlideover: React.FC<ApplicantSlideoverProps> = ({
     })
   }, [user?.id])
 
-  // Seed the required-task gate whenever a different applicant or stage opens.
-  const applicantId = applicant?.id
+  // Seed the required-task gate from the current stage.
   const currentStageId = applicant?.currentStageId
   useEffect(() => {
-    if (!applicantId || !currentStageId) {
+    if (!currentStageId) {
       setRequiredIncomplete(0)
       return
     }
     let cancelled = false
-    getBlockingRequiredCount(applicantId, currentStageId).then((n) => {
+    getBlockingRequiredCount(entry.applicationId, currentStageId).then((n) => {
       if (!cancelled) setRequiredIncomplete(n)
     })
     return () => {
       cancelled = true
     }
-  }, [applicantId, currentStageId])
+  }, [entry.applicationId, currentStageId])
 
-  // Hydrate the full applicant (skills, certs, work history) for the summary tab.
+  // Hydrate the full record (skills / certs / work history) for the Summary tab.
   useEffect(() => {
-    if (!applicantId || !user?.id) {
-      setDetail(null)
-      return
-    }
+    if (!user?.id) return
     let cancelled = false
-    getApplicantDetail(applicantId, user.id).then(({ data }) => {
-      if (!cancelled) setDetail(data)
+    getApplicantDetail(entry.applicationId, user.id).then(({ data }) => {
+      if (!cancelled && data) setApplicant(data)
     })
     return () => {
       cancelled = true
     }
-  }, [applicantId, user?.id])
+  }, [entry.applicationId, user?.id])
 
-  const handleKey = useCallback(
-    (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    },
-    [onClose]
-  )
-
+  // Fetch the krew relationship summary for the strip at the top of the
+  // Summary tab. Light query; runs once per worker.
+  const workerId = applicant?.workerId
   useEffect(() => {
-    if (!open) {
-      setActiveTab('summary')
+    if (!workerId) return
+    let cancelled = false
+    getKrewRelationship(workerId).then(({ data }) => {
+      if (!cancelled) setRelationship(data)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [workerId])
+
+  // Deep-link case: no preload and no hydration yet. Render a minimal frame.
+  if (!applicant) {
+    return (
+      <>
+        <div className={styles.hero}>
+          <div className={styles.heroActions}>
+            {onBack && (
+              <button
+                type="button"
+                className={styles.backBtn}
+                onClick={onBack}
+                aria-label={backLabel ? `Back to ${backLabel}` : 'Back'}
+              >
+                <span className={styles.backArrow} aria-hidden="true">
+                  ←
+                </span>
+                <span className={styles.backLabel}>
+                  {backLabel ? `Back to ${backLabel}` : 'Back'}
+                </span>
+              </button>
+            )}
+            <div className={styles.iconGroup} />
+            <button type="button" className={styles.closeBtn} onClick={onClose} aria-label="Close">
+              <CloseIcon size={18} />
+            </button>
+          </div>
+          <div className={styles.heroTop}>
+            <div className={styles.identityText}>
+              <h2 className={styles.fullName}>Loading applicant…</h2>
+            </div>
+          </div>
+        </div>
+      </>
+    )
+  }
+
+  const handleMessage = (): void => {
+    // Messaging UI isn't built yet — keep the original alert behavior so the
+    // action surface still does something useful.
+    window.alert('Messaging UI not built yet. Navigate to /site/messages to continue.')
+  }
+
+  const handleShortlist = async (): Promise<void> => {
+    // Optimistic toggle on local state.
+    const prev = applicant
+    setApplicant({ ...applicant, isShortlisted: !applicant.isShortlisted })
+    const { error } = await shortlistApplicant(applicant.id)
+    if (error) {
+      setApplicant(prev)
       return
     }
-    document.addEventListener('keydown', handleKey)
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.removeEventListener('keydown', handleKey)
-      document.body.style.overflow = ''
-    }
-  }, [open, handleKey])
+    entry.onWrite?.()
+  }
 
-  if (!open || !applicant) return null
-
-  return createPortal(
+  return (
     <>
-      <div className={styles.overlay} onClick={onClose} role="dialog" aria-modal="true">
-        <aside className={styles.panel} onClick={(e) => e.stopPropagation()}>
-          {/* ── Identity header ──────────────────────────────────────────── */}
-          <div className={styles.hero}>
-            <div className={styles.heroActions}>
-              <div className={styles.iconGroup}>
-                <button
-                  type="button"
-                  className={styles.iconBtn}
-                  onClick={() => onMessage(applicant.id)}
-                  aria-label="Message applicant"
-                >
-                  <MessageIcon size={16} />
-                </button>
-                <button
-                  type="button"
-                  className={[styles.iconBtn, applicant.isShortlisted ? styles.iconBtnActive : '']
-                    .filter(Boolean)
-                    .join(' ')}
-                  onClick={() => onShortlist(applicant.id)}
-                  aria-pressed={applicant.isShortlisted}
-                  aria-label={
-                    applicant.isShortlisted ? 'Remove from shortlist' : 'Add to shortlist'
-                  }
-                >
-                  <StarIcon
-                    size={16}
-                    color={applicant.isShortlisted ? 'var(--kt-warning)' : undefined}
-                  />
-                </button>
-                <OverflowMenu
-                  items={[
-                    {
-                      label: 'Open full profile',
-                      onClick: () => {
-                        navigate(`/site/dashboard/applicants/worker/${applicant.workerId}`)
-                        onClose()
+      {/* ── Identity header ──────────────────────────────────────────── */}
+      <div className={styles.hero}>
+        <div className={styles.heroActions}>
+          {onBack && (
+            <button
+              type="button"
+              className={styles.backBtn}
+              onClick={onBack}
+              aria-label={backLabel ? `Back to ${backLabel}` : 'Back'}
+            >
+              <span className={styles.backArrow} aria-hidden="true">
+                ←
+              </span>
+              <span className={styles.backLabel}>
+                {backLabel ? `Back to ${backLabel}` : 'Back'}
+              </span>
+            </button>
+          )}
+          <div className={styles.iconGroup}>
+            <button
+              type="button"
+              className={styles.iconBtn}
+              onClick={handleMessage}
+              aria-label="Message applicant"
+            >
+              <MessageIcon size={16} />
+            </button>
+            <button
+              type="button"
+              className={[styles.iconBtn, applicant.isShortlisted ? styles.iconBtnActive : '']
+                .filter(Boolean)
+                .join(' ')}
+              onClick={() => void handleShortlist()}
+              aria-pressed={applicant.isShortlisted}
+              aria-label={applicant.isShortlisted ? 'Remove from shortlist' : 'Add to shortlist'}
+            >
+              <StarIcon
+                size={16}
+                color={applicant.isShortlisted ? 'var(--kt-warning)' : undefined}
+              />
+            </button>
+            <OverflowMenu
+              items={[
+                {
+                  label: 'Open full profile',
+                  onClick: () => {
+                    navigate(`/site/dashboard/applicants/worker/${applicant.workerId}`)
+                    onClose()
+                  },
+                },
+                {
+                  label: 'Add to My Krew',
+                  onClick: async () => {
+                    const { error } = await addWorkerToKrew(applicant.workerId, {
+                      source: 'inbound_application',
+                    })
+                    if (error) {
+                      toast({
+                        variant: 'danger',
+                        title: 'Could not add to My Krew',
+                        description: error,
+                      })
+                    } else {
+                      toast({
+                        variant: 'success',
+                        title: 'Added to My Krew',
+                        description: `${applicant.workerFullName} is now in your Krew.`,
+                      })
+                    }
+                  },
+                },
+                ...(isTerminal(applicant.status)
+                  ? []
+                  : [{ label: 'Mark hired', onClick: () => setHireConfirm(true) }]),
+                {
+                  label: 'Archive',
+                  onClick: () => setArchiveConfirm(true),
+                },
+                { divider: true },
+                ...(isTerminal(applicant.status)
+                  ? []
+                  : [
+                      {
+                        label: 'Reject',
+                        danger: true,
+                        onClick: () => setRejectConfirm(true),
                       },
-                    },
-                    ...(isTerminal(applicant.status)
-                      ? []
-                      : [{ label: 'Mark hired', onClick: () => setHireConfirm(true) }]),
-                    {
-                      label: 'Archive',
-                      onClick: () => setArchiveConfirm(true),
-                    },
-                    { divider: true },
-                    ...(isTerminal(applicant.status)
-                      ? []
-                      : [
-                          {
-                            label: 'Reject',
-                            danger: true,
-                            onClick: () => setRejectConfirm(true),
-                          },
-                        ]),
-                  ]}
-                />
-              </div>
-              <button
-                type="button"
-                className={styles.closeBtn}
-                onClick={onClose}
-                aria-label="Close"
-              >
-                <CloseIcon size={18} />
-              </button>
-            </div>
-            <div className={styles.heroTop}>
-              <div className={styles.avatar}>{applicant.workerInitials}</div>
-              <div className={styles.identityText}>
-                <div className={styles.nameRow}>
-                  <h2 className={styles.fullName}>{applicant.workerFullName}</h2>
-                  {applicant.isRegulixReady && <RegulixBadge size="sm" />}
-                </div>
-                <p className={styles.jobRef}>
-                  Applied for <strong>{applicant.jobTitle}</strong>
-                  {' · '}
-                  {formatAppliedShort(applicant.appliedAt)}
-                </p>
-                <div className={styles.stageRow}>
-                  <span className={styles.stageRowLabel}>Stage</span>
-                  <StagePillControl
-                    applicant={applicant}
-                    stages={stageOptions}
-                    requiredIncomplete={requiredIncomplete}
-                    onMoveTo={async (stageId) => {
-                      await setApplicantStage(applicant.id, stageId)
-                      onChanged?.()
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
+                    ]),
+              ]}
+            />
           </div>
-
-          {/* ── Tab strip ────────────────────────────────────────────────── */}
-          <div className={styles.tabStrip} role="tablist">
-            {(['summary', 'pipeline', 'log'] as Tab[]).map((tab) => (
-              <button
-                key={tab}
-                type="button"
-                role="tab"
-                aria-selected={activeTab === tab}
-                className={[styles.tab, activeTab === tab ? styles.tabActive : '']
-                  .filter(Boolean)
-                  .join(' ')}
-                onClick={() => setActiveTab(tab)}
-              >
-                {tab.charAt(0).toUpperCase() + tab.slice(1)}
-              </button>
-            ))}
-          </div>
-
-          {/* ── Tab content ──────────────────────────────────────────────── */}
-          <div className={styles.tabContent}>
-            {activeTab === 'summary' && (
-              <div className={styles.summaryScroll}>
-                <ApplicantPreviewBody
-                  applicant={detail && detail.id === applicant.id ? detail : applicant}
-                />
-              </div>
+          <button type="button" className={styles.closeBtn} onClick={onClose} aria-label="Close">
+            <CloseIcon size={18} />
+          </button>
+        </div>
+        <div className={styles.heroTop}>
+          <div className={styles.avatar}>
+            {applicant.workerAvatar ? (
+              <img src={applicant.workerAvatar} alt="" />
+            ) : (
+              applicant.workerInitials
             )}
-            {activeTab === 'pipeline' && (
-              <PipelineTab
+          </div>
+          <div className={styles.identityText}>
+            <div className={styles.nameRow}>
+              <h2 className={styles.fullName}>
+                {applicant.workerFirstName}
+                {applicant.workerLastInitial ? ` ${applicant.workerLastInitial}.` : ''}
+              </h2>
+              {applicant.isRegulixReady && <RegulixBadge size="sm" />}
+              <KrewBadge inKrew={relationship?.inKrew} />
+            </div>
+            <p className={styles.jobRef}>
+              Applied for <strong>{applicant.jobTitle}</strong>
+              {' · '}
+              {formatAppliedShort(applicant.appliedAt)}
+            </p>
+            <div className={styles.stageRow}>
+              <span className={styles.stageRowLabel}>Stage</span>
+              <StagePillControl
                 applicant={applicant}
                 stages={stageOptions}
-                onRequiredCountChange={setRequiredIncomplete}
-                onChanged={onChanged}
+                requiredIncomplete={requiredIncomplete}
+                onMoveTo={async (stageId) => {
+                  await setApplicantStage(applicant.id, stageId)
+                  entry.onWrite?.()
+                }}
               />
-            )}
-            {activeTab === 'log' && <LogTab applicationId={applicant.id} stages={stageOptions} />}
+            </div>
           </div>
-        </aside>
+        </div>
+      </div>
+
+      {/* ── Tab strip ────────────────────────────────────────────────── */}
+      <div className={styles.tabStrip} role="tablist">
+        {(['summary', 'pipeline', 'log'] as Tab[]).map((tab) => (
+          <button
+            key={tab}
+            type="button"
+            role="tab"
+            aria-selected={activeTab === tab}
+            className={[styles.tab, activeTab === tab ? styles.tabActive : '']
+              .filter(Boolean)
+              .join(' ')}
+            onClick={() => setActiveTab(tab)}
+          >
+            {tab.charAt(0).toUpperCase() + tab.slice(1)}
+          </button>
+        ))}
+      </div>
+
+      {/* ── Tab content ──────────────────────────────────────────────── */}
+      <div className={styles.tabContent}>
+        {activeTab === 'summary' && (
+          <div className={styles.summaryScroll}>
+            <ApplicantPreviewBody applicant={applicant} />
+          </div>
+        )}
+        {activeTab === 'pipeline' && (
+          <PipelineTab
+            applicant={applicant}
+            stages={stageOptions}
+            onRequiredCountChange={setRequiredIncomplete}
+            onChanged={entry.onWrite}
+          />
+        )}
+        {activeTab === 'log' && <LogTab applicationId={applicant.id} stages={stageOptions} />}
       </div>
 
       {/* Reject confirmation */}
@@ -305,8 +391,7 @@ export const ApplicantSlideover: React.FC<ApplicantSlideoverProps> = ({
               onClick={async () => {
                 setRejectConfirm(false)
                 await rejectApplicant(applicant.id)
-                onReject?.(applicant)
-                onChanged?.()
+                entry.onWrite?.()
                 onClose()
               }}
             >
@@ -345,8 +430,7 @@ export const ApplicantSlideover: React.FC<ApplicantSlideoverProps> = ({
               onClick={async () => {
                 setHireConfirm(false)
                 await hireApplicant(applicant.id)
-                onHire?.(applicant)
-                onChanged?.()
+                entry.onWrite?.()
                 onClose()
               }}
             >
@@ -383,7 +467,7 @@ export const ApplicantSlideover: React.FC<ApplicantSlideoverProps> = ({
               onClick={async () => {
                 setArchiveConfirm(false)
                 await archiveApplicant(applicant.id)
-                onChanged?.()
+                entry.onWrite?.()
                 onClose()
               }}
             >
@@ -397,16 +481,11 @@ export const ApplicantSlideover: React.FC<ApplicantSlideoverProps> = ({
           Archived filter. Proceed?
         </p>
       </Modal>
-    </>,
-    document.body
+    </>
   )
 }
 
 // ── StagePillControl ────────────────────────────────────────────────────────
-//
-// The application-control surface: shows current stage + time-in-stage, and
-// opens a dropdown of pipeline stages plus terminal actions (Reject / Mark
-// hired). This is the *only* stage-advancement control in the drawer.
 
 interface StagePillControlProps {
   applicant: CompanyApplicant
@@ -428,7 +507,7 @@ const StagePillControl: React.FC<StagePillControlProps> = ({
 
   useEffect(() => {
     if (!open) return
-    const h = (e: MouseEvent) => {
+    const h = (e: MouseEvent): void => {
       if (btnRef.current?.contains(e.target as Node) || menuRef.current?.contains(e.target as Node))
         return
       setOpen(false)
@@ -437,7 +516,7 @@ const StagePillControl: React.FC<StagePillControlProps> = ({
     return () => document.removeEventListener('mousedown', h)
   }, [open])
 
-  function toggle() {
+  function toggle(): void {
     if (!open && btnRef.current) {
       const r = btnRef.current.getBoundingClientRect()
       setPos({ top: r.bottom + 4, left: r.left, width: r.width })
@@ -445,13 +524,11 @@ const StagePillControl: React.FC<StagePillControlProps> = ({
     setOpen((v) => !v)
   }
 
-  function pick(stageId: string) {
+  function pick(stageId: string): void {
     setOpen(false)
     if (stageId !== applicant.currentStageId) onMoveTo(stageId)
   }
 
-  // Forward stages are locked while the current stage has incomplete required
-  // tasks. Backward moves stay open so a mis-step can always be corrected.
   const currentStage = stages.find((s) => s.id === applicant.currentStageId)
   const gateForward = requiredIncomplete > 0
 
@@ -532,8 +609,6 @@ const StagePillControl: React.FC<StagePillControlProps> = ({
 }
 
 // ── OverflowMenu ───────────────────────────────────────────────────────────
-//
-// Auxiliary actions only. Stage-change actions live in the StagePillControl.
 
 type OverflowItem = { label: string; danger?: boolean; onClick: () => void } | { divider: true }
 
@@ -545,7 +620,7 @@ const OverflowMenu: React.FC<{ items: OverflowItem[] }> = ({ items }) => {
 
   useEffect(() => {
     if (!open) return
-    const h = (e: MouseEvent) => {
+    const h = (e: MouseEvent): void => {
       if (btnRef.current?.contains(e.target as Node) || menuRef.current?.contains(e.target as Node))
         return
       setOpen(false)
@@ -554,7 +629,7 @@ const OverflowMenu: React.FC<{ items: OverflowItem[] }> = ({ items }) => {
     return () => document.removeEventListener('mousedown', h)
   }, [open])
 
-  function toggle() {
+  function toggle(): void {
     if (!open && btnRef.current) {
       const r = btnRef.current.getBoundingClientRect()
       setPos({ top: r.bottom + 4, right: window.innerWidth - r.right })

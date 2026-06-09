@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import type { User, Session } from '@supabase/supabase-js'
 import { supabase } from '../../lib/supabase'
+import { clearSessionCache } from '../utils/sessionCache'
 
 export type Persona = 'worker' | 'company'
 
@@ -20,7 +21,9 @@ interface AuthState {
     displayName?: string,
     lastName?: string,
     industry?: string,
-    companySize?: string
+    phone?: string,
+    hqCity?: string,
+    hqState?: string
   ) => Promise<{ error: string | null; persona?: Persona; userId?: string }>
   logout: () => Promise<void>
   resendVerificationEmail: () => Promise<{ error: string | null }>
@@ -109,7 +112,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     displayName = '',
     lastName = '',
     industry = '',
-    companySize = ''
+    phone = '',
+    hqCity = '',
+    hqState = ''
   ): Promise<{ error: string | null; persona?: Persona; userId?: string }> => {
     // Pass role + name in metadata — the handle_new_user trigger creates the rows
     const { data, error } = await supabase.auth.signUp({
@@ -122,7 +127,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           last_name: role === 'worker' ? lastName : '',
           company_name: role === 'company' ? displayName : '',
           industry: role === 'company' ? industry : '',
-          company_size: role === 'company' ? companySize : '',
+          phone: role === 'company' ? phone : '',
+          hq_city: role === 'company' ? hqCity : '',
+          hq_state: role === 'company' ? hqState : '',
         },
       },
     })
@@ -148,6 +155,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await supabase.auth.signOut()
     setPersonaState(null)
     localStorage.removeItem('kt_profile_edit_v6')
+    // Drop cached company-scoped Discover data so a fresh login doesn't read
+    // the previous account's skills/coords/active-jobs entries.
+    clearSessionCache()
   }
 
   const setPersona = (p: Persona) => setPersonaState(p)

@@ -5,6 +5,7 @@ import { StatCard } from '../components/StatCard/StatCard'
 import { ApplicantsWidget } from '../components/ApplicantsWidget/ApplicantsWidget'
 import { NeedsAttentionWidget } from '../components/NeedsAttentionWidget/NeedsAttentionWidget'
 import { WeekCalendarWidget } from '../components/WeekCalendarWidget/WeekCalendarWidget'
+import { CompanyProfileNudge } from '../components/CompanyProfileNudge/CompanyProfileNudge'
 import { RegulixLogo } from '../components/RegulixLogo/RegulixLogo'
 import { BriefcaseIcon, UsersIcon, PersonIcon, RocketIcon, CheckIcon, CloseIcon } from '../icons'
 import { useAuth } from '../context/AuthContext'
@@ -256,6 +257,9 @@ export const CompanyDashboard: React.FC = () => {
             <StatCard key={s.label} {...s} />
           ))}
         </div>
+
+        {/* ── Profile completeness nudge (spec §5.1) ───────────────────── */}
+        {user?.id && <CompanyProfileNudge companyId={user.id} />}
 
         {/* ── Regulix promo banner ─────────────────────────────────────── */}
         {!regulixBannerDismissed && (

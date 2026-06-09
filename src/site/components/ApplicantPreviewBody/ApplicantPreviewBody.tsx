@@ -1,6 +1,7 @@
 import React from 'react'
 import type { CompanyApplicant } from '../../types'
-import { RegulixMarkIcon } from '../../icons'
+import { InfoCircleIcon, RegulixMarkIcon } from '../../icons'
+import { Tooltip } from '../../../components'
 import { KrewtreeMark } from '../Logo'
 import styles from './ApplicantPreviewBody.module.css'
 
@@ -17,47 +18,35 @@ export const ApplicantPreviewBody: React.FC<ApplicantPreviewBodyProps> = ({ appl
       <section className={styles.section}>
         <div className={styles.matchRow}>
           <h3 className={styles.sectionHeading}>Match score</h3>
-          <span className={styles.matchPct}>{applicant.matchScore}%</span>
-        </div>
-        <div className={styles.breakdown}>
-          <div className={styles.breakdownCell}>
-            <span className={styles.breakdownLabel}>Skills</span>
-            <span
-              className={[
-                styles.breakdownValue,
-                applicant.matchBreakdown.skills === 0 ? styles.breakdownValueZero : '',
-              ]
-                .filter(Boolean)
-                .join(' ')}
+          <div className={styles.matchValue}>
+            <span className={styles.matchPct}>{applicant.matchScore}%</span>
+            <Tooltip
+              position="bottom-end"
+              content={
+                <span className={styles.matchTooltip}>
+                  <span className={styles.matchTooltipRow}>
+                    <span>Skills</span>
+                    <span>{applicant.matchBreakdown.skills}%</span>
+                  </span>
+                  <span className={styles.matchTooltipRow}>
+                    <span>Location</span>
+                    <span>{applicant.matchBreakdown.location}%</span>
+                  </span>
+                  <span className={styles.matchTooltipRow}>
+                    <span>Availability</span>
+                    <span>{applicant.matchBreakdown.availability}%</span>
+                  </span>
+                </span>
+              }
             >
-              {applicant.matchBreakdown.skills}%
-            </span>
-          </div>
-          <div className={styles.breakdownCell}>
-            <span className={styles.breakdownLabel}>Location</span>
-            <span
-              className={[
-                styles.breakdownValue,
-                applicant.matchBreakdown.location === 0 ? styles.breakdownValueZero : '',
-              ]
-                .filter(Boolean)
-                .join(' ')}
-            >
-              {applicant.matchBreakdown.location}%
-            </span>
-          </div>
-          <div className={styles.breakdownCell}>
-            <span className={styles.breakdownLabel}>Availability</span>
-            <span
-              className={[
-                styles.breakdownValue,
-                applicant.matchBreakdown.availability === 0 ? styles.breakdownValueZero : '',
-              ]
-                .filter(Boolean)
-                .join(' ')}
-            >
-              {applicant.matchBreakdown.availability}%
-            </span>
+              <button
+                type="button"
+                className={styles.matchInfoBtn}
+                aria-label="Match score breakdown"
+              >
+                <InfoCircleIcon size={14} />
+              </button>
+            </Tooltip>
           </div>
         </div>
       </section>
@@ -111,6 +100,7 @@ export const ApplicantPreviewBody: React.FC<ApplicantPreviewBodyProps> = ({ appl
                     {!isLast && <div className={styles.timelineLine} />}
                   </div>
                   <div className={styles.timelineContent}>
+                    {job.isCurrent && <p className={styles.currentRoleLabel}>Currently at</p>}
                     <p className={styles.jobTitle}>{job.title}</p>
                     <p className={styles.jobMeta}>
                       {job.employer} · {job.duration}
@@ -135,6 +125,26 @@ export const ApplicantPreviewBody: React.FC<ApplicantPreviewBodyProps> = ({ appl
                   <p className={styles.certIssuer}>{c.issuer}</p>
                 </div>
                 {c.expiresOn && <span className={styles.certMeta}>Expires {c.expiresOn}</span>}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/* References */}
+      {applicant.workerReferences.length > 0 && (
+        <section className={styles.section}>
+          <h3 className={styles.sectionHeading}>References</h3>
+          <ul className={styles.certList}>
+            {applicant.workerReferences.map((r) => (
+              <li key={r.id} className={styles.certItem}>
+                <div className={styles.certText}>
+                  <p className={styles.certName}>{r.name}</p>
+                  <p className={styles.certIssuer}>{r.company}</p>
+                </div>
+                {(r.phone || r.email) && (
+                  <span className={styles.certMeta}>{r.phone ?? r.email}</span>
+                )}
               </li>
             ))}
           </ul>

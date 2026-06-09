@@ -1,7 +1,15 @@
 import React, { useState, useId } from 'react'
 import styles from './Tooltip.module.css'
 
-export type TooltipPosition = 'top' | 'bottom' | 'left' | 'right'
+export type TooltipPosition =
+  | 'top'
+  | 'top-start'
+  | 'top-end'
+  | 'bottom'
+  | 'bottom-start'
+  | 'bottom-end'
+  | 'left'
+  | 'right'
 
 export interface TooltipProps {
   content: React.ReactNode
@@ -33,11 +41,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
         'aria-describedby': id,
       })}
       {visible && (
-        <span
-          id={id}
-          role="tooltip"
-          className={[styles.tooltip, styles[position]].join(' ')}
-        >
+        <span id={id} role="tooltip" className={[styles.tooltip, styles[position] ?? ''].join(' ')}>
           {content}
         </span>
       )}

@@ -1,4 +1,7 @@
-.wrap { position: relative; display: inline-flex; }
+.wrap {
+  position: relative;
+  display: inline-flex;
+}
 
 .tooltip {
   position: absolute;
@@ -17,20 +20,45 @@
 }
 
 @keyframes tipIn {
-  from { opacity: 0; transform: scale(0.92); }
-  to   { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
-/* ---- Positions ---- */
+/* ---- Positions ----
+ * The "-start" / "-end" variants align the tooltip's near edge to the trigger's
+ * matching edge instead of centering. Useful when a centered tooltip would clip
+ * past the viewport (e.g. a trigger near the right edge of a drawer). */
 .top {
   bottom: calc(100% + 8px);
   left: 50%;
   transform: translateX(-50%);
 }
+.top-start {
+  bottom: calc(100% + 8px);
+  left: 0;
+}
+.top-end {
+  bottom: calc(100% + 8px);
+  right: 0;
+}
 .bottom {
   top: calc(100% + 8px);
   left: 50%;
   transform: translateX(-50%);
+}
+.bottom-start {
+  top: calc(100% + 8px);
+  left: 0;
+}
+.bottom-end {
+  top: calc(100% + 8px);
+  right: 0;
 }
 .left {
   right: calc(100% + 8px);

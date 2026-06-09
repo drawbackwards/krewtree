@@ -151,10 +151,18 @@ export const Navbar: React.FC = () => {
                   Dashboard
                 </Link>
                 <Link
-                  to="/site/workers"
-                  className={[styles.link, isActive('/site/workers')].filter(Boolean).join(' ')}
+                  to="/site/discover"
+                  className={[styles.link, isActive('/site/discover')].filter(Boolean).join(' ')}
                 >
-                  Candidates
+                  Discover
+                </Link>
+                <Link
+                  to="/site/dashboard/krew"
+                  className={[styles.link, isActive('/site/dashboard/krew')]
+                    .filter(Boolean)
+                    .join(' ')}
+                >
+                  My Krew
                 </Link>
                 <Link
                   to="/site/jobs"
@@ -292,10 +300,42 @@ export const Navbar: React.FC = () => {
                             role="menuitem"
                             onClick={() => {
                               setAvatarMenuOpen(false)
+                              navigate('/site/company/edit')
+                            }}
+                          >
+                            Edit company profile
+                          </button>
+                          {user?.id && (
+                            <button
+                              className={styles.menuItem}
+                              role="menuitem"
+                              onClick={() => {
+                                setAvatarMenuOpen(false)
+                                navigate(`/site/company/${user.id}`)
+                              }}
+                            >
+                              View public profile
+                            </button>
+                          )}
+                          <button
+                            className={styles.menuItem}
+                            role="menuitem"
+                            onClick={() => {
+                              setAvatarMenuOpen(false)
                               navigate('/site/settings')
                             }}
                           >
                             Organization Settings
+                          </button>
+                          <button
+                            className={styles.menuItem}
+                            role="menuitem"
+                            onClick={() => {
+                              setAvatarMenuOpen(false)
+                              navigate('/site/settings/account')
+                            }}
+                          >
+                            Account &amp; billing
                           </button>
                         </div>
                       </>

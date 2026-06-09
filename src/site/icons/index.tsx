@@ -517,8 +517,10 @@ export const InfoCircleIcon: React.FC<{ size?: number; color?: string }> = ({
     aria-hidden="true"
   >
     <circle cx="12" cy="12" r="10" />
-    <line x1="12" y1="8" x2="12" y2="12" />
-    <line x1="12" y1="16" x2="12.01" y2="16" />
+    {/* Lowercase "i": dot on top, body below — the prior glyph had them flipped
+        which read as "!". */}
+    <line x1="12" y1="8" x2="12.01" y2="8" />
+    <line x1="12" y1="12" x2="12" y2="16" />
   </svg>
 )
 

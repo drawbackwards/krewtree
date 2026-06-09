@@ -84,6 +84,13 @@ export type Job = {
   regulixPreferred?: boolean
   autoPauseLimit?: number | null
   closingAt?: string | null
+  /** Job's resolved coordinates from us_cities. Set by the jobs_geocode trigger
+   *  whenever `location` changes; null when the location isn't parseable. */
+  latitude?: number | null
+  longitude?: number | null
+  /** Miles from the worker's chosen anchor — only populated when the Find Jobs
+   *  page is running a distance filter or Nearest sort. */
+  distanceMi?: number | null
 }
 
 export type Application = {
@@ -282,7 +289,19 @@ export type CompanyApplicant = {
   workerAvailability: 'available' | 'limited' | 'unavailable'
   workerTopSkills: string[]
   workerCertifications: Array<{ name: string; issuer: string; expiresOn: string | null }>
-  workerJobHistory: Array<{ employer: string; title: string; duration: string }>
+  workerJobHistory: Array<{
+    employer: string
+    title: string
+    duration: string
+    isCurrent: boolean
+  }>
+  workerReferences: Array<{
+    id: string
+    name: string
+    company: string
+    phone: string | null
+    email: string | null
+  }>
   workerRating: number | null
   workerRatingCount: number
   workerRegulixRating: number | null

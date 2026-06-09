@@ -43,7 +43,7 @@ function flagTooltip(labels: string[]): string {
   return `${labels.length} flagged tasks`
 }
 import { getPipelineStages } from '../services/pipelineService'
-import { ApplicantSlideover } from '../components/ApplicantSlideover/ApplicantSlideover'
+import { useDrawerStack } from '../components/DrawerSystem/DrawerStackContext'
 import { WidgetKanbanView } from '../components/ApplicantsWidget/WidgetKanbanView'
 import styles from './AllApplicantsPage.module.css'
 
@@ -169,8 +169,31 @@ export const AllApplicantsPage: React.FC = () => {
   const [jobOptions, setJobOptions] = useState<Array<{ id: string; title: string }>>([])
   const [stageOptions, setStageOptions] = useState<Array<{ id: string; name: string }>>([])
   const [selected, setSelected] = useState<Set<string>>(new Set())
-  const [open, setOpen] = useState<CompanyApplicant | null>(null)
   const [confirmBulkReject, setConfirmBulkReject] = useState(false)
+  const { openDrawer, stack, closeAllDrawers } = useDrawerStack()
+
+  const openApplicant = useCallback(
+    (a: CompanyApplicant): void => {
+      openDrawer({
+        type: 'application',
+        applicationId: a.id,
+        preloadedApplicant: a,
+        onWrite: () => load(),
+      })
+    },
+    // load is recreated each render; we depend on the stable openDrawer ref and
+    // resolve load at call time via closure to avoid a churn loop.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [openDrawer]
+  )
+
+  // If a row mutation hits the application currently visible in a drawer,
+  // close the drawer so the user isn't looking at stale state.
+  const closeDrawerIfMatches = (id: string): void => {
+    if (stack.some((e) => e.type === 'application' && e.applicationId === id)) {
+      closeAllDrawers()
+    }
+  }
 
   // Sync filters + view to URL (replace so back button stays sensible)
   useEffect(() => {
@@ -274,12 +297,12 @@ export const AllApplicantsPage: React.FC = () => {
   // ── Row actions ──────────────────────────────────────────────────────────
   const handleAdvance = async (id: string, currentStageId: string) => {
     await advanceApplicant(id, currentStageId)
-    if (open?.id === id) setOpen(null)
+    closeDrawerIfMatches(id)
     load()
   }
   const handleReject = async (id: string) => {
     await rejectApplicant(id)
-    if (open?.id === id) setOpen(null)
+    closeDrawerIfMatches(id)
     load()
   }
   const handleShortlist = async (id: string) => {
@@ -534,7 +557,7 @@ export const AllApplicantsPage: React.FC = () => {
             <WidgetKanbanView
               companyId={user.id}
               filters={widgetFilters}
-              onOpenApplicant={setOpen}
+              onOpenApplicant={openApplicant}
               cardsPerCol={50}
             />
           </div>
@@ -617,7 +640,7 @@ export const AllApplicantsPage: React.FC = () => {
                 rows.map((a) => {
                   const isSelected = selected.has(a.id)
                   const overflowItems: OverflowItem[] = [
-                    { label: 'View profile', onClick: () => setOpen(a) },
+                    { label: 'View profile', onClick: () => openApplicant(a) },
                   ]
                   if (a.status === 'active') {
                     overflowItems.push({
@@ -666,7 +689,7 @@ export const AllApplicantsPage: React.FC = () => {
                           <button
                             type="button"
                             className={styles.applicantName}
-                            onClick={() => setOpen(a)}
+                            onClick={() => openApplicant(a)}
                           >
                             {a.workerFirstName} {a.workerLastInitial}.
                           </button>
@@ -731,7 +754,7 @@ export const AllApplicantsPage: React.FC = () => {
                         <button
                           type="button"
                           className={styles.primaryAction}
-                          onClick={() => setOpen(a)}
+                          onClick={() => openApplicant(a)}
                         >
                           View profile
                         </button>
@@ -807,14 +830,6 @@ export const AllApplicantsPage: React.FC = () => {
           </>
         )}
       </div>
-
-      <ApplicantSlideover
-        applicant={open}
-        onClose={() => setOpen(null)}
-        onMessage={handleMessage}
-        onShortlist={handleShortlist}
-        onChanged={load}
-      />
 
       {/* Bulk reject confirmation */}
       <Modal

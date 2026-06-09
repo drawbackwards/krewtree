@@ -1,4 +1,5 @@
 import type { StepState } from '../../../components/Stepper/Stepper'
+import type { ContractTypeValue } from '../../data/contractTypes'
 
 export type ProfileSkill = {
   id: string
@@ -22,7 +23,7 @@ export type WorkEntry = {
   startDate: string
   endDate: string
   isCurrent: boolean
-  contractType: 'day_rate' | 'project' | 'long_term_temp' | ''
+  contractType: ContractTypeValue | ''
   industryId: string
   description: string
 }
@@ -51,6 +52,21 @@ export type Step3Data = {
   workHistory: WorkEntry[]
 }
 
+export type ReferenceEntry = {
+  id: string
+  name: string
+  company: string
+  phone: string
+  email: string
+}
+
+export type StepReferencesData = {
+  consent: boolean
+  references: ReferenceEntry[]
+}
+
+export const MAX_REFERENCES = 5
+
 export type EditState = {
   workerIndustries: string[]
   stepStates: Record<number, StepState>
@@ -58,4 +74,5 @@ export type EditState = {
   stepAbout: StepAboutData
   step2: Record<string, Step2Data>
   step3: Step3Data
+  stepReferences: StepReferencesData
 }

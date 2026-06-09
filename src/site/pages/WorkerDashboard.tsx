@@ -252,7 +252,7 @@ export const WorkerDashboard: React.FC = () => {
         { key: 'skills', label: 'Skills', done: completeness.hasSkills },
         { key: 'work_history', label: 'Work history', done: completeness.hasWorkHistory },
         { key: 'certifications', label: 'Certifications', done: completeness.hasCerts },
-        { key: 'resume', label: 'Resume', done: completeness.hasResume },
+        { key: 'references', label: 'References', done: completeness.hasReferences },
         { key: 'social', label: 'Social links', done: completeness.hasSocialLinks },
       ].sort((a, b) => Number(b.done) - Number(a.done))
     : []

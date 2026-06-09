@@ -1,6 +1,8 @@
 import React, { useEffect } from 'react'
 import { Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom'
 import { Navbar } from './components/Navbar/Navbar'
+import { DrawerStackProvider } from './components/DrawerSystem/DrawerStackContext'
+import { DrawerSystem } from './components/DrawerSystem/DrawerSystem'
 import {
   LandingPage,
   JobsPage,
@@ -11,6 +13,7 @@ import {
   CompanyDashboard,
   PostJobPage,
   CompanyProfilePage,
+  CompanyProfileEditPage,
   SavedJobsPage,
   MessagesPage,
   ReferralPage,
@@ -19,9 +22,12 @@ import {
   CompanyApplicantProfilePage,
   ApplicationsPage,
   PipelinePage,
+  KrewPage,
+  DiscoverPage,
 } from './pages'
 import SettingsLayout from './pages/Settings/SettingsLayout'
 import PipelineSettingsPage from './pages/Settings/PipelineSettingsPage'
+import { AccountSettingsPage } from './pages/Settings/AccountSettingsPage'
 import { LoginPage } from './pages/auth/LoginPage'
 import { SignupRolePage } from './pages/auth/SignupRolePage'
 import { WorkerSignupPage } from './pages/auth/WorkerSignupPage'
@@ -38,12 +44,16 @@ const ScrollToTop: React.FC = () => {
   return null
 }
 
-// Layout wrapper — Navbar reads auth/persona from context directly
+// Layout wrapper — Navbar reads auth/persona from context directly.
+// DrawerStackProvider lives here so any page can call useDrawerStack() to
+// open WorkerDrawer or ApplicationDrawer; DrawerSystem renders the active
+// drawer(s) on top of whatever page is current.
 const AppLayout: React.FC = () => (
-  <>
+  <DrawerStackProvider>
     <Navbar />
     <Outlet />
-  </>
+    <DrawerSystem />
+  </DrawerStackProvider>
 )
 
 // Requires authentication. Optionally enforces a specific persona.
@@ -96,6 +106,8 @@ export const SiteRouter: React.FC = () => (
         {/* Company-only */}
         <Route element={<RequireAuth persona="company" />}>
           <Route path="/site/dashboard/company" element={<CompanyDashboard />} />
+          <Route path="/site/dashboard/krew" element={<KrewPage />} />
+          <Route path="/site/discover" element={<DiscoverPage />} />
           <Route path="/site/dashboard/jobs" element={<JobPostsPage />} />
           <Route path="/site/dashboard/applicants" element={<AllApplicantsPage />} />
           <Route
@@ -110,9 +122,11 @@ export const SiteRouter: React.FC = () => (
               path="pipeline-tasks"
               element={<Navigate to="/site/settings/pipeline" replace />}
             />
+            <Route path="account" element={<AccountSettingsPage />} />
           </Route>
           <Route path="/site/post-job" element={<PostJobPage />} />
           <Route path="/site/post-job/:id" element={<PostJobPage />} />
+          <Route path="/site/company/edit" element={<CompanyProfileEditPage />} />
         </Route>
 
         {/* Requires auth (any persona) */}

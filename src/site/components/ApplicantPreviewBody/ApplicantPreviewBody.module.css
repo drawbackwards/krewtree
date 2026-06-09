@@ -26,14 +26,40 @@
 
 .matchRow {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: var(--kt-space-4);
-  margin-bottom: 8px;
 }
 
 .matchRow .sectionHeading {
   margin: 0;
+}
+
+.matchValue {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.matchInfoBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 999px;
+  color: var(--kt-text-muted);
+  cursor: pointer;
+  transition: color 120ms ease;
+}
+
+.matchInfoBtn:hover,
+.matchInfoBtn:focus-visible {
+  color: var(--kt-text);
+  outline: none;
 }
 
 .matchPct {
@@ -43,36 +69,22 @@
   line-height: 1;
 }
 
-.breakdown {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 12px;
-  padding: 10px 12px;
-  background: var(--kt-bg-subtle);
-  border-radius: var(--kt-radius-md);
-}
-
-.breakdownCell {
+/* Tooltip content — three rows, label left / value right. Overrides the
+ * Tooltip's default nowrap so the rows can stack. */
+.matchTooltip {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  min-width: 0;
+  gap: 4px;
+  white-space: normal;
+  min-width: 140px;
 }
 
-.breakdownLabel {
-  font-size: 11px;
-  color: var(--kt-text-muted);
-}
-
-.breakdownValue {
-  font-size: 13px;
-  color: var(--kt-text);
-  font-weight: var(--kt-weight-semibold);
-}
-
-.breakdownValueZero {
-  color: var(--kt-text-muted);
-  font-weight: var(--kt-weight-medium);
+.matchTooltipRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font-variant-numeric: tabular-nums;
 }
 
 /* ── Skills strip — mirrors profile page ─────────────────────────────────── */
@@ -136,6 +148,15 @@
   font-style: italic;
 }
 
+.currentRoleLabel {
+  font-size: 11px;
+  font-weight: var(--kt-weight-bold);
+  color: var(--kt-olive-700);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin: 0 0 2px;
+}
+
 /* ── Timeline (work experience) ──────────────────────────────────────────── */
 
 .timeline {
@@ -159,7 +180,7 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--kt-success);
+  background: var(--kt-olive-700);
   margin-top: 5px;
   flex-shrink: 0;
 }

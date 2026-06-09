@@ -176,7 +176,7 @@ export const Step1Section: React.FC<{ data: Step1Data; onChange: (d: Step1Data) 
                 color: 'var(--kt-text)',
               }}
             >
-              Email
+              Email<span style={{ color: 'var(--kt-danger)', marginLeft: 2 }}>*</span>
             </label>
 
             {/* Verified */}
@@ -243,6 +243,7 @@ export const Step1Section: React.FC<{ data: Step1Data; onChange: (d: Step1Data) 
               setEmailInput(e.target.value)
               setEmailStatus('idle')
             }}
+            required
           />
 
           {/* Update button + feedback when email has changed */}
@@ -295,7 +296,7 @@ export const Step1Section: React.FC<{ data: Step1Data; onChange: (d: Step1Data) 
                 color: 'var(--kt-text)',
               }}
             >
-              Phone
+              Phone<span style={{ color: 'var(--kt-danger)', marginLeft: 2 }}>*</span>
             </label>
             <button
               type="button"
@@ -320,6 +321,7 @@ export const Step1Section: React.FC<{ data: Step1Data; onChange: (d: Step1Data) 
             value={data.phone}
             onChange={(e) => set('phone', e.target.value)}
             placeholder="e.g. (555) 000-0000"
+            required
           />
         </div>
         <Input
@@ -327,12 +329,14 @@ export const Step1Section: React.FC<{ data: Step1Data; onChange: (d: Step1Data) 
           value={data.city}
           onChange={(e) => set('city', e.target.value)}
           placeholder="e.g. Denver"
+          required
         />
         <Input
           label="State / Region"
           value={data.region}
           onChange={(e) => set('region', e.target.value)}
           placeholder="e.g. CO"
+          required
         />
       </div>
     </div>

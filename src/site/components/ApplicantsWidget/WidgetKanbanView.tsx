@@ -48,14 +48,16 @@ const MAX_FETCH = 200
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
-function timeInStage(iso: string | null | undefined): string {
+function formatAppliedDate(iso: string | null | undefined): string {
   if (!iso) return ''
-  const diffMs = Date.now() - new Date(iso).getTime()
-  const h = Math.floor(diffMs / 3_600_000)
-  if (h < 24) return `${Math.max(1, h)}h`
-  const d = Math.floor(h / 24)
-  if (d < 14) return `${d}d`
-  return `${Math.floor(d / 7)}w`
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return ''
+  const sameYear = d.getFullYear() === new Date().getFullYear()
+  return d.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    ...(sameYear ? {} : { year: 'numeric' }),
+  })
 }
 
 function flagTooltip(labels: string[]): string {
@@ -294,7 +296,10 @@ const KanbanCard: React.FC<CardProps> = ({
               </Tooltip>
             )}
           </div>
-          <span className={styles.cardTimeInStage}>{timeInStage(a.stageEnteredAt)}</span>
+          <span className={styles.cardTimeInStage}>
+            <span className={styles.cardAppliedLabel}>Applied:</span>{' '}
+            {formatAppliedDate(a.appliedAt)}
+          </span>
         </div>
       </div>
     </div>

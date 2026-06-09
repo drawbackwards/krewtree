@@ -1,0 +1,253 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+}
+
+/* ── Card container ──────────────────────────────────────────────────────── */
+
+.card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 14px;
+  border-radius: var(--kt-radius-md);
+  background: transparent;
+}
+
+/* ── Treatments ──────────────────────────────────────────────────────────── */
+
+.treatmentOutlined {
+  background: var(--kt-surface);
+  box-shadow: inset 0 0 0 0.5px var(--kt-border);
+}
+
+.treatmentGreen {
+  background: var(--kt-success-subtle);
+}
+
+.treatmentRed {
+  background: var(--kt-danger-subtle);
+}
+
+/* ── Default layout (mirrors matches card) ───────────────────────────────── */
+
+.topRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: var(--kt-weight-semibold);
+  color: var(--kt-text);
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.metaRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--kt-text-muted);
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--kt-border);
+}
+
+.context {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  font-size: 11px;
+  color: var(--kt-text-muted);
+  min-width: 0;
+}
+
+.actionRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.seeStatusBtn {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  border-radius: var(--kt-radius-md);
+  border: none;
+  background: var(--kt-primary);
+  color: var(--kt-on-primary, #ffffff);
+  font-size: 12px;
+  font-weight: var(--kt-weight-semibold);
+  line-height: 1.2;
+  cursor: pointer;
+  transition: background var(--kt-duration-fast) var(--kt-ease);
+}
+
+.seeStatusBtn:hover {
+  background: var(--kt-navy-700, var(--kt-primary));
+}
+
+/* ── Finished layout (with rating slot) ─────────────────────────────────── */
+
+.finishedGrid {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.finishedLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.ratingSlot {
+  width: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rating {
+  font-size: 24px;
+  font-weight: var(--kt-weight-semibold);
+  color: var(--kt-text);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.ratingEmpty {
+  color: var(--kt-text-placeholder);
+}
+
+/* ── Text styles ─────────────────────────────────────────────────────────── */
+
+.date {
+  font-size: 13px;
+  font-weight: var(--kt-weight-semibold);
+  color: var(--kt-text);
+}
+
+.jobTitle {
+  font-size: 12px;
+  font-weight: var(--kt-weight-medium);
+  color: var(--kt-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.middot {
+  font-size: 12px;
+  color: var(--kt-text-placeholder);
+}
+
+/* Footer border + meta tone shifts on tinted treatments so it doesn't dissolve */
+.treatmentGreen .footer {
+  border-top-color: rgba(30, 122, 74, 0.2);
+}
+.treatmentRed .footer {
+  border-top-color: rgba(192, 57, 43, 0.2);
+}
+
+.pillRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: var(--kt-weight-medium);
+  line-height: 1.4;
+  background: var(--kt-surface);
+  color: var(--kt-text-muted);
+}
+
+/* ── State badge ─────────────────────────────────────────────────────────── */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: var(--kt-weight-medium);
+  padding: 2px 8px;
+  border-radius: 999px;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.badgeGray {
+  background: var(--kt-grey-100);
+  color: var(--kt-text-muted);
+}
+
+.badgeBlue {
+  background: var(--kt-info-subtle);
+  color: var(--kt-info);
+}
+
+.badgeGreen {
+  background: var(--kt-success-subtle);
+  color: var(--kt-success);
+}
+
+.badgeRed {
+  background: var(--kt-danger-subtle);
+  color: var(--kt-danger);
+}
+
+/* Badge tweaks when the card background is itself a tint of the same hue —
+   the pill needs a denser fill so it doesn't dissolve into the card. */
+.treatmentGreen .badgeGreen {
+  background: rgba(30, 122, 74, 0.18);
+}
+.treatmentRed .badgeRed {
+  background: rgba(192, 57, 43, 0.18);
+}
+
+/* ── Empty / loading states ──────────────────────────────────────────────── */
+
+.loading,
+.empty {
+  padding: 24px 20px;
+  font-size: 13px;
+  color: var(--kt-text-muted);
+  margin: 0;
+}

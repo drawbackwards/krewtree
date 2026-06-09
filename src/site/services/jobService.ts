@@ -2,6 +2,7 @@ import { supabase } from '@/lib/supabase'
 import type { Json } from '@/lib/database.types'
 import type { Job } from '@site/types'
 import { daysSince } from '@site/utils/date'
+import { invalidateSessionCache } from '@site/utils/sessionCache'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -30,6 +31,8 @@ type DbJob = {
   regulix_preferred: boolean
   auto_pause_limit: number | null
   closing_at: string | null
+  latitude: number | null
+  longitude: number | null
   company_profiles: {
     id: string
     name: string
@@ -80,6 +83,7 @@ const JOB_SELECT = `
   pay_min, pay_max, pay_type, description, requirements, skills,
   is_sponsored, regulix_ready_applicants, total_applicants, status, created_at,
   experience_level, pre_interview_questions, urgent_hiring, regulix_preferred, auto_pause_limit, closing_at,
+  latitude, longitude,
   company_profiles(id, name, logo_url, location, industry, is_verified, description, size, website, avg_rating, review_count),
   job_analytics(views_total),
   applications(count)
@@ -127,6 +131,8 @@ function mapJob(j: DbJob): Job {
     regulixPreferred: j.regulix_preferred ?? false,
     autoPauseLimit: j.auto_pause_limit ?? null,
     closingAt: j.closing_at ?? null,
+    latitude: j.latitude ?? null,
+    longitude: j.longitude ?? null,
   }
 }
 
@@ -302,6 +308,8 @@ export async function createJob(
     .single()
 
   if (error) return { data: null, error: error.message }
+  // Discover's active-jobs dropdown caches in session; new job invalidates it.
+  invalidateSessionCache('discover_active_jobs', params.companyId)
   return { data: { id: data.id }, error: null }
 }
 
@@ -333,17 +341,26 @@ export async function updateJob(
 
   const { error } = await supabase.from('jobs').update(patch).eq('id', id)
   if (error) return { error: error.message }
+  // Title/status edits change the dropdown; cheaper to invalidate than diff.
+  const { data: row } = await supabase.from('jobs').select('company_id').eq('id', id).maybeSingle()
+  if (row?.company_id) {
+    invalidateSessionCache('discover_active_jobs', row.company_id)
+  }
   return { error: null }
 }
 
 export async function getCompanyJobs(
-  companyId: string
+  companyId: string,
+  opts: { activeOnly?: boolean } = {}
 ): Promise<{ data: Job[]; error: string | null }> {
-  const { data, error } = await supabase
+  let q = supabase
     .from('jobs')
     .select(JOB_SELECT)
     .eq('company_id', companyId)
     .order('created_at', { ascending: false })
+  if (opts.activeOnly) q = q.eq('status', 'active')
+
+  const { data, error } = await q
 
   if (error) return { data: [], error: error.message }
   if (!data) return { data: [], error: null }

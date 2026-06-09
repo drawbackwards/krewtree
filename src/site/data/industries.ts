@@ -21,7 +21,7 @@ export type IndustryDef = {
 export const INDUSTRIES: IndustryDef[] = [
   {
     id: 'construction',
-    name: 'Construction',
+    name: 'Skilled trades / construction',
     slug: 'construction',
     icon: '🏗️',
     color: '#8B6914',
@@ -653,6 +653,54 @@ export const INDUSTRIES: IndustryDef[] = [
         aliases: ['ISO 9001', 'ISO certification', 'quality management system', 'QMS', 'AS9100'],
       },
     ],
+  },
+  {
+    id: 'hospitality',
+    name: 'Hospitality',
+    slug: 'hospitality',
+    icon: '🏨',
+    color: '#a8536b',
+    skills: [],
+  },
+  {
+    id: 'warehousing',
+    name: 'Warehousing / logistics',
+    slug: 'warehousing',
+    icon: '📦',
+    color: '#7a5d3a',
+    skills: [],
+  },
+  {
+    id: 'landscaping',
+    name: 'Landscaping / outdoor services',
+    slug: 'landscaping',
+    icon: '🌿',
+    color: '#5b7a3a',
+    skills: [],
+  },
+  {
+    id: 'cleaning',
+    name: 'Cleaning / janitorial',
+    slug: 'cleaning',
+    icon: '🧽',
+    color: '#3a6b7a',
+    skills: [],
+  },
+  {
+    id: 'food_service',
+    name: 'Food service',
+    slug: 'food-service',
+    icon: '🍽️',
+    color: '#a86b3a',
+    skills: [],
+  },
+  {
+    id: 'freelance',
+    name: 'Freelance / independent professionals',
+    slug: 'freelance',
+    icon: '💼',
+    color: '#5e5285',
+    skills: [],
   },
 ]
 

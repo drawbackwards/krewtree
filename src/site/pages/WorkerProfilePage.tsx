@@ -18,6 +18,7 @@ import {
 import { getFullWorkerProfile } from '../services/workerService'
 import type { FullWorkerProfile } from '../services/workerService'
 import { INDUSTRIES } from '../data/industries'
+import { getContractTypeLabel } from '../data/contractTypes'
 import styles from './WorkerProfilePage.module.css'
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -32,12 +33,7 @@ const formatMonth = (d: string | null): string => {
   return `${month} ${y}`
 }
 
-const contractLabel = (t: string): string => {
-  if (t === 'day_rate') return 'Day Rate'
-  if (t === 'project') return 'Project'
-  if (t === 'long_term_temp') return 'Long-term Temp'
-  return ''
-}
+const contractLabel = (t: string): string => getContractTypeLabel(t)
 
 const industryName = (id: string | null): string =>
   INDUSTRIES.find((i) => i.id === id)?.name ?? id ?? ''
@@ -831,6 +827,28 @@ export const WorkerProfilePage: React.FC = () => {
                   </p>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* References indicator — count only, never names; hidden until
+              consent is confirmed so the count never advertises hidden refs. */}
+          {profile.referencesCount > 0 && !!profile.referencesConsentConfirmedAt && (
+            <div
+              style={{
+                background: 'var(--kt-surface)',
+                border: '1px solid var(--kt-border)',
+                borderRadius: 'var(--kt-radius-lg)',
+                padding: '14px 16px',
+                fontSize: 'var(--kt-text-xs)',
+                color: 'var(--kt-text-muted)',
+                lineHeight: 1.55,
+              }}
+            >
+              <strong style={{ color: 'var(--kt-text)', fontWeight: 'var(--kt-weight-semibold)' }}>
+                {profile.referencesCount}{' '}
+                {profile.referencesCount === 1 ? 'reference' : 'references'}
+              </strong>{' '}
+              available on application
             </div>
           )}
         </div>

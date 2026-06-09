@@ -1,0 +1,64 @@
+/* DrawerShell — shared chrome for WorkerDrawer and ApplicantSlideover.
+   Owns the scrim, panel container, slide-in animation, and the back
+   affordance shown when the drawer is the top of a stack. */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--kt-surface-overlay);
+  display: flex;
+  justify-content: flex-end;
+  z-index: var(--kt-z-modal);
+  animation: drawerFadeIn var(--kt-duration-base) var(--kt-ease);
+}
+
+/* Top overlay: transparent scrim so the base panel edge shows through.
+   The overlay still receives clicks (closes the top drawer). */
+.overlayTop {
+  background: transparent;
+}
+
+.panel {
+  width: max(480px, 36vw);
+  max-width: 100%;
+  height: 100vh;
+  background: var(--kt-surface);
+  border-left: 1px solid var(--kt-border);
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--kt-shadow-lg);
+  animation: drawerSlideIn var(--kt-duration-base) var(--kt-ease);
+}
+
+/* Layered panel sits flush right and overlaps the base — the back affordance
+   inside the panel hero (rendered by the drawer component) handles dismissal. */
+.panelTop {
+  margin-right: 0;
+}
+
+@keyframes drawerFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes drawerSlideIn {
+  from {
+    transform: translateX(24px);
+    opacity: 0.6;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 640px) {
+  .panel {
+    width: 100%;
+    border-left: none;
+  }
+}

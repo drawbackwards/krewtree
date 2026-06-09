@@ -1,0 +1,286 @@
+.card {
+  background-color: var(--kt-white);
+  border: 1px solid var(--kt-border);
+  border-radius: var(--kt-radius-lg);
+  padding: var(--kt-space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--kt-space-5);
+  cursor: pointer;
+  position: relative;
+  transition:
+    box-shadow var(--kt-duration-base) var(--kt-ease),
+    border-color var(--kt-duration-base) var(--kt-ease),
+    transform var(--kt-duration-base) var(--kt-ease);
+}
+
+.card:hover {
+  box-shadow: var(--kt-shadow-md);
+  border-color: var(--kt-grey-300);
+  transform: translateY(-1px);
+}
+
+.header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--kt-space-3);
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--kt-primary);
+  color: var(--kt-primary-fg, #ffffff);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: var(--kt-weight-semibold);
+  font-size: 14px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.headerText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+}
+
+.nameRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.workerName {
+  margin: 0;
+  font-size: var(--kt-text-xl);
+  font-weight: var(--kt-weight-semibold);
+  color: var(--kt-grey-900);
+  line-height: var(--kt-leading-tight);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.subtitle {
+  font-size: var(--kt-text-sm);
+  font-weight: var(--kt-weight-semibold);
+  color: var(--kt-grey-800);
+}
+
+.meta {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--kt-space-1) var(--kt-space-3);
+}
+
+.metaItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--kt-text-sm);
+  color: var(--kt-text-muted);
+}
+
+.metaIcon {
+  display: flex;
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+
+.bio {
+  margin: 0;
+  font-size: var(--kt-text-sm);
+  color: var(--kt-text-muted);
+  line-height: var(--kt-leading-relaxed);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.matchPill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: var(--kt-text-xs);
+  font-weight: var(--kt-weight-semibold);
+  background: var(--kt-olive-50, var(--kt-secondary));
+  color: var(--kt-olive-800, var(--kt-navy-600));
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--kt-space-3);
+  padding-top: var(--kt-space-3);
+  border-top: 1px solid var(--kt-border);
+}
+
+.skills {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 6px;
+  align-items: center;
+  min-width: 0;
+}
+
+.skillTag {
+  font-size: var(--kt-text-xs);
+  font-weight: var(--kt-weight-medium);
+  color: var(--kt-navy-600);
+  background-color: var(--kt-navy-50);
+  padding: 4px 10px;
+  border-radius: var(--kt-radius-full);
+  border: 1px solid var(--kt-navy-100);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.skillMore {
+  font-size: var(--kt-text-xs);
+  font-weight: var(--kt-weight-medium);
+  color: var(--kt-text-muted);
+  white-space: nowrap;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.viewBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 18px;
+  background: var(--kt-olive-700);
+  color: white;
+  border: none;
+  border-radius: var(--kt-radius-md);
+  font-size: var(--kt-text-sm);
+  font-weight: var(--kt-weight-semibold);
+  cursor: pointer;
+  font-family: var(--kt-font-sans);
+  white-space: nowrap;
+  transition: background var(--kt-duration-fast) var(--kt-ease);
+}
+
+.viewBtn:hover {
+  background: var(--kt-olive-800);
+}
+
+/* "In Krew" status indicator — muted, non-interactive, no surface fill so it
+   doesn't read as a button next to View Profile. */
+.krewPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 4px;
+  background: transparent;
+  color: var(--kt-text-muted);
+  font-size: var(--kt-text-xs);
+  font-weight: var(--kt-weight-semibold);
+  white-space: nowrap;
+}
+
+.iconBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  background: transparent;
+  color: var(--kt-text-muted);
+  border: none;
+  border-radius: var(--kt-radius-md);
+  cursor: pointer;
+  transition:
+    background var(--kt-duration-fast) var(--kt-ease),
+    color var(--kt-duration-fast) var(--kt-ease);
+}
+
+.iconBtn:hover {
+  background: var(--kt-secondary);
+  color: var(--kt-navy-600);
+}
+
+.iconBtn[aria-expanded='true'] {
+  background: var(--kt-secondary);
+  color: var(--kt-navy-600);
+}
+
+/* Portaled overflow menu */
+.overflowMenu {
+  position: fixed;
+  z-index: 1000;
+  min-width: 160px;
+  background: var(--kt-surface);
+  border: 1px solid var(--kt-border);
+  border-radius: var(--kt-radius-md);
+  box-shadow: var(--kt-shadow-md);
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.overflowItem {
+  background: transparent;
+  border: none;
+  text-align: left;
+  padding: 8px 10px;
+  border-radius: var(--kt-radius-sm);
+  font-size: var(--kt-text-sm);
+  color: var(--kt-text);
+  font-family: var(--kt-font-sans);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.overflowItem:hover:not(:disabled) {
+  background: var(--kt-secondary);
+}
+
+.overflowItem:disabled {
+  color: var(--kt-text-placeholder);
+  cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+  .footer {
+    flex-direction: column;
+    align-items: stretch;
+    border-top: none;
+    padding-top: 0;
+    gap: var(--kt-space-4);
+  }
+
+  .actions {
+    width: 100%;
+  }
+
+  .viewBtn {
+    flex: 1;
+  }
+}

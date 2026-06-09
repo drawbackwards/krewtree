@@ -81,6 +81,13 @@ type JoinedApplicantRow = AppRow & {
       end_date: string | null
       is_current: boolean
     }>
+    worker_references: Array<{
+      id: string
+      name: string
+      company: string
+      phone: string | null
+      email: string | null
+    }>
   }
   jobs: Pick<JobRow, 'id' | 'title' | 'status'>
   application_notes: Array<{
@@ -164,7 +171,15 @@ function toCompanyApplicant(
         employer: h.employer_name,
         title: h.role_title,
         duration: formatJobDuration(h.start_date, h.end_date, h.is_current),
+        isCurrent: h.is_current === true,
       })),
+    workerReferences: (w.worker_references ?? []).map((r) => ({
+      id: r.id,
+      name: r.name,
+      company: r.company,
+      phone: r.phone ?? null,
+      email: r.email ?? null,
+    })),
     workerRating: null,
     workerRatingCount: 0,
     workerRegulixRating: null,
@@ -212,7 +227,8 @@ const APPLICANT_SELECT = `
     id, first_name, last_name, avatar_url, primary_trade, city, region, is_regulix_ready,
     worker_skills(name, years_exp),
     worker_certifications(cert_name, issuing_body, expiry_date),
-    worker_work_history(employer_name, role_title, start_date, end_date, is_current)
+    worker_work_history(employer_name, role_title, start_date, end_date, is_current),
+    worker_references(id, name, company, phone, email)
   ),
   jobs!inner(id, title, status, company_id),
   application_notes(text, author_name, created_at),

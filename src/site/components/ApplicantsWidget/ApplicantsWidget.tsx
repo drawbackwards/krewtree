@@ -7,7 +7,7 @@ import {
   DEFAULT_WIDGET_FILTERS,
 } from '../../services/applicantService'
 import type { CompanyApplicant } from '../../types'
-import { ApplicantSlideover } from '../ApplicantSlideover/ApplicantSlideover'
+import { useDrawerStack } from '../DrawerSystem/DrawerStackContext'
 import { ApplicantListView } from './ApplicantListView'
 import { WidgetKanbanView } from './WidgetKanbanView'
 import styles from './ApplicantsWidget.module.css'
@@ -23,9 +23,9 @@ export const ApplicantsWidget: React.FC<Props> = ({ view, onViewChange, companyI
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [hasJobs, setHasJobs] = useState(false)
-  const [selectedApplicant, setSelectedApplicant] = useState<CompanyApplicant | null>(null)
   // Bumped on any external mutation so child views (kanban, list) can refetch.
   const [refreshTick, setRefreshTick] = useState(0)
+  const { openDrawer } = useDrawerStack()
 
   const fetchApplicants = useCallback(async () => {
     setLoading(true)
@@ -42,30 +42,33 @@ export const ApplicantsWidget: React.FC<Props> = ({ view, onViewChange, companyI
     fetchApplicants()
   }, [fetchApplicants])
 
-  const handleShortlist = useCallback(
+  // Row-level shortlist (from in-row star button, not the drawer).
+  const handleRowShortlist = useCallback(
     async (id: string) => {
-      // Optimistic: flip the open drawer's button state immediately.
-      setSelectedApplicant((prev) =>
-        prev?.id === id ? { ...prev, isShortlisted: !prev.isShortlisted } : prev
-      )
       const { error } = await shortlistApplicant(id)
-      if (error) {
-        // Revert on failure.
-        setSelectedApplicant((prev) =>
-          prev?.id === id ? { ...prev, isShortlisted: !prev.isShortlisted } : prev
-        )
-        return
-      }
+      if (error) return
       fetchApplicants()
       setRefreshTick((t) => t + 1)
     },
     [fetchApplicants]
   )
 
-  const handleDrawerChanged = useCallback(() => {
+  const handleDrawerWrite = useCallback(() => {
     fetchApplicants()
     setRefreshTick((t) => t + 1)
   }, [fetchApplicants])
+
+  const handleOpenApplicant = useCallback(
+    (a: CompanyApplicant) => {
+      openDrawer({
+        type: 'application',
+        applicationId: a.id,
+        preloadedApplicant: a,
+        onWrite: handleDrawerWrite,
+      })
+    },
+    [openDrawer, handleDrawerWrite]
+  )
 
   return (
     <>
@@ -107,28 +110,20 @@ export const ApplicantsWidget: React.FC<Props> = ({ view, onViewChange, companyI
               total={total}
               loading={loading}
               hasJobs={hasJobs}
-              onOpenApplicant={setSelectedApplicant}
-              onShortlist={(a) => handleShortlist(a.id)}
+              onOpenApplicant={handleOpenApplicant}
+              onShortlist={(a) => handleRowShortlist(a.id)}
               onRefresh={() => fetchApplicants()}
             />
           ) : (
             <WidgetKanbanView
               companyId={companyId}
               filters={DEFAULT_WIDGET_FILTERS}
-              onOpenApplicant={setSelectedApplicant}
+              onOpenApplicant={handleOpenApplicant}
               refreshTick={refreshTick}
             />
           )}
         </div>
       </div>
-
-      <ApplicantSlideover
-        applicant={selectedApplicant}
-        onClose={() => setSelectedApplicant(null)}
-        onMessage={() => {}}
-        onShortlist={handleShortlist}
-        onChanged={handleDrawerChanged}
-      />
     </>
   )
 }

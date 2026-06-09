@@ -1,0 +1,64 @@
+.fieldLabel {
+  display: block;
+  font-size: var(--kt-text-sm);
+  font-weight: var(--kt-weight-medium);
+  color: var(--kt-text);
+  margin-bottom: 10px;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.checkboxGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 24px;
+}
+
+.toggleStack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.placeholderBody {
+  padding: 28px 0;
+  text-align: center;
+  color: var(--kt-text-muted);
+  font-size: var(--kt-text-sm);
+}
+
+.photoGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.photoCard {
+  border: 1px solid var(--kt-border);
+  border-radius: var(--kt-radius-md);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.photoImg {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: var(--kt-radius-sm);
+  background: var(--kt-bg-subtle);
+}
+
+@media (max-width: 640px) {
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+  .checkboxGrid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -12,6 +12,7 @@ import {
   SparkleIcon,
 } from './icons'
 import type { WorkEntry, Step3Data } from './types'
+import { CONTRACT_TYPE_OPTIONS } from '../../data/contractTypes'
 import { uploadWorkerResume } from '../../services/workerService'
 import styles from './Step3Section.module.css'
 
@@ -202,11 +203,7 @@ const WorkEntryCard: React.FC<{
             label="Contract type"
             value={entry.contractType}
             onChange={(e) => onChange('contractType', e.target.value)}
-            options={[
-              { label: 'Day rate', value: 'day_rate' },
-              { label: 'Project-based', value: 'project' },
-              { label: 'Long-term temp', value: 'long_term_temp' },
-            ]}
+            options={CONTRACT_TYPE_OPTIONS}
             placeholder="Select type"
           />
           <Select

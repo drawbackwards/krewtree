@@ -97,6 +97,11 @@ export const JobCard: React.FC<JobCardProps> = ({
           </span>
           {job.location}
         </span>
+        {job.distanceMi != null && (
+          <span className={styles.distancePill}>
+            {job.distanceMi < 1 ? '< 1 mi away' : `${Math.round(job.distanceMi)} mi away`}
+          </span>
+        )}
         <span className={styles.metaItem}>
           <span className={styles.metaIcon}>
             <BriefcaseIcon size={13} />

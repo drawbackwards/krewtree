@@ -18,6 +18,7 @@ import {
   RegulixMarkIcon,
 } from '../icons'
 import { getFullWorkerProfile, type FullWorkerProfile } from '../services/workerService'
+import { WorkerReferencesSection } from '../components/WorkerReferencesSection'
 import {
   addApplicantNote,
   getWorkerApplicationsAtCompany,
@@ -27,6 +28,7 @@ import {
 import { getPipelineStages, type PipelineStage } from '../services/pipelineService'
 import type { CompanyApplicant } from '../types'
 import { INDUSTRIES } from '../data/industries'
+import { getContractTypeLabel } from '../data/contractTypes'
 import styles from './CompanyApplicantProfilePage.module.css'
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -41,12 +43,7 @@ const formatMonth = (d: string | null): string => {
   return `${month} ${y}`
 }
 
-const contractLabel = (t: string): string => {
-  if (t === 'day_rate') return 'Day Rate'
-  if (t === 'project') return 'Project'
-  if (t === 'long_term_temp') return 'Long-term Temp'
-  return ''
-}
+const contractLabel = (t: string): string => getContractTypeLabel(t)
 
 const industryName = (id: string | null): string =>
   INDUSTRIES.find((i) => i.id === id)?.name ?? id ?? ''
@@ -97,6 +94,9 @@ function stubProfileFromApplicant(a: CompanyApplicant): FullWorkerProfile {
       industryId: null,
       description: '',
     })),
+    references: [],
+    referencesCount: 0,
+    referencesConsentConfirmedAt: null,
   }
 }
 
@@ -685,6 +685,10 @@ export const CompanyApplicantProfilePage: React.FC = () => {
               </div>
             </div>
           )}
+
+          {/* References — visible only because the worker has applied here
+              AND their section-level consent is confirmed (enforced by RLS). */}
+          <WorkerReferencesSection references={profile.references} variant="card" />
 
           {/* Certifications */}
           {profile.certifications.length > 0 && (

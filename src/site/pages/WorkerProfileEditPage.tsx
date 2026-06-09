@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Button } from '../../components'
+import { Button, Checkbox } from '../../components'
 import { Stepper } from '../../components/Stepper/Stepper'
 import type { StepState } from '../../components/Stepper/Stepper'
 import { getFullWorkerProfile, upsertWorkerProfile } from '../services/workerService'
@@ -9,23 +9,34 @@ import { Step1Section } from './WorkerProfileEdit/Step1Section'
 import { StepAboutSection } from './WorkerProfileEdit/StepAboutSection'
 import { Step2Section } from './WorkerProfileEdit/Step2Section'
 import { Step3Section } from './WorkerProfileEdit/Step3Section'
+import { StepReferencesSection } from './WorkerProfileEdit/StepReferencesSection'
 import { CheckCircleIcon } from './WorkerProfileEdit/icons'
-import type { EditState, Step2Data, WorkEntry } from './WorkerProfileEdit/types'
+import type { EditState, Step2Data, StepReferencesData, WorkEntry } from './WorkerProfileEdit/types'
 import styles from './WorkerProfileEditPage.module.css'
 
 // ── localStorage ───────────────────────────────────────────────────────────────
 
-const STORAGE_KEY = 'kt_profile_edit_v6'
+// Bumped to v8 to invalidate cached state with the dropped `relationship` field.
+const STORAGE_KEY = 'kt_profile_edit_v8'
 
 const emptyStep2 = (): Step2Data => ({ skills: [], certifications: [] })
 
+const emptyReferences = (): StepReferencesData => ({ consent: false, references: [] })
+
 const defaultState = (): EditState => ({
   workerIndustries: [],
-  stepStates: { 1: 'incomplete', 2: 'incomplete', 3: 'incomplete', 4: 'incomplete' },
+  stepStates: {
+    1: 'incomplete',
+    2: 'incomplete',
+    3: 'incomplete',
+    4: 'incomplete',
+    5: 'incomplete',
+  },
   step1: { firstName: '', lastName: '', city: '', region: '', phone: '', avatarUrl: '' },
   stepAbout: { primaryTrade: '', bio: '', socialLinks: [] },
   step2: { construction: emptyStep2(), healthcare: emptyStep2(), manufacturing: emptyStep2() },
   step3: { workHistory: [] },
+  stepReferences: emptyReferences(),
 })
 
 function loadState(): EditState {
@@ -42,6 +53,7 @@ function loadState(): EditState {
         stepAbout: { ...def.stepAbout, ...(parsed.stepAbout ?? {}) },
         step2: { ...def.step2, ...(parsed.step2 ?? {}) },
         step3: { ...def.step3, ...(parsed.step3 ?? {}) },
+        stepReferences: { ...def.stepReferences, ...(parsed.stepReferences ?? {}) },
       }
     }
   } catch {
@@ -65,13 +77,41 @@ const STEPS = [
   { label: 'About Me' },
   { label: 'Skills' },
   { label: 'Work History' },
+  { label: 'References' },
 ]
+
+const TOTAL_STEPS = STEPS.length
 
 const STEP_TITLES: Record<number, string> = {
   1: 'Identity & Basics',
   2: 'About Me',
   3: 'Skills & Certifications',
   4: 'Work History',
+  5: 'References',
+}
+
+// Mirror of the server-side required-field gate in upsert_worker_profile so
+// users get a friendly inline error instead of a raw RPC failure. Returns the
+// step that owns the missing field so we can scroll there and show the error
+// in context.
+function validateRequiredFields(
+  state: EditState,
+  email: string | undefined
+): { step: number; message: string } | null {
+  if (!email?.trim()) return { step: 1, message: 'Email is required.' }
+  if (!state.step1.firstName.trim()) return { step: 1, message: 'First name is required.' }
+  if (!state.step1.lastName.trim()) return { step: 1, message: 'Last name is required.' }
+  if (!state.step1.phone.trim()) return { step: 1, message: 'Phone is required.' }
+  if (!state.step1.city.trim()) return { step: 1, message: 'City is required.' }
+  if (!state.step1.region.trim()) return { step: 1, message: 'State is required.' }
+  if (!state.stepAbout.primaryTrade.trim())
+    return { step: 2, message: 'Primary trade is required.' }
+  const active = new Set(state.workerIndustries)
+  const totalSkills = Object.entries(state.step2)
+    .filter(([id]) => active.has(id))
+    .reduce((sum, [, d]) => sum + d.skills.length, 0)
+  if (totalSkills === 0) return { step: 3, message: 'Add at least one skill to save your profile.' }
+  return null
 }
 
 // ── Section card wrapper ───────────────────────────────────────────────────────
@@ -88,6 +128,7 @@ type SectionCardProps = {
   cardRef: (el: HTMLDivElement | null) => void
   children: React.ReactNode
   error?: string | null
+  footerLeft?: React.ReactNode
 }
 
 const SectionCard: React.FC<SectionCardProps> = ({
@@ -102,6 +143,7 @@ const SectionCard: React.FC<SectionCardProps> = ({
   cardRef,
   children,
   error,
+  footerLeft,
 }) => {
   const isComplete = stepState === 'complete-filled' || stepState === 'complete-skipped'
   return (
@@ -148,6 +190,7 @@ const SectionCard: React.FC<SectionCardProps> = ({
 
       <div className={styles.cardFooter}>
         <div className={styles.saveRow}>
+          {footerLeft && <div className={styles.footerLeft}>{footerLeft}</div>}
           {isSaved && (
             <span
               style={{
@@ -320,6 +363,19 @@ export const WorkerProfileEditPage: React.FC = () => {
                     description: j.description,
                   })),
           },
+          stepReferences:
+            prev.stepReferences.references.length > 0
+              ? prev.stepReferences
+              : {
+                  consent: !!data.referencesConsentConfirmedAt,
+                  references: data.references.map((r) => ({
+                    id: r.id,
+                    name: r.name,
+                    company: r.company,
+                    phone: r.phone ?? '',
+                    email: r.email ?? '',
+                  })),
+                },
         }
       })
       prefillDone.current = true
@@ -338,6 +394,16 @@ export const WorkerProfileEditPage: React.FC = () => {
   const saveSection = async (stepNum: number) => {
     setSaveError(null)
     setSaveErrorStep(null)
+
+    const missing = validateRequiredFields(editState, user?.email)
+    if (missing) {
+      setSaveError(missing.message)
+      setSaveErrorStep(missing.step)
+      if (missing.step !== stepNum) {
+        setTimeout(() => scrollToSection(missing.step), 80)
+      }
+      return
+    }
 
     if (user) {
       setIsSaving(true)
@@ -381,6 +447,18 @@ export const WorkerProfileEditPage: React.FC = () => {
         description: w.description,
       }))
 
+      // Drop entries missing required fields or contact info so the DB CHECK
+      // and NOT NULL constraints never fire on save.
+      const references = editState.stepReferences.references
+        .filter((r) => r.name.trim() && r.company.trim())
+        .filter((r) => r.phone.trim() || r.email.trim())
+        .map((r) => ({
+          name: r.name.trim(),
+          company: r.company.trim(),
+          phone: r.phone.trim() || null,
+          email: r.email.trim() || null,
+        }))
+
       const { error } = await upsertWorkerProfile({
         p_first_name: editState.step1.firstName,
         p_last_name: editState.step1.lastName,
@@ -394,6 +472,8 @@ export const WorkerProfileEditPage: React.FC = () => {
         p_certs: certs,
         p_social_links: socialLinks,
         p_work_history: workHistory,
+        p_references: references,
+        p_references_consent: editState.stepReferences.consent,
       })
 
       setIsSaving(false)
@@ -413,7 +493,7 @@ export const WorkerProfileEditPage: React.FC = () => {
     })
     setSavedStep(stepNum)
     setTimeout(() => setSavedStep(null), 2000)
-    if (stepNum < 4) {
+    if (stepNum < TOTAL_STEPS) {
       setActiveSection(stepNum + 1)
       setTimeout(() => scrollToSection(stepNum + 1), 80)
     } else {
@@ -435,7 +515,7 @@ export const WorkerProfileEditPage: React.FC = () => {
     }))
 
   const displayStepStates: Record<number, StepState> = {}
-  for (let i = 1; i <= 4; i++) {
+  for (let i = 1; i <= TOTAL_STEPS; i++) {
     const stored = editState.stepStates[i]
     if (stored === 'complete-filled' || stored === 'complete-skipped') {
       displayStepStates[i] = stored
@@ -575,7 +655,6 @@ export const WorkerProfileEditPage: React.FC = () => {
               isSaving={isSaving}
               onSave={() => saveSection(4)}
               isCreate={isCreate}
-              isLast
               error={saveErrorStep === 4 ? saveError : null}
               cardRef={(el) => {
                 sectionRefs.current[4] = el
@@ -586,6 +665,38 @@ export const WorkerProfileEditPage: React.FC = () => {
                 workerIndustries={editState.workerIndustries}
                 userId={user?.id ?? null}
                 onChange={(d) => setEditState((prev) => ({ ...prev, step3: d }))}
+              />
+            </SectionCard>
+
+            <SectionCard
+              stepNum={5}
+              title={STEP_TITLES[5]}
+              stepState={displayStepStates[5]}
+              isSaved={savedStep === 5}
+              isSaving={isSaving}
+              onSave={() => saveSection(5)}
+              isCreate={isCreate}
+              isLast
+              error={saveErrorStep === 5 ? saveError : null}
+              cardRef={(el) => {
+                sectionRefs.current[5] = el
+              }}
+              footerLeft={
+                <Checkbox
+                  checked={editState.stepReferences.consent}
+                  onChange={(e) =>
+                    setEditState((prev) => ({
+                      ...prev,
+                      stepReferences: { ...prev.stepReferences, consent: e.target.checked },
+                    }))
+                  }
+                  label="I confirm I have permission to list these people as references."
+                />
+              }
+            >
+              <StepReferencesSection
+                data={editState.stepReferences}
+                onChange={(d) => setEditState((prev) => ({ ...prev, stepReferences: d }))}
               />
             </SectionCard>
           </div>

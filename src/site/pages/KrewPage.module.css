@@ -1,0 +1,1133 @@
+.page {
+  background: var(--kt-bg);
+  min-height: calc(100vh - 60px);
+}
+
+.container {
+  max-width: var(--kt-layout-max-width);
+  margin: 0 auto;
+  padding: 32px var(--kt-space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--kt-space-5);
+}
+
+/* ── Header ─────────────────────────────────────────────────────────────── */
+
+.pageHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--kt-space-4);
+  flex-wrap: wrap;
+}
+
+.title {
+  font-size: var(--kt-text-2xl);
+  font-weight: var(--kt-weight-semibold);
+  color: var(--kt-text);
+  margin: 0 0 4px;
+}
+
+.subtitle {
+  font-size: var(--kt-text-sm);
+  color: var(--kt-text-muted);
+  margin: 0;
+}
+
+/* ── Two-column layout ──────────────────────────────────────────────────── */
+
+.layout {
+  display: flex;
+  gap: 32px;
+  align-items: flex-start;
+}
+
+.sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 80px;
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--kt-space-4);
+}
+
+/* ── Filter bar (above the table) ───────────────────────────────────────── */
+
+.filterBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--kt-space-3);
+  align-items: center;
+  background: var(--kt-surface);
+  border: 1px solid var(--kt-border);
+  border-radius: var(--kt-radius-lg);
+  padding: var(--kt-space-3) var(--kt-space-4);
+}
+
+.searchWrap {
+  position: relative;
+  flex: 1 1 220px;
+  max-width: 320px;
+  min-width: 160px;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--kt-text-muted);
+  display: inline-flex;
+  pointer-events: none;
+}
+
+.searchInput {
+  width: 100%;
+  height: 32px;
+  padding: 0 10px 0 30px;
+  border: 1px solid var(--kt-border);
+  border-radius: var(--kt-radius-md);
+  background: var(--kt-bg);
+  color: var(--kt-text);
+  font-family: var(--kt-font-sans);
+  font-size: 12px;
+  outline: none;
+}
+
+.searchInput:focus {
+  border-color: var(--kt-primary);
+}
+
+/* Dropdown trigger + popover */
+.filterDropdownWrap {
+  position: relative;
+}
+
+.filterTrigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--kt-border);
+  border-radius: var(--kt-radius-md);
+  background: var(--kt-bg);
+  color: var(--kt-text);
+  font-family: var(--kt-font-sans);
+  font-size: 12px;
+  font-weight: var(--kt-weight-medium);
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    border-color 0.1s,
+    background 0.1s;
+}
+
+.filterTrigger:hover {
+  border-color: var(--kt-primary);
+}
+
+.filterTriggerActive {
+  border-color: var(--kt-primary);
+  background: var(--kt-primary-subtle);
+  color: var(--kt-primary);
+}
+
+.filterTriggerCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 5px;
+  background: var(--kt-primary);
+  color: var(--kt-primary-fg);
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: var(--kt-weight-bold);
+  font-variant-numeric: tabular-nums;
+}
+
+.filterPopover {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  min-width: 180px;
+  background: var(--kt-surface);
+  border: 1px solid var(--kt-border);
+  border-radius: var(--kt-radius-md);
+  box-shadow: var(--kt-shadow-sm);
+  padding: 6px;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.filterOption {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: var(--kt-radius-sm);
+  font-size: 12px;
+  color: var(--kt-text);
+  font-family: var(--kt-font-sans);
+  cursor: pointer;
+  user-select: none;
+}
+
+.filterOption:hover {
+  background: var(--kt-secondary);
+}
+
+.filterOption input[type='checkbox'] {
+  cursor: pointer;
+}
+
+/* "Strong matches only" pill toggle */
+.toggleBtn {
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--kt-border);
+  border-radius: var(--kt-radius-md);
+  background: var(--kt-bg);
+  font-family: var(--kt-font-sans);
+  font-size: 12px;
+  font-weight: var(--kt-weight-medium);
+  color: var(--kt-text);
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    border-color 0.1s,
+    background 0.1s,
+    color 0.1s;
+}
+
+.toggleBtn:hover {
+  border-color: var(--kt-primary);
+}
+
+.toggleBtnOn {
+  border-color: var(--kt-primary);
+  background: var(--kt-primary-subtle);
+  color: var(--kt-primary);
+}
+
+.clearLink {
+  margin-left: auto;
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: var(--kt-font-sans);
+  font-size: 12px;
+  color: var(--kt-primary);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.clearLink:hover {
+  color: var(--kt-primary-hover);
+}
+
+/* ── Bulk action bar (replaces the filter bar when rows are selected) ────── */
+
+.bulkBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--kt-space-4);
+  padding: var(--kt-space-3) var(--kt-space-4);
+  background: var(--kt-primary-subtle);
+  border: 1px solid color-mix(in srgb, var(--kt-primary) 20%, var(--kt-border));
+  border-radius: var(--kt-radius-lg);
+}
+
+.bulkCount {
+  font-size: 13px;
+  font-weight: var(--kt-weight-semibold);
+  color: var(--kt-text);
+  flex-shrink: 0;
+}
+
+.bulkActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.bulkBtn {
+  height: 28px;
+  padding: 0 12px;
+  border: 0.5px solid var(--kt-border);
+  border-radius: var(--kt-radius-md);
+  background: var(--kt-surface);
+  color: var(--kt-text);
+  font-family: var(--kt-font-sans);
+  font-size: 11px;
+  font-weight: var(--kt-weight-medium);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.bulkBtn:hover {
+  background: var(--kt-secondary);
+}
+
+.bulkBtnDanger {
+  color: var(--kt-danger);
+  border-color: color-mix(in srgb, var(--kt-danger) 30%, var(--kt-border));
+}
+
+.bulkBtnDanger:hover {
+  background: var(--kt-danger-subtle);
+}
+
+.bulkDeselect {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: var(--kt-font-sans);
+  font-size: 12px;
+  color: var(--kt-text-muted);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.bulkDeselect:hover {
+  color: var(--kt-text);
+}
+
+.rowSelected {
+  background: var(--kt-primary-subtle);
+}
+
+/* ── Pagination footer ──────────────────────────────────────────────────── */
+
+.paginationBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--kt-space-4);
+  flex-wrap: wrap;
+}
+
+.paginationInfo {
+  font-size: 12px;
+  color: var(--kt-text-muted);
+}
+
+.paginationRight {
+  display: flex;
+  align-items: center;
+  gap: var(--kt-space-4);
+  flex-wrap: wrap;
+}
+
+.pageSizeLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--kt-text-muted);
+  font-family: var(--kt-font-sans);
+}
+
+.pageSizeSelect {
+  height: 28px;
+  padding: 0 28px 0 10px;
+  border: 1px solid var(--kt-border);
+  border-radius: var(--kt-radius-md);
+  background: var(--kt-bg);
+  color: var(--kt-text);
+  font-family: var(--kt-font-sans);
+  font-size: 12px;
+  cursor: pointer;
+  appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--kt-text-muted) 50%),
+    linear-gradient(135deg, var(--kt-text-muted) 50%, transparent 50%);
+  background-position:
+    calc(100% - 14px) 50%,
+    calc(100% - 10px) 50%;
+  background-size: 4px 4px;
+  background-repeat: no-repeat;
+}
+
+.pagerButtons {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.pagerBtn {
+  min-width: 28px;
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--kt-border);
+  border-radius: var(--kt-radius-md);
+  background: var(--kt-surface);
+  color: var(--kt-text);
+  font-family: var(--kt-font-sans);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.pagerBtn:hover:not(:disabled) {
+  background: var(--kt-secondary);
+}
+
+.pagerBtn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.pagerBtnActive {
+  background: var(--kt-primary);
+  color: var(--kt-primary-fg);
+  border-color: var(--kt-primary);
+}
+
+.pagerBtnActive:hover:not(:disabled) {
+  background: var(--kt-primary-hover);
+}
+
+.pagerEllipsis {
+  font-size: 11px;
+  color: var(--kt-text-muted);
+  padding: 0 4px;
+}
+
+/* ── Row overflow menu (portaled to document body) ──────────────────────── */
+
+.overflowMenu {
+  position: fixed;
+  background: var(--kt-surface);
+  border: 0.5px solid var(--kt-border);
+  border-radius: var(--kt-radius-md);
+  box-shadow: var(--kt-shadow-sm);
+  min-width: 180px;
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.overflowItem {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px 14px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  font-family: var(--kt-font-sans);
+  color: var(--kt-text);
+  font-weight: var(--kt-weight-medium);
+}
+
+.overflowItem:hover {
+  background: var(--kt-secondary);
+}
+
+.overflowItemDanger {
+  color: var(--kt-danger);
+}
+
+/* ── Skeleton row shimmer ───────────────────────────────────────────────── */
+
+.skeletonBar {
+  display: inline-block;
+  background: linear-gradient(
+    90deg,
+    var(--kt-grey-100) 0%,
+    var(--kt-grey-200) 50%,
+    var(--kt-grey-100) 100%
+  );
+  background-size: 200% 100%;
+  border-radius: var(--kt-radius-sm);
+  animation: skeletonShimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes skeletonShimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+
+/* ── Sidebar list card ──────────────────────────────────────────────────── */
+
+.listCard {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--kt-surface);
+  border: 1px solid var(--kt-border);
+  border-radius: var(--kt-radius-lg);
+  padding: var(--kt-space-3);
+}
+
+.listItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  border-radius: var(--kt-radius-md);
+  background: transparent;
+  color: var(--kt-text);
+  font-family: var(--kt-font-sans);
+  font-size: var(--kt-text-sm);
+  font-weight: var(--kt-weight-medium);
+  cursor: pointer;
+  text-align: left;
+  outline: none;
+  transition:
+    background 120ms ease,
+    color 120ms ease;
+}
+
+.listItem:focus-visible {
+  background: var(--kt-secondary);
+}
+
+/* Grow the label so the count + overflow sit on the right edge */
+.listItem > .listItemLabel {
+  flex: 1;
+}
+
+.listItem:hover {
+  background: var(--kt-secondary);
+}
+
+.listItemActive,
+.listItemActive:hover {
+  background: var(--kt-primary-subtle);
+  color: var(--kt-primary);
+  font-weight: var(--kt-weight-semibold);
+}
+
+.listItemLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.listItemCount {
+  font-size: var(--kt-text-xs);
+  color: var(--kt-text-muted);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.listItemActive .listItemCount {
+  color: var(--kt-primary);
+}
+
+.divider {
+  height: 1px;
+  background: var(--kt-border);
+  margin: 6px 4px;
+}
+
+.newListBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  border-radius: var(--kt-radius-md);
+  background: transparent;
+  color: var(--kt-text-muted);
+  font-family: var(--kt-font-sans);
+  font-size: var(--kt-text-sm);
+  font-weight: var(--kt-weight-medium);
+  cursor: pointer;
+  text-align: left;
+  transition:
+    background 120ms ease,
+    color 120ms ease;
+}
+
+.newListBtn:hover {
+  background: var(--kt-secondary);
+  color: var(--kt-text);
+}
+
+/* Small per-list overflow button — hidden until the list is hovered, focused, or active */
+.listOverflowBtn {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  opacity: 0;
+  color: var(--kt-text-muted);
+  transition: opacity 120ms ease;
+}
+
+.listItem:hover .listOverflowBtn,
+.listOverflowBtn:focus,
+.listItemActive .listOverflowBtn {
+  opacity: 1;
+}
+
+/* Invisible placeholder that reserves the overflow button's footprint so virtual
+ * sidebar items (All Krew, Regulix Ready) align with the row counts of real lists.
+ * Matches the rendered overflow button width (.overflowBtn = 26px), not the
+ * listOverflowBtn override, because base-class specificity wins in the cascade. */
+.listOverflowSpacer {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
+/* Regulix "R" wordmark needs a small inline-flex shell to align with the other
+ * sidebar icons, which all live on the baseline at a 15px size. */
+.regulixListIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  color: var(--kt-accent);
+  flex-shrink: 0;
+}
+
+/* Inline input used for both "create list" and "rename list" */
+.listInlineRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 10px;
+  border-radius: var(--kt-radius-md);
+  background: var(--kt-bg);
+  border: 1px solid var(--kt-primary);
+  color: var(--kt-text-muted);
+}
+
+.listInlineInput {
+  flex: 1;
+  min-width: 0;
+  height: 22px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--kt-text);
+  font-family: var(--kt-font-sans);
+  font-size: var(--kt-text-sm);
+  font-weight: var(--kt-weight-medium);
+  outline: none;
+}
+
+.listInlineHint {
+  font-size: var(--kt-text-xs);
+  color: var(--kt-text-placeholder);
+  flex-shrink: 0;
+}
+
+.listInlineError {
+  padding: 4px 10px 0;
+  font-size: var(--kt-text-xs);
+  color: var(--kt-danger);
+}
+
+/* ── Add-to-list picker (Modal body) ────────────────────────────────────── */
+
+.pickerHelpText {
+  font-size: var(--kt-text-sm);
+  color: var(--kt-text-muted);
+  margin: 0 0 var(--kt-space-3);
+}
+
+.pickerListContainer {
+  max-height: 280px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: var(--kt-space-3);
+}
+
+.pickerListOption {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: var(--kt-radius-md);
+  cursor: pointer;
+  font-size: var(--kt-text-sm);
+  color: var(--kt-text);
+  font-family: var(--kt-font-sans);
+}
+
+.pickerListOption:hover {
+  background: var(--kt-secondary);
+}
+
+.pickerListOption input[type='checkbox'] {
+  cursor: pointer;
+}
+
+.pickerListOptionLabel {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.pickerListOptionCount {
+  font-size: var(--kt-text-xs);
+  color: var(--kt-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.pickerNewListRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px dashed var(--kt-border);
+  border-radius: var(--kt-radius-md);
+  color: var(--kt-text-muted);
+}
+
+.pickerNewListInput {
+  flex: 1;
+  min-width: 0;
+  height: 24px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--kt-text);
+  font-family: var(--kt-font-sans);
+  font-size: var(--kt-text-sm);
+  outline: none;
+}
+
+.pickerError {
+  margin: var(--kt-space-3) 0 0;
+  font-size: var(--kt-text-xs);
+  color: var(--kt-danger);
+}
+
+.confirmRemoveBody {
+  margin: 0;
+  font-size: var(--kt-text-sm);
+  color: var(--kt-text);
+  line-height: 1.5;
+}
+
+/* ── Table (mirrors AllApplicantsPage pattern) ──────────────────────────── */
+
+.tableCard {
+  background: var(--kt-surface);
+  border: 1px solid var(--kt-border);
+  border-radius: var(--kt-radius-lg);
+  overflow-x: auto;
+}
+
+.row {
+  display: grid;
+  /* Select | Worker | Trade | Regulix | Matches | Last interaction | Overflow */
+  grid-template-columns: 32px minmax(160px, 1.5fr) minmax(120px, 1fr) 72px 84px 144px 48px;
+  align-items: center;
+  padding: 6px var(--kt-space-4);
+  border-bottom: 1px solid var(--kt-border);
+  column-gap: 10px;
+  min-height: 40px;
+  cursor: pointer;
+  /* Forces horizontal scroll inside .tableCard when viewport is narrower */
+  min-width: 760px;
+  transition: background 120ms ease;
+}
+
+.row:not(.headerRow):hover {
+  background: var(--kt-grey-100);
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.headerRow {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  min-height: 0;
+  background: var(--kt-bg);
+  font-size: 11px;
+  font-weight: var(--kt-weight-semibold);
+  color: var(--kt-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: default;
+}
+
+.sortableHeader {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: var(--kt-font-sans);
+  font-size: 11px;
+  font-weight: var(--kt-weight-semibold);
+  color: var(--kt-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  text-align: left;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sortableHeader:hover {
+  color: var(--kt-text);
+}
+
+.sortIndicator {
+  font-size: 10px;
+  color: var(--kt-primary);
+  font-weight: var(--kt-weight-bold);
+}
+
+.regulixHeader {
+  font-size: 11px;
+  font-weight: var(--kt-weight-semibold);
+  color: var(--kt-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-align: center;
+}
+
+.regulixCell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--kt-accent);
+}
+
+.checkCell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.checkCell input[type='checkbox'] {
+  cursor: pointer;
+}
+
+.emptyRow {
+  padding: 56px 24px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--kt-text-muted);
+  /* Match the row min-width so the empty text stays centered when the card scrolls */
+  min-width: 760px;
+}
+
+/* ── Row cells ──────────────────────────────────────────────────────────── */
+
+.workerCell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--kt-navy-800);
+  color: var(--kt-sand-300);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: var(--kt-weight-bold);
+  flex-shrink: 0;
+}
+
+.workerText {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.workerName {
+  font-size: 13px;
+  font-weight: var(--kt-weight-semibold);
+  color: var(--kt-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.regulixBadge {
+  display: inline-flex;
+  align-items: center;
+  color: var(--kt-accent);
+  flex-shrink: 0;
+}
+
+.tradeCell {
+  font-size: 12px;
+  color: var(--kt-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.numberCell {
+  font-size: 12px;
+  color: var(--kt-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.dateCell {
+  font-size: 12px;
+  color: var(--kt-text-muted);
+  white-space: nowrap;
+}
+
+.dashCell {
+  font-size: 12px;
+  color: var(--kt-text-placeholder);
+}
+
+.matchesBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 20px;
+  padding: 0 8px;
+  background: var(--kt-accent-subtle);
+  color: var(--kt-accent);
+  border-radius: var(--kt-radius-md);
+  font-size: 11px;
+  font-weight: var(--kt-weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+.overflowCell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.overflowBtn {
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: var(--kt-radius-md);
+  background: transparent;
+  color: var(--kt-text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.overflowBtn:hover {
+  background: var(--kt-secondary);
+  color: var(--kt-text);
+}
+
+/* ── Mobile list selector (hidden on desktop) ───────────────────────────── */
+
+.mobileListBar {
+  display: none;
+}
+
+.listDropdown {
+  flex: 1;
+  min-width: 0;
+  height: 38px;
+  padding: 0 32px 0 12px;
+  border: 1px solid var(--kt-border);
+  border-radius: var(--kt-radius-md);
+  background: var(--kt-surface);
+  color: var(--kt-text);
+  font-family: var(--kt-font-sans);
+  font-size: var(--kt-text-sm);
+  font-weight: var(--kt-weight-medium);
+  cursor: pointer;
+  appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--kt-text-muted) 50%),
+    linear-gradient(135deg, var(--kt-text-muted) 50%, transparent 50%);
+  background-position:
+    calc(100% - 16px) 50%,
+    calc(100% - 12px) 50%;
+  background-size: 5px 5px;
+  background-repeat: no-repeat;
+}
+
+.mobileNewListBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border: 1px solid var(--kt-border);
+  border-radius: var(--kt-radius-md);
+  background: var(--kt-surface);
+  color: var(--kt-text);
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+
+.mobileNewListBtn:hover {
+  background: var(--kt-secondary);
+}
+
+/* ── Worker drawer (Chunk 12 placeholder) ─────────────────────────────── */
+
+.drawerOverlay {
+  position: fixed;
+  inset: 0;
+  background: var(--kt-surface-overlay);
+  display: flex;
+  justify-content: flex-end;
+  z-index: var(--kt-z-modal);
+  animation: drawerFadeIn var(--kt-duration-base) var(--kt-ease);
+}
+
+.drawerPanel {
+  width: max(480px, 36vw);
+  max-width: 100%;
+  height: 100vh;
+  background: var(--kt-surface);
+  border-left: 1px solid var(--kt-border);
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--kt-shadow-lg);
+  animation: drawerSlideIn var(--kt-duration-base) var(--kt-ease);
+}
+
+@keyframes drawerFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes drawerSlideIn {
+  from {
+    transform: translateX(24px);
+    opacity: 0.6;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.drawerHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--kt-space-3);
+  padding: 24px 28px;
+  border-bottom: 1px solid var(--kt-border);
+  flex-shrink: 0;
+}
+
+.drawerTitle {
+  font-size: var(--kt-text-lg);
+  font-weight: var(--kt-weight-bold);
+  color: var(--kt-text);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.drawerCloseBtn {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--kt-text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  border: none;
+  padding: 0;
+  transition: background 120ms ease;
+}
+
+.drawerCloseBtn:hover {
+  background: var(--kt-secondary);
+  color: var(--kt-text);
+}
+
+.drawerBody {
+  flex: 1;
+  padding: 24px 28px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--kt-space-3);
+}
+
+.drawerPlaceholder {
+  font-size: var(--kt-text-sm);
+  color: var(--kt-text);
+  margin: 0;
+}
+
+.drawerPlaceholderMuted {
+  font-size: 12px;
+  color: var(--kt-text-muted);
+  margin: 0;
+  font-family: var(--kt-font-mono, monospace);
+}
+
+/* ── Responsive: sidebar → dropdown ─────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .container {
+    padding: 20px var(--kt-space-4);
+  }
+
+  .sidebar {
+    display: none;
+  }
+
+  .mobileListBar {
+    display: flex;
+    gap: var(--kt-space-3);
+    align-items: center;
+  }
+
+  .layout {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

@@ -77,8 +77,8 @@ function toTask(row: TaskRow): ApplicationTask {
   return {
     id: row.id,
     applicationId: row.application_id,
-    stageId: row.stage_id,
-    source: row.source,
+    stageId: row.stage_id ?? '',
+    source: row.source as ApplicationTask['source'],
     templateTaskId: row.template_task_id,
     label: row.label,
     isRequired: row.is_required,
@@ -116,7 +116,7 @@ function toTaskNote(row: TaskNoteRow): ApplicationTaskNote {
 function toNote(row: NoteRow): StageNote {
   return {
     applicationId: row.application_id,
-    stageId: row.stage_id,
+    stageId: row.stage_id ?? '',
     notes: row.notes,
     updatedAt: row.updated_at,
     updatedBy: row.updated_by ?? '',

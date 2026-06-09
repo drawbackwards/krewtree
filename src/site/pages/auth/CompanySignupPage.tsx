@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Button, Input, Select, Checkbox, Radio } from '../../../components'
-// TODO: replace with real Supabase query for industries list
-import { industries } from '../../data/mock'
+import { Button, Input, Select, Checkbox } from '../../../components'
+import { INDUSTRIES } from '../../data/industries'
+import { US_STATE_OPTIONS } from '../../data/usStates'
 import { KrewtreeLogo, KrewtreeBgMark } from '../../components/Logo'
 import { useAuth } from '../../context/AuthContext'
 import styles from './CompanySignupPage.module.css'
@@ -60,12 +60,11 @@ const BenefitIcon = ({ icon }: { icon: string }) => {
   }
 }
 
-const COMPANY_SIZES = [
-  { value: '1-9', label: '1–9' },
-  { value: '10-50', label: '10–50' },
-  { value: '51-200', label: '51–200' },
-  { value: '201+', label: '201+' },
-]
+// Digits-only phone validation. 10-15 digits accepted; formatting is cosmetic.
+const isValidPhone = (input: string): boolean => {
+  const digits = input.replace(/\D/g, '')
+  return digits.length >= 10 && digits.length <= 15
+}
 
 export const CompanySignupPage: React.FC = () => {
   const navigate = useNavigate()
@@ -75,15 +74,18 @@ export const CompanySignupPage: React.FC = () => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [phone, setPhone] = useState('')
   const [industry, setIndustry] = useState('')
-  const [companySize, setCompanySize] = useState('10-50')
+  const [hqCity, setHqCity] = useState('')
+  const [hqState, setHqState] = useState('')
   const [termsAgreed, setTermsAgreed] = useState(false)
   const [passwordError, setPasswordError] = useState('')
   const [confirmPasswordError, setConfirmPasswordError] = useState('')
+  const [phoneError, setPhoneError] = useState('')
   const [authError, setAuthError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const industryOptions = industries.map((ind) => ({
+  const industryOptions = INDUSTRIES.map((ind) => ({
     value: ind.slug,
     label: ind.name,
   }))
@@ -106,6 +108,13 @@ export const CompanySignupPage: React.FC = () => {
       setConfirmPasswordError('')
     }
 
+    if (!isValidPhone(phone)) {
+      setPhoneError('Enter a valid phone number')
+      valid = false
+    } else {
+      setPhoneError('')
+    }
+
     if (!termsAgreed || !valid) return
 
     setIsSubmitting(true)
@@ -116,7 +125,9 @@ export const CompanySignupPage: React.FC = () => {
       companyName,
       '',
       industry,
-      companySize
+      phone,
+      hqCity,
+      hqState
     )
     setIsSubmitting(false)
     if (error) {
@@ -395,6 +406,19 @@ export const CompanySignupPage: React.FC = () => {
                 />
               </div>
 
+              <Input
+                label="Phone number"
+                type="tel"
+                placeholder="(555) 123-4567"
+                value={phone}
+                onChange={(e) => {
+                  setPhone(e.target.value)
+                  setPhoneError('')
+                }}
+                error={phoneError}
+                required
+              />
+
               <Select
                 label="Primary industry"
                 placeholder="Select industry"
@@ -404,30 +428,23 @@ export const CompanySignupPage: React.FC = () => {
                 required
               />
 
-              {/* Company size */}
-              <div>
-                <p
-                  style={{
-                    fontSize: 'var(--kt-text-sm)',
-                    fontWeight: 'var(--kt-weight-medium)',
-                    color: 'var(--kt-text)',
-                    marginBottom: 10,
-                  }}
-                >
-                  Company size
-                </p>
-                <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap' }}>
-                  {COMPANY_SIZES.map(({ value, label }) => (
-                    <Radio
-                      key={value}
-                      label={label}
-                      name="company-size"
-                      value={value}
-                      checked={companySize === value}
-                      onChange={() => setCompanySize(value)}
-                    />
-                  ))}
-                </div>
+              <div className={styles.passwordGrid}>
+                <Input
+                  label="HQ city"
+                  type="text"
+                  placeholder="Phoenix"
+                  value={hqCity}
+                  onChange={(e) => setHqCity(e.target.value)}
+                  required
+                />
+                <Select
+                  label="State"
+                  placeholder="Select state"
+                  options={US_STATE_OPTIONS}
+                  value={hqState}
+                  onChange={(e) => setHqState(e.target.value)}
+                  required
+                />
               </div>
 
               <Checkbox
