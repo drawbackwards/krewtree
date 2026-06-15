@@ -96,6 +96,12 @@
   align-items: stretch;
 }
 
+/* When the completeness widget hides itself (dismissed or 100% complete)
+   or a module is toggled off, the remaining widget takes the full row. */
+.row1 > :only-child {
+  grid-column: 1 / -1;
+}
+
 @media (max-width: 960px) {
   .layout {
     padding: 20px var(--kt-space-4);

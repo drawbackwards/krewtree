@@ -1,0 +1,77 @@
+.heroInner {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 32px var(--kt-space-6) 28px;
+}
+
+.profileRow {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.profileActions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+  padding-bottom: 4px;
+}
+
+.body {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 24px var(--kt-space-6) 48px;
+}
+
+.aboutGrid {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sidebar {
+  width: 260px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: sticky;
+  top: 120px;
+}
+
+@media (max-width: 640px) {
+  .heroInner {
+    padding: 16px var(--kt-space-4) 0;
+  }
+
+  .profileActions {
+    width: 100%;
+  }
+
+  .profileActions > * {
+    flex: 1;
+  }
+
+  .body {
+    padding: 16px var(--kt-space-4) 24px;
+  }
+
+  .aboutGrid {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .sidebar {
+    width: 100%;
+    position: static;
+  }
+}

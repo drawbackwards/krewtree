@@ -387,7 +387,6 @@ export type ApplicationMessage = {
   id: string
   applicationId: string
   applicationTaskId: string | null
-  subject: string
   body: string
   calendarLink: string | null
   sentAt: string

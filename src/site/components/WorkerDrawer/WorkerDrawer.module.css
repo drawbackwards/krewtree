@@ -74,6 +74,15 @@
   background: var(--kt-secondary);
 }
 
+.iconBtn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.iconBtn:disabled:hover {
+  background: transparent;
+}
+
 .iconBtn[aria-expanded='true'] {
   background: var(--kt-secondary);
 }

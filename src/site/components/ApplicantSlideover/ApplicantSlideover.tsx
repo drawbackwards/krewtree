@@ -182,9 +182,8 @@ export const ApplicantSlideover: React.FC<ApplicantSlideoverProps> = ({
   }
 
   const handleMessage = (): void => {
-    // Messaging UI isn't built yet — keep the original alert behavior so the
-    // action surface still does something useful.
-    window.alert('Messaging UI not built yet. Navigate to /site/messages to continue.')
+    navigate(`/site/messages?application=${entry.applicationId}`)
+    onClose()
   }
 
   const handleShortlist = async (): Promise<void> => {

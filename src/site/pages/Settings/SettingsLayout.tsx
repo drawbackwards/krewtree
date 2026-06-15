@@ -4,7 +4,10 @@ import styles from './SettingsLayout.module.css'
 
 type NavItem = { to: string; label: string }
 
-const ORG_NAV: NavItem[] = [{ to: '/site/settings/pipeline', label: 'Pipeline' }]
+const ORG_NAV: NavItem[] = [
+  { to: '/site/settings/profile', label: 'Profile' },
+  { to: '/site/settings/pipeline', label: 'Pipeline' },
+]
 const ACCOUNT_NAV: NavItem[] = [{ to: '/site/settings/account', label: 'Account & billing' }]
 
 const NavList: React.FC<{ items: NavItem[] }> = ({ items }) => (

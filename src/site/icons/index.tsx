@@ -1264,6 +1264,25 @@ export const ChevronRightIcon: React.FC<{ size?: number; color?: string }> = ({
   </svg>
 )
 
+export const ChevronLeftIcon: React.FC<{ size?: number; color?: string }> = ({
+  size = 16,
+  color = 'currentColor',
+}) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeWidth="2.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <polyline points="15 18 9 12 15 6" />
+  </svg>
+)
+
 export const UploadIcon: React.FC<{ size?: number; color?: string }> = ({
   size = 20,
   color = 'currentColor',

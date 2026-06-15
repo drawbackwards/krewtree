@@ -17,3 +17,16 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     detectSessionInUrl: true,
   },
 })
+
+/**
+ * Current user's id from the locally cached session — no network round trip,
+ * unlike `auth.getUser()` which revalidates against the auth server on every
+ * call. Services should use this for identity; RLS enforces authorization
+ * server-side regardless of what the client claims.
+ */
+export async function getCurrentUserId(): Promise<string | null> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
+  return session?.user.id ?? null
+}

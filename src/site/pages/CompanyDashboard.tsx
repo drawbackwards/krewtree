@@ -3,9 +3,8 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Badge, Button, Modal } from '../../components'
 import { StatCard } from '../components/StatCard/StatCard'
 import { ApplicantsWidget } from '../components/ApplicantsWidget/ApplicantsWidget'
-import { NeedsAttentionWidget } from '../components/NeedsAttentionWidget/NeedsAttentionWidget'
 import { WeekCalendarWidget } from '../components/WeekCalendarWidget/WeekCalendarWidget'
-import { CompanyProfileNudge } from '../components/CompanyProfileNudge/CompanyProfileNudge'
+import { CompanyCompletenessWidget } from '../components/CompanyCompletenessWidget/CompanyCompletenessWidget'
 import { RegulixLogo } from '../components/RegulixLogo/RegulixLogo'
 import { BriefcaseIcon, UsersIcon, PersonIcon, RocketIcon, CheckIcon, CloseIcon } from '../icons'
 import { useAuth } from '../context/AuthContext'
@@ -147,13 +146,13 @@ export const CompanyDashboard: React.FC = () => {
 
   type ModuleConfig = {
     calendar: boolean
-    needsAttention: boolean
+    profileCompleteness: boolean
     applicants: boolean
     activeJobs: boolean
   }
   const DEFAULT_MODULE_CONFIG: ModuleConfig = {
     calendar: true,
-    needsAttention: true,
+    profileCompleteness: true,
     applicants: true,
     activeJobs: true,
   }
@@ -162,7 +161,12 @@ export const CompanyDashboard: React.FC = () => {
       const raw = localStorage.getItem('kt_company_modules_v2')
       if (!raw) return DEFAULT_MODULE_CONFIG
       const parsed = JSON.parse(raw) as Partial<ModuleConfig>
-      return { ...DEFAULT_MODULE_CONFIG, ...parsed }
+      return {
+        calendar: parsed.calendar ?? true,
+        profileCompleteness: parsed.profileCompleteness ?? true,
+        applicants: parsed.applicants ?? true,
+        activeJobs: parsed.activeJobs ?? true,
+      }
     } catch {
       return DEFAULT_MODULE_CONFIG
     }
@@ -258,8 +262,15 @@ export const CompanyDashboard: React.FC = () => {
           ))}
         </div>
 
-        {/* ── Profile completeness nudge (spec §5.1) ───────────────────── */}
-        {user?.id && <CompanyProfileNudge companyId={user.id} />}
+        {/* ── Two-column module grid ───────────────────────────────────── */}
+
+        {/* Row 1: Week calendar 2/3 + Profile completeness 1/3, stacks on mobile */}
+        {(moduleConfig.calendar || moduleConfig.profileCompleteness) && user?.id && (
+          <div className={dashStyles.row1}>
+            {moduleConfig.calendar && <WeekCalendarWidget companyId={user.id} />}
+            {moduleConfig.profileCompleteness && <CompanyCompletenessWidget companyId={user.id} />}
+          </div>
+        )}
 
         {/* ── Regulix promo banner ─────────────────────────────────────── */}
         {!regulixBannerDismissed && (
@@ -281,16 +292,6 @@ export const CompanyDashboard: React.FC = () => {
             >
               <CloseIcon size={14} />
             </button>
-          </div>
-        )}
-
-        {/* ── Two-column module grid ───────────────────────────────────── */}
-
-        {/* Row 1: Week calendar 2/3 + Needs attention 1/3, stacks on mobile */}
-        {(moduleConfig.calendar || moduleConfig.needsAttention) && user?.id && (
-          <div className={dashStyles.row1}>
-            {moduleConfig.calendar ? <WeekCalendarWidget companyId={user.id} /> : <div />}
-            {moduleConfig.needsAttention ? <NeedsAttentionWidget companyId={user.id} /> : <div />}
           </div>
         )}
 
@@ -341,9 +342,9 @@ export const CompanyDashboard: React.FC = () => {
             onChange={(v) => setModuleConfig((c) => ({ ...c, calendar: v }))}
           />
           <ToggleRow
-            label="Needs attention"
-            on={moduleConfig.needsAttention}
-            onChange={(v) => setModuleConfig((c) => ({ ...c, needsAttention: v }))}
+            label="Profile completeness"
+            on={moduleConfig.profileCompleteness}
+            onChange={(v) => setModuleConfig((c) => ({ ...c, profileCompleteness: v }))}
           />
           <ToggleRow
             label="Applicants"

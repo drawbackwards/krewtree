@@ -17,7 +17,11 @@ import styles from './WorkerProfileEditPage.module.css'
 // ── localStorage ───────────────────────────────────────────────────────────────
 
 // Bumped to v8 to invalidate cached state with the dropped `relationship` field.
-const STORAGE_KEY = 'kt_profile_edit_v8'
+// Scoped per account so one worker's draft never leaks into another that signs
+// in on the same browser. A missing user id yields no key (no read/write).
+function storageKey(userId: string | undefined): string | null {
+  return userId ? `kt_profile_edit_v8:${userId}` : null
+}
 
 const emptyStep2 = (): Step2Data => ({ skills: [], certifications: [] })
 
@@ -39,9 +43,11 @@ const defaultState = (): EditState => ({
   stepReferences: emptyReferences(),
 })
 
-function loadState(): EditState {
+function loadState(userId: string | undefined): EditState {
+  const key = storageKey(userId)
+  if (!key) return defaultState()
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
+    const raw = localStorage.getItem(key)
     if (raw) {
       const parsed = JSON.parse(raw) as Partial<EditState>
       const def = defaultState()
@@ -62,9 +68,11 @@ function loadState(): EditState {
   return defaultState()
 }
 
-function saveState(state: EditState) {
+function saveState(userId: string | undefined, state: EditState) {
+  const key = storageKey(userId)
+  if (!key) return
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+    localStorage.setItem(key, JSON.stringify(state))
   } catch {
     /* ignore */
   }
@@ -239,7 +247,7 @@ export const WorkerProfileEditPage: React.FC = () => {
   const { user } = useAuth()
   const isCreate = location.pathname.includes('/create')
 
-  const [editState, setEditState] = useState<EditState>(() => loadState())
+  const [editState, setEditState] = useState<EditState>(() => loadState(user?.id))
   const [activeSection, setActiveSection] = useState(1)
   const [savedStep, setSavedStep] = useState<number | null>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
@@ -248,12 +256,19 @@ export const WorkerProfileEditPage: React.FC = () => {
   const [isDirty, setIsDirty] = useState(false)
   const [profileCompletePct, setProfileCompletePct] = useState(0)
   const prefillDone = useRef(false)
+  // The prefill's own setEditState triggers the effect below; this one-shot ref
+  // lets that single run through without marking the form dirty.
+  const skipDirtyOnce = useRef(false)
   const sectionRefs = useRef<Record<number, HTMLDivElement | null>>({})
 
   useEffect(() => {
-    saveState(editState)
+    saveState(user?.id, editState)
+    if (skipDirtyOnce.current) {
+      skipDirtyOnce.current = false
+      return
+    }
     if (prefillDone.current) setIsDirty(true)
-  }, [editState])
+  }, [editState, user?.id])
 
   // Warn on browser refresh / tab close
   useEffect(() => {
@@ -282,6 +297,7 @@ export const WorkerProfileEditPage: React.FC = () => {
         return
       }
       setProfileCompletePct(data.profileCompletePct)
+      skipDirtyOnce.current = true
       const meta = user.user_metadata as Record<string, string> | undefined
       setEditState((prev) => {
         // Skills: group by industry, then fill each bucket that is empty in localStorage
@@ -497,7 +513,8 @@ export const WorkerProfileEditPage: React.FC = () => {
       setActiveSection(stepNum + 1)
       setTimeout(() => scrollToSection(stepNum + 1), 80)
     } else {
-      localStorage.removeItem(STORAGE_KEY)
+      const key = storageKey(user?.id)
+      if (key) localStorage.removeItem(key)
       setTimeout(() => navigate(`/site/profile/${user!.id}`), 1500)
     }
   }

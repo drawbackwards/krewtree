@@ -1,9 +1,20 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 import {
-  getWorkerMessages,
-  markMessageRead,
-  type WorkerInboxMessage,
-} from '../services/pipelineService'
+  getConversations,
+  getConversationStub,
+  getApplicationThreadRef,
+  getThreadMessages,
+  sendMessage,
+  markThreadRead,
+  conversationKey,
+  MESSAGES_READ_EVENT,
+  type ApplicationThreadRef,
+  type Conversation,
+  type ThreadMessage,
+} from '../services/messageService'
+import { ChevronLeftIcon, LinkIcon } from '../icons'
 import styles from './MessagesPage.module.css'
 
 function formatRelativeTime(iso: string): string {
@@ -19,6 +30,20 @@ function formatRelativeTime(iso: string): string {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
+function formatDayLabel(iso: string): string {
+  const date = new Date(iso)
+  const today = new Date()
+  const yesterday = new Date(today)
+  yesterday.setDate(today.getDate() - 1)
+  if (date.toDateString() === today.toDateString()) return 'Today'
+  if (date.toDateString() === yesterday.toDateString()) return 'Yesterday'
+  return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+}
+
+function formatClockTime(iso: string): string {
+  return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+}
+
 function initials(name: string): string {
   return name
     .split(/\s+/)
@@ -28,106 +53,451 @@ function initials(name: string): string {
     .toUpperCase()
 }
 
-export const MessagesPage: React.FC = () => {
-  const [messages, setMessages] = useState<WorkerInboxMessage[]>([])
-  const [loading, setLoading] = useState(true)
-  const [openId, setOpenId] = useState<string | null>(null)
+/** Decode a conversation key back into its pair coordinates. */
+function parseConversationKey(key: string): { companyId: string; workerId: string } | null {
+  const [companyId, workerId] = key.split(':')
+  if (companyId && workerId) return { companyId, workerId }
+  return null
+}
 
-  const load = useCallback(async () => {
+export const MessagesPage: React.FC = () => {
+  const { persona, user } = useAuth()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const myId = user?.id ?? null
+
+  // Deep links: ?dm=<otherPartyId> opens the pair thread with that
+  // counterpart (worker id for company viewers, company id for worker
+  // viewers); ?application=<id> resolves the application to its pair
+  // thread and tags composed messages with that application's context.
+  const deepLinkApplication = searchParams.get('application')
+  const deepLinkDm = searchParams.get('dm')
+
+  const [appRef, setAppRef] = useState<ApplicationThreadRef | null>(null)
+  useEffect(() => {
+    if (!deepLinkApplication) {
+      setAppRef(null)
+      return
+    }
+    let cancelled = false
+    getApplicationThreadRef(deepLinkApplication).then(({ data }) => {
+      if (!cancelled) setAppRef(data)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [deepLinkApplication])
+
+  const deepLinkKey = useMemo(() => {
+    if (deepLinkApplication) {
+      return appRef ? conversationKey(appRef.companyId, appRef.workerId) : null
+    }
+    if (deepLinkDm && myId && persona) {
+      return persona === 'company'
+        ? conversationKey(myId, deepLinkDm)
+        : conversationKey(deepLinkDm, myId)
+    }
+    return null
+  }, [deepLinkApplication, appRef, deepLinkDm, myId, persona])
+
+  const [conversations, setConversations] = useState<Conversation[]>([])
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
+  const [selectedKey, setSelectedKey] = useState<string | null>(null)
+
+  const [thread, setThread] = useState<ThreadMessage[]>([])
+  const [threadLoading, setThreadLoading] = useState(false)
+
+  const [draft, setDraft] = useState('')
+  const [sending, setSending] = useState(false)
+  const [sendError, setSendError] = useState<string | null>(null)
+
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const composerRef = useRef<HTMLTextAreaElement>(null)
+
+  const selected = useMemo(
+    () => conversations.find((c) => c.key === selectedKey) ?? null,
+    [conversations, selectedKey]
+  )
+
+  // Select the deep-linked thread once it's resolvable (dm links need the
+  // auth user, application links need the resolved pair).
+  useEffect(() => {
+    if (deepLinkKey) setSelectedKey(deepLinkKey)
+  }, [deepLinkKey])
+
+  // ── Load conversation list ────────────────────────────────────────────────
+  const loadConversations = useCallback(async () => {
+    if (!persona) return
     setLoading(true)
-    const { data } = await getWorkerMessages()
-    setMessages(data)
+    const { data, error } = await getConversations()
+    let list = data
+    // Deep link to a pair with no messages yet (e.g. company starting a
+    // conversation from the pipeline or chat pane) — fetch its header.
+    if (deepLinkKey && !data.some((c) => c.key === deepLinkKey)) {
+      const parsed = parseConversationKey(deepLinkKey)
+      if (parsed) {
+        const { data: stub } = await getConversationStub(parsed.companyId, parsed.workerId)
+        if (stub) list = [stub, ...data]
+      }
+    }
+    setConversations(list)
+    setLoadError(error)
     setLoading(false)
-  }, [])
+  }, [persona, deepLinkKey])
 
   useEffect(() => {
-    load()
-  }, [load])
+    loadConversations()
+  }, [loadConversations])
 
-  async function handleOpen(msg: WorkerInboxMessage) {
-    const willOpen = openId !== msg.id
-    setOpenId(willOpen ? msg.id : null)
-    if (willOpen && !msg.readAt) {
-      const now = new Date().toISOString()
-      setMessages((prev) => prev.map((m) => (m.id === msg.id ? { ...m, readAt: now } : m)))
-      await markMessageRead(msg.id)
+  // ── Load + mark read the selected thread ──────────────────────────────────
+  // The key encodes the pair, so the fetch doesn't need the Conversation
+  // object — which may not exist yet when a deep link selects a thread
+  // before the list has loaded.
+  useEffect(() => {
+    const parsed = selectedKey ? parseConversationKey(selectedKey) : null
+    if (!parsed || !persona) {
+      setThread([])
+      return
+    }
+    let cancelled = false
+    setThreadLoading(true)
+    getThreadMessages(parsed.companyId, parsed.workerId).then(({ data }) => {
+      if (cancelled) return
+      setThread(data)
+      setThreadLoading(false)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [selectedKey, persona])
+
+  useEffect(() => {
+    if (!selected || selected.unreadCount === 0) return
+    markThreadRead(selected.companyId, selected.workerId).then(() => {
+      setConversations((prev) =>
+        prev.map((c) => (c.key === selected.key ? { ...c, unreadCount: 0 } : c))
+      )
+      window.dispatchEvent(new Event(MESSAGES_READ_EVENT))
+    })
+  }, [selected])
+
+  // Keep the thread pinned to the latest message.
+  useEffect(() => {
+    const el = scrollRef.current
+    if (el) el.scrollTop = el.scrollHeight
+  }, [thread])
+
+  function handleSelect(conv: Conversation): void {
+    setSelectedKey(conv.key)
+    setDraft('')
+    setSendError(null)
+    // Selecting from the list always rewrites to a dm link, which clears
+    // any active application context from a previous deep link.
+    const otherPartyId = persona === 'company' ? conv.workerId : conv.companyId
+    setSearchParams({ dm: otherPartyId }, { replace: true })
+  }
+
+  function handleBack(): void {
+    setSelectedKey(null)
+    setSearchParams({}, { replace: true })
+  }
+
+  // ── Send / reply ──────────────────────────────────────────────────────────
+  async function handleSend(): Promise<void> {
+    if (!selected || !persona || sending) return
+    const body = draft.trim()
+    if (!body) return
+
+    // Arriving via ?application=<id> tags sends with that application so
+    // the other party sees which job the message is about.
+    const applicationId =
+      appRef && selected.key === conversationKey(appRef.companyId, appRef.workerId)
+        ? appRef.applicationId
+        : null
+
+    setSending(true)
+    setSendError(null)
+    const { data, error } = await sendMessage(selected.companyId, selected.workerId, body, {
+      applicationId,
+    })
+    setSending(false)
+
+    if (error || !data) {
+      setSendError('Message failed to send. Please try again.')
+      return
+    }
+
+    setThread((prev) => [...prev, data])
+    setDraft('')
+    setConversations((prev) =>
+      prev.map((c) =>
+        c.key === selected.key ? { ...c, lastMessage: data, messageCount: c.messageCount + 1 } : c
+      )
+    )
+    composerRef.current?.focus()
+  }
+
+  function handleComposerKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>): void {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleSend()
     }
   }
 
-  const unreadCount = messages.filter((m) => !m.readAt).length
+  // ── Display helpers ───────────────────────────────────────────────────────
+  const isCompany = persona === 'company'
+
+  function counterpartName(c: Conversation): string {
+    return isCompany ? c.workerName || 'Worker' : c.companyName
+  }
+
+  function counterpartAvatar(c: Conversation): string | null {
+    return isCompany ? c.workerAvatar : c.companyLogo
+  }
+
+  function contextLine(c: Conversation): string {
+    return c.lastMessage?.jobTitle ?? 'Direct message'
+  }
+
+  const sortedConversations = useMemo(
+    () =>
+      [...conversations].sort((a, b) => {
+        const at = a.lastMessage?.sentAt ?? ''
+        const bt = b.lastMessage?.sentAt ?? ''
+        return bt.localeCompare(at)
+      }),
+    [conversations]
+  )
+
+  const totalUnread = conversations.reduce((sum, c) => sum + c.unreadCount, 0)
 
   return (
     <div className={styles.page}>
       <header className={styles.header}>
         <h1 className={styles.title}>Messages</h1>
-        {!loading && messages.length > 0 && (
+        {!loading && conversations.length > 0 && (
           <span className={styles.unreadCount}>
-            {unreadCount > 0
-              ? `${unreadCount} unread of ${messages.length}`
-              : `${messages.length} message${messages.length === 1 ? '' : 's'}`}
+            {totalUnread > 0
+              ? `${totalUnread} unread`
+              : `${conversations.length} conversation${conversations.length === 1 ? '' : 's'}`}
           </span>
         )}
       </header>
 
-      {loading ? null : messages.length === 0 ? (
+      {loading ? null : loadError ? (
+        <div className={styles.empty}>
+          <p className={styles.emptyTitle}>Couldn’t load messages</p>
+          <p className={styles.emptyHint}>{loadError}</p>
+        </div>
+      ) : conversations.length === 0 ? (
         <div className={styles.empty}>
           <p className={styles.emptyTitle}>No messages yet</p>
           <p className={styles.emptyHint}>
-            When a company reaches out about an application, you’ll see it here.
+            {isCompany
+              ? 'Message a worker from Discover or My Krew, or start a conversation from your pipeline — it will appear here.'
+              : 'When a company reaches out, you’ll see it here.'}
           </p>
         </div>
       ) : (
-        <ul className={styles.list}>
-          {messages.map((msg) => {
-            const unread = !msg.readAt
-            const isOpen = openId === msg.id
-            return (
-              <li key={msg.id} className={`${styles.row} ${unread ? styles.rowUnread : ''}`}>
-                <button
-                  type="button"
-                  className={styles.rowHeader}
-                  onClick={() => handleOpen(msg)}
-                  aria-expanded={isOpen}
-                >
-                  {msg.companyLogo ? (
-                    <img src={msg.companyLogo} alt="" className={styles.logo} aria-hidden="true" />
-                  ) : (
-                    <span className={styles.logo} aria-hidden="true">
-                      {initials(msg.companyName)}
-                    </span>
-                  )}
-                  <div className={styles.center}>
-                    <div className={styles.fromLine}>
-                      <span className={styles.fromCompany}>{msg.companyName}</span>
-                      <span>· {msg.jobTitle}</span>
-                    </div>
-                    <div className={`${styles.subjectLine} ${unread ? styles.subjectUnread : ''}`}>
-                      {unread && <span className={styles.unreadDot} aria-hidden="true" />}
-                      {msg.subject}
-                    </div>
-                    {!isOpen && (
-                      <div className={styles.preview}>
-                        {msg.body.replace(/\s+/g, ' ').slice(0, 110)}
-                      </div>
-                    )}
-                  </div>
-                  <div className={styles.right}>
-                    <span className={styles.sentTime}>{formatRelativeTime(msg.sentAt)}</span>
-                  </div>
-                </button>
+        <div className={`${styles.layout} ${selectedKey ? styles.layoutThreadOpen : ''}`}>
+          {/* ── Conversation list ── */}
+          <aside className={styles.listPane} aria-label="Conversations">
+            <ul className={styles.convList}>
+              {sortedConversations.map((c) => {
+                const active = c.key === selectedKey
+                const unread = c.unreadCount > 0
+                return (
+                  <li key={c.key}>
+                    <button
+                      type="button"
+                      className={[
+                        styles.convRow,
+                        active ? styles.convRowActive : '',
+                        unread ? styles.convRowUnread : '',
+                      ]
+                        .filter(Boolean)
+                        .join(' ')}
+                      onClick={() => handleSelect(c)}
+                      aria-current={active}
+                    >
+                      {counterpartAvatar(c) ? (
+                        <img
+                          src={counterpartAvatar(c)!}
+                          alt=""
+                          className={styles.avatar}
+                          aria-hidden="true"
+                        />
+                      ) : (
+                        <span className={styles.avatar} aria-hidden="true">
+                          {initials(counterpartName(c))}
+                        </span>
+                      )}
+                      <span className={styles.convCenter}>
+                        <span className={styles.convTopLine}>
+                          <span className={unread ? styles.convNameUnread : styles.convName}>
+                            {counterpartName(c)}
+                          </span>
+                          {c.lastMessage && (
+                            <span className={styles.convTime}>
+                              {formatRelativeTime(c.lastMessage.sentAt)}
+                            </span>
+                          )}
+                        </span>
+                        <span className={styles.convJob}>{contextLine(c)}</span>
+                        <span className={styles.convPreview}>
+                          {c.lastMessage
+                            ? c.lastMessage.body.replace(/\s+/g, ' ').slice(0, 90)
+                            : 'No messages yet'}
+                        </span>
+                      </span>
+                      {unread && (
+                        <span className={styles.unreadPill}>
+                          {c.unreadCount > 9 ? '9+' : c.unreadCount}
+                        </span>
+                      )}
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+          </aside>
 
-                {isOpen && (
-                  <div className={styles.body}>
-                    <div className={styles.bodyMeta}>
-                      Sent {new Date(msg.sentAt).toLocaleString()}
-                    </div>
-                    {msg.body}
+          {/* ── Thread ── */}
+          <section className={styles.threadPane} aria-label="Conversation">
+            {!selected ? (
+              <div className={styles.threadEmpty}>
+                <p className={styles.emptyTitle}>Select a conversation</p>
+                <p className={styles.emptyHint}>
+                  Choose a conversation on the left to read and reply.
+                </p>
+              </div>
+            ) : (
+              <>
+                <header className={styles.threadHeader}>
+                  <button
+                    type="button"
+                    className={styles.backBtn}
+                    onClick={handleBack}
+                    aria-label="Back to conversations"
+                  >
+                    <ChevronLeftIcon size={14} />
+                  </button>
+                  <div className={styles.threadHeaderCenter}>
+                    <span className={styles.threadName}>{counterpartName(selected)}</span>
+                    <span className={styles.threadJobLine}>
+                      <Link
+                        to={
+                          isCompany
+                            ? `/site/profile/${selected.workerId}`
+                            : `/site/company/${selected.companyId}`
+                        }
+                        className={styles.threadJobLink}
+                      >
+                        View profile
+                      </Link>
+                    </span>
                   </div>
-                )}
-              </li>
-            )
-          })}
-        </ul>
+                </header>
+
+                <div className={styles.threadScroll} ref={scrollRef}>
+                  {threadLoading ? null : thread.length === 0 ? (
+                    <div className={styles.threadEmpty}>
+                      <p className={styles.emptyHint}>
+                        No messages yet — write the first one below.
+                      </p>
+                    </div>
+                  ) : (
+                    thread.map((msg, i) => {
+                      const prev = thread[i - 1]
+                      const mine = msg.senderRole === persona
+                      const newDay =
+                        !prev ||
+                        new Date(prev.sentAt).toDateString() !== new Date(msg.sentAt).toDateString()
+                      return (
+                        <React.Fragment key={msg.id}>
+                          {newDay && (
+                            <div className={styles.dayDivider}>{formatDayLabel(msg.sentAt)}</div>
+                          )}
+                          <div
+                            className={`${styles.bubbleRow} ${mine ? styles.bubbleRowMine : ''}`}
+                          >
+                            <div className={`${styles.bubble} ${mine ? styles.bubbleMine : ''}`}>
+                              <div className={styles.bubbleBody}>{msg.body}</div>
+                              {msg.calendarLink && (
+                                <a
+                                  href={msg.calendarLink}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className={`${styles.calendarLink} ${
+                                    mine ? styles.calendarLinkMine : ''
+                                  }`}
+                                >
+                                  <LinkIcon size={13} />
+                                  Schedule a time
+                                </a>
+                              )}
+                              <div
+                                className={`${styles.bubbleTime} ${
+                                  mine ? styles.bubbleTimeMine : ''
+                                }`}
+                              >
+                                {msg.applicationId && msg.jobTitle && (
+                                  <>
+                                    <Link
+                                      to={`/site/jobs/${msg.jobId}`}
+                                      className={styles.bubbleTimeLink}
+                                    >
+                                      Re: {msg.jobTitle}
+                                    </Link>
+                                    {' · '}
+                                  </>
+                                )}
+                                {formatClockTime(msg.sentAt)}
+                              </div>
+                            </div>
+                          </div>
+                        </React.Fragment>
+                      )
+                    })
+                  )}
+                </div>
+
+                <footer className={styles.composer}>
+                  {sendError && (
+                    <div className={styles.sendError} role="alert">
+                      {sendError}
+                    </div>
+                  )}
+                  <div className={styles.composerRow}>
+                    <textarea
+                      ref={composerRef}
+                      className={styles.composerInput}
+                      placeholder={`Message ${counterpartName(selected)}…`}
+                      value={draft}
+                      onChange={(e) => setDraft(e.target.value)}
+                      onKeyDown={handleComposerKeyDown}
+                      rows={2}
+                      maxLength={10000}
+                      disabled={sending || !user}
+                      aria-label="Message text"
+                    />
+                    <button
+                      type="button"
+                      className={styles.sendBtn}
+                      onClick={handleSend}
+                      disabled={sending || !draft.trim()}
+                    >
+                      {sending ? 'Sending…' : 'Send'}
+                    </button>
+                  </div>
+                  <div className={styles.composerHint}>
+                    Enter to send · Shift+Enter for a new line
+                  </div>
+                </footer>
+              </>
+            )}
+          </section>
+        </div>
       )}
     </div>
   )

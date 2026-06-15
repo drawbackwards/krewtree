@@ -1,25 +1,23 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '../../components'
-import { Stepper } from '../../components/Stepper/Stepper'
 import type { StepState } from '../../components/Stepper/Stepper'
 import { useAuth } from '../context/AuthContext'
 import {
   getCompanyProfile,
   getCompanyLicenses,
-  getCompanyAdditionalLocations,
   getCompanyPhotos,
   getCompanyBenefits,
   upsertCompanyBasics,
   saveCompanyLicenses,
-  saveCompanyLocations,
+  saveCompanyContractBenefits,
   saveCompanyHiring,
   recomputeProfileCompletePct,
 } from '../services/companyService'
 import { Step1Section } from './CompanyProfileEdit/Step1Section'
 import { StepAboutSection } from './CompanyProfileEdit/StepAboutSection'
 import { StepLicensesSection } from './CompanyProfileEdit/StepLicensesSection'
-import { StepLocationsSection } from './CompanyProfileEdit/StepLocationsSection'
+import { StepContractBenefitsSection } from './CompanyProfileEdit/StepContractBenefitsSection'
 import { StepHiringSection } from './CompanyProfileEdit/StepHiringSection'
 import { CheckCircleIcon } from './WorkerProfileEdit/icons'
 import type {
@@ -27,13 +25,17 @@ import type {
   Step1Data,
   StepAboutData,
   StepLicensesData,
-  StepLocationsData,
+  StepContractBenefitsData,
   StepHiringData,
 } from './CompanyProfileEdit/types'
 import styles from './CompanyProfileEditPage.module.css'
 
 // Bumped to v2 so cached states from the Phase 2 build don't poison the new shape.
-const STORAGE_KEY = 'kt_company_profile_edit_v2'
+// Scoped per account so a draft from one company never leaks into another that
+// signs in on the same browser. A missing user id yields no key (no read/write).
+function storageKey(userId: string | undefined): string | null {
+  return userId ? `kt_company_profile_edit_v2:${userId}` : null
+}
 
 const defaultStep1 = (): Step1Data => ({
   name: '',
@@ -46,8 +48,6 @@ const defaultStep1 = (): Step1Data => ({
   hqCity: '',
   hqState: '',
   phonePublic: false,
-  emailPublic: false,
-  addressPublic: false,
 })
 
 const defaultStepAbout = (): StepAboutData => ({
@@ -58,18 +58,13 @@ const defaultStepAbout = (): StepAboutData => ({
 
 const defaultStepLicenses = (): StepLicensesData => ({ licenses: [] })
 
-const defaultStepLocations = (): StepLocationsData => ({
-  hqStreet: '',
-  hqPostalCode: '',
-  serviceAreaRadius: 25,
-  serviceAreaOverride: '',
-  additionalLocations: [],
+const defaultStepContractBenefits = (): StepContractBenefitsData => ({
+  contractTypes: [],
+  benefits: [],
 })
 
 const defaultStepHiring = (): StepHiringData => ({
   photos: [],
-  benefits: [],
-  contractTypes: [],
   facebookUrl: '',
   instagramUrl: '',
   linkedinUrl: '',
@@ -88,13 +83,15 @@ const defaultState = (): EditState => ({
   step1: defaultStep1(),
   stepAbout: defaultStepAbout(),
   stepLicenses: defaultStepLicenses(),
-  stepLocations: defaultStepLocations(),
+  stepContractBenefits: defaultStepContractBenefits(),
   stepHiring: defaultStepHiring(),
 })
 
-function loadState(): EditState {
+function loadState(userId: string | undefined): EditState {
+  const key = storageKey(userId)
+  if (!key) return defaultState()
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
+    const raw = localStorage.getItem(key)
     if (raw) {
       const parsed = JSON.parse(raw) as Partial<EditState>
       const def = defaultState()
@@ -104,7 +101,10 @@ function loadState(): EditState {
         step1: { ...def.step1, ...(parsed.step1 ?? {}) },
         stepAbout: { ...def.stepAbout, ...(parsed.stepAbout ?? {}) },
         stepLicenses: { ...def.stepLicenses, ...(parsed.stepLicenses ?? {}) },
-        stepLocations: { ...def.stepLocations, ...(parsed.stepLocations ?? {}) },
+        stepContractBenefits: {
+          ...def.stepContractBenefits,
+          ...(parsed.stepContractBenefits ?? {}),
+        },
         stepHiring: { ...def.stepHiring, ...(parsed.stepHiring ?? {}) },
       }
     }
@@ -114,9 +114,11 @@ function loadState(): EditState {
   return defaultState()
 }
 
-function saveState(state: EditState) {
+function saveState(userId: string | undefined, state: EditState) {
+  const key = storageKey(userId)
+  if (!key) return
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+    localStorage.setItem(key, JSON.stringify(state))
   } catch {
     /* ignore */
   }
@@ -126,7 +128,7 @@ const STEPS = [
   { label: 'Identity' },
   { label: 'About' },
   { label: 'Licenses' },
-  { label: 'Locations' },
+  { label: 'Contract & Benefits' },
   { label: 'Hiring & Culture' },
 ]
 const TOTAL_STEPS = STEPS.length
@@ -135,7 +137,7 @@ const STEP_TITLES: Record<number, string> = {
   1: 'Identity & Basics',
   2: 'About the Company',
   3: 'Licenses & Credentials',
-  4: 'Locations & Coverage',
+  4: 'Contract Types & Benefits',
   5: 'Hiring & Culture',
 }
 
@@ -261,7 +263,7 @@ export const CompanyProfileEditPage: React.FC = () => {
   const navigate = useNavigate()
   const { user } = useAuth()
 
-  const [editState, setEditState] = useState<EditState>(() => loadState())
+  const [editState, setEditState] = useState<EditState>(() => loadState(user?.id))
   const [activeSection, setActiveSection] = useState(1)
   const [savedStep, setSavedStep] = useState<number | null>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
@@ -270,12 +272,19 @@ export const CompanyProfileEditPage: React.FC = () => {
   const [isDirty, setIsDirty] = useState(false)
   const [profileCompletePct, setProfileCompletePct] = useState(0)
   const prefillDone = useRef(false)
+  // The prefill's own setEditState triggers the effect below; this one-shot ref
+  // lets that single run through without marking the form dirty.
+  const skipDirtyOnce = useRef(false)
   const sectionRefs = useRef<Record<number, HTMLDivElement | null>>({})
 
   useEffect(() => {
-    saveState(editState)
+    saveState(user?.id, editState)
+    if (skipDirtyOnce.current) {
+      skipDirtyOnce.current = false
+      return
+    }
     if (prefillDone.current) setIsDirty(true)
-  }, [editState])
+  }, [editState, user?.id])
 
   useEffect(() => {
     const handler = (e: BeforeUnloadEvent) => {
@@ -299,16 +308,16 @@ export const CompanyProfileEditPage: React.FC = () => {
     Promise.all([
       getCompanyProfile(userId),
       getCompanyLicenses(userId),
-      getCompanyAdditionalLocations(userId),
       getCompanyPhotos(userId),
       getCompanyBenefits(userId),
-    ]).then(([profileRes, licensesRes, locationsRes, photosRes, benefitsRes]) => {
+    ]).then(([profileRes, licensesRes, photosRes, benefitsRes]) => {
       const { data } = profileRes
       if (!data) {
         prefillDone.current = true
         return
       }
       setProfileCompletePct(data.profile_complete_pct)
+      skipDirtyOnce.current = true
       setEditState((prev) => ({
         ...prev,
         step1: {
@@ -325,8 +334,6 @@ export const CompanyProfileEditPage: React.FC = () => {
           hqCity: prev.step1.hqCity || data.hq_city || '',
           hqState: prev.step1.hqState || data.hq_state || '',
           phonePublic: prev.step1.phonePublic || data.phone_public,
-          emailPublic: prev.step1.emailPublic || data.email_public,
-          addressPublic: prev.step1.addressPublic || data.address_public,
         },
         stepAbout: {
           description: prev.stepAbout.description || data.description || '',
@@ -351,39 +358,21 @@ export const CompanyProfileEditPage: React.FC = () => {
                     | 'expired',
                 })),
         },
-        stepLocations: {
-          hqStreet: prev.stepLocations.hqStreet || data.hq_street || '',
-          hqPostalCode: prev.stepLocations.hqPostalCode || data.hq_postal_code || '',
-          serviceAreaRadius:
-            prev.stepLocations.serviceAreaRadius !== 25
-              ? prev.stepLocations.serviceAreaRadius
-              : (data.service_area_radius ?? 25),
-          serviceAreaOverride:
-            prev.stepLocations.serviceAreaOverride || data.service_area_override || '',
-          additionalLocations:
-            prev.stepLocations.additionalLocations.length > 0
-              ? prev.stepLocations.additionalLocations
-              : locationsRes.data.map((l) => ({
-                  id: l.id,
-                  name: l.name,
-                  street: l.street,
-                  city: l.city,
-                  state: l.state,
-                  postalCode: l.postal_code,
-                  radius: l.radius,
-                })),
+        stepContractBenefits: {
+          contractTypes:
+            prev.stepContractBenefits.contractTypes.length > 0
+              ? prev.stepContractBenefits.contractTypes
+              : (data.contract_types ?? []),
+          benefits:
+            prev.stepContractBenefits.benefits.length > 0
+              ? prev.stepContractBenefits.benefits
+              : benefitsRes.data,
         },
         stepHiring: {
           photos:
             prev.stepHiring.photos.length > 0
               ? prev.stepHiring.photos
               : photosRes.data.map((p) => ({ id: p.id, url: p.url, caption: p.caption })),
-          benefits:
-            prev.stepHiring.benefits.length > 0 ? prev.stepHiring.benefits : benefitsRes.data,
-          contractTypes:
-            prev.stepHiring.contractTypes.length > 0
-              ? prev.stepHiring.contractTypes
-              : (data.contract_types ?? []),
           facebookUrl: prev.stepHiring.facebookUrl || data.facebook_url || '',
           instagramUrl: prev.stepHiring.instagramUrl || data.instagram_url || '',
           linkedinUrl: prev.stepHiring.linkedinUrl || data.linkedin_url || '',
@@ -433,13 +422,9 @@ export const CompanyProfileEditPage: React.FC = () => {
         additional_industries: editState.step1.additionalIndustries,
         phone: editState.step1.phone,
         website: editState.step1.website,
-        hq_street: editState.stepLocations.hqStreet,
         hq_city: editState.step1.hqCity,
         hq_state: editState.step1.hqState,
-        hq_postal_code: editState.stepLocations.hqPostalCode,
         phone_public: editState.step1.phonePublic,
-        email_public: editState.step1.emailPublic,
-        address_public: editState.step1.addressPublic,
         size: editState.stepAbout.size,
         founded: editState.stepAbout.founded,
         description: editState.stepAbout.description,
@@ -457,26 +442,14 @@ export const CompanyProfileEditPage: React.FC = () => {
       )
       error = res.error
     } else if (stepNum === 4) {
-      const res = await saveCompanyLocations(user.id, {
-        hq_street: editState.stepLocations.hqStreet,
-        hq_postal_code: editState.stepLocations.hqPostalCode,
-        service_area_radius: editState.stepLocations.serviceAreaRadius,
-        service_area_override: editState.stepLocations.serviceAreaOverride,
-        additional_locations: editState.stepLocations.additionalLocations.map((l) => ({
-          name: l.name,
-          street: l.street,
-          city: l.city,
-          state: l.state,
-          postal_code: l.postalCode,
-          radius: l.radius,
-        })),
+      const res = await saveCompanyContractBenefits(user.id, {
+        contract_types: editState.stepContractBenefits.contractTypes,
+        benefits: editState.stepContractBenefits.benefits,
       })
       error = res.error
     } else if (stepNum === 5) {
       const res = await saveCompanyHiring(user.id, {
         photos: editState.stepHiring.photos.map((p) => ({ url: p.url, caption: p.caption })),
-        benefits: editState.stepHiring.benefits,
-        contract_types: editState.stepHiring.contractTypes,
         facebook_url: editState.stepHiring.facebookUrl,
         instagram_url: editState.stepHiring.instagramUrl,
         linkedin_url: editState.stepHiring.linkedinUrl,
@@ -524,155 +497,149 @@ export const CompanyProfileEditPage: React.FC = () => {
     }
   }
 
-  return (
-    <div style={{ minHeight: '100vh', background: 'var(--kt-bg)' }}>
-      <div
-        style={{
-          background: 'var(--kt-surface)',
-          borderBottom: '1px solid var(--kt-border)',
-          padding: '20px 0',
+  const sectionCards = (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20, minWidth: 0 }}>
+      <SectionCard
+        stepNum={1}
+        title={STEP_TITLES[1]}
+        stepState={displayStepStates[1]}
+        isSaved={savedStep === 1}
+        isSaving={isSaving}
+        onSave={() => saveSection(1)}
+        error={saveErrorStep === 1 ? saveError : null}
+        cardRef={(el) => {
+          sectionRefs.current[1] = el
         }}
       >
-        <div className={styles.pageHeaderInner}>
-          <div>
-            <h1
-              style={{
-                fontSize: 'var(--kt-text-xl)',
-                fontWeight: 'var(--kt-weight-bold)',
-                color: 'var(--kt-text)',
-                margin: '0 0 2px',
-              }}
-            >
-              Edit company profile
-            </h1>
-            <p style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text-muted)', margin: 0 }}>
-              Keep your profile current so workers know what you're about
-              {profileCompletePct > 0 && ` · ${profileCompletePct}% complete`}.
-            </p>
-          </div>
-          {user && (
-            <Button
-              variant="outline"
-              size="md"
-              onClick={() => safeNavigate(`/site/company/${user.id}`)}
-            >
-              View public profile
-            </Button>
+        <Step1Section
+          data={editState.step1}
+          onChange={(d) => setEditState((prev) => ({ ...prev, step1: d }))}
+        />
+      </SectionCard>
+
+      <SectionCard
+        stepNum={2}
+        title={STEP_TITLES[2]}
+        stepState={displayStepStates[2]}
+        isSaved={savedStep === 2}
+        isSaving={isSaving}
+        onSave={() => saveSection(2)}
+        error={saveErrorStep === 2 ? saveError : null}
+        cardRef={(el) => {
+          sectionRefs.current[2] = el
+        }}
+      >
+        <StepAboutSection
+          data={editState.stepAbout}
+          onChange={(d) => setEditState((prev) => ({ ...prev, stepAbout: d }))}
+        />
+      </SectionCard>
+
+      <SectionCard
+        stepNum={3}
+        title={STEP_TITLES[3]}
+        stepState={displayStepStates[3]}
+        isSaved={savedStep === 3}
+        isSaving={isSaving}
+        onSave={() => saveSection(3)}
+        error={saveErrorStep === 3 ? saveError : null}
+        cardRef={(el) => {
+          sectionRefs.current[3] = el
+        }}
+      >
+        <StepLicensesSection
+          data={editState.stepLicenses}
+          industryIds={[editState.step1.industry, ...editState.step1.additionalIndustries].filter(
+            Boolean
           )}
-        </div>
+          onChange={(d) => setEditState((prev) => ({ ...prev, stepLicenses: d }))}
+        />
+      </SectionCard>
+
+      <SectionCard
+        stepNum={4}
+        title={STEP_TITLES[4]}
+        stepState={displayStepStates[4]}
+        isSaved={savedStep === 4}
+        isSaving={isSaving}
+        onSave={() => saveSection(4)}
+        error={saveErrorStep === 4 ? saveError : null}
+        cardRef={(el) => {
+          sectionRefs.current[4] = el
+        }}
+      >
+        <StepContractBenefitsSection
+          data={editState.stepContractBenefits}
+          onChange={(d) => setEditState((prev) => ({ ...prev, stepContractBenefits: d }))}
+        />
+      </SectionCard>
+
+      <SectionCard
+        stepNum={5}
+        title={STEP_TITLES[5]}
+        stepState={displayStepStates[5]}
+        isSaved={savedStep === 5}
+        isSaving={isSaving}
+        onSave={() => saveSection(5)}
+        error={saveErrorStep === 5 ? saveError : null}
+        isLast
+        cardRef={(el) => {
+          sectionRefs.current[5] = el
+        }}
+      >
+        <StepHiringSection
+          data={editState.stepHiring}
+          onChange={(d) => setEditState((prev) => ({ ...prev, stepHiring: d }))}
+        />
+      </SectionCard>
+    </div>
+  )
+
+  const header = (
+    <div
+      style={{
+        flex: 1,
+        display: 'flex',
+        alignItems: 'flex-start',
+        justifyContent: 'space-between',
+        gap: 16,
+      }}
+    >
+      <div>
+        <h2
+          style={{
+            fontSize: 'var(--kt-text-xl)',
+            fontWeight: 'var(--kt-weight-bold)',
+            color: 'var(--kt-text)',
+            margin: '0 0 2px',
+          }}
+        >
+          Company profile
+        </h2>
+        <p style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text-muted)', margin: 0 }}>
+          Keep your profile current so workers know what you're about
+          {profileCompletePct > 0 && ` · ${profileCompletePct}% complete`}.
+        </p>
       </div>
+      {user && (
+        <Button
+          variant="outline"
+          size="md"
+          onClick={() => safeNavigate(`/site/company/${user.id}`)}
+        >
+          View public profile
+        </Button>
+      )}
+    </div>
+  )
 
-      <div className={styles.pageBody}>
-        <div className={`${styles.grid} ${styles.gridWithStepper}`}>
-          <div className={styles.stepperWrap}>
-            <Stepper
-              vertical
-              steps={STEPS}
-              stepStates={displayStepStates}
-              onStepClick={scrollToSection}
-            />
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 20, minWidth: 0 }}>
-            <SectionCard
-              stepNum={1}
-              title={STEP_TITLES[1]}
-              stepState={displayStepStates[1]}
-              isSaved={savedStep === 1}
-              isSaving={isSaving}
-              onSave={() => saveSection(1)}
-              error={saveErrorStep === 1 ? saveError : null}
-              cardRef={(el) => {
-                sectionRefs.current[1] = el
-              }}
-            >
-              <Step1Section
-                data={editState.step1}
-                onChange={(d) => setEditState((prev) => ({ ...prev, step1: d }))}
-              />
-            </SectionCard>
-
-            <SectionCard
-              stepNum={2}
-              title={STEP_TITLES[2]}
-              stepState={displayStepStates[2]}
-              isSaved={savedStep === 2}
-              isSaving={isSaving}
-              onSave={() => saveSection(2)}
-              error={saveErrorStep === 2 ? saveError : null}
-              cardRef={(el) => {
-                sectionRefs.current[2] = el
-              }}
-            >
-              <StepAboutSection
-                data={editState.stepAbout}
-                onChange={(d) => setEditState((prev) => ({ ...prev, stepAbout: d }))}
-              />
-            </SectionCard>
-
-            <SectionCard
-              stepNum={3}
-              title={STEP_TITLES[3]}
-              stepState={displayStepStates[3]}
-              isSaved={savedStep === 3}
-              isSaving={isSaving}
-              onSave={() => saveSection(3)}
-              error={saveErrorStep === 3 ? saveError : null}
-              cardRef={(el) => {
-                sectionRefs.current[3] = el
-              }}
-            >
-              <StepLicensesSection
-                data={editState.stepLicenses}
-                industryIds={[
-                  editState.step1.industry,
-                  ...editState.step1.additionalIndustries,
-                ].filter(Boolean)}
-                onChange={(d) => setEditState((prev) => ({ ...prev, stepLicenses: d }))}
-              />
-            </SectionCard>
-
-            <SectionCard
-              stepNum={4}
-              title={STEP_TITLES[4]}
-              stepState={displayStepStates[4]}
-              isSaved={savedStep === 4}
-              isSaving={isSaving}
-              onSave={() => saveSection(4)}
-              error={saveErrorStep === 4 ? saveError : null}
-              cardRef={(el) => {
-                sectionRefs.current[4] = el
-              }}
-            >
-              <StepLocationsSection
-                data={editState.stepLocations}
-                hqCity={editState.step1.hqCity}
-                hqState={editState.step1.hqState}
-                onChange={(d) => setEditState((prev) => ({ ...prev, stepLocations: d }))}
-              />
-            </SectionCard>
-
-            <SectionCard
-              stepNum={5}
-              title={STEP_TITLES[5]}
-              stepState={displayStepStates[5]}
-              isSaved={savedStep === 5}
-              isSaving={isSaving}
-              onSave={() => saveSection(5)}
-              error={saveErrorStep === 5 ? saveError : null}
-              isLast
-              cardRef={(el) => {
-                sectionRefs.current[5] = el
-              }}
-            >
-              <StepHiringSection
-                data={editState.stepHiring}
-                onChange={(d) => setEditState((prev) => ({ ...prev, stepHiring: d }))}
-              />
-            </SectionCard>
-          </div>
-        </div>
-      </div>
+  // Rendered inside SettingsLayout (Settings → Profile), which supplies the page
+  // chrome and left nav, so we render a single column of section cards under a
+  // lightweight header — no full-page wrapper, no step sidebar.
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      {header}
+      {sectionCards}
     </div>
   )
 }

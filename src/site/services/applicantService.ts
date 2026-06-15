@@ -10,7 +10,7 @@
 // ============================================================
 
 import type { ApplicationStatus, CompanyApplicant } from '../types'
-import { supabase } from '../../lib/supabase'
+import { supabase, getCurrentUserId } from '../../lib/supabase'
 import type { Database } from '../../lib/database.types'
 import { getPipelineStages, instantiateTemplatesForStage } from './pipelineService'
 
@@ -263,7 +263,7 @@ export async function getRecentApplicants(
     supabase
       .from('applications')
       .select(WIDGET_SELECT)
-      .eq('jobs.company_id', companyId)
+      .eq('company_id', companyId)
       .eq('status', 'active')
       .order('created_at', { ascending: false })
       .limit(limit),
@@ -291,7 +291,7 @@ export async function getKanbanApplicants(
     supabase
       .from('applications')
       .select(WIDGET_SELECT)
-      .eq('jobs.company_id', companyId)
+      .eq('company_id', companyId)
       .eq('status', 'active')
       .order('created_at', { ascending: false }),
     buildStageNameMap(companyId),
@@ -354,7 +354,7 @@ export async function getWidgetApplicants(
   let q = supabase
     .from('applications')
     .select(WIDGET_SELECT, { count: 'exact' })
-    .eq('jobs.company_id', companyId)
+    .eq('company_id', companyId)
     .eq('status', 'active')
     .order('status_updated_at', { ascending: false })
     .order('created_at', { ascending: false })
@@ -393,8 +393,8 @@ export async function countNewApplicantsSince(
 ): Promise<{ count: number; error: string | null }> {
   let q = supabase
     .from('applications')
-    .select('id, jobs!inner(company_id)', { count: 'exact', head: true })
-    .eq('jobs.company_id', companyId)
+    .select('id', { count: 'exact', head: true })
+    .eq('company_id', companyId)
   if (sinceIso) q = q.gt('created_at', sinceIso)
   const { count, error } = await q
   if (error) return { count: 0, error: error.message }
@@ -415,10 +415,12 @@ export async function getAllApplicants(
   const page = Math.max(1, params.page ?? 1)
   const pageSize = params.pageSize ?? 25
 
+  // List rows only need the lightweight shape — the slideover hydrates the
+  // heavy nested relations on demand via getApplicantDetail.
   let q = supabase
     .from('applications')
-    .select(APPLICANT_SELECT, { count: 'exact' })
-    .eq('jobs.company_id', companyId)
+    .select(WIDGET_SELECT, { count: 'exact' })
+    .eq('company_id', companyId)
 
   // When showArchived is false only show active applications; otherwise include all statuses.
   if (!filters.showArchived) {
@@ -430,6 +432,52 @@ export async function getAllApplicants(
   if (filters.appliedFrom) q = q.gte('created_at', filters.appliedFrom)
   if (filters.appliedTo) q = q.lte('created_at', filters.appliedTo)
   if (filters.regulixOnly) q = q.eq('worker_profiles.is_regulix_ready', true)
+
+  // Server-side search: match worker name OR job title. PostgREST can't OR
+  // across two embedded tables in one filter, so we prefilter each side with
+  // a cheap id-only query and OR the id lists into the main query. This also
+  // fixes pagination/totals, which the old fetch-page-then-filter approach
+  // got wrong (it only searched within the current page).
+  if (filters.search.trim()) {
+    const tokens = filters.search
+      .trim()
+      .split(/\s+/)
+      // Escape LIKE metacharacters so a typed `%` or `_` doesn't widen the match.
+      .map((t) => t.replace(/[%_\\]/g, '\\$&'))
+
+    let nameQ = supabase
+      .from('applications')
+      .select('id, worker_profiles!inner(id)')
+      .eq('company_id', companyId)
+    // Every token must match the first or last name ("john sm" → John Smith).
+    for (const t of tokens) {
+      nameQ = nameQ.or(`first_name.ilike.%${t}%,last_name.ilike.%${t}%`, {
+        foreignTable: 'worker_profiles',
+      })
+    }
+
+    const wholeTerm = tokens.join(' ')
+    const [nameRes, jobRes] = await Promise.all([
+      nameQ,
+      supabase
+        .from('jobs')
+        .select('id')
+        .eq('company_id', companyId)
+        .ilike('title', `%${wholeTerm}%`),
+    ])
+    if (nameRes.error) return { data: [], total: 0, error: nameRes.error.message }
+    if (jobRes.error) return { data: [], total: 0, error: jobRes.error.message }
+
+    const appIds = (nameRes.data ?? []).map((r) => r.id)
+    const jobIds = (jobRes.data ?? []).map((r) => r.id)
+    if (appIds.length === 0 && jobIds.length === 0) {
+      return { data: [], total: 0, error: null }
+    }
+    const orParts: string[] = []
+    if (appIds.length > 0) orParts.push(`id.in.(${appIds.join(',')})`)
+    if (jobIds.length > 0) orParts.push(`job_id.in.(${jobIds.join(',')})`)
+    q = q.or(orParts.join(','))
+  }
 
   const ascending = sort.direction === 'asc'
   switch (sort.column) {
@@ -456,18 +504,9 @@ export async function getAllApplicants(
   ])
   if (error) return { data: [], total: 0, error: error.message }
 
-  let rows = (data ?? []).map((row) =>
+  const rows = (data ?? []).map((row) =>
     toCompanyApplicant(row as unknown as JoinedApplicantRow, stageNameMap)
   )
-
-  // NOTE: `total` (from the server) is pre-search; UI "N of M" may overcount
-  // while a search term is active. TODO: push search server-side via .or(...).
-  if (filters.search) {
-    const s = filters.search.toLowerCase()
-    rows = rows.filter(
-      (r) => r.workerFullName.toLowerCase().includes(s) || r.jobTitle.toLowerCase().includes(s)
-    )
-  }
 
   return { data: rows, total: count ?? rows.length, error: null }
 }
@@ -479,25 +518,22 @@ export async function getAllApplicants(
 export async function getJobFilterOptions(
   companyId: string
 ): Promise<{ data: Array<{ id: string; title: string }>; error: string | null }> {
-  // TODO: fetches one row per application — wasteful for large companies.
-  // Post-MVP: replace with an RPC or view (SELECT DISTINCT j.id, j.title FROM jobs j JOIN applications a ...).
+  // One row per job (with an aggregate application count), not one row per
+  // application — keeps this constant-size as the applicant pool grows.
   const { data, error } = await supabase
-    .from('applications')
-    .select('jobs!inner(id, title)')
-    .eq('jobs.company_id', companyId)
+    .from('jobs')
+    .select('id, title, applications(count)')
+    .eq('company_id', companyId)
 
   if (error) return { data: [], error: error.message }
 
-  type JobFilterRow = { jobs: Pick<JobRow, 'id' | 'title'> }
-  const seen = new Map<string, string>()
-  for (const row of data ?? []) {
-    const job = (row as unknown as JobFilterRow).jobs
-    if (job && !seen.has(job.id)) seen.set(job.id, job.title)
-  }
+  type JobFilterRow = { id: string; title: string; applications: Array<{ count: number }> }
   return {
-    data: Array.from(seen, ([id, title]) => ({ id, title })).sort((a, b) =>
-      a.title.localeCompare(b.title, undefined, { sensitivity: 'base' })
-    ),
+    data: (data ?? [])
+      .map((row) => row as unknown as JobFilterRow)
+      .filter((row) => (row.applications?.[0]?.count ?? 0) > 0)
+      .map(({ id, title }) => ({ id, title }))
+      .sort((a, b) => a.title.localeCompare(b.title, undefined, { sensitivity: 'base' })),
     error: null,
   }
 }
@@ -515,7 +551,7 @@ export async function getWorkerApplicationsAtCompany(
       .from('applications')
       .select(APPLICANT_SELECT)
       .eq('worker_id', workerId)
-      .eq('jobs.company_id', companyId)
+      .eq('company_id', companyId)
       .order('created_at', { ascending: false }),
     buildStageNameMap(companyId),
   ])
@@ -636,14 +672,12 @@ export async function addApplicantNote(
   const trimmed = note.trim()
   if (!trimmed) return { error: 'empty_note' }
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return { error: 'not_authenticated' }
+  const userId = await getCurrentUserId()
+  if (!userId) return { error: 'not_authenticated' }
 
   const { error } = await supabase.from('application_notes').insert({
     application_id: applicationId,
-    author_id: user.id,
+    author_id: userId,
     author_name: authorName,
     text: trimmed,
   })

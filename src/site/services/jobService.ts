@@ -138,17 +138,88 @@ function mapJob(j: DbJob): Job {
 
 // ── Queries ────────────────────────────────────────────────────────────────────
 
-export async function getJobs(): Promise<{ data: Job[]; error: string | null }> {
-  const { data, error } = await supabase
-    .from('jobs')
-    .select(JOB_SELECT)
-    .eq('status', 'active')
-    .order('created_at', { ascending: false })
+export type SearchJobsParams = {
+  search?: string
+  industries?: string[]
+  types?: string[]
+  sponsoredOnly?: boolean
+  regulixOnly?: boolean
+  payMin?: number | null
+  payMax?: number | null
+  anchorLat?: number | null
+  anchorLng?: number | null
+  radiusMi?: number | null
+  sort?: 'recent' | 'pay' | 'applicants' | 'nearest'
+  page?: number
+  pageSize?: number
+}
 
-  if (error) return { data: [], error: error.message }
-  if (!data) return { data: [], error: null }
+/**
+ * Server-side jobs board query. Filtering, search (title / company name /
+ * skills / industry), distance, sort, and pagination all happen in Postgres
+ * via the search_jobs RPC; we then hydrate full rows for just the returned
+ * page of ids. Replaces the old getJobs(), which fetched every active job
+ * on the platform and filtered client-side.
+ */
+export async function searchJobs(
+  params: SearchJobsParams = {}
+): Promise<{ data: Job[]; total: number; error: string | null }> {
+  const { data: pageRows, error: rpcError } = await supabase.rpc('search_jobs', {
+    p_search: params.search?.trim() || null,
+    p_industries: params.industries?.length ? params.industries : null,
+    p_types: params.types?.length ? params.types : null,
+    p_sponsored_only: params.sponsoredOnly ?? false,
+    p_regulix_only: params.regulixOnly ?? false,
+    p_pay_min: params.payMin ?? null,
+    p_pay_max: params.payMax ?? null,
+    p_anchor_lat: params.anchorLat ?? null,
+    p_anchor_lng: params.anchorLng ?? null,
+    p_radius_mi: params.radiusMi ?? null,
+    p_sort: params.sort ?? 'recent',
+    p_page: params.page ?? 1,
+    p_page_size: params.pageSize ?? 5,
+  })
 
-  return { data: data.map((j) => mapJob(j as unknown as DbJob)), error: null }
+  if (rpcError) return { data: [], total: 0, error: rpcError.message }
+  if (!pageRows || pageRows.length === 0) return { data: [], total: 0, error: null }
+
+  const ids = pageRows.map((r) => r.job_id)
+  const { data, error } = await supabase.from('jobs').select(JOB_SELECT).in('id', ids)
+  if (error) return { data: [], total: 0, error: error.message }
+
+  // .in() loses the RPC's ordering; restore it and attach distance.
+  const byId = new Map((data ?? []).map((j) => [(j as unknown as DbJob).id, j]))
+  const jobs: Job[] = []
+  for (const row of pageRows) {
+    const raw = byId.get(row.job_id)
+    if (!raw) continue
+    const job = mapJob(raw as unknown as DbJob)
+    job.distanceMi = row.distance_mi
+    jobs.push(job)
+  }
+
+  return { data: jobs, total: pageRows[0].total_count, error: null }
+}
+
+/**
+ * Jobs-per-industry and jobs-per-type tallies for the filter sidebar,
+ * aggregated in Postgres (previously tallied client-side over a full
+ * job-list fetch).
+ */
+export async function getJobFacetCounts(): Promise<{
+  data: { industries: Record<string, number>; types: Record<string, number> }
+  error: string | null
+}> {
+  const { data, error } = await supabase.rpc('get_job_facet_counts')
+  if (error) return { data: { industries: {}, types: {} }, error: error.message }
+
+  const industries: Record<string, number> = {}
+  const types: Record<string, number> = {}
+  for (const row of data ?? []) {
+    industries[row.industry_slug] = (industries[row.industry_slug] ?? 0) + row.job_count
+    types[row.job_type] = (types[row.job_type] ?? 0) + row.job_count
+  }
+  return { data: { industries, types }, error: null }
 }
 
 export async function getJobById(id: string): Promise<{ data: Job | null; error: string | null }> {

@@ -54,9 +54,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [persona, setPersonaState] = useState<Persona | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  // Fetch the user's role from the database and set persona
-  const loadRole = async (userId: string) => {
-    const { data } = await supabase.from('user_roles').select('role').eq('id', userId).single()
+  // Resolve the user's persona. The role is set in user_metadata at signup
+  // (handle_new_user reads raw_user_meta_data->>'role'), so it rides on the
+  // session/JWT and needs no query. Only fall back to a user_roles read when
+  // metadata is missing (legacy accounts) — this avoids a per-event DB lookup
+  // that previously fired on every token refresh and tab refocus.
+  const loadRole = async (sessionUser: User) => {
+    const metaRole = (sessionUser.user_metadata?.role as Persona | undefined) ?? undefined
+    if (metaRole === 'worker' || metaRole === 'company') {
+      setPersonaState(metaRole)
+      return
+    }
+    const { data } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('id', sessionUser.id)
+      .single()
     if (data) setPersonaState(data.role as Persona)
   }
 
@@ -66,7 +79,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setSession(s)
       setUser(s?.user ?? null)
       if (s?.user) {
-        loadRole(s.user.id).finally(() => setIsLoading(false))
+        loadRole(s.user).finally(() => setIsLoading(false))
       } else {
         setIsLoading(false)
       }
@@ -79,7 +92,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setSession(s)
       setUser(s?.user ?? null)
       if (s?.user) {
-        loadRole(s.user.id)
+        loadRole(s.user)
       } else {
         setPersonaState(null)
       }
@@ -154,7 +167,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = async () => {
     await supabase.auth.signOut()
     setPersonaState(null)
-    localStorage.removeItem('kt_profile_edit_v6')
+    // Profile-edit drafts are keyed per account (see WorkerProfileEditPage /
+    // CompanyProfileEditPage storageKey), so they no longer need clearing here —
+    // one account's draft can't leak into another's form.
     // Drop cached company-scoped Discover data so a fresh login doesn't read
     // the previous account's skills/coords/active-jobs entries.
     clearSessionCache()

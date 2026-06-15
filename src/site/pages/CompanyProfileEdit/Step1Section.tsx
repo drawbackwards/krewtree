@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react'
-import { Button, Input, Select, Switch, Checkbox } from '../../../components'
+import { Button, Input, Select, MultiSelect, Checkbox } from '../../../components'
 import { INDUSTRIES } from '../../data/industries'
 import { US_STATE_OPTIONS } from '../../data/usStates'
 import { useAuth } from '../../context/AuthContext'
@@ -42,19 +42,10 @@ export const Step1Section: React.FC<{
     e.target.value = ''
   }
 
-  const toggleAdditional = (slug: string) => {
-    const active = data.additionalIndustries.includes(slug)
-    if (active) {
-      set(
-        'additionalIndustries',
-        data.additionalIndustries.filter((s) => s !== slug)
-      )
-    } else {
-      set('additionalIndustries', [...data.additionalIndustries, slug])
-    }
-  }
-
   const initials = data.name ? data.name.slice(0, 2).toUpperCase() : '?'
+
+  // Additional industries can't include whatever is picked as primary.
+  const additionalIndustryOptions = INDUSTRY_OPTIONS.filter((o) => o.value !== data.industry)
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
@@ -131,49 +122,23 @@ export const Step1Section: React.FC<{
         maxLength={80}
       />
 
-      <Select
-        label="Primary industry"
-        placeholder="Select industry"
-        options={INDUSTRY_OPTIONS}
-        value={data.industry}
-        onChange={(e) => set('industry', e.target.value)}
-        required
-      />
-
-      {/* Additional industries */}
-      <div>
-        <label className={styles.fieldLabel}>Additional industries</label>
-        <p
-          style={{
-            fontSize: 'var(--kt-text-xs)',
-            color: 'var(--kt-text-muted)',
-            margin: '-6px 0 12px',
-          }}
-        >
-          Select any other industries you operate in.
-        </p>
-        <div className={styles.checkboxGrid}>
-          {INDUSTRIES.filter((i) => i.slug !== data.industry).map((ind) => (
-            <Checkbox
-              key={ind.slug}
-              label={ind.name}
-              checked={data.additionalIndustries.includes(ind.slug)}
-              onChange={() => toggleAdditional(ind.slug)}
-            />
-          ))}
-        </div>
-      </div>
-
       {/* Contact pair */}
       <div className={styles.formGrid}>
-        <Input
-          label="Phone number"
-          type="tel"
-          value={data.phone}
-          onChange={(e) => set('phone', e.target.value)}
-          placeholder="(555) 123-4567"
-          required
-        />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <Input
+            label="Phone number"
+            type="tel"
+            value={data.phone}
+            onChange={(e) => set('phone', e.target.value)}
+            placeholder="(555) 123-4567"
+            required
+          />
+          <Checkbox
+            label="Show on profile"
+            checked={data.phonePublic}
+            onChange={(e) => set('phonePublic', e.target.checked)}
+          />
+        </div>
         <Input
           label="Website"
           type="url"
@@ -201,35 +166,24 @@ export const Step1Section: React.FC<{
         />
       </div>
 
-      {/* Public/private toggles */}
-      <div>
-        <label className={styles.fieldLabel}>Visibility</label>
-        <p
-          style={{
-            fontSize: 'var(--kt-text-xs)',
-            color: 'var(--kt-text-muted)',
-            margin: '-6px 0 12px',
-          }}
-        >
-          Workers always see your company name, industry, and city. Turn these on to also show:
-        </p>
-        <div className={styles.toggleStack}>
-          <Switch
-            checked={data.phonePublic}
-            onChange={(e) => set('phonePublic', e.target.checked)}
-            label="Show phone number on public profile"
-          />
-          <Switch
-            checked={data.emailPublic}
-            onChange={(e) => set('emailPublic', e.target.checked)}
-            label="Show email on public profile"
-          />
-          <Switch
-            checked={data.addressPublic}
-            onChange={(e) => set('addressPublic', e.target.checked)}
-            label="Show full HQ address on public profile"
-          />
-        </div>
+      {/* Industries */}
+      <div className={styles.formGrid}>
+        <Select
+          label="Primary industry"
+          placeholder="Select industry"
+          options={INDUSTRY_OPTIONS}
+          value={data.industry}
+          onChange={(e) => set('industry', e.target.value)}
+          required
+        />
+
+        <MultiSelect
+          label="Additional industries"
+          placeholder="Select any other industries you operate in"
+          options={additionalIndustryOptions}
+          value={data.additionalIndustries}
+          onChange={(next) => set('additionalIndustries', next)}
+        />
       </div>
     </div>
   )

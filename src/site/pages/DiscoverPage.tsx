@@ -20,6 +20,8 @@ import {
   type DiscoverSort,
   type DiscoverWorker,
 } from '../services/krewService'
+import { useChatPane } from '../components/ChatPane/ChatPaneContext'
+import { useDebounce } from '../hooks/useDebounce'
 import { SearchIcon } from '../icons'
 import styles from './DiscoverPage.module.css'
 
@@ -71,9 +73,13 @@ export const DiscoverPage: React.FC = () => {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const { toast } = useToast()
+  const { openChat } = useChatPane()
 
   // URL-driven filter state.
   const searchQ = searchParams.get('q') ?? ''
+  // Input renders searchQ live; the worker fetch trails it so we don't refire
+  // the (potentially 500-row) discover query on every keystroke.
+  const debouncedSearchQ = useDebounce(searchQ)
   const selectedSkills = useMemo(
     () => searchParams.get('skill')?.split(',').filter(Boolean) ?? [],
     [searchParams]
@@ -206,7 +212,7 @@ export const DiscoverPage: React.FC = () => {
     setLoading(true)
     setError(null)
     discoverWorkers({
-      search: searchQ || undefined,
+      search: debouncedSearchQ || undefined,
       skills: selectedSkills.length > 0 ? selectedSkills : undefined,
       regulixReadyOnly: regulixOnly || undefined,
       sort: sortBy,
@@ -225,7 +231,7 @@ export const DiscoverPage: React.FC = () => {
   }
 
   useEffect(refetch, [
-    searchQ,
+    debouncedSearchQ,
     selectedSkills,
     regulixOnly,
     sortBy,
@@ -350,11 +356,13 @@ export const DiscoverPage: React.FC = () => {
     navigate(`/site/profile/${worker.id}`)
   }
 
+  // Direct messages don't require an application — open the docked chat
+  // pane for this worker (LinkedIn-style) without leaving the page.
   const handleMessage = (worker: DiscoverWorker): void => {
-    toast({
-      title: 'Messaging coming soon',
-      description: `You'll be able to message ${worker.firstName} from here once messaging ships.`,
-      variant: 'info',
+    openChat({
+      workerId: worker.id,
+      name: `${worker.firstName} ${worker.lastName}`.trim(),
+      avatarUrl: worker.avatarUrl,
     })
   }
 

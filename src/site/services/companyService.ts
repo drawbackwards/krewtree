@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase'
+import { supabase, getCurrentUserId } from '@/lib/supabase'
 
 // ── Company Profile ─────────────────────────────────────────────────────────────
 
@@ -67,13 +67,9 @@ export type UpsertCompanyBasicsParams = {
   additional_industries: string[]
   phone: string
   website: string
-  hq_street: string
   hq_city: string
   hq_state: string
-  hq_postal_code: string
   phone_public: boolean
-  email_public: boolean
-  address_public: boolean
   size: string
   founded: number | null
   description: string
@@ -92,13 +88,9 @@ export async function upsertCompanyBasics(
       additional_industries: params.additional_industries,
       phone: params.phone,
       website: params.website,
-      hq_street: params.hq_street,
       hq_city: params.hq_city,
       hq_state: params.hq_state,
-      hq_postal_code: params.hq_postal_code,
       phone_public: params.phone_public,
-      email_public: params.email_public,
-      address_public: params.address_public,
       size: params.size,
       founded: params.founded,
       description: params.description,
@@ -434,13 +426,11 @@ export async function reportPhoto(
   photoId: string,
   reason: string
 ): Promise<{ error: string | null }> {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return { error: 'You must be signed in to report a photo.' }
+  const userId = await getCurrentUserId()
+  if (!userId) return { error: 'You must be signed in to report a photo.' }
   const { error } = await supabase.from('photo_reports').insert({
     photo_id: photoId,
-    reporter_id: user.id,
+    reporter_id: userId,
     reason: reason.trim(),
   })
   if (error) return { error: error.message }
@@ -548,61 +538,6 @@ export async function getCompanyAdditionalLocations(
   return { data: (data ?? []) as CompanyAdditionalLocationRow[], error: null }
 }
 
-export type SaveLocationsParams = {
-  hq_street: string
-  hq_postal_code: string
-  service_area_radius: number
-  service_area_override: string
-  additional_locations: {
-    name: string
-    street: string
-    city: string
-    state: string
-    postal_code: string
-    radius: number | null
-  }[]
-}
-
-export async function saveCompanyLocations(
-  companyId: string,
-  params: SaveLocationsParams
-): Promise<{ error: string | null }> {
-  const { error: profErr } = await supabase
-    .from('company_profiles')
-    .update({
-      hq_street: params.hq_street,
-      hq_postal_code: params.hq_postal_code,
-      service_area_radius: params.service_area_radius,
-      service_area_override: params.service_area_override,
-    })
-    .eq('id', companyId)
-  if (profErr) return { error: profErr.message }
-
-  const { error: delErr } = await supabase
-    .from('company_additional_locations')
-    .delete()
-    .eq('company_id', companyId)
-  if (delErr) return { error: delErr.message }
-
-  if (params.additional_locations.length > 0) {
-    const rows = params.additional_locations.map((l, idx) => ({
-      company_id: companyId,
-      name: l.name,
-      street: l.street,
-      city: l.city,
-      state: l.state,
-      postal_code: l.postal_code,
-      radius: l.radius,
-      display_order: idx,
-    }))
-    const { error: insErr } = await supabase.from('company_additional_locations').insert(rows)
-    if (insErr) return { error: insErr.message }
-  }
-
-  await recomputeProfileCompletePct(companyId)
-  return { error: null }
-}
-
 // ── Photos ────────────────────────────────────────────────────────────────────
 
 export type CompanyPhotoRow = {
@@ -655,12 +590,47 @@ export async function getCompanyBenefits(
   return { data: (data ?? []).map((r) => r.label), error: null }
 }
 
-// ── Hiring & Culture (photos + benefits + contract_types + social URLs) ──────
+// ── Contract types & benefits ────────────────────────────────────────────────
+
+export type SaveContractBenefitsParams = {
+  contract_types: string[]
+  benefits: string[]
+}
+
+export async function saveCompanyContractBenefits(
+  companyId: string,
+  params: SaveContractBenefitsParams
+): Promise<{ error: string | null }> {
+  const { error: profErr } = await supabase
+    .from('company_profiles')
+    .update({ contract_types: params.contract_types })
+    .eq('id', companyId)
+  if (profErr) return { error: profErr.message }
+
+  // Benefits full-replace
+  const { error: delBenErr } = await supabase
+    .from('company_benefits')
+    .delete()
+    .eq('company_id', companyId)
+  if (delBenErr) return { error: delBenErr.message }
+  if (params.benefits.length > 0) {
+    const rows = params.benefits.map((label, idx) => ({
+      company_id: companyId,
+      label,
+      display_order: idx,
+    }))
+    const { error: insBenErr } = await supabase.from('company_benefits').insert(rows)
+    if (insBenErr) return { error: insBenErr.message }
+  }
+
+  await recomputeProfileCompletePct(companyId)
+  return { error: null }
+}
+
+// ── Hiring & Culture (photos + social URLs) ──────────────────────────────────
 
 export type SaveHiringParams = {
   photos: { url: string; caption: string }[]
-  benefits: string[]
-  contract_types: string[]
   facebook_url: string
   instagram_url: string
   linkedin_url: string
@@ -675,7 +645,6 @@ export async function saveCompanyHiring(
   const { error: profErr } = await supabase
     .from('company_profiles')
     .update({
-      contract_types: params.contract_types,
       facebook_url: params.facebook_url,
       instagram_url: params.instagram_url,
       linkedin_url: params.linkedin_url,
@@ -700,22 +669,6 @@ export async function saveCompanyHiring(
     }))
     const { error: insPhotosErr } = await supabase.from('company_photos').insert(rows)
     if (insPhotosErr) return { error: insPhotosErr.message }
-  }
-
-  // Benefits full-replace
-  const { error: delBenErr } = await supabase
-    .from('company_benefits')
-    .delete()
-    .eq('company_id', companyId)
-  if (delBenErr) return { error: delBenErr.message }
-  if (params.benefits.length > 0) {
-    const rows = params.benefits.map((label, idx) => ({
-      company_id: companyId,
-      label,
-      display_order: idx,
-    }))
-    const { error: insBenErr } = await supabase.from('company_benefits').insert(rows)
-    if (insBenErr) return { error: insBenErr.message }
   }
 
   await recomputeProfileCompletePct(companyId)

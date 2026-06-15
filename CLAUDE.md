@@ -47,8 +47,9 @@ with different dashboards, flows, and data access.
 ## Services layer (current state — session 9)
 
 - `workerService.ts` — worker profile read/write, applications, events, saved count, recommended jobs, avatar/resume upload, `submitApplication()`
-- `jobService.ts` — `getJobs()`, `getJobById()`, `createJob()`, `updateJob()` (added session 9)
-- No service files yet for: company profile, messages, referrals, saved jobs, notifications
+- `jobService.ts` — `searchJobs()` (server-side search/filter/distance/pagination via `search_jobs` RPC, replaced the old fetch-all `getJobs()` on 2026-06-12), `getJobFacetCounts()`, `getJobById()`, `createJob()`, `updateJob()`
+- `messageService.ts` — unified messaging: ONE thread per (company, worker) pair, backed by the single `message` table (the split `application_message`/`direct_message` tables were merged and dropped on 2026-06-12, `20260612000004_unify_messaging.sql`). Application context is per-message: nullable `application_id`/`application_task_id`/`calendar_link`, set on pipeline sends and on messages composed from an `?application=` deep link; RLS verifies a tagged application belongs to the pair. Messages have NO subject (`subject` column dropped in `20260612000005`) — pipeline template subjects are internal labels only (task list, "Sent:" log entries) and never ship on the message. `sent_by` is NOT NULL (legacy auto-sends backfilled to the company side), so unread math is persona-free (`sent_by <> auth.uid()`) and the RPCs `get_conversation_summaries()` / `get_unread_message_count()` take no args. Conversation key is `<companyId>:<workerId>`
+- No service files yet for: company profile, referrals, saved jobs, notifications
 
 ## Screen completion status (session 9 — 2026-03-30)
 
@@ -56,11 +57,25 @@ with different dashboards, flows, and data access.
 
 **In progress:** WorkerDashboard, WorkerProfileEditPage, WorkerProfilePage (public), JobsPage, JobDetailPage, CompanyDashboard
 
-**Stub / mock data only:** SavedJobsPage, MessagesPage, ReferralPage, CompanyProfilePage
+**Stub / mock data only:** SavedJobsPage, ReferralPage, CompanyProfilePage
+
+**MessagesPage (unified 2026-06-12):** complete — two-pane inbox for both personas, ONE conversation per (company, worker) pair. Threads render bubbles with day dividers only; application-tagged messages carry their reference inside the bubble's timestamp footer ("Re: <job title> · 3:42 PM", title links to the job, `bubbleTimeLink` inherits the footer color so it stays readable on the navy mine-bubble). No subject lines anywhere in the feed. Deep links: `?dm=<otherPartyId>` (worker id for company viewers, company id for worker viewers) and `?application=<id>` — the latter resolves via `getApplicationThreadRef()` to the pair thread AND tags messages composed there with that application, so the recipient sees the job context. Selecting a conversation from the list rewrites the URL to `?dm=`, which clears any active application context. Thread loading parses the conversation key rather than the Conversation object, so deep links work before the list loads. DrawerSystem auto-closes the drawer stack on pathname change — drawer actions that navigate must NOT call `onClose()` themselves (KrewPage's drawer↔URL sync fires a competing navigation that clobbers the route change); ChatPane opens without navigating, so WorkerDrawer's Message action calls `onClose()` safely. Pipeline-context entry points (All Applicants row overflow + bulk bar, applicant profile header icon, ApplicantSlideover) deep-link with `?application=`
+
+**ChatPane (2026-06-11, unified 2026-06-12):** LinkedIn-style docked chat, bottom-right, mounted in `AppLayout` (`ChatPaneProvider` + `ChatPane`, `src/site/components/ChatPane/`). Worker-centric Message actions (Discover card overflow, My Krew row overflow + bulk bar, WorkerDrawer header icon) call `useChatPane().openChat({workerId, name, avatarUrl})` — no application needed. Shows the same unified pair thread as MessagesPage (`message` table; RLS: both parties read/send/mark-read; sender must be a party). Pane survives route changes; its envelope button deep-links to `/site/messages?dm=<workerId>`. The legacy `conversations`/`messages` tables were dropped 2026-06-11; the split `application_message`/`direct_message` tables were merged into `message` and dropped 2026-06-12
 
 **Missing / not built:** Email verification landing, Company profile edit, Phone verification flow, Resume AI parsing (Vercel + Claude Haiku), Boost payment flow, Regulix connect/disconnect, Worker settings, Applicant detail view, 404 page, Post-apply confirmation screen
 
 **Journey map:** https://www.figma.com/design/dPKfI2yONW9L6wYs40HdWB (Drawbackwards team)
+
+## Performance conventions (2026-06-12 overhaul)
+
+- Services read identity via `getCurrentUserId()` (`src/lib/supabase.ts`, cached session) — never `supabase.auth.getUser()`, which is a network round trip
+- Search inputs that drive queries must debounce via `useDebounce` (`src/site/hooks/useDebounce.ts`)
+- Routes are lazy-loaded in `Router.tsx`; new pages must use the same `React.lazy` pattern
+- `applications.company_id` is denormalized (trigger-maintained from jobs) — filter company-side queries on it directly, not `jobs.company_id` through a join
+- RLS policies must wrap auth calls as `(select auth.uid())`, never bare `auth.uid()`
+- New FK / RLS-filter columns need indexes in the same migration; beware: dropping a column silently drops any index containing it
+- Aggregations (counts, last-message, facets) belong in SQL RPCs, not client-side loops over full fetches — see `get_conversation_summaries`, `get_unread_message_count`, `search_jobs`, `get_job_facet_counts`
 
 ## Styling rules
 

@@ -205,8 +205,11 @@ export const CompanyApplicantProfilePage: React.FC = () => {
     load()
   }
 
+  // Threads are application-scoped — deep-link into the primary (newest)
+  // application's thread. The button is disabled when there's no application.
   const handleMessage = () => {
-    navigate('/site/messages')
+    if (!primary) return
+    navigate(`/site/messages?application=${primary.id}`)
   }
 
   const handleAddNote = async (appId: string, text: string) => {

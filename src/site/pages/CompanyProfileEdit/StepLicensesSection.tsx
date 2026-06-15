@@ -62,8 +62,25 @@ export const StepLicensesSection: React.FC<{
       </p>
 
       {data.licenses.length === 0 && (
-        <div className={styles.placeholderBody} style={{ padding: '20px 0' }}>
-          No licenses added yet.
+        <div
+          style={{
+            padding: '20px',
+            borderRadius: 'var(--kt-radius-md)',
+            background: 'var(--kt-surface-raised)',
+            border: '1px dashed var(--kt-border)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 10,
+            textAlign: 'center',
+          }}
+        >
+          <p style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text-muted)', margin: 0 }}>
+            No licenses added yet. Add the licenses and credentials you hold.
+          </p>
+          <Button size="sm" variant="outline" onClick={add}>
+            + Add license
+          </Button>
         </div>
       )}
 
@@ -135,11 +152,13 @@ export const StepLicensesSection: React.FC<{
         ))}
       </div>
 
-      <div>
-        <Button size="sm" variant="outline" onClick={add}>
-          + Add license
-        </Button>
-      </div>
+      {data.licenses.length > 0 && (
+        <div>
+          <Button size="sm" variant="outline" onClick={add}>
+            + Add license
+          </Button>
+        </div>
+      )}
 
       <Modal
         open={verifyOpen}

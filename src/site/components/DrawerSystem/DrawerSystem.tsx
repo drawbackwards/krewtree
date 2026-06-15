@@ -1,4 +1,5 @@
-import React from 'react'
+import React, { useEffect, useRef } from 'react'
+import { useLocation } from 'react-router-dom'
 import { DrawerShell } from '../DrawerShell/DrawerShell'
 import { ApplicantSlideover } from '../ApplicantSlideover/ApplicantSlideover'
 import { WorkerDrawer } from '../WorkerDrawer/WorkerDrawer'
@@ -28,7 +29,23 @@ function getBackLabel(entry: DrawerStackEntry): string {
 }
 
 export const DrawerSystem: React.FC = () => {
-  const { stack, popDrawer } = useDrawerStack()
+  const { stack, popDrawer, closeAllDrawers } = useDrawerStack()
+
+  // Route change closes the whole stack. Drawer actions that navigate (e.g.
+  // "Message" → /site/messages) must NOT pop the stack themselves: on pages
+  // that mirror the drawer into the URL (KrewPage's drawer ↔ URL sync), the
+  // synchronous pop re-renders the page before the route transition commits,
+  // and its sync effect fires a competing navigation that clobbers the
+  // intended one. Comparing against the previous pathname (rather than firing
+  // on mount) keeps `?worker=X` deep-link refreshes working.
+  const { pathname } = useLocation()
+  const prevPathRef = useRef(pathname)
+  useEffect(() => {
+    if (prevPathRef.current === pathname) return
+    prevPathRef.current = pathname
+    closeAllDrawers()
+  }, [pathname, closeAllDrawers])
+
   if (stack.length === 0) return null
 
   return (

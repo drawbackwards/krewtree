@@ -13,9 +13,11 @@ import {
 } from '../icons'
 import { getPublicCompanyProfile, reportPhoto } from '../services/companyService'
 import type { PublicCompanyProfile } from '../services/companyService'
+import { RegulixLogo } from '../components/RegulixLogo/RegulixLogo'
 import { getIndustryById, INDUSTRIES } from '../data/industries'
 import { getLicenseTypeById } from '../data/licenseTypes'
 import { BENEFIT_GROUPS, CONTRACT_TYPE_OPTIONS } from './CompanyProfileEdit/types'
+import styles from './CompanyProfilePage.module.css'
 
 const CURRENT_YEAR = 2026
 
@@ -88,19 +90,56 @@ const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title
   </section>
 )
 
-const RegulixPlaceholder: React.FC<{ kind: 'badge' | 'stats' }> = ({ kind }) => (
+const SidebarCard: React.FC<{ title: string; children: React.ReactNode }> = ({
+  title,
+  children,
+}) => (
   <div
     style={{
-      background: 'var(--kt-bg-subtle)',
-      border: '1px dashed var(--kt-border)',
-      borderRadius: 'var(--kt-radius-md)',
-      padding: 16,
-      textAlign: 'center',
-      color: 'var(--kt-text-muted)',
-      fontSize: 'var(--kt-text-sm)',
+      background: 'var(--kt-surface)',
+      border: '1px solid var(--kt-border)',
+      borderRadius: 'var(--kt-radius-lg)',
+      padding: 18,
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 12,
     }}
   >
-    {kind === 'badge' ? 'Regulix integration coming soon.' : 'Regulix stats coming soon.'}
+    <h2
+      style={{
+        fontSize: 'var(--kt-text-md)',
+        fontWeight: 'var(--kt-weight-bold)',
+        color: 'var(--kt-text)',
+        margin: 0,
+      }}
+    >
+      {title}
+    </h2>
+    {children}
+  </div>
+)
+
+const QuickFact: React.FC<{ icon: React.ReactNode; label: string; children: React.ReactNode }> = ({
+  icon,
+  label,
+  children,
+}) => (
+  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+    <span style={{ color: 'var(--kt-text-muted)', flexShrink: 0, display: 'flex', marginTop: 1 }}>
+      {icon}
+    </span>
+    <div style={{ minWidth: 0 }}>
+      <p
+        style={{
+          margin: 0,
+          fontSize: 'var(--kt-text-xs)',
+          color: 'var(--kt-text-muted)',
+        }}
+      >
+        {label}
+      </p>
+      <div style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text)' }}>{children}</div>
+    </div>
   </div>
 )
 
@@ -199,10 +238,6 @@ export const CompanyProfilePage: React.FC = () => {
       ? CURRENT_YEAR - data.founded
       : null
 
-  const serviceAreaText = data.service_area_override?.trim()
-    ? data.service_area_override
-    : `Within ${data.service_area_radius} miles of ${data.hq_city || 'HQ'}`
-
   const locationLabel =
     data.hq_full_address || [data.hq_city, data.hq_state].filter(Boolean).join(', ')
 
@@ -211,39 +246,22 @@ export const CompanyProfilePage: React.FC = () => {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--kt-bg)' }}>
       {/* Hero */}
-      <div style={{ background: 'var(--kt-surface)', borderBottom: '1px solid var(--kt-border)' }}>
-        <div style={{ height: 140, background: 'var(--kt-grey-100)' }} />
-        <div
-          style={{
-            maxWidth: 960,
-            margin: '0 auto',
-            padding: '0 var(--kt-space-6) 28px',
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              gap: 20,
-              alignItems: 'flex-end',
-              marginTop: -40,
-              flexWrap: 'wrap',
-            }}
-          >
+      <div style={{ background: 'var(--kt-surface)' }}>
+        <div className={styles.heroInner}>
+          <div className={styles.profileRow}>
             <div
               style={{
-                width: 80,
-                height: 80,
+                width: 96,
+                height: 96,
                 borderRadius: 'var(--kt-radius-lg)',
-                background: 'var(--kt-grey-100)',
-                color: 'var(--kt-navy-900)',
+                background: 'var(--kt-primary)',
+                color: 'var(--kt-primary-fg)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontWeight: 'var(--kt-weight-bold)',
                 fontSize: 'var(--kt-text-2xl)',
-                border: '4px solid var(--kt-white)',
                 flexShrink: 0,
-                boxShadow: 'var(--kt-shadow-sm)',
                 overflow: 'hidden',
               }}
             >
@@ -257,7 +275,7 @@ export const CompanyProfilePage: React.FC = () => {
                 initials
               )}
             </div>
-            <div style={{ flex: 1, paddingBottom: 4, minWidth: 0 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
               <div
                 style={{
                   display: 'flex',
@@ -303,40 +321,8 @@ export const CompanyProfilePage: React.FC = () => {
                   {data.tagline}
                 </p>
               )}
-              <div
-                style={{
-                  display: 'flex',
-                  gap: 16,
-                  marginTop: 8,
-                  flexWrap: 'wrap',
-                  fontSize: 'var(--kt-text-xs)',
-                  color: 'var(--kt-text-muted)',
-                  alignItems: 'center',
-                }}
-              >
-                {locationLabel && (
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                    <LocationIcon size={14} /> {locationLabel}
-                  </span>
-                )}
-                {data.industry && (
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                    <BuildingIcon size={14} /> {industryLabel(data.industry)}
-                  </span>
-                )}
-                {data.founded && (
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                    <CalendarIcon size={14} /> Founded {data.founded}
-                  </span>
-                )}
-                {data.size && (
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                    <UsersIcon size={14} /> {data.size} employees
-                  </span>
-                )}
-              </div>
             </div>
-            <div style={{ display: 'flex', gap: 8, paddingBottom: 4 }}>
+            <div className={styles.profileActions}>
               <Button variant="primary" onClick={() => navigate('/site/messages')}>
                 Message company
               </Button>
@@ -349,7 +335,6 @@ export const CompanyProfilePage: React.FC = () => {
       <div
         style={{
           background: 'var(--kt-surface)',
-          borderBottom: '1px solid var(--kt-border)',
           position: 'sticky',
           top: 64,
           zIndex: 10,
@@ -360,6 +345,7 @@ export const CompanyProfilePage: React.FC = () => {
             maxWidth: 960,
             margin: '0 auto',
             padding: '0 var(--kt-space-6)',
+            borderBottom: '1px solid var(--kt-border)',
             display: 'flex',
             gap: 8,
           }}
@@ -391,102 +377,291 @@ export const CompanyProfilePage: React.FC = () => {
       </div>
 
       {/* Body */}
-      <div
-        style={{
-          maxWidth: 960,
-          margin: '0 auto',
-          padding: '24px var(--kt-space-6) 48px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 16,
-        }}
-      >
+      <div className={styles.body}>
         {activeTab === 'about' && (
-          <>
-            {data.description && (
-              <Section title="About">
+          <div className={styles.aboutGrid}>
+            <div className={styles.main}>
+              {data.description && (
+                <Section title="About">
+                  <p
+                    style={{
+                      margin: 0,
+                      whiteSpace: 'pre-wrap',
+                      fontSize: 'var(--kt-text-sm)',
+                      color: 'var(--kt-text)',
+                      lineHeight: 1.6,
+                    }}
+                  >
+                    {data.description}
+                  </p>
+                  {yearsInBusiness !== null && (
+                    <p
+                      style={{
+                        margin: 0,
+                        fontSize: 'var(--kt-text-xs)',
+                        color: 'var(--kt-text-muted)',
+                      }}
+                    >
+                      In business {yearsInBusiness} {yearsInBusiness === 1 ? 'year' : 'years'}.
+                    </p>
+                  )}
+                </Section>
+              )}
+
+              {data.photos.length > 0 && (
+                <Section title="Photos">
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+                      gap: 12,
+                    }}
+                  >
+                    {data.photos.map((p) => (
+                      <figure
+                        key={p.id}
+                        style={{ margin: 0, display: 'flex', flexDirection: 'column', gap: 6 }}
+                      >
+                        <div style={{ position: 'relative' }}>
+                          <img
+                            src={p.url}
+                            alt={p.caption || 'Company photo'}
+                            style={{
+                              width: '100%',
+                              aspectRatio: '1 / 1',
+                              objectFit: 'cover',
+                              borderRadius: 'var(--kt-radius-md)',
+                              background: 'var(--kt-bg-subtle)',
+                            }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => openReport(p.id)}
+                            aria-label="Report this photo"
+                            title="Report this photo"
+                            style={{
+                              position: 'absolute',
+                              top: 6,
+                              right: 6,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 4,
+                              padding: '4px 8px',
+                              background: 'rgba(0, 0, 0, 0.55)',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: 'var(--kt-radius-sm)',
+                              cursor: 'pointer',
+                              fontSize: 11,
+                              fontFamily: 'var(--kt-font-sans)',
+                            }}
+                          >
+                            <FlagIcon size={11} color="white" /> Report
+                          </button>
+                        </div>
+                        {p.caption && (
+                          <figcaption
+                            style={{
+                              fontSize: 'var(--kt-text-xs)',
+                              color: 'var(--kt-text-muted)',
+                            }}
+                          >
+                            {p.caption}
+                          </figcaption>
+                        )}
+                      </figure>
+                    ))}
+                  </div>
+                </Section>
+              )}
+
+              {data.licenses.length > 0 && (
+                <Section title="Licenses & credentials">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {data.licenses.map((l) => {
+                      const typeLabel = getLicenseTypeById(l.license_type)?.label ?? l.license_type
+                      return (
+                        <div
+                          key={l.id}
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            padding: '10px 0',
+                            borderBottom: '1px solid var(--kt-border)',
+                          }}
+                        >
+                          <div>
+                            <p
+                              style={{
+                                margin: 0,
+                                fontSize: 'var(--kt-text-sm)',
+                                fontWeight: 'var(--kt-weight-medium)',
+                                color: 'var(--kt-text)',
+                              }}
+                            >
+                              {typeLabel}{' '}
+                              <span style={{ color: 'var(--kt-text-muted)' }}>
+                                · {l.jurisdiction}
+                              </span>
+                            </p>
+                            <p
+                              style={{
+                                margin: 0,
+                                fontSize: 'var(--kt-text-xs)',
+                                color: 'var(--kt-text-muted)',
+                              }}
+                            >
+                              License #{l.license_number}
+                              {l.expiration_date && ` · expires ${l.expiration_date}`}
+                            </p>
+                          </div>
+                          {licenseStatusBadge(l.verification_status, l.expiration_date)}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </Section>
+              )}
+
+              {data.benefits.length > 0 && (
+                <Section title="Benefits & perks">
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                    {data.benefits.map((b) => (
+                      <Badge key={b} variant="neutral">
+                        {benefitLabel(b)}
+                      </Badge>
+                    ))}
+                  </div>
+                </Section>
+              )}
+
+              {data.contract_types.length > 0 && (
+                <Section title="Typical contract types">
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                    {data.contract_types.map((c) => (
+                      <Badge key={c} variant="secondary">
+                        {contractTypeLabel(c)}
+                      </Badge>
+                    ))}
+                  </div>
+                </Section>
+              )}
+
+              {data.additional_industries.length > 0 && (
+                <Section title="Industries">
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                    <Badge variant="primary">{industryLabel(data.industry)}</Badge>
+                    {data.additional_industries.map((slug) => (
+                      <Badge key={slug} variant="neutral">
+                        {industryLabel(slug)}
+                      </Badge>
+                    ))}
+                  </div>
+                </Section>
+              )}
+
+              {(data.facebook_url ||
+                data.instagram_url ||
+                data.linkedin_url ||
+                data.youtube_url ||
+                data.tiktok_url) && (
+                <Section title="Social">
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16 }}>
+                    {data.facebook_url && <SocialLink url={data.facebook_url} label="Facebook" />}
+                    {data.instagram_url && (
+                      <SocialLink url={data.instagram_url} label="Instagram" />
+                    )}
+                    {data.linkedin_url && <SocialLink url={data.linkedin_url} label="LinkedIn" />}
+                    {data.youtube_url && <SocialLink url={data.youtube_url} label="YouTube" />}
+                    {data.tiktok_url && <SocialLink url={data.tiktok_url} label="TikTok" />}
+                  </div>
+                </Section>
+              )}
+            </div>
+
+            <div className={styles.sidebar}>
+              {/* Regulix status — matches the worker profile's box; greyed out
+                  when the company hasn't connected Regulix. */}
+              <div
+                style={{
+                  background: data.regulix_connected
+                    ? 'var(--kt-regulix-50)'
+                    : 'var(--kt-surface-raised)',
+                  borderRadius: 'var(--kt-radius-lg)',
+                  padding: 18,
+                  textAlign: 'center',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                }}
+              >
+                <RegulixLogo
+                  height={24}
+                  textColor={data.regulix_connected ? 'var(--kt-navy-700)' : 'var(--kt-text-muted)'}
+                  opacity={data.regulix_connected ? 1 : 0.45}
+                />
                 <p
                   style={{
-                    margin: 0,
-                    whiteSpace: 'pre-wrap',
+                    marginTop: 10,
                     fontSize: 'var(--kt-text-sm)',
-                    color: 'var(--kt-text)',
-                    lineHeight: 1.6,
+                    fontWeight: 'var(--kt-weight-semibold)',
+                    color: data.regulix_connected
+                      ? 'var(--kt-regulix-500)'
+                      : 'var(--kt-text-muted)',
                   }}
                 >
-                  {data.description}
+                  {data.regulix_connected ? 'Regulix Connected' : 'Not on Regulix'}
                 </p>
-                {yearsInBusiness !== null && (
-                  <p
-                    style={{
-                      margin: 0,
-                      fontSize: 'var(--kt-text-xs)',
-                      color: 'var(--kt-text-muted)',
-                    }}
-                  >
-                    In business {yearsInBusiness} {yearsInBusiness === 1 ? 'year' : 'years'}.
-                  </p>
-                )}
-              </Section>
-            )}
+                <p
+                  style={{
+                    fontSize: 'var(--kt-text-xs)',
+                    color: 'var(--kt-text-muted)',
+                    marginTop: 4,
+                    lineHeight: 1.5,
+                  }}
+                >
+                  {data.regulix_connected
+                    ? 'Verified workforce compliance through Regulix.'
+                    : 'This company has not connected Regulix yet.'}
+                </p>
+              </div>
 
-            <Section title="Service area">
-              <p style={{ margin: 0, fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text)' }}>
-                {serviceAreaText}
-              </p>
-              {data.additional_locations.length > 0 && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <p
-                    style={{
-                      margin: 0,
-                      fontSize: 'var(--kt-text-xs)',
-                      fontWeight: 'var(--kt-weight-bold)',
-                      color: 'var(--kt-text-muted)',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.04em',
-                    }}
-                  >
-                    Other locations
-                  </p>
-                  {data.additional_locations.map((loc) => (
-                    <p
-                      key={loc.id}
-                      style={{ margin: 0, fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text)' }}
-                    >
-                      {loc.name && <strong>{loc.name}</strong>}
-                      {loc.name && ' · '}
-                      {[loc.city, loc.state].filter(Boolean).join(', ')}
-                    </p>
-                  ))}
-                </div>
-              )}
-            </Section>
-
-            {(data.phone || data.website) && (
-              <Section title="Contact">
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <SidebarCard title="Company details">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {data.industry && (
+                    <QuickFact icon={<BuildingIcon size={15} />} label="Industry">
+                      {industryLabel(data.industry)}
+                    </QuickFact>
+                  )}
+                  {data.founded && (
+                    <QuickFact icon={<CalendarIcon size={15} />} label="Founded">
+                      {data.founded}
+                      {yearsInBusiness !== null && (
+                        <span style={{ color: 'var(--kt-text-muted)' }}>
+                          {' '}
+                          · {yearsInBusiness} {yearsInBusiness === 1 ? 'yr' : 'yrs'}
+                        </span>
+                      )}
+                    </QuickFact>
+                  )}
+                  {data.size && (
+                    <QuickFact icon={<UsersIcon size={15} />} label="Company size">
+                      {data.size} employees
+                    </QuickFact>
+                  )}
+                  {locationLabel && (
+                    <QuickFact icon={<LocationIcon size={15} />} label="Location">
+                      {locationLabel}
+                    </QuickFact>
+                  )}
                   {data.phone && (
-                    <span
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 8,
-                        fontSize: 'var(--kt-text-sm)',
-                      }}
-                    >
-                      <PhoneIcon size={14} /> {data.phone}
-                    </span>
+                    <QuickFact icon={<PhoneIcon size={15} />} label="Phone">
+                      {data.phone}
+                    </QuickFact>
                   )}
                   {data.website && (
-                    <span
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 8,
-                        fontSize: 'var(--kt-text-sm)',
-                      }}
-                    >
-                      <GlobeIcon size={14} />
+                    <QuickFact icon={<GlobeIcon size={15} />} label="Website">
                       <a
                         href={data.website}
                         target="_blank"
@@ -495,190 +670,17 @@ export const CompanyProfilePage: React.FC = () => {
                           color: 'var(--kt-navy-500)',
                           fontWeight: 'var(--kt-weight-bold)',
                           textDecoration: 'none',
+                          wordBreak: 'break-word',
                         }}
                       >
                         {data.website.replace(/^https?:\/\//, '')}
                       </a>
-                    </span>
+                    </QuickFact>
                   )}
                 </div>
-              </Section>
-            )}
-
-            {data.photos.length > 0 && (
-              <Section title="Photos">
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-                    gap: 12,
-                  }}
-                >
-                  {data.photos.map((p) => (
-                    <figure
-                      key={p.id}
-                      style={{ margin: 0, display: 'flex', flexDirection: 'column', gap: 6 }}
-                    >
-                      <div style={{ position: 'relative' }}>
-                        <img
-                          src={p.url}
-                          alt={p.caption || 'Company photo'}
-                          style={{
-                            width: '100%',
-                            aspectRatio: '1 / 1',
-                            objectFit: 'cover',
-                            borderRadius: 'var(--kt-radius-md)',
-                            background: 'var(--kt-bg-subtle)',
-                          }}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => openReport(p.id)}
-                          aria-label="Report this photo"
-                          title="Report this photo"
-                          style={{
-                            position: 'absolute',
-                            top: 6,
-                            right: 6,
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: 4,
-                            padding: '4px 8px',
-                            background: 'rgba(0, 0, 0, 0.55)',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: 'var(--kt-radius-sm)',
-                            cursor: 'pointer',
-                            fontSize: 11,
-                            fontFamily: 'var(--kt-font-sans)',
-                          }}
-                        >
-                          <FlagIcon size={11} color="white" /> Report
-                        </button>
-                      </div>
-                      {p.caption && (
-                        <figcaption
-                          style={{
-                            fontSize: 'var(--kt-text-xs)',
-                            color: 'var(--kt-text-muted)',
-                          }}
-                        >
-                          {p.caption}
-                        </figcaption>
-                      )}
-                    </figure>
-                  ))}
-                </div>
-              </Section>
-            )}
-
-            {data.licenses.length > 0 && (
-              <Section title="Licenses & credentials">
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {data.licenses.map((l) => {
-                    const typeLabel = getLicenseTypeById(l.license_type)?.label ?? l.license_type
-                    return (
-                      <div
-                        key={l.id}
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          padding: '10px 0',
-                          borderBottom: '1px solid var(--kt-border)',
-                        }}
-                      >
-                        <div>
-                          <p
-                            style={{
-                              margin: 0,
-                              fontSize: 'var(--kt-text-sm)',
-                              fontWeight: 'var(--kt-weight-medium)',
-                              color: 'var(--kt-text)',
-                            }}
-                          >
-                            {typeLabel}{' '}
-                            <span style={{ color: 'var(--kt-text-muted)' }}>
-                              · {l.jurisdiction}
-                            </span>
-                          </p>
-                          <p
-                            style={{
-                              margin: 0,
-                              fontSize: 'var(--kt-text-xs)',
-                              color: 'var(--kt-text-muted)',
-                            }}
-                          >
-                            License #{l.license_number}
-                            {l.expiration_date && ` · expires ${l.expiration_date}`}
-                          </p>
-                        </div>
-                        {licenseStatusBadge(l.verification_status, l.expiration_date)}
-                      </div>
-                    )
-                  })}
-                </div>
-              </Section>
-            )}
-
-            {data.benefits.length > 0 && (
-              <Section title="Benefits & perks">
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                  {data.benefits.map((b) => (
-                    <Badge key={b} variant="neutral">
-                      {benefitLabel(b)}
-                    </Badge>
-                  ))}
-                </div>
-              </Section>
-            )}
-
-            {data.contract_types.length > 0 && (
-              <Section title="Typical contract types">
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                  {data.contract_types.map((c) => (
-                    <Badge key={c} variant="secondary">
-                      {contractTypeLabel(c)}
-                    </Badge>
-                  ))}
-                </div>
-              </Section>
-            )}
-
-            {data.additional_industries.length > 0 && (
-              <Section title="Industries">
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                  <Badge variant="primary">{industryLabel(data.industry)}</Badge>
-                  {data.additional_industries.map((slug) => (
-                    <Badge key={slug} variant="neutral">
-                      {industryLabel(slug)}
-                    </Badge>
-                  ))}
-                </div>
-              </Section>
-            )}
-
-            {(data.facebook_url ||
-              data.instagram_url ||
-              data.linkedin_url ||
-              data.youtube_url ||
-              data.tiktok_url) && (
-              <Section title="Social">
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16 }}>
-                  {data.facebook_url && <SocialLink url={data.facebook_url} label="Facebook" />}
-                  {data.instagram_url && <SocialLink url={data.instagram_url} label="Instagram" />}
-                  {data.linkedin_url && <SocialLink url={data.linkedin_url} label="LinkedIn" />}
-                  {data.youtube_url && <SocialLink url={data.youtube_url} label="YouTube" />}
-                  {data.tiktok_url && <SocialLink url={data.tiktok_url} label="TikTok" />}
-                </div>
-              </Section>
-            )}
-
-            {/* Regulix placeholder — spec §4.6 */}
-            <Section title="Regulix">
-              <RegulixPlaceholder kind={data.regulix_connected ? 'stats' : 'badge'} />
-            </Section>
-          </>
+              </SidebarCard>
+            </div>
+          </div>
         )}
 
         {activeTab === 'jobs' && (

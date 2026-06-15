@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useSearchParams } from 'react-router-dom'
 import { Button, Modal, Tooltip } from '../../components'
+import { useToast } from '../../components/Toast/Toast'
 import {
   ChevronDownIcon,
   DotsHorizontalIcon,
@@ -26,6 +27,8 @@ import {
   type KrewList,
   type KrewWorker,
 } from '../services/krewService'
+import { useChatPane } from '../components/ChatPane/ChatPaneContext'
+import { useDebounce } from '../hooks/useDebounce'
 import { useDrawerStack } from '../components/DrawerSystem/DrawerStackContext'
 import styles from './KrewPage.module.css'
 
@@ -297,10 +300,14 @@ function parsePageSize(p: URLSearchParams): number {
 export const KrewPage: React.FC = () => {
   // ─── URL is the source of truth — everything derives from searchParams ───
   const [searchParams, setSearchParams] = useSearchParams()
+  const { toast } = useToast()
+  const { openChat } = useChatPane()
 
   const activeListId = searchParams.get(PARAM_LIST) ?? ALL_KREW_SENTINEL
   const isRegulixView = activeListId === REGULIX_READY_SENTINEL
   const search = searchParams.get(PARAM_SEARCH) ?? ''
+  // The input renders `search` live; the table query waits for typing to pause.
+  const debouncedSearch = useDebounce(search)
   const sources = useMemo(() => parseStringSet(searchParams, PARAM_SOURCE), [searchParams])
   const skills = useMemo(() => parseStringSet(searchParams, PARAM_SKILLS), [searchParams])
   const sort = useMemo(() => parseSort(searchParams), [searchParams])
@@ -620,11 +627,37 @@ export const KrewPage: React.FC = () => {
     refetchWorkers()
   }
 
+  // Direct messages don't require an application — open the docked chat
+  // pane for this worker (LinkedIn-style) without leaving the page.
+  const handleSendMessage = (worker: KrewWorker): void => {
+    openChat({
+      workerId: worker.id,
+      name: `${worker.firstName} ${worker.lastName}`.trim(),
+      avatarUrl: worker.avatarUrl,
+    })
+  }
+
+  // Bulk bar variant: chats are one-on-one — open the pane when exactly one
+  // worker is selected, explain why otherwise.
+  const handleBulkSendMessage = (): void => {
+    const ids = Array.from(selected)
+    if (ids.length === 1) {
+      const w = workers.find((row) => row.id === ids[0])
+      if (w) handleSendMessage(w)
+      return
+    }
+    toast({
+      variant: 'info',
+      title: 'Select a single worker',
+      description: 'Chats are one-on-one — select one worker to open their conversation.',
+    })
+  }
+
   // Build the row overflow menu — items depend on whether a list is currently selected.
   const getRowOverflowItems = (worker: KrewWorker): MenuItem[] => {
     const items: MenuItem[] = [
       { label: 'View profile', onClick: () => openWorker(worker.id) },
-      { label: 'Send message' }, // TODO: messaging
+      { label: 'Send message', onClick: () => handleSendMessage(worker) },
       { label: 'Add to list', onClick: () => openAddToList([worker.id]) },
     ]
     if (activeListId !== ALL_KREW_SENTINEL) {
@@ -651,6 +684,9 @@ export const KrewPage: React.FC = () => {
   const tableParamsKey = useMemo(() => {
     const next = new URLSearchParams(searchParams)
     next.delete(PARAM_WORKER)
+    // Search is tracked separately via debouncedSearch so each keystroke
+    // doesn't refetch — the URL updates live, the table query trails it.
+    next.delete(PARAM_SEARCH)
     return next.toString()
   }, [searchParams])
   useEffect(() => {
@@ -661,7 +697,7 @@ export const KrewPage: React.FC = () => {
     const listId = isAll || isRegulix ? undefined : activeListId
     getKrew({
       listId,
-      search: search || undefined,
+      search: debouncedSearch || undefined,
       sources: sources.size > 0 ? Array.from(sources) : undefined,
       skills: skills.size > 0 ? Array.from(skills) : undefined,
       regulixReadyOnly: isRegulix || undefined,
@@ -674,12 +710,12 @@ export const KrewPage: React.FC = () => {
       setPageTotal(data.total)
       // Header / "All Krew" count caches the unfiltered total — only update when
       // every row-affecting filter is off.
-      const isUnfilteredAll = isAll && search.length === 0 && sources.size === 0
+      const isUnfilteredAll = isAll && debouncedSearch.length === 0 && sources.size === 0
       if (isUnfilteredAll) {
         setKrewTotalCount(data.total)
       }
       // Regulix Ready count caches when on that view with no other row-affecting filter.
-      const isUnfilteredRegulix = isRegulix && search.length === 0 && sources.size === 0
+      const isUnfilteredRegulix = isRegulix && debouncedSearch.length === 0 && sources.size === 0
       if (isUnfilteredRegulix) {
         setRegulixReadyCount(data.total)
       }
@@ -692,7 +728,7 @@ export const KrewPage: React.FC = () => {
     // PARAM_WORKER so drawer open/close doesn't refetch). refetchVersion bumps
     // after mutations to force a refetch without changing the URL.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tableParamsKey, refetchVersion])
+  }, [tableParamsKey, debouncedSearch, refetchVersion])
 
   // Independently fetch the regulix-ready count for the sidebar badge. Runs on
   // mount and after mutations so the badge stays accurate even when the user is
@@ -819,16 +855,22 @@ export const KrewPage: React.FC = () => {
 
   // Stack → URL: when the user closes the drawer via Esc / scrim / close
   // button, popDrawer clears the stack and this effect clears the URL.
+  // The param is only DELETED on an open→closed transition (prev base id was
+  // non-null): on a `?worker=X` deep-link mount the stack is still empty here
+  // (the URL→stack effect's openDrawer state hasn't landed yet), and clearing
+  // on "empty stack vs set param" would strip the param and kill the deep
+  // link. A mount-skip flag isn't enough — StrictMode replays the effect with
+  // the same stale closure after the flag is already set.
+  const prevBaseWorkerIdRef = useRef<string | null>(null)
   useEffect(() => {
+    const prevBaseWorkerId = prevBaseWorkerIdRef.current
+    prevBaseWorkerIdRef.current = baseWorkerId
     const urlWorkerId = searchParams.get(PARAM_WORKER)
-    if (baseWorkerId !== urlWorkerId) {
-      updateParams(
-        (p) => {
-          if (baseWorkerId) p.set(PARAM_WORKER, baseWorkerId)
-          else p.delete(PARAM_WORKER)
-        },
-        { resetPage: false }
-      )
+    if (baseWorkerId === urlWorkerId) return
+    if (baseWorkerId) {
+      updateParams((p) => p.set(PARAM_WORKER, baseWorkerId), { resetPage: false })
+    } else if (prevBaseWorkerId) {
+      updateParams((p) => p.delete(PARAM_WORKER), { resetPage: false })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [baseWorkerId])
@@ -1072,7 +1114,7 @@ export const KrewPage: React.FC = () => {
                       Remove from list
                     </button>
                   )}
-                  <button type="button" className={styles.bulkBtn}>
+                  <button type="button" className={styles.bulkBtn} onClick={handleBulkSendMessage}>
                     Send message
                   </button>
                   <button

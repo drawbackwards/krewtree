@@ -5,14 +5,14 @@ import { JobCard } from '../components/JobCard/JobCard'
 import { QuickApplyModal } from '../components/QuickApplyModal/QuickApplyModal'
 import type { SavedSearch, Job } from '../types'
 import { industries, locationRegions } from '../data/mock'
-import { getJobs, getAppliedJobIds } from '../services/jobService'
+import { searchJobs, getJobFacetCounts, getAppliedJobIds } from '../services/jobService'
 import {
   getCityCoords,
   getWorkerCoords,
-  haversineMi,
   searchCities,
   type CityOption,
 } from '../services/locationService'
+import { useDebounce } from '../hooks/useDebounce'
 import {
   getSavedSearches,
   createSavedSearch,
@@ -342,15 +342,16 @@ export const JobsPage: React.FC = () => {
 
   // ---- All filter state derived from URL params ----
   const searchQ = searchParams.get('q') ?? ''
-  // Memoized so the array reference is stable across renders (prevents useMemo churning)
+  // Memoized on the raw param strings (not the searchParams object) so the
+  // array identity only changes when these specific filters change — other
+  // URL updates (search typing, page) don't retrigger the fetch effect.
+  const industryParam = searchParams.get('industry') ?? ''
+  const typeParam = searchParams.get('type') ?? ''
   const selectedIndustries = useMemo(
-    () => searchParams.get('industry')?.split(',').filter(Boolean) ?? [],
-    [searchParams]
+    () => industryParam.split(',').filter(Boolean),
+    [industryParam]
   )
-  const selectedTypes = useMemo(
-    () => searchParams.get('type')?.split(',').filter(Boolean) ?? [],
-    [searchParams]
-  )
+  const selectedTypes = useMemo(() => typeParam.split(',').filter(Boolean), [typeParam])
   const payRangeIdx = Number(searchParams.get('pay') ?? '0')
   const regulixOnly = searchParams.get('regulix') === '1'
   const sponsoredOnly = searchParams.get('sponsored') === '1'
@@ -369,33 +370,28 @@ export const JobsPage: React.FC = () => {
   const radiusMi: number | null = [10, 25, 50, 100].includes(radiusParam) ? radiusParam : null
   const page = Number(searchParams.get('page') ?? '1')
 
-  // ---- Jobs data ----
-  const [jobsList, setJobsList] = useState<Job[]>([])
+  // ---- Jobs data (server-paginated — see the search effect below) ----
+  const [jobs, setJobs] = useState<Job[]>([])
+  const [total, setTotal] = useState(0)
   const [jobsLoading, setJobsLoading] = useState(true)
   const [jobsError, setJobsError] = useState<string | null>(null)
   const [appliedDates, setAppliedDates] = useState<Map<string, string>>(new Map())
 
+  // Effects keyed on user id (not the user object) so auth events like the
+  // hourly token refresh don't refetch.
   useEffect(() => {
-    getJobs().then(({ data, error }) => {
-      setJobsList(data)
-      setJobsError(error)
-      setJobsLoading(false)
-    })
-  }, [])
-
-  useEffect(() => {
-    if (!user) return
+    if (!user?.id) return
     getAppliedJobIds(user.id).then(({ data }) => {
       setAppliedDates(new Map(data.map((r) => [r.jobId, r.appliedAt])))
     })
-  }, [user])
+  }, [user?.id])
 
   useEffect(() => {
-    if (!user) return
+    if (!user?.id) return
     getSavedSearches(user.id).then(({ data }) => {
       setMySearches(data)
     })
-  }, [user])
+  }, [user?.id])
 
   // ---- Distance anchor: worker's home coords are the default; the city
   // picker can override via ?near=City, ST. We resolve the anchor here and
@@ -480,22 +476,15 @@ export const JobsPage: React.FC = () => {
 
   const handleResetFilters = () => setSearchParams({}, { replace: true })
 
-  // ---- Live industry + type counts from real job data ----
-  const industryCounts = useMemo(() => {
-    const counts: Record<string, number> = {}
-    jobsList.forEach((j) => {
-      counts[j.industrySlug] = (counts[j.industrySlug] ?? 0) + 1
+  // ---- Live industry + type counts, aggregated server-side ----
+  const [industryCounts, setIndustryCounts] = useState<Record<string, number>>({})
+  const [typeCounts, setTypeCounts] = useState<Record<string, number>>({})
+  useEffect(() => {
+    getJobFacetCounts().then(({ data }) => {
+      setIndustryCounts(data.industries)
+      setTypeCounts(data.types)
     })
-    return counts
-  }, [jobsList])
-
-  const typeCounts = useMemo(() => {
-    const counts: Record<string, number> = {}
-    jobsList.forEach((j) => {
-      counts[j.type] = (counts[j.type] ?? 0) + 1
-    })
-    return counts
-  }, [jobsList])
+  }, [])
 
   // ---- Saved searches ----
   const [mySearches, setMySearches] = useState<SavedSearch[]>([])
@@ -536,55 +525,46 @@ export const JobsPage: React.FC = () => {
     )
   }
 
-  const filtered = useMemo(() => {
-    let list = [...jobsList]
-    if (searchQ.trim()) {
-      const q = searchQ.toLowerCase()
-      list = list.filter(
-        (j) =>
-          j.title.toLowerCase().includes(q) ||
-          j.company.name.toLowerCase().includes(q) ||
-          j.skills.some((s) => s.toLowerCase().includes(q)) ||
-          j.industry.toLowerCase().includes(q)
-      )
-    }
-    if (selectedIndustries.length)
-      list = list.filter((j) => selectedIndustries.includes(j.industrySlug))
-    if (selectedTypes.length) list = list.filter((j) => selectedTypes.includes(j.type))
-    if (regulixOnly) list = list.filter((j) => j.regulixReadyApplicants > 0)
-    if (sponsoredOnly) list = list.filter((j) => j.isSponsored)
+  // ---- Server-side search. Filtering, distance, sort, and pagination all
+  // happen in Postgres (search_jobs RPC); this effect just assembles params.
+  // Search is debounced so typing doesn't fire a query per keystroke.
+  const debouncedSearchQ = useDebounce(searchQ)
+  useEffect(() => {
+    // Distance-dependent queries wait for the anchor to resolve so we don't
+    // waste a round trip that's immediately superseded.
+    const needsAnchor = sortBy === 'nearest' || radiusMi != null
+    if (needsAnchor && !workerCoordsChecked) return
+    if (nearCity && !pickedCityCoords) return
+
+    let cancelled = false
+    setJobsLoading(true)
     const pr = PAY_RANGES[payRangeIdx]
-    if (pr.min > 0 || pr.max < Infinity)
-      list = list.filter((j) => j.payMin >= pr.min && j.payMax <= pr.max + 5)
-
-    // Distance compute / filter. Attach distanceMi to a fresh copy of each
-    // matching job so JobCard can render the pill without us mutating the
-    // cached `jobsList` rows.
-    if (anchorCoords) {
-      const { latitude: aLat, longitude: aLng } = anchorCoords
-      list = list.map((j) => {
-        if (j.latitude == null || j.longitude == null) return { ...j, distanceMi: null }
-        return { ...j, distanceMi: haversineMi(aLat, aLng, j.latitude, j.longitude) }
-      })
-      if (radiusMi != null) {
-        list = list.filter((j) => j.distanceMi != null && j.distanceMi <= radiusMi)
-      }
-    }
-
-    list = [...list].sort((a, b) => {
-      if (sortBy === 'nearest') {
-        return (
-          (a.distanceMi ?? Number.POSITIVE_INFINITY) - (b.distanceMi ?? Number.POSITIVE_INFINITY)
-        )
-      }
-      if (sortBy === 'recent') return a.postedDaysAgo - b.postedDaysAgo
-      if (sortBy === 'pay') return b.payMax - a.payMax
-      return b.totalApplicants - a.totalApplicants
+    searchJobs({
+      search: debouncedSearchQ,
+      industries: selectedIndustries,
+      types: selectedTypes,
+      sponsoredOnly,
+      regulixOnly,
+      payMin: pr.min > 0 ? pr.min : null,
+      payMax: pr.max < Infinity ? pr.max + 5 : null,
+      anchorLat: anchorCoords?.latitude ?? null,
+      anchorLng: anchorCoords?.longitude ?? null,
+      radiusMi,
+      sort: sortBy,
+      page,
+      pageSize: PAGE_SIZE,
+    }).then(({ data, total, error }) => {
+      if (cancelled) return
+      setJobs(data)
+      setTotal(total)
+      setJobsError(error)
+      setJobsLoading(false)
     })
-    return list
+    return () => {
+      cancelled = true
+    }
   }, [
-    jobsList,
-    searchQ,
+    debouncedSearchQ,
     selectedIndustries,
     selectedTypes,
     regulixOnly,
@@ -593,10 +573,14 @@ export const JobsPage: React.FC = () => {
     sortBy,
     anchorCoords,
     radiusMi,
+    page,
+    workerCoordsChecked,
+    nearCity,
+    pickedCityCoords,
   ])
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
-  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
+  const paginated = jobs
 
   const handleSaveSearch = async () => {
     if (!saveLabel.trim() || !user) return
@@ -611,7 +595,7 @@ export const JobsPage: React.FC = () => {
     }
     const { data } = await createSavedSearch(user.id, params)
     if (data) {
-      setMySearches((prev) => [{ ...data, newMatchesCount: filtered.length }, ...prev])
+      setMySearches((prev) => [{ ...data, newMatchesCount: total }, ...prev])
     }
     setSaveLabel('')
     setShowSaveForm(false)
@@ -1250,7 +1234,7 @@ export const JobsPage: React.FC = () => {
                       fontSize: 'var(--kt-text-lg)',
                     }}
                   >
-                    {filtered.length} jobs found
+                    {total} jobs found
                   </span>
                   {regulixOnly && (
                     <Badge variant="accent" size="sm" dot>
@@ -1323,7 +1307,7 @@ export const JobsPage: React.FC = () => {
                   </p>
                   <p style={{ fontSize: 'var(--kt-text-sm)' }}>{jobsError}</p>
                 </div>
-              ) : filtered.length === 0 ? (
+              ) : total === 0 ? (
                 <div
                   style={{ textAlign: 'center', padding: '60px 0', color: 'var(--kt-text-muted)' }}
                 >
@@ -1432,8 +1416,8 @@ export const JobsPage: React.FC = () => {
                       color: 'var(--kt-text-muted)',
                     }}
                   >
-                    Showing {(page - 1) * PAGE_SIZE + 1}–
-                    {Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length}
+                    Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, total)} of{' '}
+                    {total}
                   </div>
                 </>
               )}
@@ -1735,7 +1719,7 @@ export const JobsPage: React.FC = () => {
 
         <div className={styles.drawerFooter}>
           <button className={styles.drawerCTA} onClick={() => setDrawerType(null)}>
-            {drawerType === 'sort' ? 'Sort Results' : `Show Results (${filtered.length})`}
+            {drawerType === 'sort' ? 'Sort Results' : `Show Results (${total})`}
           </button>
         </div>
       </div>

@@ -12,6 +12,7 @@ import {
   type WorkerJobMatch,
   type WorkerNote,
 } from '../../services/krewService'
+import { useChatPane } from '../ChatPane/ChatPaneContext'
 import { WorkerSummaryTab } from './WorkerSummaryTab'
 import { WorkerMatchesTab } from './WorkerMatchesTab'
 import { WorkerHistoryTab } from './WorkerHistoryTab'
@@ -34,6 +35,7 @@ export const WorkerDrawer: React.FC<WorkerDrawerProps> = ({
   backLabel,
 }) => {
   const navigate = useNavigate()
+  const { openChat } = useChatPane()
   const defaultTab: Tab = entry.defaultTab ?? 'summary'
   const [activeTab, setActiveTab] = useState<Tab>(defaultTab)
   const [bootstrap, setBootstrap] = useState<WorkerDrawerBootstrap | null>(null)
@@ -82,8 +84,17 @@ export const WorkerDrawer: React.FC<WorkerDrawerProps> = ({
   const namePart = `${firstName}${lastInitial ? ' ' + lastInitial : ''}`.trim()
   const displayName = namePart || trade || 'Worker'
 
+  // Direct messages don't require an application — open the docked chat
+  // pane for this worker. Close the drawer so the pane isn't buried under
+  // it; no navigation happens, so onClose() can't race the URL sync here.
   const handleMessage = (): void => {
-    window.alert('Messaging UI not built yet. Navigate to /site/messages to continue.')
+    if (!bootstrap) return
+    openChat({
+      workerId: entry.workerId,
+      name: `${firstName} ${lastName}`.trim() || displayName,
+      avatarUrl,
+    })
+    onClose()
   }
 
   return (
@@ -111,6 +122,7 @@ export const WorkerDrawer: React.FC<WorkerDrawerProps> = ({
               type="button"
               className={styles.iconBtn}
               onClick={handleMessage}
+              disabled={!bootstrap}
               aria-label="Message worker"
             >
               <MessageIcon size={16} />
@@ -120,8 +132,8 @@ export const WorkerDrawer: React.FC<WorkerDrawerProps> = ({
                 {
                   label: 'Open full profile',
                   onClick: () => {
+                    // Same as handleMessage: route change closes the drawer.
                     navigate(`/site/dashboard/applicants/worker/${entry.workerId}`)
-                    onClose()
                   },
                 },
               ]}

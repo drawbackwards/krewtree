@@ -6,6 +6,8 @@ import { KrewtreeLogo } from '../Logo'
 import { useAuth } from '../../context/AuthContext'
 import { BellIcon, ChevronDownIcon } from '../../icons'
 import { getWorkerProfile } from '../../services/workerService'
+import { getCompanyProfile } from '../../services/companyService'
+import { getUnreadMessageCount, MESSAGES_READ_EVENT } from '../../services/messageService'
 import styles from './Navbar.module.css'
 
 // Keep Persona export so existing imports don't break
@@ -50,13 +52,57 @@ export const Navbar: React.FC = () => {
     return () => document.removeEventListener('mousedown', handler)
   }, [avatarMenuOpen])
 
-  // Fetch avatar URL for worker persona
+  // Fetch the avatar image: worker avatar for workers, company logo for
+  // companies. Keyed on user id (not the user object) so auth events like
+  // hourly token refresh don't refetch.
   useEffect(() => {
-    if (!isLoggedIn || persona !== 'worker' || !user) return
-    getWorkerProfile(user.id).then(({ data }) => {
-      if (data?.avatar_url) setAvatarUrl(data.avatar_url)
-    })
-  }, [isLoggedIn, persona, user])
+    if (!isLoggedIn || !user?.id) return
+    if (persona === 'worker') {
+      getWorkerProfile(user.id).then(({ data }) => {
+        if (data?.avatar_url) setAvatarUrl(data.avatar_url)
+      })
+    } else if (persona === 'company') {
+      getCompanyProfile(user.id).then(({ data }) => {
+        if (data?.logo_url) setAvatarUrl(data.logo_url)
+      })
+    }
+  }, [isLoggedIn, persona, user?.id])
+
+  // Unread message count for the Messages nav badge. Refreshed when the
+  // messages page marks a thread read and on a slow poll — NOT on every
+  // route change, which previously fired a database query per nav click.
+  const [msgUnread, setMsgUnread] = useState(0)
+  useEffect(() => {
+    if (!isLoggedIn || !persona) {
+      setMsgUnread(0)
+      return
+    }
+    let cancelled = false
+    const refresh = () => {
+      getUnreadMessageCount().then(({ data }) => {
+        if (!cancelled) setMsgUnread(data)
+      })
+    }
+    refresh()
+    const interval = window.setInterval(refresh, 60_000)
+    window.addEventListener(MESSAGES_READ_EVENT, refresh)
+    return () => {
+      cancelled = true
+      window.clearInterval(interval)
+      window.removeEventListener(MESSAGES_READ_EVENT, refresh)
+    }
+  }, [isLoggedIn, persona])
+
+  const messagesLabel = (
+    <>
+      Messages
+      {msgUnread > 0 && (
+        <span className={styles.msgBadge} aria-label={`${msgUnread} unread messages`}>
+          {msgUnread > 9 ? '9+' : msgUnread}
+        </span>
+      )}
+    </>
+  )
 
   const handleMarkAllRead = () => {
     setNotifs((prev) => prev.map((n) => ({ ...n, isRead: true })))
@@ -136,7 +182,7 @@ export const Navbar: React.FC = () => {
                   to="/site/messages"
                   className={[styles.link, isActive('/site/messages')].filter(Boolean).join(' ')}
                 >
-                  Messages
+                  {messagesLabel}
                 </Link>
               </>
             )}
@@ -171,8 +217,10 @@ export const Navbar: React.FC = () => {
                   Jobs
                 </Link>
                 <Link
-                  to="/site/pipeline"
-                  className={[styles.link, isActive('/site/pipeline')].filter(Boolean).join(' ')}
+                  to="/site/dashboard/applicants?view=kanban"
+                  className={[styles.link, isActive('/site/dashboard/applicants')]
+                    .filter(Boolean)
+                    .join(' ')}
                 >
                   Pipeline
                 </Link>
@@ -180,7 +228,7 @@ export const Navbar: React.FC = () => {
                   to="/site/messages"
                   className={[styles.link, isActive('/site/messages')].filter(Boolean).join(' ')}
                 >
-                  Messages
+                  {messagesLabel}
                 </Link>
               </>
             )}
@@ -293,52 +341,18 @@ export const Navbar: React.FC = () => {
 
                     {/* Company settings */}
                     {persona === 'company' && (
-                      <>
-                        <div className={styles.menuSection}>
-                          <button
-                            className={styles.menuItem}
-                            role="menuitem"
-                            onClick={() => {
-                              setAvatarMenuOpen(false)
-                              navigate('/site/company/edit')
-                            }}
-                          >
-                            Edit company profile
-                          </button>
-                          {user?.id && (
-                            <button
-                              className={styles.menuItem}
-                              role="menuitem"
-                              onClick={() => {
-                                setAvatarMenuOpen(false)
-                                navigate(`/site/company/${user.id}`)
-                              }}
-                            >
-                              View public profile
-                            </button>
-                          )}
-                          <button
-                            className={styles.menuItem}
-                            role="menuitem"
-                            onClick={() => {
-                              setAvatarMenuOpen(false)
-                              navigate('/site/settings')
-                            }}
-                          >
-                            Organization Settings
-                          </button>
-                          <button
-                            className={styles.menuItem}
-                            role="menuitem"
-                            onClick={() => {
-                              setAvatarMenuOpen(false)
-                              navigate('/site/settings/account')
-                            }}
-                          >
-                            Account &amp; billing
-                          </button>
-                        </div>
-                      </>
+                      <div className={styles.menuSection}>
+                        <button
+                          className={styles.menuItem}
+                          role="menuitem"
+                          onClick={() => {
+                            setAvatarMenuOpen(false)
+                            navigate('/site/settings')
+                          }}
+                        >
+                          Organization Settings
+                        </button>
+                      </div>
                     )}
 
                     {/* Personal */}

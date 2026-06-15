@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Badge, Button } from '../../components'
-import { RegulixBadge } from '../components/RegulixBadge/RegulixBadge'
+import { useToast } from '../../components/Toast/Toast'
+import { RegulixLogo } from '../components/RegulixLogo/RegulixLogo'
+import { useChatPane } from '../components/ChatPane/ChatPaneContext'
 import { useAuth } from '../context/AuthContext'
+import { addWorkerToKrew, removeWorkerFromKrew, getKrewRelationship } from '../services/krewService'
 import {
   MapPinIcon,
   StarIcon,
@@ -75,12 +78,20 @@ const sectionHeading: React.CSSProperties = {
 export const WorkerProfilePage: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { user } = useAuth()
+  const { user, persona } = useAuth()
+  const { openChat } = useChatPane()
+  const { toast } = useToast()
   const isOwnProfile = !!user && user.id === id
+  const isCompanyViewer = persona === 'company' && !isOwnProfile
 
   const [profile, setProfile] = useState<FullWorkerProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [fetchError, setFetchError] = useState<string | null>(null)
+
+  // Krew membership — only meaningful when a company is viewing someone else's
+  // profile. null while we don't know yet (loading / not applicable).
+  const [inKrew, setInKrew] = useState<boolean | null>(null)
+  const [krewBusy, setKrewBusy] = useState(false)
 
   useEffect(() => {
     if (!id) return
@@ -91,6 +102,49 @@ export const WorkerProfilePage: React.FC = () => {
       setLoading(false)
     })
   }, [id])
+
+  useEffect(() => {
+    if (!id || !isCompanyViewer) {
+      setInKrew(null)
+      return
+    }
+    getKrewRelationship(id).then(({ data }) => {
+      setInKrew(data?.inKrew ?? false)
+    })
+  }, [id, isCompanyViewer])
+
+  const handleToggleKrew = async (): Promise<void> => {
+    if (!id || krewBusy) return
+    const name = `${profile?.firstName ?? ''} ${profile?.lastName ?? ''}`.trim() || 'Worker'
+    setKrewBusy(true)
+    if (inKrew) {
+      const { error } = await removeWorkerFromKrew(id)
+      setKrewBusy(false)
+      if (error) {
+        toast({ title: 'Could not remove from krew', description: error, variant: 'danger' })
+        return
+      }
+      setInKrew(false)
+      toast({
+        title: 'Removed from My Krew',
+        description: `${name} is no longer in your krew.`,
+        variant: 'success',
+      })
+    } else {
+      const { error } = await addWorkerToKrew(id, { source: 'marketplace' })
+      setKrewBusy(false)
+      if (error) {
+        toast({ title: 'Could not add to krew', description: error, variant: 'danger' })
+        return
+      }
+      setInKrew(true)
+      toast({
+        title: 'Added to My Krew',
+        description: `${name} is now in your krew.`,
+        variant: 'success',
+      })
+    }
+  }
 
   if (loading) {
     return (
@@ -172,9 +226,7 @@ export const WorkerProfilePage: React.FC = () => {
                 justifyContent: 'center',
                 fontWeight: 'var(--kt-weight-bold)',
                 fontSize: 'var(--kt-text-3xl)',
-                border: '4px solid var(--kt-surface)',
                 flexShrink: 0,
-                boxShadow: 'var(--kt-shadow-sm)',
                 overflow: 'hidden',
               }}
             >
@@ -238,12 +290,33 @@ export const WorkerProfilePage: React.FC = () => {
                 </Button>
               ) : (
                 <>
-                  <Button variant="primary" size="md">
+                  <Button
+                    variant="primary"
+                    size="md"
+                    onClick={() =>
+                      openChat({
+                        workerId: id!,
+                        name: fullName || 'Worker',
+                        avatarUrl: profile.avatarUrl,
+                      })
+                    }
+                  >
                     Message
                   </Button>
-                  <Button variant="outline" size="md">
-                    Save
-                  </Button>
+                  {isCompanyViewer ? (
+                    <Button
+                      variant="outline"
+                      size="md"
+                      onClick={handleToggleKrew}
+                      disabled={krewBusy || inKrew === null}
+                    >
+                      {inKrew ? 'In My Krew' : 'Add to My Krew'}
+                    </Button>
+                  ) : (
+                    <Button variant="outline" size="md">
+                      Save
+                    </Button>
+                  )}
                 </>
               )}
             </div>
@@ -705,8 +778,7 @@ export const WorkerProfilePage: React.FC = () => {
           {/* Regulix status */}
           <div
             style={{
-              background: profile.isRegulixReady ? 'var(--kt-olive-100)' : 'var(--kt-surface)',
-              border: `1px solid ${profile.isRegulixReady ? 'var(--kt-olive-300)' : 'var(--kt-border)'}`,
+              background: 'var(--kt-regulix-50)',
               borderRadius: 'var(--kt-radius-lg)',
               padding: 18,
               textAlign: 'center',
@@ -717,17 +789,13 @@ export const WorkerProfilePage: React.FC = () => {
               justifyContent: !hasContent ? 'center' : undefined,
             }}
           >
-            <RegulixBadge
-              size="lg"
-              variant={profile.isRegulixReady ? 'filled' : 'pending'}
-              pulse={profile.isRegulixReady}
-            />
+            <RegulixLogo height={24} textColor="var(--kt-navy-700)" />
             <p
               style={{
                 marginTop: 10,
                 fontSize: 'var(--kt-text-sm)',
                 fontWeight: 'var(--kt-weight-semibold)',
-                color: profile.isRegulixReady ? 'var(--kt-olive-800)' : 'var(--kt-text-muted)',
+                color: profile.isRegulixReady ? 'var(--kt-regulix-500)' : 'var(--kt-text-muted)',
               }}
             >
               {profile.isRegulixReady ? 'Regulix Ready' : 'Not Yet Regulix Ready'}

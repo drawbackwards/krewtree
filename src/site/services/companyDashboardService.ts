@@ -42,13 +42,13 @@ async function fetchNewApplicants(companyId: string): Promise<DashboardStat> {
   const [weekRes, yesterdayRes] = await Promise.all([
     supabase
       .from('applications')
-      .select('id, jobs!inner(company_id)', { count: 'exact', head: true })
-      .eq('jobs.company_id', companyId)
+      .select('id', { count: 'exact', head: true })
+      .eq('company_id', companyId)
       .gte('created_at', weekStart),
     supabase
       .from('applications')
-      .select('id, jobs!inner(company_id)', { count: 'exact', head: true })
-      .eq('jobs.company_id', companyId)
+      .select('id', { count: 'exact', head: true })
+      .eq('company_id', companyId)
       .gte('created_at', yesterday)
       .lt('created_at', today),
   ])

@@ -49,6 +49,12 @@ export interface DrawerStackValue {
 
 const DrawerStackContext = createContext<DrawerStackValue | null>(null)
 
+// Identity key for a stack entry — DrawerSystem uses the same shape as its
+// React key, so two entries must never share one.
+function entryKey(entry: DrawerStackEntry): string {
+  return `${entry.type}-${entry.type === 'application' ? entry.applicationId : entry.workerId}`
+}
+
 // ── Provider ────────────────────────────────────────────────────────────────
 
 export const DrawerStackProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -57,7 +63,10 @@ export const DrawerStackProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const openDrawer = useCallback((entry: DrawerStackEntry) => {
     setStack((prev) => {
       if (prev.length === 0) return [entry]
-      if (prev.length === 1) return [prev[0], entry]
+      // Re-opening the entry that's already the base is a no-op — pushing it
+      // would give two stack entries the same identity (duplicate React keys
+      // in DrawerSystem). updateBasePreload exists for late preload patching.
+      if (entryKey(prev[0]) === entryKey(entry)) return prev
       // Cap guard — replace the top rather than growing past 2.
       return [prev[0], entry]
     })

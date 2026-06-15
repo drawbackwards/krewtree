@@ -1,9 +1,9 @@
 import React, { useRef, useState } from 'react'
-import { Button, Checkbox, Input } from '../../../components'
+import { Button, Input } from '../../../components'
 import { useAuth } from '../../context/AuthContext'
 import { uploadCompanyPhoto } from '../../services/companyService'
 import type { CompanyPhoto, StepHiringData } from './types'
-import { BENEFIT_GROUPS, CONTRACT_TYPE_OPTIONS, MAX_PHOTOS } from './types'
+import { MAX_PHOTOS } from './types'
 import styles from './CompanyProfileEdit.module.css'
 
 export const StepHiringSection: React.FC<{
@@ -17,19 +17,6 @@ export const StepHiringSection: React.FC<{
 
   const set = <K extends keyof StepHiringData>(key: K, val: StepHiringData[K]) =>
     onChange({ ...data, [key]: val })
-
-  const toggleBenefit = (value: string) => {
-    const has = data.benefits.includes(value)
-    set('benefits', has ? data.benefits.filter((b) => b !== value) : [...data.benefits, value])
-  }
-
-  const toggleContractType = (value: string) => {
-    const has = data.contractTypes.includes(value)
-    set(
-      'contractTypes',
-      has ? data.contractTypes.filter((t) => t !== value) : [...data.contractTypes, value]
-    )
-  }
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -143,90 +130,6 @@ export const StepHiringSection: React.FC<{
               Maximum of {MAX_PHOTOS} reached.
             </span>
           )}
-        </div>
-      </div>
-
-      {/* Contract types */}
-      <div>
-        <h3
-          style={{
-            fontSize: 'var(--kt-text-md)',
-            fontWeight: 'var(--kt-weight-bold)',
-            color: 'var(--kt-text)',
-            margin: '0 0 4px',
-          }}
-        >
-          Typical contract types
-        </h3>
-        <p
-          style={{
-            fontSize: 'var(--kt-text-xs)',
-            color: 'var(--kt-text-muted)',
-            margin: '0 0 12px',
-          }}
-        >
-          Helps workers self-select for the kinds of arrangements you offer.
-        </p>
-        <div className={styles.checkboxGrid}>
-          {CONTRACT_TYPE_OPTIONS.map((opt) => (
-            <Checkbox
-              key={opt.value}
-              label={opt.label}
-              checked={data.contractTypes.includes(opt.value)}
-              onChange={() => toggleContractType(opt.value)}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* Benefits */}
-      <div>
-        <h3
-          style={{
-            fontSize: 'var(--kt-text-md)',
-            fontWeight: 'var(--kt-weight-bold)',
-            color: 'var(--kt-text)',
-            margin: '0 0 4px',
-          }}
-        >
-          Benefits & perks
-        </h3>
-        <p
-          style={{
-            fontSize: 'var(--kt-text-xs)',
-            color: 'var(--kt-text-muted)',
-            margin: '0 0 12px',
-          }}
-        >
-          Select any that you offer. Groups are for organization — they all save as flat tags.
-        </p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-          {BENEFIT_GROUPS.map((group) => (
-            <div key={group.label}>
-              <p
-                style={{
-                  fontSize: 'var(--kt-text-xs)',
-                  fontWeight: 'var(--kt-weight-bold)',
-                  color: 'var(--kt-text-muted)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.04em',
-                  margin: '0 0 8px',
-                }}
-              >
-                {group.label}
-              </p>
-              <div className={styles.checkboxGrid}>
-                {group.benefits.map((b) => (
-                  <Checkbox
-                    key={b.value}
-                    label={b.label}
-                    checked={data.benefits.includes(b.value)}
-                    onChange={() => toggleBenefit(b.value)}
-                  />
-                ))}
-              </div>
-            </div>
-          ))}
         </div>
       </div>
 

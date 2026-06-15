@@ -1,10 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Modal, Tooltip } from '../../components'
+import { useToast } from '../../components/Toast/Toast'
 import { JobCell } from '../components/ApplicantsWidget/cells/JobCell'
 import { StageCell } from '../components/ApplicantsWidget/cells/StageCell'
 import { useAuth } from '../context/AuthContext'
+import { useDebounce } from '../hooks/useDebounce'
 import type { CompanyApplicant } from '../types'
 import {
   getAllApplicants,
@@ -150,6 +152,8 @@ function initFiltersFromParams(params: URLSearchParams): ApplicantFilters {
 export const AllApplicantsPage: React.FC = () => {
   const { user } = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
+  const navigate = useNavigate()
+  const { toast } = useToast()
 
   const [view, setView] = useState<'list' | 'kanban'>(() =>
     searchParams.get('view') === 'kanban' ? 'kanban' : 'list'
@@ -209,9 +213,28 @@ export const AllApplicantsPage: React.FC = () => {
     setSearchParams(params, { replace: true })
   }, [view, filters, setSearchParams])
 
+  // Debounce the search term so the heavy applicants query fires once typing
+  // pauses, not on every keystroke. The input itself stays on filters.search.
+  const debouncedSearch = useDebounce(filters.search)
+  const queryFilters = useMemo(
+    () => ({ ...filters, search: debouncedSearch }),
+    // Keyed on each non-search field (not the filters object) so identity only
+    // changes when a setting changes or the debounced search settles.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      filters.stageId,
+      filters.jobId,
+      filters.regulixOnly,
+      filters.appliedFrom,
+      filters.appliedTo,
+      filters.showArchived,
+      debouncedSearch,
+    ]
+  )
+
   const load = useCallback(() => {
     if (!user?.id) return
-    getAllApplicants(user.id, { filters, sort, page, pageSize }).then((res) => {
+    getAllApplicants(user.id, { filters: queryFilters, sort, page, pageSize }).then((res) => {
       const isDemo =
         typeof window !== 'undefined' && window.sessionStorage.getItem('kt:demoCard') === 'full'
       const data = res.data
@@ -230,7 +253,7 @@ export const AllApplicantsPage: React.FC = () => {
       setRows(data)
       setTotal(res.total)
     })
-  }, [user?.id, filters, sort, page, pageSize])
+  }, [user?.id, queryFilters, sort, page, pageSize])
 
   useEffect(() => {
     load()
@@ -309,8 +332,10 @@ export const AllApplicantsPage: React.FC = () => {
     await shortlistApplicant(id)
     load()
   }
-  const handleMessage = (_id: string) => {
-    window.alert('Messaging UI not built yet. Navigate to /site/messages to continue.')
+  // Rows ARE applications, so Message deep-links straight into the thread —
+  // MessagesPage handles never-messaged applications via getConversationStub.
+  const handleMessage = (id: string) => {
+    navigate(`/site/messages?application=${id}`)
   }
   const handleAddNote = async (id: string) => {
     const text = window.prompt('Add a note about this applicant:')
@@ -332,7 +357,20 @@ export const AllApplicantsPage: React.FC = () => {
     setSelected(new Set())
     load()
   }
-  const doBulkMessage = () => handleMessage('__bulk__')
+  // Threads are per-application — open the thread when exactly one row is
+  // selected, explain why otherwise.
+  const doBulkMessage = () => {
+    if (bulkIds.length === 1) {
+      handleMessage(bulkIds[0])
+      return
+    }
+    toast({
+      variant: 'info',
+      title: 'Select a single applicant',
+      description:
+        'Message threads are one-on-one — select one applicant to open their conversation.',
+    })
+  }
   const doBulkReject = async () => {
     await bulkReject(bulkIds)
     setSelected(new Set())

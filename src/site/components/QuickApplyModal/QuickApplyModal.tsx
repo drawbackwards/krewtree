@@ -1,6 +1,4 @@
-import React, { useState, useEffect } from 'react'
-import Lottie from 'lottie-react'
-import successAnimation from './success-animation.json'
+import React, { Suspense, lazy, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Modal } from '../../../components'
 import type { Job } from '../../types'
@@ -19,6 +17,20 @@ import {
   CheckCircleIcon,
 } from '../../icons'
 import styles from './QuickApplyModal.module.css'
+
+// lottie-react + the animation JSON are ~300 KB combined — by far the heaviest
+// thing this modal touches, and only visible for the one-time success state.
+// Load them on demand so browsing jobs doesn't pay for them.
+const SuccessAnimation = lazy(async () => {
+  const [{ default: Lottie }, animation] = await Promise.all([
+    import('lottie-react'),
+    import('./success-animation.json'),
+  ])
+  const Component: React.FC = () => (
+    <Lottie animationData={animation.default} loop={false} style={{ width: 80, height: 80 }} />
+  )
+  return { default: Component }
+})
 
 interface QuickApplyModalProps {
   job: Job | null
@@ -254,11 +266,9 @@ export const QuickApplyModal: React.FC<QuickApplyModalProps> = ({
               {submittedWithBoost ? (
                 <RocketIcon size={40} color="var(--kt-olive-700)" />
               ) : (
-                <Lottie
-                  animationData={successAnimation}
-                  loop={false}
-                  style={{ width: 80, height: 80 }}
-                />
+                <Suspense fallback={<span style={{ width: 80, height: 80 }} />}>
+                  <SuccessAnimation />
+                </Suspense>
               )}
             </div>
             <div className={styles.confirmTitle}>

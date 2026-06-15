@@ -17,7 +17,7 @@ import type {
   TaskState,
   LogEventType,
 } from '../types'
-import { supabase } from '../../lib/supabase'
+import { supabase, getCurrentUserId } from '../../lib/supabase'
 import type { Database } from '../../lib/database.types'
 import shortTemplate from '../../../seeds/pipeline-templates/short.json'
 import longTemplate from '../../../seeds/pipeline-templates/long.json'
@@ -27,7 +27,7 @@ type TaskNoteRow = Database['public']['Tables']['application_task_note']['Row']
 type NoteRow = Database['public']['Tables']['application_stage_notes']['Row']
 type LogRow = Database['public']['Tables']['application_log']['Row']
 type TemplateRow = Database['public']['Tables']['pipeline_stage_task_template']['Row']
-type MessageRow = Database['public']['Tables']['application_message']['Row']
+type MessageRow = Database['public']['Tables']['message']['Row']
 
 export type TaskTemplate = {
   id: string
@@ -60,9 +60,10 @@ function toTemplate(row: TemplateRow): TaskTemplate {
 function toMessage(row: MessageRow): ApplicationMessage {
   return {
     id: row.id,
-    applicationId: row.application_id,
+    // Pipeline sends always carry application context; the unified
+    // message table allows null only for plain chat messages.
+    applicationId: row.application_id ?? '',
     applicationTaskId: row.application_task_id,
-    subject: row.subject,
     body: row.body,
     calendarLink: row.calendar_link,
     sentAt: row.sent_at,
@@ -196,14 +197,12 @@ export async function toggleTaskComplete(
   taskId: string,
   completed: boolean
 ): Promise<{ error: string | null }> {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const userId = await getCurrentUserId()
 
   const patch = completed
     ? {
         completed_at: new Date().toISOString(),
-        completed_by: user?.id ?? null,
+        completed_by: userId,
         skipped_at: null,
         skipped_by: null,
       }
@@ -236,14 +235,12 @@ export async function toggleTaskSkip(
   taskId: string,
   skipped: boolean
 ): Promise<{ error: string | null }> {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const userId = await getCurrentUserId()
 
   const patch = skipped
     ? {
         skipped_at: new Date().toISOString(),
-        skipped_by: user?.id ?? null,
+        skipped_by: userId,
         completed_at: null,
         completed_by: null,
       }
@@ -306,9 +303,7 @@ export async function addTaskNote(
   const trimmed = body.trim()
   if (!trimmed) return { data: null, error: 'empty_note' }
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const userId = await getCurrentUserId()
 
   const { data, error } = await supabase
     .from('application_task_note')
@@ -316,7 +311,7 @@ export async function addTaskNote(
       application_task_id: taskId,
       application_id: applicationId,
       body: trimmed,
-      created_by: user?.id ?? null,
+      created_by: userId,
     })
     .select('*')
     .single()
@@ -349,16 +344,14 @@ export async function editTaskNote(
   const trimmed = body.trim()
   if (!trimmed) return { data: null, error: 'empty_note' }
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const userId = await getCurrentUserId()
 
   const { data, error } = await supabase
     .from('application_task_note')
     .update({
       body: trimmed,
       updated_at: new Date().toISOString(),
-      updated_by: user?.id ?? null,
+      updated_by: userId,
     })
     .eq('id', noteId)
     .eq('application_id', applicationId)
@@ -498,16 +491,14 @@ export async function saveStageNotes(
   stageId: string,
   notes: string
 ): Promise<{ error: string | null }> {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const userId = await getCurrentUserId()
 
   const { error } = await supabase.from('application_stage_notes').upsert(
     {
       application_id: applicationId,
       stage_id: stageId,
       notes: notes.trim() || null,
-      updated_by: user?.id ?? null,
+      updated_by: userId,
     },
     { onConflict: 'application_id,stage_id' }
   )
@@ -811,9 +802,10 @@ export async function reorderTaskTemplates(
 
 /**
  * Send the message attached to an application_task. The task's snapshotted
- * message fields are recorded as a permanent application_message row and the
- * task is marked complete + message_sent_at stamped. Pass `{ override }` to
- * send a customized subject/body (used by the manual-send modal where the
+ * message fields are recorded as a permanent row on the unified `message`
+ * table (tagged with the application context) and the task is marked
+ * complete + message_sent_at stamped. Pass `{ override }` to send a
+ * customized subject/body (used by the manual-send modal where the
  * employer can tweak before sending).
  */
 export async function sendApplicationMessage(
@@ -825,10 +817,12 @@ export async function sendApplicationMessage(
 ): Promise<{ data: ApplicationMessage | null; error: string | null }> {
   const { data: task, error: tErr } = await supabase
     .from('application_task')
-    .select('*')
+    .select('*, applications!inner(company_id, worker_id)')
     .eq('id', applicationTaskId)
     .single()
   if (tErr || !task) return { data: null, error: tErr?.message ?? 'not_found' }
+  const pair = (task as unknown as { applications: { company_id: string; worker_id: string } })
+    .applications
 
   const subject = opts.override?.subject?.trim() || task.message_subject?.trim()
   const body = opts.override?.body?.trim() || task.message_body?.trim()
@@ -836,19 +830,21 @@ export async function sendApplicationMessage(
   const calendarLink =
     opts.override?.calendarLink !== undefined ? opts.override.calendarLink : task.calendar_link
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const userId = await getCurrentUserId()
+  if (!userId) return { data: null, error: 'not_authenticated' }
 
+  // The subject stays an internal label (task list, "Sent:" log entries);
+  // only the body ships on the message.
   const { data: inserted, error: insErr } = await supabase
-    .from('application_message')
+    .from('message')
     .insert({
+      company_id: pair.company_id,
+      worker_id: pair.worker_id,
       application_id: task.application_id,
       application_task_id: task.id,
-      subject,
       body,
       calendar_link: calendarLink ?? null,
-      sent_by: user?.id ?? null,
+      sent_by: userId,
     })
     .select('*')
     .single()
@@ -861,7 +857,7 @@ export async function sendApplicationMessage(
     .update({
       message_sent_at: now,
       completed_at: task.completed_at ?? now,
-      completed_by: task.completed_by ?? user?.id ?? null,
+      completed_by: task.completed_by ?? userId,
     })
     .eq('id', task.id)
 
@@ -884,96 +880,6 @@ export async function sendApplicationMessage(
   }
 
   return { data: toMessage(inserted), error: null }
-}
-
-export async function getApplicationMessages(
-  applicationId: string
-): Promise<{ data: ApplicationMessage[]; error: string | null }> {
-  const { data, error } = await supabase
-    .from('application_message')
-    .select('*')
-    .eq('application_id', applicationId)
-    .order('sent_at', { ascending: false })
-
-  if (error) return { data: [], error: error.message }
-  return { data: (data ?? []).map(toMessage), error: null }
-}
-
-/**
- * Inbox query for the worker side: every message across every application this
- * worker has filed, joined with job title + company name + logo for display.
- * RLS scopes results to the worker's own applications.
- */
-export type WorkerInboxMessage = ApplicationMessage & {
-  jobId: string
-  jobTitle: string
-  companyId: string
-  companyName: string
-  companyLogo: string | null
-}
-
-export async function getWorkerMessages(): Promise<{
-  data: WorkerInboxMessage[]
-  error: string | null
-}> {
-  const { data, error } = await supabase
-    .from('application_message')
-    .select(
-      `
-      *,
-      applications!inner(
-        id,
-        jobs!inner(
-          id,
-          title,
-          company_profiles!inner(id, name, logo_url)
-        )
-      )
-    `
-    )
-    .order('sent_at', { ascending: false })
-
-  if (error) return { data: [], error: error.message }
-
-  type JoinedMessage = MessageRow & {
-    applications: {
-      id: string
-      jobs: {
-        id: string
-        title: string
-        company_profiles: {
-          id: string
-          name: string
-          logo_url: string | null
-        }
-      }
-    }
-  }
-
-  const enriched = (data ?? []).map((row) => {
-    const r = row as unknown as JoinedMessage
-    const job = r.applications.jobs
-    const company = job.company_profiles
-    return {
-      ...toMessage(r),
-      jobId: job.id,
-      jobTitle: job.title,
-      companyId: company.id,
-      companyName: company.name,
-      companyLogo: company.logo_url,
-    }
-  })
-
-  return { data: enriched, error: null }
-}
-
-export async function markMessageRead(messageId: string): Promise<{ error: string | null }> {
-  const { error } = await supabase
-    .from('application_message')
-    .update({ read_at: new Date().toISOString() })
-    .eq('id', messageId)
-    .is('read_at', null)
-  return { error: error?.message ?? null }
 }
 
 // ── Org-level pipeline (company_pipeline + pipeline_stage tables) ─────────────

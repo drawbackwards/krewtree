@@ -11,8 +11,6 @@ export type Step1Data = {
   hqCity: string
   hqState: string
   phonePublic: boolean
-  emailPublic: boolean
-  addressPublic: boolean
 }
 
 export type StepAboutData = {
@@ -34,34 +32,19 @@ export type StepLicensesData = {
   licenses: LicenseEntry[]
 }
 
-export type AdditionalLocation = {
-  id: string
-  name: string
-  street: string
-  city: string
-  state: string
-  postalCode: string
-  radius: number | null
-}
-
-export type StepLocationsData = {
-  hqStreet: string
-  hqPostalCode: string
-  serviceAreaRadius: number
-  serviceAreaOverride: string
-  additionalLocations: AdditionalLocation[]
-}
-
 export type CompanyPhoto = {
   id: string
   url: string
   caption: string
 }
 
+export type StepContractBenefitsData = {
+  contractTypes: string[]
+  benefits: string[]
+}
+
 export type StepHiringData = {
   photos: CompanyPhoto[]
-  benefits: string[]
-  contractTypes: string[]
   facebookUrl: string
   instagramUrl: string
   linkedinUrl: string
@@ -74,7 +57,7 @@ export type EditState = {
   step1: Step1Data
   stepAbout: StepAboutData
   stepLicenses: StepLicensesData
-  stepLocations: StepLocationsData
+  stepContractBenefits: StepContractBenefitsData
   stepHiring: StepHiringData
 }
 
@@ -150,4 +133,3 @@ export const BENEFIT_GROUPS: { label: string; benefits: { value: string; label: 
 ]
 
 export const MAX_PHOTOS = 5
-export const MAX_ADDITIONAL_LOCATIONS = 10

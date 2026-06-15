@@ -119,57 +119,6 @@ export type Database = {
           },
         ]
       }
-      application_message: {
-        Row: {
-          application_id: string
-          application_task_id: string | null
-          body: string
-          calendar_link: string | null
-          id: string
-          read_at: string | null
-          sent_at: string
-          sent_by: string | null
-          subject: string
-        }
-        Insert: {
-          application_id: string
-          application_task_id?: string | null
-          body: string
-          calendar_link?: string | null
-          id?: string
-          read_at?: string | null
-          sent_at?: string
-          sent_by?: string | null
-          subject: string
-        }
-        Update: {
-          application_id?: string
-          application_task_id?: string | null
-          body?: string
-          calendar_link?: string | null
-          id?: string
-          read_at?: string | null
-          sent_at?: string
-          sent_by?: string | null
-          subject?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: 'application_message_application_id_fkey'
-            columns: ['application_id']
-            isOneToOne: false
-            referencedRelation: 'applications'
-            referencedColumns: ['id']
-          },
-          {
-            foreignKeyName: 'application_message_application_task_id_fkey'
-            columns: ['application_task_id']
-            isOneToOne: false
-            referencedRelation: 'application_task'
-            referencedColumns: ['id']
-          },
-        ]
-      }
       application_notes: {
         Row: {
           application_id: string
@@ -378,6 +327,7 @@ export type Database = {
       applications: {
         Row: {
           application_source: string | null
+          company_id: string
           created_at: string
           current_stage_id: string | null
           id: string
@@ -394,6 +344,7 @@ export type Database = {
         }
         Insert: {
           application_source?: string | null
+          company_id?: string
           created_at?: string
           current_stage_id?: string | null
           id?: string
@@ -410,6 +361,7 @@ export type Database = {
         }
         Update: {
           application_source?: string | null
+          company_id?: string
           created_at?: string
           current_stage_id?: string | null
           id?: string
@@ -858,54 +810,70 @@ export type Database = {
           },
         ]
       }
-      conversations: {
+      message: {
         Row: {
+          application_id: string | null
+          application_task_id: string | null
+          body: string
+          calendar_link: string | null
           company_id: string
-          created_at: string
           id: string
-          job_id: string | null
-          last_activity: string
-          unread_count: number
+          read_at: string | null
+          sent_at: string
+          sent_by: string
           worker_id: string
         }
         Insert: {
+          application_id?: string | null
+          application_task_id?: string | null
+          body: string
+          calendar_link?: string | null
           company_id: string
-          created_at?: string
           id?: string
-          job_id?: string | null
-          last_activity?: string
-          unread_count?: number
+          read_at?: string | null
+          sent_at?: string
+          sent_by: string
           worker_id: string
         }
         Update: {
+          application_id?: string | null
+          application_task_id?: string | null
+          body?: string
+          calendar_link?: string | null
           company_id?: string
-          created_at?: string
           id?: string
-          job_id?: string | null
-          last_activity?: string
-          unread_count?: number
+          read_at?: string | null
+          sent_at?: string
+          sent_by?: string
           worker_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: 'conversations_company_id_fkey'
+            foreignKeyName: 'message_company_id_fkey'
             columns: ['company_id']
             isOneToOne: false
             referencedRelation: 'company_profiles'
             referencedColumns: ['id']
           },
           {
-            foreignKeyName: 'conversations_job_id_fkey'
-            columns: ['job_id']
-            isOneToOne: false
-            referencedRelation: 'jobs'
-            referencedColumns: ['id']
-          },
-          {
-            foreignKeyName: 'conversations_worker_id_fkey'
+            foreignKeyName: 'message_worker_id_fkey'
             columns: ['worker_id']
             isOneToOne: false
             referencedRelation: 'worker_profiles'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'message_application_id_fkey'
+            columns: ['application_id']
+            isOneToOne: false
+            referencedRelation: 'applications'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'message_application_task_id_fkey'
+            columns: ['application_task_id']
+            isOneToOne: false
+            referencedRelation: 'application_task'
             referencedColumns: ['id']
           },
         ]
@@ -1278,44 +1246,6 @@ export type Database = {
           state?: string
         }
         Relationships: []
-      }
-      messages: {
-        Row: {
-          content: string
-          conversation_id: string
-          created_at: string
-          id: string
-          is_company: boolean
-          is_read: boolean
-          sender_id: string
-        }
-        Insert: {
-          content: string
-          conversation_id: string
-          created_at?: string
-          id?: string
-          is_company?: boolean
-          is_read?: boolean
-          sender_id: string
-        }
-        Update: {
-          content?: string
-          conversation_id?: string
-          created_at?: string
-          id?: string
-          is_company?: boolean
-          is_read?: boolean
-          sender_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: 'messages_conversation_id_fkey'
-            columns: ['conversation_id']
-            isOneToOne: false
-            referencedRelation: 'conversations'
-            referencedColumns: ['id']
-          },
-        ]
       }
       notifications: {
         Row: {
@@ -2217,6 +2147,55 @@ export type Database = {
       compute_krew_match_counts: {
         Args: { p_worker_ids: string[] }
         Returns: { worker_id: string; matches: number; strong_matches: number }[]
+      }
+      get_conversation_summaries: {
+        Args: never
+        Returns: {
+          company_id: string
+          company_name: string
+          company_logo: string | null
+          worker_id: string
+          worker_first_name: string
+          worker_last_name: string
+          worker_avatar: string | null
+          last_message_id: string
+          last_application_id: string | null
+          last_job_id: string | null
+          last_job_title: string | null
+          last_body: string
+          last_calendar_link: string | null
+          last_sent_at: string
+          last_sent_by: string
+          last_read_at: string | null
+          unread_count: number
+          message_count: number
+        }[]
+      }
+      get_unread_message_count: {
+        Args: never
+        Returns: number
+      }
+      search_jobs: {
+        Args: {
+          p_search?: string | null
+          p_industries?: string[] | null
+          p_types?: string[] | null
+          p_sponsored_only?: boolean
+          p_regulix_only?: boolean
+          p_pay_min?: number | null
+          p_pay_max?: number | null
+          p_anchor_lat?: number | null
+          p_anchor_lng?: number | null
+          p_radius_mi?: number | null
+          p_sort?: string
+          p_page?: number
+          p_page_size?: number
+        }
+        Returns: { job_id: string; distance_mi: number | null; total_count: number }[]
+      }
+      get_job_facet_counts: {
+        Args: never
+        Returns: { industry_slug: string; job_type: string; job_count: number }[]
       }
       get_my_role: { Args: never; Returns: string }
       increment_job_view: { Args: { p_job_id: string }; Returns: undefined }
