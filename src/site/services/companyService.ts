@@ -56,6 +56,21 @@ export async function getCompanyProfile(
   return { data: data as unknown as CompanyProfileRow, error: null }
 }
 
+// Lightweight logo lookup for the navbar avatar — selects a single column
+// instead of the full ~30-column profile row that getCompanyProfile returns.
+export async function getCompanyLogoUrl(
+  companyId: string
+): Promise<{ data: string | null; error: string | null }> {
+  const { data, error } = await supabase
+    .from('company_profiles')
+    .select('logo_url')
+    .eq('id', companyId)
+    .maybeSingle()
+
+  if (error) return { data: null, error: error.message }
+  return { data: (data?.logo_url as string | null) ?? null, error: null }
+}
+
 // ── Upsert (Identity + About) ──────────────────────────────────────────────────
 // Phase 2 writes only the Identity & basics + About fields directly. Phase 3
 // will introduce an RPC for atomic license / location / photo replacement.

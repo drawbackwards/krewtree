@@ -6,7 +6,7 @@ import { KrewtreeLogo } from '../Logo'
 import { useAuth } from '../../context/AuthContext'
 import { BellIcon, ChevronDownIcon } from '../../icons'
 import { getWorkerProfile } from '../../services/workerService'
-import { getCompanyProfile } from '../../services/companyService'
+import { getCompanyLogoUrl } from '../../services/companyService'
 import { getUnreadMessageCount, MESSAGES_READ_EVENT } from '../../services/messageService'
 import styles from './Navbar.module.css'
 
@@ -62,8 +62,8 @@ export const Navbar: React.FC = () => {
         if (data?.avatar_url) setAvatarUrl(data.avatar_url)
       })
     } else if (persona === 'company') {
-      getCompanyProfile(user.id).then(({ data }) => {
-        if (data?.logo_url) setAvatarUrl(data.logo_url)
+      getCompanyLogoUrl(user.id).then(({ data }) => {
+        if (data) setAvatarUrl(data)
       })
     }
   }, [isLoggedIn, persona, user?.id])

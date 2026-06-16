@@ -193,7 +193,7 @@
 .avatar {
   width: 32px;
   height: 32px;
-  border-radius: 50%;
+  border-radius: var(--kt-radius-sm);
   background-color: var(--kt-navy-900);
   color: var(--kt-white);
   display: flex;
@@ -217,9 +217,14 @@
   padding: 4px 6px 4px 2px;
   border-radius: var(--kt-radius-md);
   color: var(--kt-text-muted);
+  outline: none;
   transition:
     background-color var(--kt-duration-fast),
     color var(--kt-duration-fast);
+}
+.avatarBtn:focus,
+.avatarBtn:focus-visible {
+  outline: none;
 }
 .avatarBtn:hover {
   background-color: var(--kt-grey-100);

@@ -2175,6 +2175,10 @@ export type Database = {
         Args: never
         Returns: number
       }
+      get_company_dashboard: {
+        Args: never
+        Returns: Json
+      }
       search_jobs: {
         Args: {
           p_search?: string | null

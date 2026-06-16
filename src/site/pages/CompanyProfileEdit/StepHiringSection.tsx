@@ -19,27 +19,47 @@ export const StepHiringSection: React.FC<{
     onChange({ ...data, [key]: val })
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file || !user) return
-    if (data.photos.length >= MAX_PHOTOS) {
+    const files = Array.from(e.target.files ?? [])
+    e.target.value = ''
+    if (files.length === 0 || !user) return
+
+    const remaining = MAX_PHOTOS - data.photos.length
+    if (remaining <= 0) {
       setUploadError(`Maximum ${MAX_PHOTOS} photos.`)
       return
     }
+
+    // Only the first `remaining` selections fit; the rest are dropped with a note.
+    const toUpload = files.slice(0, remaining)
+    const overflow = files.length - toUpload.length
     setUploadError('')
     setIsUploading(true)
-    const { url, error } = await uploadCompanyPhoto(user.id, file, data.photos.length)
+
+    const added: CompanyPhoto[] = []
+    let failed = 0
+    for (const file of toUpload) {
+      const { url, error } = await uploadCompanyPhoto(
+        user.id,
+        file,
+        data.photos.length + added.length
+      )
+      if (error || !url) {
+        failed += 1
+        continue
+      }
+      added.push({ id: `tmp-${Math.random().toString(36).slice(2, 9)}`, url, caption: '' })
+    }
+
     setIsUploading(false)
-    if (error || !url) {
-      setUploadError(error ?? 'Upload failed')
-      return
+    if (added.length > 0) set('photos', [...data.photos, ...added])
+
+    if (failed > 0) {
+      setUploadError(`${failed} ${failed === 1 ? 'photo' : 'photos'} failed to upload.`)
+    } else if (overflow > 0) {
+      setUploadError(
+        `Only ${remaining} more ${remaining === 1 ? 'photo' : 'photos'} could be added.`
+      )
     }
-    const newPhoto: CompanyPhoto = {
-      id: `tmp-${Math.random().toString(36).slice(2, 9)}`,
-      url,
-      caption: '',
-    }
-    set('photos', [...data.photos, newPhoto])
-    e.target.value = ''
   }
 
   const updatePhotoCaption = (id: string, caption: string) =>
@@ -70,8 +90,8 @@ export const StepHiringSection: React.FC<{
             Photos
           </h3>
           <p style={{ fontSize: 'var(--kt-text-xs)', color: 'var(--kt-text-muted)', margin: 0 }}>
-            Up to {MAX_PHOTOS}. Show projects, crew, equipment — anything that helps workers picture
-            the job.
+            Up to {MAX_PHOTOS}. Select several at once. Show projects, crew, equipment — anything
+            that helps workers picture the job.
           </p>
         </div>
 
@@ -97,6 +117,7 @@ export const StepHiringSection: React.FC<{
             ref={fileInputRef}
             type="file"
             accept="image/jpeg,image/png,image/webp"
+            multiple
             style={{ display: 'none' }}
             onChange={handleFileChange}
           />
@@ -106,7 +127,7 @@ export const StepHiringSection: React.FC<{
             onClick={() => fileInputRef.current?.click()}
             disabled={isUploading || data.photos.length >= MAX_PHOTOS}
           >
-            {isUploading ? 'Uploading…' : '+ Add photo'}
+            {isUploading ? 'Uploading…' : '+ Add photos'}
           </Button>
           {uploadError && (
             <span

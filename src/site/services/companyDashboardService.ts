@@ -8,88 +8,37 @@ export type DashboardStat = {
   subtext: string
 }
 
-// ── Date helpers ───────────────────────────────────────────────────────────────
+export type CompletenessItemKey =
+  | 'basics'
+  | 'logo'
+  | 'description'
+  | 'website'
+  | 'founded'
+  | 'size'
+  | 'licenses'
+  | 'photos'
+  | 'benefits'
 
-function todayMidnightUTC(): string {
-  const d = new Date()
-  d.setUTCHours(0, 0, 0, 0)
-  return d.toISOString()
+export type CompanyCompleteness = {
+  pct: number
+  items: Record<CompletenessItemKey, boolean>
 }
 
-function daysAgoMidnightUTC(days: number): string {
-  const d = new Date()
-  d.setUTCDate(d.getUTCDate() - days)
-  d.setUTCHours(0, 0, 0, 0)
-  return d.toISOString()
+// All read-only dashboard aggregates in a single round trip (see the
+// get_company_dashboard RPC). Stat scalars + the profile-completeness payload.
+export type CompanyDashboardData = {
+  stats: { new_applicants_week: number; new_applicants_yesterday: number }
+  completeness: CompanyCompleteness
 }
 
-function mondayOfWeekUTC(): string {
-  const d = new Date()
-  d.setUTCHours(0, 0, 0, 0)
-  const day = d.getUTCDay()
-  const diff = day === 0 ? 6 : day - 1
-  d.setUTCDate(d.getUTCDate() - diff)
-  return d.toISOString()
-}
+// ── Stat assembly ────────────────────────────────────────────────────────────
 
-// ── Queries ────────────────────────────────────────────────────────────────────
-
-async function fetchNewApplicants(companyId: string): Promise<DashboardStat> {
-  const weekStart = mondayOfWeekUTC()
-  const yesterday = daysAgoMidnightUTC(1)
-  const today = todayMidnightUTC()
-
-  const [weekRes, yesterdayRes] = await Promise.all([
-    supabase
-      .from('applications')
-      .select('id', { count: 'exact', head: true })
-      .eq('company_id', companyId)
-      .gte('created_at', weekStart),
-    supabase
-      .from('applications')
-      .select('id', { count: 'exact', head: true })
-      .eq('company_id', companyId)
-      .gte('created_at', yesterday)
-      .lt('created_at', today),
-  ])
-
-  const weekCount = weekRes.error ? 0 : (weekRes.count ?? 0)
-  const yesterdayCount = yesterdayRes.error ? 0 : (yesterdayRes.count ?? 0)
-  const delta = weekCount - yesterdayCount
-
-  return {
-    key: 'new_applicants',
-    value: weekCount,
-    subtext: delta >= 0 ? `+${delta} since yesterday` : `${delta} since yesterday`,
-  }
-}
-
-async function fetchInterviewsThisWeek(_companyId: string): Promise<DashboardStat> {
-  // interviews table is stubbed — Supabase types will be regenerated after migration is applied
-  return {
-    key: 'interviews_this_week',
-    value: 0,
-    subtext: '0 today',
-  }
-}
-
-async function fetchOpenPosts(companyId: string): Promise<DashboardStat> {
-  const [openRes, pausedRes] = await Promise.all([
-    supabase
-      .from('jobs')
-      .select('id', { count: 'exact', head: true })
-      .eq('company_id', companyId)
-      .eq('status', 'active'),
-    supabase
-      .from('jobs')
-      .select('id', { count: 'exact', head: true })
-      .eq('company_id', companyId)
-      .eq('status', 'paused'),
-  ])
-
-  const openCount = openRes.error ? 0 : (openRes.count ?? 0)
-  const pausedCount = pausedRes.error ? 0 : (pausedRes.count ?? 0)
-
+// The `open_posts` stat is derived client-side from the company's job list,
+// which the dashboard already loads via getCompanyJobs — counting it server-side
+// would re-read data already held in memory.
+export function buildOpenPostsStat(jobs: { status: string }[]): DashboardStat {
+  const openCount = jobs.filter((j) => j.status === 'active').length
+  const pausedCount = jobs.filter((j) => j.status === 'paused').length
   return {
     key: 'open_posts',
     value: openCount,
@@ -97,29 +46,70 @@ async function fetchOpenPosts(companyId: string): Promise<DashboardStat> {
   }
 }
 
-async function fetchTimeToFill(): Promise<DashboardStat> {
-  // Requires hire event timestamps — not yet available. Stub.
-  return {
-    key: 'time_to_fill',
-    value: '—',
-    subtext: '90-day avg',
-  }
+// Builds the four stat cards in display order from the RPC aggregates (nullable
+// while still loading) and the already-loaded job list. interviews/time-to-fill
+// remain stubs until their data sources land.
+export function buildDashboardStats(
+  stats: CompanyDashboardData['stats'] | null,
+  jobs: { status: string }[]
+): DashboardStat[] {
+  const week = stats?.new_applicants_week ?? 0
+  const yesterday = stats?.new_applicants_yesterday ?? 0
+  const delta = week - yesterday
+  return [
+    {
+      key: 'new_applicants',
+      value: week,
+      subtext: delta >= 0 ? `+${delta} since yesterday` : `${delta} since yesterday`,
+    },
+    { key: 'interviews_this_week', value: 0, subtext: '0 today' },
+    buildOpenPostsStat(jobs),
+    { key: 'time_to_fill', value: '—', subtext: '90-day avg' },
+  ]
 }
 
 // ── Public API ─────────────────────────────────────────────────────────────────
 
-export async function getCompanyDashboardStats(
-  companyId: string
-): Promise<{ data: DashboardStat[]; error: string | null }> {
-  try {
-    const cards = await Promise.all([
-      fetchNewApplicants(companyId),
-      fetchInterviewsThisWeek(companyId),
-      fetchOpenPosts(companyId),
-      fetchTimeToFill(),
-    ])
-    return { data: cards, error: null }
-  } catch (err) {
-    return { data: [], error: err instanceof Error ? err.message : 'Unknown error' }
+const EMPTY_COMPLETENESS: CompanyCompleteness = {
+  pct: 0,
+  items: {
+    basics: false,
+    logo: false,
+    description: false,
+    website: false,
+    founded: false,
+    size: false,
+    licenses: false,
+    photos: false,
+    benefits: false,
+  },
+}
+
+export async function getCompanyDashboard(): Promise<{
+  data: CompanyDashboardData | null
+  error: string | null
+}> {
+  const { data, error } = await supabase.rpc('get_company_dashboard')
+  if (error) return { data: null, error: error.message }
+
+  // jsonb comes back loosely typed; narrow defensively.
+  const raw = (data ?? {}) as {
+    stats?: { new_applicants_week?: number; new_applicants_yesterday?: number }
+    completeness?: { pct?: number; items?: Partial<Record<CompletenessItemKey, boolean>> }
+  }
+
+  const items = raw.completeness?.items ?? {}
+  return {
+    data: {
+      stats: {
+        new_applicants_week: raw.stats?.new_applicants_week ?? 0,
+        new_applicants_yesterday: raw.stats?.new_applicants_yesterday ?? 0,
+      },
+      completeness: {
+        pct: raw.completeness?.pct ?? 0,
+        items: { ...EMPTY_COMPLETENESS.items, ...items },
+      },
+    },
+    error: null,
   }
 }

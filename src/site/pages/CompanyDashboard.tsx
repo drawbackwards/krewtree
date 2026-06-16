@@ -9,10 +9,10 @@ import { RegulixLogo } from '../components/RegulixLogo/RegulixLogo'
 import { BriefcaseIcon, UsersIcon, PersonIcon, RocketIcon, CheckIcon, CloseIcon } from '../icons'
 import { useAuth } from '../context/AuthContext'
 import { getCompanyJobs } from '../services/jobService'
-import { getCompanyDashboardStats } from '../services/companyDashboardService'
+import { getCompanyDashboard, buildDashboardStats } from '../services/companyDashboardService'
 import { getApplicantsView, setApplicantsView } from '../services/companyPreferenceService'
 import type { ApplicantsView } from '../services/companyPreferenceService'
-import type { DashboardStat } from '../services/companyDashboardService'
+import type { DashboardStat, CompanyDashboardData } from '../services/companyDashboardService'
 import type { StatCardColor } from '../components/StatCard/StatCard'
 import type { Job } from '../types'
 import dashStyles from './CompanyDashboard.module.css'
@@ -140,7 +140,7 @@ export const CompanyDashboard: React.FC = () => {
     ''
 
   const [companyJobs, setCompanyJobs] = useState<Job[]>([])
-  const [dashboardStats, setDashboardStats] = useState<DashboardStat[]>([])
+  const [dashboardData, setDashboardData] = useState<CompanyDashboardData | null>(null)
   const [regulixBannerDismissed, setRegulixBannerDismissed] = useState(false)
   const [customizeOpen, setCustomizeOpen] = useState(false)
 
@@ -207,8 +207,8 @@ export const CompanyDashboard: React.FC = () => {
     getCompanyJobs(user.id).then(({ data }) => {
       if (data) setCompanyJobs(data)
     })
-    getCompanyDashboardStats(user.id).then(({ data }) => {
-      if (data) setDashboardStats(data)
+    getCompanyDashboard().then(({ data }) => {
+      if (data) setDashboardData(data)
     })
   }, [user?.id])
 
@@ -222,7 +222,10 @@ export const CompanyDashboard: React.FC = () => {
     setBoostJobSuccess(false)
   }
 
-  const stats = dashboardStats.map((s) => {
+  // Stat cards: new_applicants comes from the dashboard RPC, open_posts is
+  // derived from the already-loaded companyJobs, the rest are stubs. Renders
+  // progressively — open_posts shows from jobs even before the RPC resolves.
+  const stats = buildDashboardStats(dashboardData?.stats ?? null, companyJobs).map((s) => {
     const meta = STAT_META[s.key]
     return {
       label: meta.label,
@@ -268,7 +271,9 @@ export const CompanyDashboard: React.FC = () => {
         {(moduleConfig.calendar || moduleConfig.profileCompleteness) && user?.id && (
           <div className={dashStyles.row1}>
             {moduleConfig.calendar && <WeekCalendarWidget companyId={user.id} />}
-            {moduleConfig.profileCompleteness && <CompanyCompletenessWidget companyId={user.id} />}
+            {moduleConfig.profileCompleteness && (
+              <CompanyCompletenessWidget data={dashboardData?.completeness ?? null} />
+            )}
           </div>
         )}
 
@@ -642,10 +647,7 @@ const ActiveJobsModule: React.FC<ActiveJobsModuleProps> = ({ rows }) => {
     <div className={dashStyles.jobsWidget}>
       {/* Header */}
       <div className={dashStyles.jobsWidgetHeader}>
-        <h2 className={dashStyles.jobsWidgetTitle}>
-          <BriefcaseIcon size={16} color="var(--kt-olive-700)" />
-          Active jobs
-        </h2>
+        <h2 className={dashStyles.jobsWidgetTitle}>Active jobs</h2>
         <Link to="/site/dashboard/jobs" className={dashStyles.jobsWidgetLink}>
           View all jobs →
         </Link>

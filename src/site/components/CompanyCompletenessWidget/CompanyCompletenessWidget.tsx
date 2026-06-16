@@ -1,82 +1,62 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { CheckIcon } from '../../icons'
-import { supabase } from '@/lib/supabase'
-import { getCompanyProfile } from '../../services/companyService'
+import type {
+  CompanyCompleteness,
+  CompletenessItemKey,
+} from '../../services/companyDashboardService'
 import styles from './CompanyCompletenessWidget.module.css'
 
-type ChecklistItem = {
-  key: string
-  label: string
-  done: boolean
-}
-
 type Props = {
-  companyId: string
+  // null while the dashboard RPC is still loading — the card stays hidden.
+  data: CompanyCompleteness | null
 }
 
-// Mirrors the worker dashboard's "Complete your profile" card. Items track the
-// inputs of computeProfileCompletePct; pct comes from the stored score.
-export const CompanyCompletenessWidget: React.FC<Props> = ({ companyId }) => {
-  const [loading, setLoading] = useState(true)
-  const [items, setItems] = useState<ChecklistItem[]>([])
-  const [pct, setPct] = useState(0)
+const ITEM_LABELS: Record<CompletenessItemKey, string> = {
+  basics: 'Basic info',
+  logo: 'Company logo',
+  description: 'Description',
+  website: 'Website',
+  founded: 'Founded year',
+  size: 'Company size',
+  licenses: 'Licenses',
+  photos: 'Photos',
+  benefits: 'Benefits',
+}
+
+const ITEM_ORDER: CompletenessItemKey[] = [
+  'basics',
+  'logo',
+  'description',
+  'website',
+  'founded',
+  'size',
+  'licenses',
+  'photos',
+  'benefits',
+]
+
+// Mirrors the worker dashboard's "Complete your profile" card. Both the score
+// and the per-item booleans are computed server-side in the get_company_dashboard
+// RPC and passed down — this component is purely presentational.
+export const CompanyCompletenessWidget: React.FC<Props> = ({ data }) => {
   const [dismissed, setDismissed] = useState(
     () => localStorage.getItem('kt_company_completeness_dismissed') === '1'
   )
-
-  useEffect(() => {
-    let cancelled = false
-    setLoading(true)
-    Promise.all([
-      getCompanyProfile(companyId),
-      supabase
-        .from('company_licenses')
-        .select('id', { count: 'exact', head: true })
-        .eq('company_id', companyId),
-      supabase
-        .from('company_photos')
-        .select('id', { count: 'exact', head: true })
-        .eq('company_id', companyId),
-      supabase
-        .from('company_benefits')
-        .select('id', { count: 'exact', head: true })
-        .eq('company_id', companyId),
-    ]).then(([profileRes, licensesRes, photosRes, benefitsRes]) => {
-      if (cancelled) return
-      setLoading(false)
-      const p = profileRes.data
-      if (!p) return
-      setPct(p.profile_complete_pct ?? 0)
-      setItems(
-        [
-          {
-            key: 'basics',
-            label: 'Basic info',
-            done: !!(p.name.trim() && p.industry.trim() && p.hq_city.trim() && p.phone.trim()),
-          },
-          { key: 'logo', label: 'Company logo', done: !!p.logo_url },
-          { key: 'description', label: 'Description', done: p.description.trim().length >= 40 },
-          { key: 'website', label: 'Website', done: !!p.website.trim() },
-          { key: 'founded', label: 'Founded year', done: !!p.founded },
-          { key: 'size', label: 'Company size', done: !!p.size.trim() },
-          { key: 'licenses', label: 'Licenses', done: (licensesRes.count ?? 0) > 0 },
-          { key: 'photos', label: 'Photos', done: (photosRes.count ?? 0) > 0 },
-          { key: 'benefits', label: 'Benefits', done: (benefitsRes.count ?? 0) > 0 },
-        ].sort((a, b) => Number(b.done) - Number(a.done))
-      )
-    })
-    return () => {
-      cancelled = true
-    }
-  }, [companyId])
 
   const handleDismiss = (): void => {
     localStorage.setItem('kt_company_completeness_dismissed', '1')
     setDismissed(true)
   }
 
-  if (loading || dismissed || pct >= 100) return null
+  if (!data || dismissed || data.pct >= 100) return null
+
+  const pct = data.pct
+  const items = ITEM_ORDER.map((key) => ({
+    key,
+    label: ITEM_LABELS[key],
+    done: data.items[key],
+  })).sort((a, b) => Number(b.done) - Number(a.done))
 
   return (
     <div className={styles.widget}>

@@ -92,7 +92,7 @@ export const Step1Section: React.FC<{ data: Step1Data; onChange: (d: Step1Data) 
             style={{
               width: 80,
               height: 80,
-              borderRadius: '50%',
+              borderRadius: 12,
               background: 'var(--kt-primary)',
               color: 'var(--kt-primary-fg)',
               display: 'flex',

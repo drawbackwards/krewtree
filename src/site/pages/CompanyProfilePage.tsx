@@ -4,6 +4,8 @@ import { Badge, Button, Modal, Textarea } from '../../components'
 import {
   BuildingIcon,
   CalendarIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
   FlagIcon,
   GlobeIcon,
   LocationIcon,
@@ -11,6 +13,7 @@ import {
   UsersIcon,
   VerifiedShieldIcon,
 } from '../icons'
+import { useAuth } from '../context/AuthContext'
 import { getPublicCompanyProfile, reportPhoto } from '../services/companyService'
 import type { PublicCompanyProfile } from '../services/companyService'
 import { RegulixLogo } from '../components/RegulixLogo/RegulixLogo'
@@ -146,11 +149,14 @@ const QuickFact: React.FC<{ icon: React.ReactNode; label: string; children: Reac
 export const CompanyProfilePage: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const { user, persona } = useAuth()
+  const isOwnProfile = persona === 'company' && !!user?.id && user.id === id
   const [data, setData] = useState<PublicCompanyProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
   const [activeTab, setActiveTab] = useState<'about' | 'jobs'>('about')
   const [reportPhotoId, setReportPhotoId] = useState<string | null>(null)
+  const [viewerIndex, setViewerIndex] = useState<number | null>(null)
   const [reportReason, setReportReason] = useState('')
   const [reportStatus, setReportStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
   const [reportError, setReportError] = useState('')
@@ -178,6 +184,21 @@ export const CompanyProfilePage: React.FC = () => {
     }
     setReportStatus('sent')
   }
+
+  const photoCount = data?.photos.length ?? 0
+  const stepViewer = (delta: number) =>
+    setViewerIndex((i) => (i === null ? null : (i + delta + photoCount) % photoCount))
+
+  // Arrow-key navigation while the photo viewer is open
+  useEffect(() => {
+    if (viewerIndex === null || photoCount < 2) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') stepViewer(-1)
+      if (e.key === 'ArrowRight') stepViewer(1)
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [viewerIndex, photoCount])
 
   useEffect(() => {
     if (!id) return
@@ -323,9 +344,15 @@ export const CompanyProfilePage: React.FC = () => {
               )}
             </div>
             <div className={styles.profileActions}>
-              <Button variant="primary" onClick={() => navigate('/site/messages')}>
-                Message company
-              </Button>
+              {isOwnProfile ? (
+                <Button variant="primary" onClick={() => navigate('/site/settings/profile')}>
+                  Edit profile
+                </Button>
+              ) : (
+                <Button variant="primary" onClick={() => navigate('/site/messages')}>
+                  Message company
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -379,308 +406,292 @@ export const CompanyProfilePage: React.FC = () => {
       {/* Body */}
       <div className={styles.body}>
         {activeTab === 'about' && (
-          <div className={styles.aboutGrid}>
-            <div className={styles.main}>
-              {data.description && (
-                <Section title="About">
-                  <p
-                    style={{
-                      margin: 0,
-                      whiteSpace: 'pre-wrap',
-                      fontSize: 'var(--kt-text-sm)',
-                      color: 'var(--kt-text)',
-                      lineHeight: 1.6,
-                    }}
-                  >
-                    {data.description}
-                  </p>
-                  {yearsInBusiness !== null && (
+          <>
+            <div className={styles.aboutGrid}>
+              <div className={styles.main}>
+                {data.description && (
+                  <Section title="About">
                     <p
                       style={{
                         margin: 0,
-                        fontSize: 'var(--kt-text-xs)',
-                        color: 'var(--kt-text-muted)',
+                        whiteSpace: 'pre-wrap',
+                        fontSize: 'var(--kt-text-sm)',
+                        color: 'var(--kt-text)',
+                        lineHeight: 1.6,
                       }}
                     >
-                      In business {yearsInBusiness} {yearsInBusiness === 1 ? 'year' : 'years'}.
+                      {data.description}
                     </p>
-                  )}
-                </Section>
-              )}
+                  </Section>
+                )}
 
-              {data.photos.length > 0 && (
-                <Section title="Photos">
-                  <div
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-                      gap: 12,
-                    }}
-                  >
-                    {data.photos.map((p) => (
-                      <figure
-                        key={p.id}
-                        style={{ margin: 0, display: 'flex', flexDirection: 'column', gap: 6 }}
-                      >
-                        <div style={{ position: 'relative' }}>
-                          <img
-                            src={p.url}
-                            alt={p.caption || 'Company photo'}
+                {data.licenses.length > 0 && (
+                  <Section title="Licenses & credentials">
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      {data.licenses.map((l) => {
+                        const typeLabel =
+                          getLicenseTypeById(l.license_type)?.label ?? l.license_type
+                        return (
+                          <div
+                            key={l.id}
                             style={{
-                              width: '100%',
-                              aspectRatio: '1 / 1',
-                              objectFit: 'cover',
-                              borderRadius: 'var(--kt-radius-md)',
-                              background: 'var(--kt-bg-subtle)',
-                            }}
-                          />
-                          <button
-                            type="button"
-                            onClick={() => openReport(p.id)}
-                            aria-label="Report this photo"
-                            title="Report this photo"
-                            style={{
-                              position: 'absolute',
-                              top: 6,
-                              right: 6,
-                              display: 'inline-flex',
+                              display: 'flex',
+                              justifyContent: 'space-between',
                               alignItems: 'center',
-                              gap: 4,
-                              padding: '4px 8px',
-                              background: 'rgba(0, 0, 0, 0.55)',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: 'var(--kt-radius-sm)',
-                              cursor: 'pointer',
-                              fontSize: 11,
-                              fontFamily: 'var(--kt-font-sans)',
+                              padding: '10px 0',
+                              borderBottom:
+                                data.licenses.length > 1 ? '1px solid var(--kt-border)' : 'none',
                             }}
                           >
-                            <FlagIcon size={11} color="white" /> Report
-                          </button>
-                        </div>
-                        {p.caption && (
-                          <figcaption
-                            style={{
-                              fontSize: 'var(--kt-text-xs)',
-                              color: 'var(--kt-text-muted)',
-                            }}
-                          >
-                            {p.caption}
-                          </figcaption>
-                        )}
-                      </figure>
-                    ))}
-                  </div>
-                </Section>
-              )}
-
-              {data.licenses.length > 0 && (
-                <Section title="Licenses & credentials">
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    {data.licenses.map((l) => {
-                      const typeLabel = getLicenseTypeById(l.license_type)?.label ?? l.license_type
-                      return (
-                        <div
-                          key={l.id}
-                          style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            padding: '10px 0',
-                            borderBottom: '1px solid var(--kt-border)',
-                          }}
-                        >
-                          <div>
-                            <p
-                              style={{
-                                margin: 0,
-                                fontSize: 'var(--kt-text-sm)',
-                                fontWeight: 'var(--kt-weight-medium)',
-                                color: 'var(--kt-text)',
-                              }}
-                            >
-                              {typeLabel}{' '}
-                              <span style={{ color: 'var(--kt-text-muted)' }}>
-                                · {l.jurisdiction}
-                              </span>
-                            </p>
-                            <p
-                              style={{
-                                margin: 0,
-                                fontSize: 'var(--kt-text-xs)',
-                                color: 'var(--kt-text-muted)',
-                              }}
-                            >
-                              License #{l.license_number}
-                              {l.expiration_date && ` · expires ${l.expiration_date}`}
-                            </p>
+                            <div>
+                              <p
+                                style={{
+                                  margin: 0,
+                                  fontSize: 'var(--kt-text-sm)',
+                                  fontWeight: 'var(--kt-weight-medium)',
+                                  color: 'var(--kt-text)',
+                                }}
+                              >
+                                {typeLabel}{' '}
+                                <span style={{ color: 'var(--kt-text-muted)' }}>
+                                  · {l.jurisdiction}
+                                </span>
+                              </p>
+                              <p
+                                style={{
+                                  margin: 0,
+                                  fontSize: 'var(--kt-text-xs)',
+                                  color: 'var(--kt-text-muted)',
+                                }}
+                              >
+                                License #{l.license_number}
+                                {l.expiration_date && ` · expires ${l.expiration_date}`}
+                              </p>
+                            </div>
+                            {licenseStatusBadge(l.verification_status, l.expiration_date)}
                           </div>
-                          {licenseStatusBadge(l.verification_status, l.expiration_date)}
-                        </div>
-                      )
-                    })}
-                  </div>
-                </Section>
-              )}
+                        )
+                      })}
+                    </div>
+                  </Section>
+                )}
 
-              {data.benefits.length > 0 && (
-                <Section title="Benefits & perks">
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                    {data.benefits.map((b) => (
-                      <Badge key={b} variant="neutral">
-                        {benefitLabel(b)}
-                      </Badge>
-                    ))}
-                  </div>
-                </Section>
-              )}
+                {data.benefits.length > 0 && (
+                  <Section title="Benefits & perks">
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                      {data.benefits.map((b) => (
+                        <Badge key={b} variant="secondary">
+                          {benefitLabel(b)}
+                        </Badge>
+                      ))}
+                    </div>
+                  </Section>
+                )}
 
-              {data.contract_types.length > 0 && (
-                <Section title="Typical contract types">
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                    {data.contract_types.map((c) => (
-                      <Badge key={c} variant="secondary">
-                        {contractTypeLabel(c)}
-                      </Badge>
-                    ))}
-                  </div>
-                </Section>
-              )}
+                {data.contract_types.length > 0 && (
+                  <Section title="Typical contract types">
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                      {data.contract_types.map((c) => (
+                        <Badge key={c} variant="secondary">
+                          {contractTypeLabel(c)}
+                        </Badge>
+                      ))}
+                    </div>
+                  </Section>
+                )}
 
-              {data.additional_industries.length > 0 && (
-                <Section title="Industries">
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                    <Badge variant="primary">{industryLabel(data.industry)}</Badge>
-                    {data.additional_industries.map((slug) => (
-                      <Badge key={slug} variant="neutral">
-                        {industryLabel(slug)}
-                      </Badge>
-                    ))}
-                  </div>
-                </Section>
-              )}
-
-              {(data.facebook_url ||
-                data.instagram_url ||
-                data.linkedin_url ||
-                data.youtube_url ||
-                data.tiktok_url) && (
-                <Section title="Social">
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16 }}>
-                    {data.facebook_url && <SocialLink url={data.facebook_url} label="Facebook" />}
-                    {data.instagram_url && (
-                      <SocialLink url={data.instagram_url} label="Instagram" />
-                    )}
-                    {data.linkedin_url && <SocialLink url={data.linkedin_url} label="LinkedIn" />}
-                    {data.youtube_url && <SocialLink url={data.youtube_url} label="YouTube" />}
-                    {data.tiktok_url && <SocialLink url={data.tiktok_url} label="TikTok" />}
-                  </div>
-                </Section>
-              )}
-            </div>
-
-            <div className={styles.sidebar}>
-              {/* Regulix status — matches the worker profile's box; greyed out
-                  when the company hasn't connected Regulix. */}
-              <div
-                style={{
-                  background: data.regulix_connected
-                    ? 'var(--kt-regulix-50)'
-                    : 'var(--kt-surface-raised)',
-                  borderRadius: 'var(--kt-radius-lg)',
-                  padding: 18,
-                  textAlign: 'center',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                }}
-              >
-                <RegulixLogo
-                  height={24}
-                  textColor={data.regulix_connected ? 'var(--kt-navy-700)' : 'var(--kt-text-muted)'}
-                  opacity={data.regulix_connected ? 1 : 0.45}
-                />
-                <p
-                  style={{
-                    marginTop: 10,
-                    fontSize: 'var(--kt-text-sm)',
-                    fontWeight: 'var(--kt-weight-semibold)',
-                    color: data.regulix_connected
-                      ? 'var(--kt-regulix-500)'
-                      : 'var(--kt-text-muted)',
-                  }}
-                >
-                  {data.regulix_connected ? 'Regulix Connected' : 'Not on Regulix'}
-                </p>
-                <p
-                  style={{
-                    fontSize: 'var(--kt-text-xs)',
-                    color: 'var(--kt-text-muted)',
-                    marginTop: 4,
-                    lineHeight: 1.5,
-                  }}
-                >
-                  {data.regulix_connected
-                    ? 'Verified workforce compliance through Regulix.'
-                    : 'This company has not connected Regulix yet.'}
-                </p>
+                {data.additional_industries.length > 0 && (
+                  <Section title="Industries">
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                      <Badge variant="primary">{industryLabel(data.industry)}</Badge>
+                      {data.additional_industries.map((slug) => (
+                        <Badge key={slug} variant="neutral">
+                          {industryLabel(slug)}
+                        </Badge>
+                      ))}
+                    </div>
+                  </Section>
+                )}
               </div>
 
-              <SidebarCard title="Company details">
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  {data.industry && (
-                    <QuickFact icon={<BuildingIcon size={15} />} label="Industry">
-                      {industryLabel(data.industry)}
-                    </QuickFact>
-                  )}
-                  {data.founded && (
-                    <QuickFact icon={<CalendarIcon size={15} />} label="Founded">
-                      {data.founded}
-                      {yearsInBusiness !== null && (
-                        <span style={{ color: 'var(--kt-text-muted)' }}>
-                          {' '}
-                          · {yearsInBusiness} {yearsInBusiness === 1 ? 'yr' : 'yrs'}
-                        </span>
-                      )}
-                    </QuickFact>
-                  )}
-                  {data.size && (
-                    <QuickFact icon={<UsersIcon size={15} />} label="Company size">
-                      {data.size} employees
-                    </QuickFact>
-                  )}
-                  {locationLabel && (
-                    <QuickFact icon={<LocationIcon size={15} />} label="Location">
-                      {locationLabel}
-                    </QuickFact>
-                  )}
-                  {data.phone && (
-                    <QuickFact icon={<PhoneIcon size={15} />} label="Phone">
-                      {data.phone}
-                    </QuickFact>
-                  )}
-                  {data.website && (
-                    <QuickFact icon={<GlobeIcon size={15} />} label="Website">
-                      <a
-                        href={data.website}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{
-                          color: 'var(--kt-navy-500)',
-                          fontWeight: 'var(--kt-weight-bold)',
-                          textDecoration: 'none',
-                          wordBreak: 'break-word',
-                        }}
-                      >
-                        {data.website.replace(/^https?:\/\//, '')}
-                      </a>
-                    </QuickFact>
-                  )}
+              <div className={styles.sidebar}>
+                {/* Regulix status — matches the worker profile's box; greyed out
+                  when the company hasn't connected Regulix. */}
+                <div
+                  style={{
+                    background: data.regulix_connected
+                      ? 'var(--kt-regulix-50)'
+                      : 'var(--kt-surface-raised)',
+                    borderRadius: 'var(--kt-radius-lg)',
+                    padding: 18,
+                    textAlign: 'center',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                  }}
+                >
+                  <RegulixLogo
+                    height={24}
+                    textColor={
+                      data.regulix_connected ? 'var(--kt-navy-700)' : 'var(--kt-text-muted)'
+                    }
+                    opacity={data.regulix_connected ? 1 : 0.45}
+                  />
+                  <p
+                    style={{
+                      marginTop: 10,
+                      fontSize: 'var(--kt-text-sm)',
+                      fontWeight: 'var(--kt-weight-semibold)',
+                      color: data.regulix_connected
+                        ? 'var(--kt-regulix-500)'
+                        : 'var(--kt-text-muted)',
+                    }}
+                  >
+                    {data.regulix_connected ? 'Regulix Connected' : 'Not on Regulix'}
+                  </p>
+                  <p
+                    style={{
+                      fontSize: 'var(--kt-text-xs)',
+                      color: 'var(--kt-text-muted)',
+                      marginTop: 4,
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    {data.regulix_connected
+                      ? 'Verified workforce compliance through Regulix.'
+                      : 'This company has not connected Regulix yet.'}
+                  </p>
                 </div>
-              </SidebarCard>
+
+                <SidebarCard title="Company details">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    {data.industry && (
+                      <QuickFact icon={<BuildingIcon size={15} />} label="Industry">
+                        {industryLabel(data.industry)}
+                      </QuickFact>
+                    )}
+                    {data.founded && (
+                      <QuickFact icon={<CalendarIcon size={15} />} label="Founded">
+                        {data.founded}
+                        {yearsInBusiness !== null && (
+                          <span style={{ color: 'var(--kt-text-muted)' }}>
+                            {' '}
+                            · {yearsInBusiness} {yearsInBusiness === 1 ? 'yr' : 'yrs'}
+                          </span>
+                        )}
+                      </QuickFact>
+                    )}
+                    {data.size && (
+                      <QuickFact icon={<UsersIcon size={15} />} label="Company size">
+                        {data.size} employees
+                      </QuickFact>
+                    )}
+                    {locationLabel && (
+                      <QuickFact icon={<LocationIcon size={15} />} label="Location">
+                        {locationLabel}
+                      </QuickFact>
+                    )}
+                    {data.phone && (
+                      <QuickFact icon={<PhoneIcon size={15} />} label="Phone">
+                        {data.phone}
+                      </QuickFact>
+                    )}
+                    {(data.website ||
+                      data.facebook_url ||
+                      data.instagram_url ||
+                      data.linkedin_url ||
+                      data.youtube_url ||
+                      data.tiktok_url) && (
+                      <QuickFact icon={<GlobeIcon size={15} />} label="Links">
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                          {data.website && (
+                            <SocialLink url={data.website} label="Company Website" />
+                          )}
+                          {data.facebook_url && (
+                            <SocialLink url={data.facebook_url} label="Facebook" />
+                          )}
+                          {data.instagram_url && (
+                            <SocialLink url={data.instagram_url} label="Instagram" />
+                          )}
+                          {data.linkedin_url && (
+                            <SocialLink url={data.linkedin_url} label="LinkedIn" />
+                          )}
+                          {data.youtube_url && (
+                            <SocialLink url={data.youtube_url} label="YouTube" />
+                          )}
+                          {data.tiktok_url && <SocialLink url={data.tiktok_url} label="TikTok" />}
+                        </div>
+                      </QuickFact>
+                    )}
+                  </div>
+                </SidebarCard>
+              </div>
             </div>
-          </div>
+
+            {data.photos.length > 0 && (
+              <section
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 16,
+                  marginTop: 24,
+                }}
+              >
+                <h2
+                  style={{
+                    fontSize: 'var(--kt-text-lg)',
+                    fontWeight: 'var(--kt-weight-bold)',
+                    color: 'var(--kt-text)',
+                    margin: 0,
+                  }}
+                >
+                  Photos
+                </h2>
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+                    gap: 12,
+                  }}
+                >
+                  {data.photos.map((p, i) => (
+                    <figure
+                      key={p.id}
+                      style={{ margin: 0, display: 'flex', flexDirection: 'column', gap: 6 }}
+                    >
+                      <div className={styles.photoFrame}>
+                        <img
+                          src={p.url}
+                          alt={p.caption || 'Company photo'}
+                          className={styles.photoImg}
+                          onClick={() => setViewerIndex(i)}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => openReport(p.id)}
+                          aria-label="Report this photo"
+                          title="Report this photo"
+                          className={styles.reportBtn}
+                        >
+                          <FlagIcon size={13} color="var(--kt-white)" />
+                        </button>
+                      </div>
+                      {p.caption && (
+                        <figcaption
+                          style={{
+                            fontSize: 'var(--kt-text-xs)',
+                            color: 'var(--kt-text-muted)',
+                          }}
+                        >
+                          {p.caption}
+                        </figcaption>
+                      )}
+                    </figure>
+                  ))}
+                </div>
+              </section>
+            )}
+          </>
         )}
 
         {activeTab === 'jobs' && (
@@ -730,6 +741,50 @@ export const CompanyProfilePage: React.FC = () => {
           </Section>
         )}
       </div>
+
+      {/* Photo viewer — click a photo to see it larger; scroll with ‹ › */}
+      <Modal
+        open={viewerIndex !== null}
+        onClose={() => setViewerIndex(null)}
+        size="lg"
+        title={
+          (viewerIndex !== null && data.photos[viewerIndex]?.caption) ||
+          (photoCount > 1 && viewerIndex !== null
+            ? `Photo ${viewerIndex + 1} of ${photoCount}`
+            : undefined)
+        }
+        showClose
+      >
+        {viewerIndex !== null && data.photos[viewerIndex] && (
+          <div className={styles.viewerFrame}>
+            <img
+              src={data.photos[viewerIndex].url}
+              alt={data.photos[viewerIndex].caption || 'Company photo'}
+              className={styles.viewerImg}
+            />
+            {photoCount > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => stepViewer(-1)}
+                  aria-label="Previous photo"
+                  className={`${styles.viewerNav} ${styles.viewerNavPrev}`}
+                >
+                  <ChevronLeftIcon size={22} color="var(--kt-white)" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => stepViewer(1)}
+                  aria-label="Next photo"
+                  className={`${styles.viewerNav} ${styles.viewerNavNext}`}
+                >
+                  <ChevronRightIcon size={22} color="var(--kt-white)" />
+                </button>
+              </>
+            )}
+          </div>
+        )}
+      </Modal>
 
       {/* Photo report modal — spec §4.5 */}
       <Modal

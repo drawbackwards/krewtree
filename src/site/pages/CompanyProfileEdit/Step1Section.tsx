@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react'
 import { Button, Input, Select, MultiSelect, Checkbox } from '../../../components'
+import { ImageCropModal } from '../../components/ImageCropModal'
 import { INDUSTRIES } from '../../data/industries'
 import { US_STATE_OPTIONS } from '../../data/usStates'
 import { useAuth } from '../../context/AuthContext'
@@ -20,26 +21,35 @@ export const Step1Section: React.FC<{
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isUploading, setIsUploading] = useState(false)
   const [uploadError, setUploadError] = useState('')
+  // The picked file waits here while the user frames it in the crop modal.
+  const [cropFile, setCropFile] = useState<File | null>(null)
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (!file || !user) return
+    e.target.value = ''
+    if (!file) return
     setUploadError('')
+    setCropFile(file)
+  }
+
+  const handleCropConfirm = async (cropped: File) => {
+    if (!user) return
     setIsUploading(true)
-    const { url, error } = await uploadCompanyLogo(user.id, file)
+    const { url, error } = await uploadCompanyLogo(user.id, cropped)
     if (error || !url) {
       setUploadError(error ?? 'Upload failed')
       setIsUploading(false)
+      setCropFile(null)
       return
     }
     const { error: dbError } = await updateCompanyLogoUrl(user.id, url)
     setIsUploading(false)
+    setCropFile(null)
     if (dbError) {
       setUploadError(dbError)
       return
     }
     set('logoUrl', url)
-    e.target.value = ''
   }
 
   const initials = data.name ? data.name.slice(0, 2).toUpperCase() : '?'
@@ -93,10 +103,10 @@ export const Step1Section: React.FC<{
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
             >
-              {isUploading ? 'Uploading…' : 'Upload logo'}
+              {isUploading ? 'Uploading…' : data.logoUrl ? 'Replace logo' : 'Upload logo'}
             </Button>
             <p style={{ fontSize: 'var(--kt-text-xs)', color: 'var(--kt-text-muted)', margin: 0 }}>
-              JPG, PNG, or WebP · Square crop · Max 5 MB
+              JPG, PNG, or WebP · Crop & zoom after upload · Max 5 MB
             </p>
             {uploadError && (
               <p style={{ fontSize: 'var(--kt-text-xs)', color: 'var(--kt-danger)', margin: 0 }}>
@@ -106,6 +116,16 @@ export const Step1Section: React.FC<{
           </div>
         </div>
       </div>
+
+      <ImageCropModal
+        open={!!cropFile}
+        file={cropFile}
+        title="Adjust logo"
+        shape="square"
+        busy={isUploading}
+        onCancel={() => setCropFile(null)}
+        onConfirm={handleCropConfirm}
+      />
 
       <Input
         label="Company name"

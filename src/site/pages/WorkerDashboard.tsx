@@ -454,10 +454,7 @@ export const WorkerDashboard: React.FC = () => {
           <div className={styles.tableCard}>
             {/* Header */}
             <div className={styles.tableCardHeader}>
-              <h2 className={styles.tableCardTitle}>
-                <BriefcaseIcon size={16} color="var(--kt-olive-700)" />
-                My applications
-              </h2>
+              <h2 className={styles.tableCardTitle}>My applications</h2>
               <Link to="/site/applications" className={styles.tableCardLink}>
                 View all →
               </Link>
@@ -762,10 +759,7 @@ export const WorkerDashboard: React.FC = () => {
         {/* ── Saved Jobs ──────────────────────────────────────────────────── */}
         <div className={styles.tableCard}>
           <div className={styles.tableCardHeader}>
-            <h2 className={styles.tableCardTitle}>
-              <BookmarkFilledIcon size={16} color="var(--kt-olive-700)" />
-              Saved jobs
-            </h2>
+            <h2 className={styles.tableCardTitle}>Saved jobs</h2>
             <Link to="/site/saved-jobs" className={styles.tableCardLink}>
               View all →
             </Link>
@@ -891,10 +885,7 @@ export const WorkerDashboard: React.FC = () => {
         {/* ── New Jobs For You ─────────────────────────────────────────────── */}
         <div className={styles.newJobsContainer}>
           <div className={styles.newJobsHeader}>
-            <h2 className={styles.sectionTitle}>
-              <SparkleIcon size={16} color="var(--kt-olive-700)" />
-              New job matches
-            </h2>
+            <h2 className={styles.sectionTitle}>New job matches</h2>
             <Link to="/site/jobs" className={styles.tableCardLink}>
               Browse all jobs →
             </Link>

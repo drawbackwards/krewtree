@@ -7,6 +7,8 @@ import {
   DEFAULT_WIDGET_FILTERS,
 } from '../../services/applicantService'
 import type { CompanyApplicant } from '../../types'
+import { InfoCircleIcon } from '../../icons'
+import { Tooltip } from '../../../components'
 import { useDrawerStack } from '../DrawerSystem/DrawerStackContext'
 import { ApplicantListView } from './ApplicantListView'
 import { WidgetKanbanView } from './WidgetKanbanView'
@@ -75,7 +77,21 @@ export const ApplicantsWidget: React.FC<Props> = ({ view, onViewChange, companyI
       <div className={styles.widget}>
         {/* Header */}
         <div className={styles.header}>
-          <h2 className={styles.title}>Applicants</h2>
+          <div className={styles.titleGroup}>
+            <h2 className={styles.title}>Applicants</h2>
+            <Tooltip
+              position="bottom-start"
+              content={
+                <span className={styles.infoTooltip}>
+                  Pipeline stages and tasks are editable in the organization settings.
+                </span>
+              }
+            >
+              <button type="button" className={styles.infoBtn} aria-label="About the pipeline">
+                <InfoCircleIcon size={14} />
+              </button>
+            </Tooltip>
+          </div>
           <div className={styles.headerRight}>
             {/* List / Kanban toggle */}
             <div className={styles.toggle} role="group" aria-label="Applicants view">

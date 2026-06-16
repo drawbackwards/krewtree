@@ -218,7 +218,7 @@ export const WorkerProfilePage: React.FC = () => {
               style={{
                 width: 112,
                 height: 112,
-                borderRadius: '50%',
+                borderRadius: 'var(--kt-radius-lg)',
                 background: 'var(--kt-primary)',
                 color: 'var(--kt-primary-fg)',
                 display: 'flex',
@@ -662,7 +662,7 @@ export const WorkerProfilePage: React.FC = () => {
           {profile.certifications.length > 0 && (
             <div style={card}>
               <h2 style={sectionHeading}>Certifications</h2>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
                 {profile.certifications.map((cert) => (
                   <div
                     key={cert.id}
@@ -671,16 +671,15 @@ export const WorkerProfilePage: React.FC = () => {
                       justifyContent: 'space-between',
                       alignItems: 'center',
                       gap: 12,
-                      padding: '12px 14px',
-                      border: '1px solid var(--kt-border)',
-                      borderRadius: 'var(--kt-radius-md)',
-                      background: 'var(--kt-bg)',
+                      padding: '10px 0',
+                      borderBottom:
+                        profile.certifications.length > 1 ? '1px solid var(--kt-border)' : 'none',
                     }}
                   >
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <p
                         style={{
-                          fontWeight: 'var(--kt-weight-semibold)',
+                          fontWeight: 'var(--kt-weight-medium)',
                           fontSize: 'var(--kt-text-sm)',
                           color: 'var(--kt-text)',
                           margin: '0 0 2px',
@@ -706,9 +705,6 @@ export const WorkerProfilePage: React.FC = () => {
                           flexShrink: 0,
                           fontSize: 'var(--kt-text-xs)',
                           color: 'var(--kt-text-muted)',
-                          padding: '2px 8px',
-                          borderRadius: 'var(--kt-radius-full)',
-                          border: '1px solid var(--kt-border)',
                         }}
                       >
                         Earned {formatMonth(cert.earnedDate)}
@@ -775,10 +771,13 @@ export const WorkerProfilePage: React.FC = () => {
           className={styles.sidebar}
           style={{ alignSelf: !hasContent ? 'stretch' : 'flex-start' }}
         >
-          {/* Regulix status */}
+          {/* Regulix status — matches the company profile's box; greyed out
+              when the worker isn't Regulix ready yet. */}
           <div
             style={{
-              background: 'var(--kt-regulix-50)',
+              background: profile.isRegulixReady
+                ? 'var(--kt-regulix-50)'
+                : 'var(--kt-surface-raised)',
               borderRadius: 'var(--kt-radius-lg)',
               padding: 18,
               textAlign: 'center',
@@ -789,7 +788,11 @@ export const WorkerProfilePage: React.FC = () => {
               justifyContent: !hasContent ? 'center' : undefined,
             }}
           >
-            <RegulixLogo height={24} textColor="var(--kt-navy-700)" />
+            <RegulixLogo
+              height={24}
+              textColor={profile.isRegulixReady ? 'var(--kt-navy-700)' : 'var(--kt-text-muted)'}
+              opacity={profile.isRegulixReady ? 1 : 0.45}
+            />
             <p
               style={{
                 marginTop: 10,

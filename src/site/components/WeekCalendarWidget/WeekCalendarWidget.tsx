@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { CalendarIcon } from '../../icons'
 import { getWeekInterviews, type InterviewEvent } from '../../services/interviewService'
 import styles from './WeekCalendarWidget.module.css'
 
@@ -66,10 +65,7 @@ export const WeekCalendarWidget: React.FC<Props> = ({ companyId }) => {
   return (
     <div className={styles.widget}>
       <div className={styles.header}>
-        <h2 className={styles.title}>
-          <CalendarIcon size={16} color="var(--kt-olive-700)" />
-          This week
-        </h2>
+        <h2 className={styles.title}>This week</h2>
         <Link to="/site/dashboard/interviews" className={styles.viewAll}>
           View full calendar →
         </Link>

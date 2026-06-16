@@ -20,11 +20,45 @@
   box-sizing: border-box;
 }
 
+.titleGroup {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
 .title {
   font-size: var(--kt-text-md);
   font-weight: var(--kt-weight-semibold);
   color: var(--kt-text);
   margin: 0;
+}
+
+.infoBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 999px;
+  color: var(--kt-text-muted);
+  cursor: pointer;
+  transition: color 120ms ease;
+}
+
+.infoBtn:hover,
+.infoBtn:focus-visible {
+  color: var(--kt-text);
+  outline: none;
+}
+
+.infoTooltip {
+  display: block;
+  white-space: normal;
+  width: 220px;
 }
 
 .headerRight {

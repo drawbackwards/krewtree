@@ -1,0 +1,102 @@
+.stage {
+  position: relative;
+  width: 100%;
+  max-width: 320px;
+  aspect-ratio: 1;
+  margin: 0 auto;
+  border-radius: var(--kt-radius-md);
+  overflow: hidden;
+  background: var(--kt-navy-950);
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+}
+
+.stageDragging {
+  cursor: grabbing;
+}
+
+.image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  /* Defeat any global `img { max-width: 100% }` so our explicit pixel
+     width/height (set inline) apply and the image covers the stage. */
+  max-width: none;
+  max-height: none;
+  transform-origin: top left;
+  pointer-events: none;
+  -webkit-user-drag: none;
+}
+
+/* Dimmed mask with a clear circular window for round logo crops. */
+.maskCircle {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  box-shadow: 0 0 0 9999px rgba(6, 15, 19, 0.55);
+  border-radius: var(--kt-radius-full);
+}
+
+.maskSquare {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: var(--kt-radius-sm);
+}
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.zoomRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.zoomLabel {
+  font-size: var(--kt-text-xs);
+  color: var(--kt-text-muted);
+  white-space: nowrap;
+}
+
+.slider {
+  flex: 1;
+  appearance: none;
+  -webkit-appearance: none;
+  height: 4px;
+  border-radius: var(--kt-radius-full);
+  background: var(--kt-border-strong);
+  outline: none;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: var(--kt-radius-full);
+  background: var(--kt-navy-500);
+  cursor: pointer;
+}
+
+.slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border: none;
+  border-radius: var(--kt-radius-full);
+  background: var(--kt-navy-500);
+  cursor: pointer;
+}
+
+.hint {
+  font-size: var(--kt-text-xs);
+  color: var(--kt-text-muted);
+  text-align: center;
+  margin: 0;
+}
