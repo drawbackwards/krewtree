@@ -15,7 +15,11 @@ import {
 } from '../icons'
 import { useAuth } from '../context/AuthContext'
 import { getPublicCompanyProfile, reportPhoto } from '../services/companyService'
-import type { PublicCompanyProfile } from '../services/companyService'
+import type { PublicCompanyJob, PublicCompanyProfile } from '../services/companyService'
+import { JobCard } from '../components/JobCard/JobCard'
+import { QuickApplyModal } from '../components/QuickApplyModal/QuickApplyModal'
+import { getAppliedJobIds } from '../services/jobService'
+import type { Job } from '../types'
 import { RegulixLogo } from '../components/RegulixLogo/RegulixLogo'
 import { getIndustryById, INDUSTRIES } from '../data/industries'
 import { getLicenseTypeById } from '../data/licenseTypes'
@@ -151,7 +155,10 @@ export const CompanyProfilePage: React.FC = () => {
   const navigate = useNavigate()
   const { user, persona } = useAuth()
   const isOwnProfile = persona === 'company' && !!user?.id && user.id === id
+  const isWorker = persona === 'worker'
   const [data, setData] = useState<PublicCompanyProfile | null>(null)
+  const [appliedDates, setAppliedDates] = useState<Map<string, string>>(new Map())
+  const [quickApplyJob, setQuickApplyJob] = useState<Job | null>(null)
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
   const [activeTab, setActiveTab] = useState<'about' | 'jobs'>('about')
@@ -213,6 +220,16 @@ export const CompanyProfilePage: React.FC = () => {
     })
   }, [id])
 
+  // Workers see a Quick Apply affordance on each job card, so we need to know
+  // which of this company's jobs they've already applied to. Companies don't
+  // apply, so we skip the fetch for them.
+  useEffect(() => {
+    if (!isWorker || !user?.id) return
+    getAppliedJobIds(user.id).then(({ data }) => {
+      setAppliedDates(new Map(data.map((r) => [r.jobId, r.appliedAt])))
+    })
+  }, [isWorker, user?.id])
+
   if (loading) {
     return (
       <div
@@ -263,6 +280,47 @@ export const CompanyProfilePage: React.FC = () => {
     data.hq_full_address || [data.hq_city, data.hq_state].filter(Boolean).join(', ')
 
   const initials = data.name.slice(0, 2).toUpperCase()
+
+  // Map a profile's lightweight job row onto the full Job shape the shared
+  // JobCard renders, so the company-profile Jobs tab matches the worker's
+  // Find Jobs cards exactly. Fields the public profile query doesn't fetch
+  // (skills, description, applicant counts) stay empty — the card hides them.
+  const toJobCardModel = (j: PublicCompanyJob): Job => ({
+    id: j.id,
+    companyId: data.id,
+    company: {
+      id: data.id,
+      name: data.name,
+      logo: data.logo_url ?? '',
+      location: locationLabel,
+      industry: data.industry,
+      isVerified: data.is_verified,
+      description: data.description,
+      size: data.size,
+      website: data.website,
+    },
+    title: j.title,
+    industry: j.industry,
+    industrySlug: j.industry_slug,
+    type: (j.type ?? 'Full-time') as Job['type'],
+    location: j.location || locationLabel,
+    payMin: j.pay_min ?? 0,
+    payMax: j.pay_max ?? 0,
+    payType: (j.pay_type ?? 'hour') as Job['payType'],
+    description: '',
+    requirements: [],
+    skills: j.skills ?? [],
+    isSponsored: false,
+    regulixReadyApplicants: 0,
+    totalApplicants: 0,
+    viewCount: 0,
+    postedDaysAgo: Math.max(
+      0,
+      Math.floor((Date.now() - new Date(j.created_at).getTime()) / 86_400_000)
+    ),
+    createdAt: j.created_at,
+    status: 'active',
+  })
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--kt-bg)' }}>
@@ -704,38 +762,17 @@ export const CompanyProfilePage: React.FC = () => {
               </p>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {data.jobs.map((j) => (
-                  <button
-                    key={j.id}
-                    onClick={() => navigate(`/site/jobs/${j.id}`)}
-                    style={{
-                      textAlign: 'left',
-                      background: 'var(--kt-surface)',
-                      border: '1px solid var(--kt-border)',
-                      borderRadius: 'var(--kt-radius-md)',
-                      padding: 14,
-                      cursor: 'pointer',
-                      fontFamily: 'var(--kt-font-sans)',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: 4,
-                    }}
-                  >
-                    <strong style={{ fontSize: 'var(--kt-text-md)', color: 'var(--kt-text)' }}>
-                      {j.title}
-                    </strong>
-                    <span
-                      style={{
-                        fontSize: 'var(--kt-text-xs)',
-                        color: 'var(--kt-text-muted)',
-                      }}
-                    >
-                      {j.location || locationLabel}
-                      {j.industry && ` · ${j.industry}`}
-                      {j.type && ` · ${j.type}`}
-                    </span>
-                  </button>
-                ))}
+                {data.jobs.map((j) => {
+                  const job = toJobCardModel(j)
+                  return (
+                    <JobCard
+                      key={j.id}
+                      job={job}
+                      appliedAt={isWorker ? (appliedDates.get(j.id) ?? null) : null}
+                      onQuickApply={isWorker ? () => setQuickApplyJob(job) : undefined}
+                    />
+                  )
+                })}
               </div>
             )}
           </Section>
@@ -839,6 +876,18 @@ export const CompanyProfilePage: React.FC = () => {
           </div>
         )}
       </Modal>
+
+      {/* Quick Apply — workers only; companies don't apply to jobs */}
+      {quickApplyJob && (
+        <QuickApplyModal
+          job={quickApplyJob}
+          open={!!quickApplyJob}
+          onClose={() => setQuickApplyJob(null)}
+          onApplied={(jobId) =>
+            setAppliedDates((prev) => new Map(prev).set(jobId, new Date().toISOString()))
+          }
+        />
+      )}
     </div>
   )
 }

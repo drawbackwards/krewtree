@@ -266,6 +266,7 @@ export type PublicCompanyJob = {
   pay_min: number | null
   pay_max: number | null
   pay_type: string | null
+  skills: string[] | null
   created_at: string
 }
 
@@ -334,7 +335,7 @@ export async function getPublicCompanyProfile(
       supabase
         .from('jobs')
         .select(
-          'id, title, industry, industry_slug, type, location, pay_min, pay_max, pay_type, created_at'
+          'id, title, industry, industry_slug, type, location, pay_min, pay_max, pay_type, skills, created_at'
         )
         .eq('company_id', companyId)
         .eq('status', 'active')

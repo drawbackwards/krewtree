@@ -75,7 +75,13 @@ export const JobCard: React.FC<JobCardProps> = ({
       {job.isSponsored && <span className={styles.sponsoredBanner}>{job.industry}</span>}
 
       <div className={styles.header}>
-        <div className={styles.companyLogo}>{companyInitials}</div>
+        <div className={styles.companyLogo}>
+          {job.company.logo ? (
+            <img src={job.company.logo} alt={job.company.name} className={styles.companyLogoImg} />
+          ) : (
+            companyInitials
+          )}
+        </div>
         <div className={styles.headerText}>
           <p className={styles.jobTitle}>{job.title}</p>
           <span className={styles.companyName}>
