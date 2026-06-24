@@ -25,6 +25,7 @@ export * from './Progress'
 export * from './Spinner'
 export * from './Tooltip'
 export * from './Toast'
+export * from './EmptyState'
 
 // Navigation
 export * from './Stepper'

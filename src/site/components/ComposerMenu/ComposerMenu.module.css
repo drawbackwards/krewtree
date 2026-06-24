@@ -1,0 +1,122 @@
+.kebab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  color: var(--kt-text-muted);
+  background: transparent;
+  border: none;
+  border-radius: var(--kt-radius-full);
+  cursor: pointer;
+}
+
+.kebab:hover:not(:disabled) {
+  background: var(--kt-surface-muted, rgba(0, 0, 0, 0.04));
+  color: var(--kt-text);
+}
+
+.kebab:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.menu {
+  position: fixed;
+  z-index: 1000;
+  min-width: 180px;
+  padding: 6px;
+  background: var(--kt-surface);
+  border: 1px solid var(--kt-border);
+  border-radius: var(--kt-radius-md);
+  box-shadow: var(--kt-shadow-lg, 0 8px 24px rgba(0, 0, 0, 0.12));
+}
+
+.itemWrap {
+  position: relative;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 8px 10px;
+  font-size: var(--kt-text-sm);
+  font-weight: var(--kt-weight-semibold);
+  color: var(--kt-text);
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-radius: var(--kt-radius-sm);
+  cursor: pointer;
+}
+
+.option:hover {
+  background: var(--kt-surface-muted, rgba(0, 0, 0, 0.04));
+}
+
+/* Flyout opens up-left of the option, anchored to its bottom so it stays
+   clear of the screen edge below the composer. */
+.submenu {
+  position: absolute;
+  right: calc(100% + 6px);
+  bottom: 0;
+  width: 280px;
+  max-height: 320px;
+  overflow-y: auto;
+  padding: 6px;
+  background: var(--kt-surface);
+  border: 1px solid var(--kt-border);
+  border-radius: var(--kt-radius-md);
+  box-shadow: var(--kt-shadow-lg, 0 8px 24px rgba(0, 0, 0, 0.12));
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.hint {
+  margin: 0;
+  padding: 10px;
+  font-size: var(--kt-text-sm);
+  color: var(--kt-text-muted);
+}
+
+.hintLink {
+  color: var(--kt-navy-500);
+  font-weight: var(--kt-weight-bold);
+}
+
+.templateItem {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  padding: 8px 10px;
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-radius: var(--kt-radius-sm);
+  cursor: pointer;
+}
+
+.templateItem:hover {
+  background: var(--kt-surface-muted, rgba(0, 0, 0, 0.04));
+}
+
+.templateName {
+  font-size: var(--kt-text-sm);
+  font-weight: var(--kt-weight-semibold);
+  color: var(--kt-text);
+}
+
+.templatePreview {
+  font-size: var(--kt-text-xs);
+  color: var(--kt-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

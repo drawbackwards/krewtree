@@ -99,7 +99,7 @@
 .description {
   font-size: var(--kt-text-sm);
   color: var(--kt-text-muted);
-  margin-top: var(--kt-space-1);
+  margin-top: var(--kt-space-2);
 }
 
 .closeBtn {

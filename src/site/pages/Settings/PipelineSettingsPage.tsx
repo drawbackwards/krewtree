@@ -32,6 +32,7 @@ import {
   type TaskTemplate,
   type TaskTemplatePatch,
 } from '../../services/pipelineService'
+import { getMessageTemplates, type MessageTemplate } from '../../services/messageTemplateService'
 import styles from './PipelineSettingsPage.module.css'
 
 const PipelineSettingsPage: React.FC = () => {
@@ -40,17 +41,26 @@ const PipelineSettingsPage: React.FC = () => {
   const companyId = user?.id ?? ''
   const [stages, setStages] = useState<PipelineStage[]>([])
   const [templates, setTemplates] = useState<TaskTemplate[]>([])
+  const [messageTemplates, setMessageTemplates] = useState<MessageTemplate[]>([])
   const [loading, setLoading] = useState(true)
+  // Set when enabling auto-send makes a stage fire more than one message on entry.
+  const [autoSendWarning, setAutoSendWarning] = useState<{
+    toggledId: string
+    stageName: string
+    count: number
+  } | null>(null)
 
   const load = useCallback(async () => {
     if (!companyId) return
     setLoading(true)
-    const [s, t] = await Promise.all([
+    const [s, t, m] = await Promise.all([
       getPipelineStages(companyId, { includeInactive: true }),
       getTaskTemplates(companyId),
+      getMessageTemplates(companyId),
     ])
     setStages([...s.data].sort((a, b) => a.sortOrder - b.sortOrder))
     setTemplates(t.data)
+    setMessageTemplates(m.data)
     setLoading(false)
   }, [companyId])
 
@@ -193,12 +203,30 @@ const PipelineSettingsPage: React.FC = () => {
         if (patch.isRequired !== undefined) next.isRequired = patch.isRequired
         if (patch.messageSubject !== undefined) next.messageSubject = patch.messageSubject
         if (patch.messageBody !== undefined) next.messageBody = patch.messageBody
-        if (patch.calendarLink !== undefined) next.calendarLink = patch.calendarLink
         if (patch.autoSend !== undefined) next.autoSend = patch.autoSend
+        if (patch.messageTemplateId !== undefined) next.messageTemplateId = patch.messageTemplateId
         return next
       })
     )
     await updateTaskTemplate(id, patch)
+
+    // Warn if enabling auto-send means this stage now sends more than one
+    // message on entry. The user can keep it that way; this is just a heads-up.
+    if (patch.autoSend === true) {
+      const toggled = templates.find((t) => t.id === id)
+      if (toggled) {
+        const count = templates.filter(
+          (t) =>
+            t.stageId === toggled.stageId &&
+            (t.id === id || t.autoSend) &&
+            (t.messageTemplateId || t.messageBody)
+        ).length
+        if (count > 1) {
+          const stageName = stages.find((s) => s.id === toggled.stageId)?.name ?? 'this stage'
+          setAutoSendWarning({ toggledId: id, stageName, count })
+        }
+      }
+    }
   }
 
   async function handleDeleteTemplate(id: string) {
@@ -269,6 +297,7 @@ const PipelineSettingsPage: React.FC = () => {
                     key={stage.id}
                     stage={stage}
                     templates={stageTemplates}
+                    messageTemplates={messageTemplates}
                     onRename={(name) => handleRenameStage(stage.id, name)}
                     onToggle={(isActive) => handleToggleStage(stage.id, isActive)}
                     onDeleteStage={() => handleRequestDeleteStage(stage.id)}
@@ -297,6 +326,35 @@ const PipelineSettingsPage: React.FC = () => {
         targets={stages.filter((s) => s.isActive && s.id !== deleteInfo?.stageId)}
         onCancel={() => setDeleteInfo(null)}
         onConfirm={handleConfirmDeleteStage}
+      />
+
+      <Modal
+        open={autoSendWarning !== null}
+        onClose={() => setAutoSendWarning(null)}
+        size="sm"
+        title="Multiple messages are set to autosend"
+        description={
+          autoSendWarning
+            ? `Entering “${autoSendWarning.stageName}” will automatically send ${autoSendWarning.count} separate messages to the applicant.`
+            : undefined
+        }
+        footer={
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                if (autoSendWarning)
+                  handleUpdateTemplate(autoSendWarning.toggledId, { autoSend: false })
+                setAutoSendWarning(null)
+              }}
+            >
+              Cancel
+            </Button>
+            <Button variant="primary" onClick={() => setAutoSendWarning(null)}>
+              Confirm setup
+            </Button>
+          </div>
+        }
       />
     </div>
   )
@@ -615,6 +673,7 @@ const AddStageRow: React.FC<{ onAdd: (name: string) => Promise<void> }> = ({ onA
 type StageBlockProps = {
   stage: PipelineStage
   templates: TaskTemplate[]
+  messageTemplates: MessageTemplate[]
   onRename: (name: string) => Promise<void>
   onToggle: (isActive: boolean) => Promise<void>
   onDeleteStage: () => void
@@ -627,6 +686,7 @@ type StageBlockProps = {
 const StageBlock: React.FC<StageBlockProps> = ({
   stage,
   templates,
+  messageTemplates,
   onRename,
   onToggle,
   onDeleteStage,
@@ -755,6 +815,7 @@ const StageBlock: React.FC<StageBlockProps> = ({
               <TemplateRow
                 key={t.id}
                 template={t}
+                messageTemplates={messageTemplates}
                 onUpdate={(patch) => onUpdate(t.id, patch)}
                 onDelete={() => onDelete(t.id)}
               />
@@ -802,11 +863,17 @@ const StageBlock: React.FC<StageBlockProps> = ({
 
 type TemplateRowProps = {
   template: TaskTemplate
+  messageTemplates: MessageTemplate[]
   onUpdate: (patch: TaskTemplatePatch) => Promise<void>
   onDelete: () => Promise<void>
 }
 
-const TemplateRow: React.FC<TemplateRowProps> = ({ template, onUpdate, onDelete }) => {
+const TemplateRow: React.FC<TemplateRowProps> = ({
+  template,
+  messageTemplates,
+  onUpdate,
+  onDelete,
+}) => {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(template.label)
 
@@ -900,6 +967,35 @@ const TemplateRow: React.FC<TemplateRowProps> = ({ template, onUpdate, onDelete 
             Delete
           </button>
         </div>
+      </div>
+
+      <div className={styles.taskMessageRow}>
+        <span className={styles.taskMessageLabel}>Message</span>
+        <select
+          className={styles.taskMessageSelect}
+          value={template.messageTemplateId ?? ''}
+          onChange={(e) =>
+            onUpdate({ messageTemplateId: e.target.value === '' ? null : e.target.value })
+          }
+          aria-label={`Message template for ${template.label}`}
+        >
+          <option value="">None</option>
+          {messageTemplates.map((m) => (
+            <option key={m.id} value={m.id}>
+              {m.name}
+            </option>
+          ))}
+        </select>
+        {template.messageTemplateId && (
+          <label className={styles.requiredToggle}>
+            <input
+              type="checkbox"
+              checked={template.autoSend}
+              onChange={(e) => onUpdate({ autoSend: e.target.checked })}
+            />
+            Auto-send on stage entry
+          </label>
+        )}
       </div>
     </div>
   )

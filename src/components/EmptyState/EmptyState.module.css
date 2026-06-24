@@ -1,0 +1,17 @@
+.root {
+  padding: 20px;
+  border-radius: var(--kt-radius-md);
+  background: var(--kt-surface-raised);
+  border: 1px dashed var(--kt-border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+}
+
+.message {
+  margin: 0;
+  font-size: var(--kt-text-sm);
+  color: var(--kt-text-muted);
+}

@@ -193,7 +193,6 @@ export type Database = {
         Row: {
           application_id: string
           auto_send: boolean
-          calendar_link: string | null
           completed_at: string | null
           completed_by: string | null
           created_at: string
@@ -216,7 +215,6 @@ export type Database = {
         Insert: {
           application_id: string
           auto_send?: boolean
-          calendar_link?: string | null
           completed_at?: string | null
           completed_by?: string | null
           created_at?: string
@@ -239,7 +237,6 @@ export type Database = {
         Update: {
           application_id?: string
           auto_send?: boolean
-          calendar_link?: string | null
           completed_at?: string | null
           completed_by?: string | null
           created_at?: string
@@ -815,7 +812,6 @@ export type Database = {
           application_id: string | null
           application_task_id: string | null
           body: string
-          calendar_link: string | null
           company_id: string
           id: string
           read_at: string | null
@@ -827,7 +823,6 @@ export type Database = {
           application_id?: string | null
           application_task_id?: string | null
           body: string
-          calendar_link?: string | null
           company_id: string
           id?: string
           read_at?: string | null
@@ -839,7 +834,6 @@ export type Database = {
           application_id?: string | null
           application_task_id?: string | null
           body?: string
-          calendar_link?: string | null
           company_id?: string
           id?: string
           read_at?: string | null
@@ -1022,6 +1016,41 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: 'job_templates_company_id_fkey'
+            columns: ['company_id']
+            isOneToOne: false
+            referencedRelation: 'company_profiles'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      message_templates: {
+        Row: {
+          body: string
+          company_id: string
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          company_id: string
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          company_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'message_templates_company_id_fkey'
             columns: ['company_id']
             isOneToOne: false
             referencedRelation: 'company_profiles'
@@ -1391,7 +1420,6 @@ export type Database = {
       pipeline_stage_task_template: {
         Row: {
           auto_send: boolean
-          calendar_link: string | null
           company_id: string
           created_at: string
           display_order: number
@@ -1400,12 +1428,12 @@ export type Database = {
           label: string
           message_body: string | null
           message_subject: string | null
+          message_template_id: string | null
           stage_id: string
           updated_at: string
         }
         Insert: {
           auto_send?: boolean
-          calendar_link?: string | null
           company_id: string
           created_at?: string
           display_order?: number
@@ -1414,12 +1442,12 @@ export type Database = {
           label: string
           message_body?: string | null
           message_subject?: string | null
+          message_template_id?: string | null
           stage_id: string
           updated_at?: string
         }
         Update: {
           auto_send?: boolean
-          calendar_link?: string | null
           company_id?: string
           created_at?: string
           display_order?: number
@@ -1428,6 +1456,7 @@ export type Database = {
           label?: string
           message_body?: string | null
           message_subject?: string | null
+          message_template_id?: string | null
           stage_id?: string
           updated_at?: string
         }
@@ -1437,6 +1466,13 @@ export type Database = {
             columns: ['company_id']
             isOneToOne: false
             referencedRelation: 'company_profiles'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'pipeline_stage_task_template_message_template_id_fkey'
+            columns: ['message_template_id']
+            isOneToOne: false
+            referencedRelation: 'message_templates'
             referencedColumns: ['id']
           },
         ]
@@ -2201,7 +2237,6 @@ export type Database = {
           last_job_id: string | null
           last_job_title: string | null
           last_body: string
-          last_calendar_link: string | null
           last_sent_at: string
           last_sent_by: string
           last_read_at: string | null
