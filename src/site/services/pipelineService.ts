@@ -38,8 +38,9 @@ export type TaskTemplate = {
   order: number
   messageSubject: string | null
   messageBody: string | null
-  calendarLink: string | null
   autoSend: boolean
+  /** When set, the task sends this message template (resolved + snapshotted on stage entry). */
+  messageTemplateId: string | null
 }
 
 function toTemplate(row: TemplateRow): TaskTemplate {
@@ -52,8 +53,8 @@ function toTemplate(row: TemplateRow): TaskTemplate {
     order: row.display_order,
     messageSubject: row.message_subject,
     messageBody: row.message_body,
-    calendarLink: row.calendar_link,
     autoSend: row.auto_send,
+    messageTemplateId: row.message_template_id,
   }
 }
 
@@ -65,7 +66,6 @@ function toMessage(row: MessageRow): ApplicationMessage {
     applicationId: row.application_id ?? '',
     applicationTaskId: row.application_task_id,
     body: row.body,
-    calendarLink: row.calendar_link,
     sentAt: row.sent_at,
     sentBy: row.sent_by,
     readAt: row.read_at,
@@ -94,7 +94,6 @@ function toTask(row: TaskRow): ApplicationTask {
     createdAt: row.created_at,
     messageSubject: row.message_subject,
     messageBody: row.message_body,
-    calendarLink: row.calendar_link,
     autoSend: row.auto_send,
     messageSentAt: row.message_sent_at,
     flagged: row.is_flagged,
@@ -640,29 +639,38 @@ async function instantiateTemplatesForStageImpl(
     .eq('source', 'template')
   if ((count ?? 0) > 0) return { inserted: 0, error: null }
 
-  // Load templates for the company+stage
+  // Load templates for the company+stage, embedding any attached message
+  // template so its content can be snapshotted onto the application_task.
   const { data: templates, error: tplErr } = await supabase
     .from('pipeline_stage_task_template')
-    .select('*')
+    .select('*, message_templates(name, body)')
     .eq('company_id', companyId)
     .eq('stage_id', stageId)
     .order('display_order', { ascending: true })
   if (tplErr) return { inserted: 0, error: tplErr.message }
   if (!templates || templates.length === 0) return { inserted: 0, error: null }
 
-  const rows = templates.map((t) => ({
-    application_id: applicationId,
-    stage_id: t.stage_id,
-    source: 'template' as const,
-    template_task_id: t.id,
-    label: t.label,
-    is_required: t.is_required,
-    display_order: t.display_order,
-    message_subject: t.message_subject,
-    message_body: t.message_body,
-    calendar_link: t.calendar_link,
-    auto_send: t.auto_send,
-  }))
+  type TemplateWithMessage = TemplateRow & {
+    message_templates: { name: string; body: string } | null
+  }
+
+  const rows = (templates as unknown as TemplateWithMessage[]).map((t) => {
+    // An attached message template wins over the legacy inline columns. Its
+    // name doubles as the internal subject/label; only the body ships.
+    const mt = t.message_templates
+    return {
+      application_id: applicationId,
+      stage_id: t.stage_id,
+      source: 'template' as const,
+      template_task_id: t.id,
+      label: t.label,
+      is_required: t.is_required,
+      display_order: t.display_order,
+      message_subject: mt ? mt.name : t.message_subject,
+      message_body: mt ? mt.body : t.message_body,
+      auto_send: t.auto_send,
+    }
+  })
 
   const { data: insertedTasks, error: insErr } = await supabase
     .from('application_task')
@@ -738,8 +746,8 @@ export type TaskTemplatePatch = {
   isRequired?: boolean
   messageSubject?: string | null
   messageBody?: string | null
-  calendarLink?: string | null
   autoSend?: boolean
+  messageTemplateId?: string | null
 }
 
 export async function updateTaskTemplate(
@@ -761,11 +769,8 @@ export async function updateTaskTemplate(
     const v = patch.messageBody?.trim() ?? ''
     dbPatch.message_body = v.length > 0 ? v : null
   }
-  if (patch.calendarLink !== undefined) {
-    const v = patch.calendarLink?.trim() ?? ''
-    dbPatch.calendar_link = v.length > 0 ? v : null
-  }
   if (patch.autoSend !== undefined) dbPatch.auto_send = patch.autoSend
+  if (patch.messageTemplateId !== undefined) dbPatch.message_template_id = patch.messageTemplateId
 
   const { error } = await supabase
     .from('pipeline_stage_task_template')
@@ -811,7 +816,7 @@ export async function reorderTaskTemplates(
 export async function sendApplicationMessage(
   applicationTaskId: string,
   opts: {
-    override?: { subject?: string; body?: string; calendarLink?: string | null }
+    override?: { subject?: string; body?: string }
     silent?: boolean
   } = {}
 ): Promise<{ data: ApplicationMessage | null; error: string | null }> {
@@ -827,8 +832,6 @@ export async function sendApplicationMessage(
   const subject = opts.override?.subject?.trim() || task.message_subject?.trim()
   const body = opts.override?.body?.trim() || task.message_body?.trim()
   if (!subject || !body) return { data: null, error: 'no_message' }
-  const calendarLink =
-    opts.override?.calendarLink !== undefined ? opts.override.calendarLink : task.calendar_link
 
   const userId = await getCurrentUserId()
   if (!userId) return { data: null, error: 'not_authenticated' }
@@ -843,7 +846,6 @@ export async function sendApplicationMessage(
       application_id: task.application_id,
       application_task_id: task.id,
       body,
-      calendar_link: calendarLink ?? null,
       sent_by: userId,
     })
     .select('*')

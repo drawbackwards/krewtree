@@ -14,7 +14,8 @@ import {
   type Conversation,
   type ThreadMessage,
 } from '../services/messageService'
-import { ChevronLeftIcon, LinkIcon } from '../icons'
+import { ChevronLeftIcon } from '../icons'
+import { ComposerMenu } from '../components/ComposerMenu/ComposerMenu'
 import styles from './MessagesPage.module.css'
 
 function formatRelativeTime(iso: string): string {
@@ -244,6 +245,13 @@ export const MessagesPage: React.FC = () => {
     }
   }
 
+  // Insert a template into the draft: fill an empty composer, otherwise
+  // append after the existing text so nothing is clobbered.
+  function handleInsertTemplate(text: string): void {
+    setDraft((prev) => (prev.trim() ? `${prev}\n\n${text}` : text))
+    composerRef.current?.focus()
+  }
+
   // ── Display helpers ───────────────────────────────────────────────────────
   const isCompany = persona === 'company'
 
@@ -423,19 +431,6 @@ export const MessagesPage: React.FC = () => {
                           >
                             <div className={`${styles.bubble} ${mine ? styles.bubbleMine : ''}`}>
                               <div className={styles.bubbleBody}>{msg.body}</div>
-                              {msg.calendarLink && (
-                                <a
-                                  href={msg.calendarLink}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className={`${styles.calendarLink} ${
-                                    mine ? styles.calendarLinkMine : ''
-                                  }`}
-                                >
-                                  <LinkIcon size={13} />
-                                  Schedule a time
-                                </a>
-                              )}
                               <div
                                 className={`${styles.bubbleTime} ${
                                   mine ? styles.bubbleTimeMine : ''
@@ -489,6 +484,13 @@ export const MessagesPage: React.FC = () => {
                     >
                       {sending ? 'Sending…' : 'Send'}
                     </button>
+                    {isCompany && (
+                      <ComposerMenu
+                        companyId={selected.companyId}
+                        disabled={sending || !user}
+                        onInsert={handleInsertTemplate}
+                      />
+                    )}
                   </div>
                   <div className={styles.composerHint}>
                     Enter to send · Shift+Enter for a new line

@@ -3,8 +3,8 @@
 // Unified messaging: one thread per (company, worker) pair, backed
 // by the `message` table. Application context travels per-message —
 // pipeline sends (and messages composed from an application deep
-// link) carry application_id / calendar_link; plain chat messages
-// carry none. Messages have no subjects: pipeline template subjects
+// link) carry application_id; plain chat messages carry none. Any
+// links live inline in the body. Messages have no subjects: pipeline template subjects
 // are internal labels (task list, log entries) and never ship.
 //
 // RLS scopes every query to threads the caller is a party to, so no
@@ -36,7 +36,6 @@ export type SenderRole = 'worker' | 'company'
 export type ThreadMessage = {
   id: string
   body: string
-  calendarLink: string | null
   sentAt: string
   sentBy: string
   readAt: string | null
@@ -78,7 +77,6 @@ function toThreadMessage(row: MessageRowWithContext): ThreadMessage {
   return {
     id: row.id,
     body: row.body,
-    calendarLink: row.calendar_link,
     sentAt: row.sent_at,
     sentBy: row.sent_by,
     readAt: row.read_at,
@@ -115,7 +113,6 @@ export async function getConversations(): Promise<{
     lastMessage: {
       id: row.last_message_id,
       body: row.last_body,
-      calendarLink: row.last_calendar_link,
       sentAt: row.last_sent_at,
       sentBy: row.last_sent_by,
       readAt: row.last_read_at,

@@ -387,6 +387,37 @@
   cursor: pointer;
 }
 
+.taskMessageRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 10px 10px 36px;
+}
+
+.taskMessageLabel {
+  font-size: var(--kt-text-xs);
+  font-weight: var(--kt-weight-semibold);
+  color: var(--kt-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.taskMessageSelect {
+  font-size: var(--kt-text-sm);
+  font-family: inherit;
+  background: var(--kt-surface);
+  border: 1px solid var(--kt-border);
+  border-radius: var(--kt-radius-md);
+  padding: 5px 10px;
+  color: var(--kt-text);
+  cursor: pointer;
+}
+
+.taskMessageSelect:focus {
+  outline: none;
+  border-color: var(--kt-navy-500);
+}
+
 .taskActions {
   display: flex;
   gap: 4px;

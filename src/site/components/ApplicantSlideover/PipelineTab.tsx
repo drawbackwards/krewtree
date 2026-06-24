@@ -263,7 +263,7 @@ export const PipelineTab: React.FC<PipelineTabProps> = ({
           onSend={async ({ subject, body }) => {
             setSendError(null)
             const { data, error } = await sendApplicationMessage(sendingTask.id, {
-              override: { subject, body, calendarLink: null },
+              override: { subject, body },
             })
             if (error || !data) {
               setSendError(error ?? 'send_failed')

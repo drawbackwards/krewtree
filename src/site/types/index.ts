@@ -368,7 +368,6 @@ export type ApplicationTask = {
   // Attached message (snapshot from template at instantiation time)
   messageSubject: string | null
   messageBody: string | null
-  calendarLink: string | null
   autoSend: boolean
   messageSentAt: string | null
   flagged: boolean
@@ -390,7 +389,6 @@ export type ApplicationMessage = {
   applicationId: string
   applicationTaskId: string | null
   body: string
-  calendarLink: string | null
   sentAt: string
   sentBy: string | null
   readAt: string | null

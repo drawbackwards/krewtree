@@ -316,24 +316,6 @@
   color: white;
 }
 
-.calendarLink {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: var(--kt-text-sm);
-  font-weight: var(--kt-weight-bold);
-  color: var(--kt-navy-500);
-  text-decoration: none;
-}
-
-.calendarLink:hover {
-  text-decoration: underline;
-}
-
-.calendarLinkMine {
-  color: white;
-}
-
 .bubbleTime {
   font-size: var(--kt-text-2xs);
   color: var(--kt-text-muted);

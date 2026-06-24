@@ -9,6 +9,7 @@ import {
   type ThreadMessage,
 } from '../../services/messageService'
 import { ChevronDownIcon, CloseIcon, EnvelopeIcon } from '../../icons'
+import { ComposerMenu } from '../ComposerMenu/ComposerMenu'
 import { useChatPane } from './ChatPaneContext'
 import styles from './ChatPane.module.css'
 
@@ -116,6 +117,11 @@ export const ChatPane: React.FC = () => {
       e.preventDefault()
       handleSend()
     }
+  }
+
+  function handleInsertTemplate(text: string): void {
+    setDraft((prev) => (prev.trim() ? `${prev}\n\n${text}` : text))
+    composerRef.current?.focus()
   }
 
   function handleOpenInbox(): void {
@@ -247,6 +253,11 @@ export const ChatPane: React.FC = () => {
               >
                 {sending ? '…' : 'Send'}
               </button>
+              <ComposerMenu
+                companyId={companyId}
+                disabled={sending}
+                onInsert={handleInsertTemplate}
+              />
             </div>
           </footer>
         </>
