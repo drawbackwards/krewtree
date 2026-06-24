@@ -28,12 +28,10 @@
 .primary {
   background-color: var(--kt-primary-subtle);
   color: var(--kt-primary);
-  border-color: var(--kt-primary);
 }
 .secondary {
   background-color: var(--kt-secondary-subtle);
   color: var(--kt-secondary-fg);
-  border-color: var(--kt-secondary);
 }
 .accent {
   background-color: var(--kt-accent);
@@ -58,7 +56,6 @@
 .neutral {
   background-color: var(--kt-surface-raised);
   color: var(--kt-text-muted);
-  border-color: var(--kt-border);
 }
 
 /* ---- Dot indicator ---- */

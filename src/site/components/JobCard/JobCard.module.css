@@ -30,7 +30,7 @@
   right: 20px;
   background-color: var(--kt-accent);
   color: white;
-  font-size: 10px;
+  font-size: var(--kt-text-2xs);
   font-weight: var(--kt-weight-semibold);
   letter-spacing: 0.4px;
   text-transform: uppercase;
@@ -322,7 +322,7 @@
 
 .regulixCount {
   font-size: var(--kt-text-xs);
-  color: var(--kt-accent);
+  color: var(--kt-regulix-500);
   font-weight: var(--kt-weight-medium);
   display: flex;
   align-items: center;

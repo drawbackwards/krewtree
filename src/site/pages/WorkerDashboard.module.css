@@ -55,7 +55,7 @@
 }
 
 .headerMeta {
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   color: var(--kt-text-muted);
   margin: 0;
 }
@@ -208,7 +208,7 @@
   padding-top: 8px;
   padding-bottom: 8px;
   background: var(--kt-grey-100);
-  font-size: 11px;
+  font-size: var(--kt-text-xs);
   font-weight: var(--kt-weight-semibold);
   color: var(--kt-text-muted);
   text-transform: uppercase;
@@ -306,7 +306,7 @@
 }
 
 .metaText {
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   color: var(--kt-text-muted);
 }
 
@@ -323,7 +323,7 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 11px;
+  font-size: var(--kt-text-xs);
   font-weight: var(--kt-weight-medium);
   color: var(--kt-success);
 }
@@ -335,7 +335,7 @@
   align-items: center;
   gap: 3px;
   margin-top: 2px;
-  font-size: 11px;
+  font-size: var(--kt-text-xs);
   color: var(--kt-olive-600);
   font-weight: var(--kt-weight-medium);
 }
@@ -349,7 +349,7 @@
   border-radius: var(--kt-radius-md);
   background: transparent;
   cursor: pointer;
-  font-size: 11px;
+  font-size: var(--kt-text-xs);
   font-family: var(--kt-font-sans);
   font-weight: var(--kt-weight-medium);
   color: var(--kt-text);
@@ -401,7 +401,7 @@
   background: transparent;
   border: none;
   cursor: pointer;
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   font-family: var(--kt-font-sans);
   color: var(--kt-text);
   font-weight: var(--kt-weight-medium);
@@ -449,7 +449,7 @@
 .emptyRow {
   padding: 48px 24px;
   text-align: center;
-  font-size: 13px;
+  font-size: var(--kt-text-sm);
   color: var(--kt-text-muted);
   min-height: 220px;
   display: flex;
@@ -461,7 +461,7 @@
 .emptyCard {
   padding: 48px 24px;
   text-align: center;
-  font-size: 13px;
+  font-size: var(--kt-text-sm);
   color: var(--kt-text-muted);
   min-height: 220px;
   display: flex;
@@ -536,7 +536,7 @@
 
   .bannerText {
     grid-area: text;
-    font-size: 16px;
+    font-size: var(--kt-text-md);
   }
 
   .bannerLink {
@@ -569,7 +569,7 @@
 
 @media (max-width: 640px) {
   .completenessTitle {
-    font-size: 16px;
+    font-size: var(--kt-text-md);
   }
 }
 
@@ -674,7 +674,7 @@
 .newJobCardTitle {
   flex: 1;
   min-width: 0;
-  font-size: 19px;
+  font-size: var(--kt-text-xl);
   font-weight: var(--kt-weight-semibold);
   color: var(--kt-grey-900);
   line-height: var(--kt-leading-tight);
@@ -704,23 +704,23 @@
 @media (max-width: 640px) {
   .titleLink,
   .titleStruck {
-    font-size: 16px;
+    font-size: var(--kt-text-md);
   }
   .tableCardTitle,
   .sectionTitle {
-    font-size: 16px;
+    font-size: var(--kt-text-md);
   }
   .emptyRow,
   .emptyCard {
-    font-size: 16px;
+    font-size: var(--kt-text-md);
   }
   .newJobCardTitle,
   .newJobCardCompany {
-    font-size: 16px;
+    font-size: var(--kt-text-md);
   }
   .subtitleText,
   .metaText {
-    font-size: 14px;
+    font-size: var(--kt-text-sm);
   }
   .row {
     height: auto;

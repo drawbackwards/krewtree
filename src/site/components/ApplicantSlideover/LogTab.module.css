@@ -20,7 +20,7 @@
 }
 
 .headerTitle {
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   font-weight: var(--kt-weight-semibold);
   color: var(--kt-text-muted);
   text-transform: uppercase;
@@ -34,7 +34,7 @@
   gap: 6px;
   height: 28px;
   padding: 0 12px;
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   font-weight: var(--kt-weight-semibold);
   font-family: var(--kt-font-sans);
   color: var(--kt-navy-500);
@@ -58,7 +58,7 @@
 .noteTextarea {
   width: 100%;
   padding: 8px 10px;
-  font-size: 13px;
+  font-size: var(--kt-text-sm);
   font-family: var(--kt-font-sans);
   border: 1px solid var(--kt-border);
   border-radius: var(--kt-radius-md);
@@ -78,7 +78,7 @@
 .noteCancelBtn {
   height: 30px;
   padding: 0 14px;
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   font-weight: var(--kt-weight-medium);
   font-family: var(--kt-font-sans);
   color: var(--kt-text-muted);
@@ -95,7 +95,7 @@
 .noteSaveBtn {
   height: 30px;
   padding: 0 14px;
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   font-weight: var(--kt-weight-semibold);
   font-family: var(--kt-font-sans);
   border: none;
@@ -118,13 +118,13 @@
 
 .loading {
   padding: 24px 20px;
-  font-size: 13px;
+  font-size: var(--kt-text-sm);
   color: var(--kt-text-muted);
 }
 
 .empty {
   padding: 24px 20px;
-  font-size: 13px;
+  font-size: var(--kt-text-sm);
   color: var(--kt-text-muted);
   margin: 0;
 }
@@ -153,7 +153,7 @@
 }
 
 .headline {
-  font-size: 13px;
+  font-size: var(--kt-text-sm);
   color: var(--kt-text);
   margin: 0;
   line-height: 1.45;
@@ -169,10 +169,23 @@
   padding: 8px 10px;
   background: var(--kt-bg-subtle);
   border-radius: var(--kt-radius-md);
-  font-size: 12px;
+  font-size: var(--kt-text-sm);
   color: var(--kt-text);
   line-height: 1.45;
   white-space: pre-wrap;
+}
+
+/* "Note:" label prefix inside the gray box. */
+.noteLabel {
+  font-weight: var(--kt-weight-semibold);
+}
+
+/* Timestamp rendered inside the gray box (worker notes), below the text. */
+.noteBoxTime {
+  display: block;
+  margin-top: 6px;
+  font-size: var(--kt-text-xs);
+  color: var(--kt-text-muted);
 }
 
 .footer {
@@ -183,6 +196,6 @@
 }
 
 .timestamp {
-  font-size: 11px;
+  font-size: var(--kt-text-xs);
   color: var(--kt-text-muted);
 }

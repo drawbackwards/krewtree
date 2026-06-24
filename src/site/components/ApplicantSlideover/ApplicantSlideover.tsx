@@ -246,7 +246,7 @@ export const ApplicantSlideover: React.FC<ApplicantSlideoverProps> = ({
                 {
                   label: 'Open full profile',
                   onClick: () => {
-                    navigate(`/site/dashboard/applicants/worker/${applicant.workerId}`)
+                    navigate(`/site/profile/${applicant.workerId}`)
                     onClose()
                   },
                 },

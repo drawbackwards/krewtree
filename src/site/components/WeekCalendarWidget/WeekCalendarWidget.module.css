@@ -35,7 +35,7 @@
 
 @media (max-width: 640px) {
   .title {
-    font-size: 16px;
+    font-size: var(--kt-text-md);
   }
 }
 
@@ -116,7 +116,7 @@
 }
 
 .weekday {
-  font-size: 10px;
+  font-size: var(--kt-text-2xs);
   font-weight: var(--kt-weight-semibold);
   color: var(--kt-text-muted);
   text-transform: uppercase;
@@ -129,7 +129,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 13px;
+  font-size: var(--kt-text-sm);
   font-weight: var(--kt-weight-medium);
   color: var(--kt-text);
   border-radius: 50%;
@@ -141,7 +141,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 13px;
+  font-size: var(--kt-text-sm);
   font-weight: var(--kt-weight-bold);
   color: white;
   background: #1c3d4a;
@@ -178,7 +178,7 @@
 
 .eventName {
   display: block;
-  font-size: 10px;
+  font-size: var(--kt-text-2xs);
   font-weight: var(--kt-weight-semibold);
   white-space: nowrap;
   overflow: hidden;
@@ -188,7 +188,7 @@
 
 .eventTime {
   display: block;
-  font-size: 9px;
+  font-size: var(--kt-text-2xs);
   opacity: 0.75;
   white-space: nowrap;
   overflow: hidden;

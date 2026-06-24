@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import { Button, Input, Select, Modal, Badge } from '../../../components'
+import React from 'react'
+import { Button, Input, Select, Badge } from '../../../components'
 import { US_STATE_OPTIONS } from '../../data/usStates'
 import { getLicenseTypesByIndustries } from '../../data/licenseTypes'
 import type { LicenseEntry, StepLicensesData } from './types'
@@ -33,9 +33,6 @@ export const StepLicensesSection: React.FC<{
   industryIds: string[]
   onChange: (d: StepLicensesData) => void
 }> = ({ data, industryIds, onChange }) => {
-  const [verifyOpen, setVerifyOpen] = useState(false)
-  const [verifyJurisdiction, setVerifyJurisdiction] = useState('')
-
   const licenseTypes = getLicenseTypesByIndustries(industryIds)
   const licenseTypeOptions = licenseTypes.map((lt) => ({ value: lt.id, label: lt.label }))
 
@@ -49,11 +46,6 @@ export const StepLicensesSection: React.FC<{
     onChange({ ...data, licenses: data.licenses.filter((l) => l.id !== id) })
 
   const add = () => onChange({ ...data, licenses: [...data.licenses, newEntry()] })
-
-  const handleVerifyClick = (jurisdiction: string) => {
-    setVerifyJurisdiction(jurisdiction)
-    setVerifyOpen(true)
-  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -102,13 +94,6 @@ export const StepLicensesSection: React.FC<{
                 {statusBadge(lic.verificationStatus, lic.expirationDate)}
               </div>
               <div style={{ display: 'flex', gap: 8 }}>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleVerifyClick(lic.jurisdiction)}
-                >
-                  Verify
-                </Button>
                 <Button size="sm" variant="ghost" onClick={() => remove(lic.id)}>
                   Remove
                 </Button>
@@ -159,31 +144,6 @@ export const StepLicensesSection: React.FC<{
           </Button>
         </div>
       )}
-
-      <Modal
-        open={verifyOpen}
-        onClose={() => setVerifyOpen(false)}
-        size="sm"
-        title="License verification coming soon"
-        footer={
-          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <Button variant="primary" onClick={() => setVerifyOpen(false)}>
-              Got it
-            </Button>
-          </div>
-        }
-      >
-        <p style={{ margin: 0, fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text)' }}>
-          License verification is rolling out in a future update. When it ships we'll verify against
-          the{' '}
-          {verifyJurisdiction ? (
-            <strong>{verifyJurisdiction} public license database</strong>
-          ) : (
-            <strong>state public license database</strong>
-          )}{' '}
-          and show a verified badge on your public profile.
-        </p>
-      </Modal>
     </div>
   )
 }

@@ -73,14 +73,14 @@
   border: none;
   color: var(--kt-navy-500);
   font-family: inherit;
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   font-weight: var(--kt-weight-bold);
   cursor: pointer;
   max-width: 60%;
 }
 
 .backArrow {
-  font-size: 14px;
+  font-size: var(--kt-text-sm);
   line-height: 1;
 }
 
@@ -98,7 +98,7 @@
 }
 
 .stageRowLabel {
-  font-size: 11px;
+  font-size: var(--kt-text-xs);
   font-weight: var(--kt-weight-bold);
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -194,7 +194,7 @@
   gap: 6px;
   padding: 5px 10px 5px 12px;
   font-family: var(--kt-font-sans);
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   font-weight: var(--kt-weight-semibold);
   letter-spacing: 0.2px;
   line-height: 1;
@@ -280,7 +280,7 @@
 }
 
 .stageMenuSection {
-  font-size: 11px;
+  font-size: var(--kt-text-xs);
   font-weight: var(--kt-weight-bold);
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -319,7 +319,7 @@
 .stageMenuHint {
   margin: 4px 0 2px;
   padding: 6px 14px 0;
-  font-size: 11px;
+  font-size: var(--kt-text-xs);
   line-height: 1.4;
   color: var(--kt-text-muted);
 }
@@ -400,7 +400,7 @@
 .tab {
   position: relative;
   padding: 10px 0;
-  font-size: 13px;
+  font-size: var(--kt-text-sm);
   font-weight: var(--kt-weight-semibold);
   font-family: var(--kt-font-sans);
   color: var(--kt-text-muted);

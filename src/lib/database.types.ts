@@ -994,6 +994,41 @@ export type Database = {
           },
         ]
       }
+      job_templates: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          name: string
+          payload: Json
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          name: string
+          payload?: Json
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+          payload?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'job_templates_company_id_fkey'
+            columns: ['company_id']
+            isOneToOne: false
+            referencedRelation: 'company_profiles'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       jobs: {
         Row: {
           auto_pause_limit: number | null
@@ -1017,6 +1052,7 @@ export type Database = {
           pay_type: string | null
           pipeline_snapshot: Json | null
           pre_interview_questions: string[]
+          publish_at: string | null
           regulix_preferred: boolean
           regulix_ready_applicants: number
           requirements: string[]
@@ -1051,6 +1087,7 @@ export type Database = {
           pay_type?: string | null
           pipeline_snapshot?: Json | null
           pre_interview_questions?: string[]
+          publish_at?: string | null
           regulix_preferred?: boolean
           regulix_ready_applicants?: number
           requirements?: string[]
@@ -1085,6 +1122,7 @@ export type Database = {
           pay_type?: string | null
           pipeline_snapshot?: Json | null
           pre_interview_questions?: string[]
+          publish_at?: string | null
           regulix_preferred?: boolean
           regulix_ready_applicants?: number
           requirements?: string[]

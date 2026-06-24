@@ -47,7 +47,7 @@
 }
 
 .verifiedBadge {
-  font-size: 10px;
+  font-size: var(--kt-text-2xs);
   color: var(--kt-success);
   background: color-mix(in srgb, var(--kt-success) 10%, transparent);
   padding: 1px var(--kt-space-2);
@@ -67,7 +67,7 @@
 }
 
 .star {
-  font-size: 14px;
+  font-size: var(--kt-text-sm);
   color: var(--kt-border-strong);
 }
 

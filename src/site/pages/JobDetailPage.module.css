@@ -63,14 +63,19 @@
 .body {
   display: grid;
   grid-template-columns: 1fr 300px;
-  gap: 28px;
+  /* Third row is a flexible filler: when the main column is taller than the
+     sidebar, the leftover height collapses here instead of inflating the
+     card rows (which would leave a gap under the first sidebar card). */
+  grid-template-rows: auto auto 1fr;
+  column-gap: 28px;
+  row-gap: 16px;
   align-items: start;
 }
 
 /* ── Main content column ── */
 .main {
   grid-column: 1;
-  grid-row: 1 / 3;
+  grid-row: 1 / -1;
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -78,9 +83,11 @@
 }
 
 /* ── Sidebar top — applicants / regulix upsell ── */
+/* Both sidebar blocks auto-flow within column 2 so that when the top block is
+   absent (no applicants / not Regulix preferred), the bottom block rises to the
+   first row and aligns with the main column instead of leaving a gap. */
 .sidebarTop {
   grid-column: 2;
-  grid-row: 1;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -89,7 +96,6 @@
 /* ── Sidebar bottom — company info + similar jobs ── */
 .sidebarBottom {
   grid-column: 2;
-  grid-row: 2;
   display: flex;
   flex-direction: column;
   gap: 16px;

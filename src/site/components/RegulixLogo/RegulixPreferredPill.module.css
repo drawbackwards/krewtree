@@ -1,0 +1,13 @@
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: var(--kt-radius-full);
+  font-size: var(--kt-text-xs);
+  font-weight: var(--kt-weight-normal);
+  background: var(--kt-regulix-50);
+  color: var(--kt-grey-900);
+  white-space: nowrap;
+  flex-shrink: 0;
+}

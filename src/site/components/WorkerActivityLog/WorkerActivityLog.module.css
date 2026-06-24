@@ -1,18 +1,80 @@
+/* Worker profile → Activity tab. Card visuals duplicate the My Krew drawer
+   history (WorkerHistoryTab.module.css) so the two logs stay identical; the
+   only differences are the page-level list spacing and the read-only cards
+   (no "See Status" drawer action). */
+
 .root {
   display: flex;
   flex-direction: column;
-  height: 100%;
-  min-height: 0;
+  gap: 14px;
+}
+
+/* ── Header (title + Add note) ─────────────────────────────────────────────── */
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.heading {
+  font-size: var(--kt-text-lg);
+  font-weight: var(--kt-weight-bold);
+  color: var(--kt-navy-900);
+  margin: 0;
+}
+
+/* Neutral composer wrapper — the field + buttons themselves come from the
+   shared LogTab styles (Worker Drawer Notes tab), this just spaces them. */
+.composer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ── Jobs / notes filter ───────────────────────────────────────────────────── */
+
+.filterRow {
+  display: flex;
+  gap: 6px;
+}
+
+.filterChip {
+  border: none;
+  background: var(--kt-bg-subtle);
+  color: var(--kt-text-muted);
+  font-family: var(--kt-font-sans);
+  font-size: var(--kt-text-xs);
+  font-weight: var(--kt-weight-semibold);
+  padding: 6px 14px;
+  border-radius: var(--kt-radius-full);
+  cursor: pointer;
+  transition:
+    background var(--kt-duration-fast) var(--kt-ease),
+    color var(--kt-duration-fast) var(--kt-ease);
+}
+
+.filterChip:hover {
+  color: var(--kt-text);
+}
+
+.filterChipActive {
+  background: var(--kt-navy-500);
+  color: var(--kt-on-primary, #ffffff);
+}
+
+.filterChipActive:hover {
+  color: var(--kt-on-primary, #ffffff);
 }
 
 .list {
   list-style: none;
   margin: 0;
-  padding: 16px 20px;
+  padding: 0;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  overflow-y: auto;
 }
 
 /* ── Card container ──────────────────────────────────────────────────────── */
@@ -60,6 +122,15 @@
   text-overflow: ellipsis;
 }
 
+.titleLink {
+  color: inherit;
+  text-decoration: none;
+}
+
+.titleLink:hover {
+  text-decoration: underline;
+}
+
 .metaRow {
   display: flex;
   flex-wrap: wrap;
@@ -94,25 +165,6 @@
   align-items: center;
   gap: 6px;
   flex-shrink: 0;
-}
-
-.seeStatusBtn {
-  display: inline-flex;
-  align-items: center;
-  padding: 6px 14px;
-  border-radius: var(--kt-radius-md);
-  border: none;
-  background: var(--kt-primary);
-  color: var(--kt-on-primary, #ffffff);
-  font-size: var(--kt-text-xs);
-  font-weight: var(--kt-weight-semibold);
-  line-height: 1.2;
-  cursor: pointer;
-  transition: background var(--kt-duration-fast) var(--kt-ease);
-}
-
-.seeStatusBtn:hover {
-  background: var(--kt-navy-700, var(--kt-primary));
 }
 
 /* ── Finished layout (with rating slot) ─────────────────────────────────── */
@@ -246,7 +298,7 @@
 
 .loading,
 .empty {
-  padding: 24px 20px;
+  padding: 8px 0;
   font-size: var(--kt-text-sm);
   color: var(--kt-text-muted);
   margin: 0;

@@ -104,9 +104,16 @@
 /* ── Submit bar ──────────────────────────────────────────── */
 .submitRow {
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
   gap: 12px;
   padding-bottom: 40px;
+}
+
+.submitActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 /* ── Success state ───────────────────────────────────────── */
@@ -178,6 +185,12 @@
   .submitRow > * {
     width: 100%;
     justify-content: center;
+  }
+
+  .submitActions {
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
   }
 
   .successWrapper {

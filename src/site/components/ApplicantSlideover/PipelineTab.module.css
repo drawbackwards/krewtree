@@ -28,19 +28,19 @@
 }
 
 .stageName {
-  font-size: 15px;
+  font-size: var(--kt-text-md);
   font-weight: var(--kt-weight-semibold);
   color: var(--kt-text);
 }
 
 .timeInStage {
-  font-size: 11px;
+  font-size: var(--kt-text-xs);
   color: var(--kt-text-muted);
   flex-shrink: 0;
 }
 
 .stagePurpose {
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   line-height: 1.5;
   color: var(--kt-text-muted);
   margin: -8px 0 16px;
@@ -48,7 +48,7 @@
 }
 
 .slaPill {
-  font-size: 11px;
+  font-size: var(--kt-text-xs);
   font-weight: var(--kt-weight-medium);
   padding: 2px 8px;
   border-radius: var(--kt-radius-full);
@@ -77,7 +77,7 @@
 }
 
 .emptyTasks {
-  font-size: 13px;
+  font-size: var(--kt-text-sm);
   color: var(--kt-text-muted);
   margin: 0 0 10px;
 }
@@ -138,7 +138,7 @@
 }
 
 .taskLabel {
-  font-size: 13px;
+  font-size: var(--kt-text-sm);
   color: var(--kt-text);
   line-height: 1.4;
 }
@@ -160,7 +160,7 @@
 }
 
 .requiredPill {
-  font-size: 11px;
+  font-size: var(--kt-text-xs);
   font-weight: var(--kt-weight-medium);
   padding: 1px 7px;
   border-radius: var(--kt-radius-full);
@@ -181,7 +181,7 @@
 }
 
 .skippedTag {
-  font-size: 11px;
+  font-size: var(--kt-text-xs);
   font-weight: var(--kt-weight-medium);
   padding: 1px 7px;
   border-radius: var(--kt-radius-full);
@@ -190,7 +190,7 @@
 }
 
 .sentPill {
-  font-size: 11px;
+  font-size: var(--kt-text-xs);
   font-weight: var(--kt-weight-medium);
   padding: 1px 7px;
   border-radius: var(--kt-radius-full);
@@ -199,7 +199,7 @@
 }
 
 .sendMessageBtn {
-  font-size: 11px;
+  font-size: var(--kt-text-xs);
   font-weight: var(--kt-weight-bold);
   padding: 2px 8px;
   border-radius: var(--kt-radius-full);
@@ -222,7 +222,7 @@
 }
 
 .sendModalHint {
-  font-size: var(--kt-font-size-sm);
+  font-size: var(--kt-text-sm);
   color: var(--kt-text-muted);
   margin: 0;
 }
@@ -234,7 +234,7 @@
 }
 
 .sendFieldLabel {
-  font-size: var(--kt-font-size-xs);
+  font-size: var(--kt-text-xs);
   font-weight: var(--kt-weight-bold);
   color: var(--kt-text-muted);
   text-transform: uppercase;
@@ -244,7 +244,7 @@
 .sendFieldInput,
 .sendFieldTextarea {
   font-family: inherit;
-  font-size: var(--kt-font-size-sm);
+  font-size: var(--kt-text-sm);
   color: var(--kt-text);
   background: var(--kt-surface);
   border: 1px solid var(--kt-border);
@@ -275,7 +275,7 @@
   color: var(--kt-text);
   border-radius: var(--kt-radius-md);
   padding: 8px 16px;
-  font-size: var(--kt-font-size-sm);
+  font-size: var(--kt-text-sm);
   font-weight: var(--kt-weight-bold);
   cursor: pointer;
 }
@@ -286,7 +286,7 @@
   border: none;
   border-radius: var(--kt-radius-md);
   padding: 8px 16px;
-  font-size: var(--kt-font-size-sm);
+  font-size: var(--kt-text-sm);
   font-weight: var(--kt-weight-bold);
   cursor: pointer;
 }
@@ -298,7 +298,7 @@
 }
 
 .sendModalError {
-  font-size: var(--kt-font-size-sm);
+  font-size: var(--kt-text-sm);
   color: var(--kt-error, #b42318);
   margin: 0;
 }
@@ -347,7 +347,7 @@
 }
 
 .notesCountBadge {
-  font-size: 11px;
+  font-size: var(--kt-text-xs);
   font-weight: var(--kt-weight-semibold);
   font-family: var(--kt-font-sans);
   line-height: 1;
@@ -395,7 +395,7 @@
   gap: 6px;
   width: 100%;
   padding: 8px 12px;
-  font-size: 13px;
+  font-size: var(--kt-text-sm);
   font-family: var(--kt-font-sans);
   color: var(--kt-text);
   background: none;
@@ -435,7 +435,7 @@
 .taskNotesArea {
   width: 100%;
   padding: 8px;
-  font-size: 13px;
+  font-size: var(--kt-text-sm);
   font-family: var(--kt-font-sans);
   border-radius: var(--kt-radius-md);
   border: 1px solid var(--kt-border);
@@ -454,7 +454,7 @@
 .taskNotesSaveBtn {
   height: 26px;
   padding: 0 12px;
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   font-weight: var(--kt-weight-semibold);
   font-family: var(--kt-font-sans);
   border: none;
@@ -474,7 +474,7 @@
 }
 
 .taskNotesCancelBtn {
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   color: var(--kt-text-muted);
   background: none;
   border: none;
@@ -509,7 +509,7 @@
 }
 
 .taskNoteBody {
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   color: var(--kt-text);
   line-height: 1.45;
   margin: 0;
@@ -525,18 +525,18 @@
 }
 
 .taskNoteTime {
-  font-size: 11px;
+  font-size: var(--kt-text-xs);
   color: var(--kt-text-muted);
 }
 
 .taskNoteEditedTag {
-  font-size: 11px;
+  font-size: var(--kt-text-xs);
   color: var(--kt-text-muted);
 }
 
 .taskNoteEditLink {
   margin-left: auto;
-  font-size: 11px;
+  font-size: var(--kt-text-xs);
   font-weight: var(--kt-weight-bold);
   color: var(--kt-navy-500);
   background: none;
@@ -562,7 +562,7 @@
 .taskNoteEditArea {
   width: 100%;
   padding: 8px;
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   font-family: var(--kt-font-sans);
   border-radius: var(--kt-radius-md);
   border: 1px solid var(--kt-border);
@@ -582,7 +582,7 @@
 .taskNoteSaveBtn {
   height: 24px;
   padding: 0 10px;
-  font-size: 11px;
+  font-size: var(--kt-text-xs);
   font-weight: var(--kt-weight-semibold);
   font-family: var(--kt-font-sans);
   border: none;
@@ -602,7 +602,7 @@
 }
 
 .taskNoteCancelBtn {
-  font-size: 11px;
+  font-size: var(--kt-text-xs);
   color: var(--kt-text-muted);
   background: none;
   border: none;
@@ -627,7 +627,7 @@
 .editLabelInput {
   width: 100%;
   padding: 6px 8px;
-  font-size: 13px;
+  font-size: var(--kt-text-sm);
   font-family: var(--kt-font-sans);
   border: 1px solid var(--kt-border);
   border-radius: var(--kt-radius-md);
@@ -640,7 +640,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   color: var(--kt-text-muted);
   cursor: pointer;
 }
@@ -654,7 +654,7 @@
 .editSaveBtn {
   height: 28px;
   padding: 0 12px;
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   font-weight: var(--kt-weight-semibold);
   font-family: var(--kt-font-sans);
   border: none;
@@ -665,7 +665,7 @@
 }
 
 .editCancelBtn {
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   color: var(--kt-text-muted);
   background: none;
   border: none;
@@ -680,7 +680,7 @@
   align-items: center;
   gap: 5px;
   margin-top: 10px;
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   font-weight: var(--kt-weight-medium);
   font-family: var(--kt-font-sans);
   color: var(--kt-navy-500);
@@ -708,7 +708,7 @@
 .addTaskInput {
   width: 100%;
   padding: 8px;
-  font-size: 13px;
+  font-size: var(--kt-text-sm);
   font-family: var(--kt-font-sans);
   border: 1px solid var(--kt-border);
   border-radius: var(--kt-radius-md);
@@ -728,7 +728,7 @@
   display: flex;
   align-items: center;
   gap: 5px;
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   color: var(--kt-text-muted);
   cursor: pointer;
 }
@@ -743,7 +743,7 @@
 .addTaskSaveBtn {
   height: 28px;
   padding: 0 14px;
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   font-weight: var(--kt-weight-semibold);
   font-family: var(--kt-font-sans);
   border: none;
@@ -754,7 +754,7 @@
 }
 
 .addTaskCancelBtn {
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   color: var(--kt-text-muted);
   background: none;
   border: none;
@@ -769,7 +769,7 @@
 }
 
 .notesHeader {
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   font-weight: var(--kt-weight-medium);
   color: var(--kt-text-muted);
   margin-bottom: 8px;
@@ -779,7 +779,7 @@
 }
 
 .savedIndicator {
-  font-size: 11px;
+  font-size: var(--kt-text-xs);
   color: var(--kt-text-muted);
   font-weight: var(--kt-weight-normal);
   animation: fadeOut 2s ease forwards;
@@ -800,7 +800,7 @@
 .notesTextarea {
   width: 100%;
   padding: 8px;
-  font-size: 13px;
+  font-size: var(--kt-text-sm);
   font-family: var(--kt-font-sans);
   border: 1px solid var(--kt-border);
   border-radius: var(--kt-radius-md);
@@ -820,7 +820,7 @@
 .notesSaveBtn {
   height: 30px;
   padding: 0 14px;
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   font-weight: var(--kt-weight-semibold);
   font-family: var(--kt-font-sans);
   border: none;

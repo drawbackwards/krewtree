@@ -92,7 +92,9 @@ const ToggleRow: React.FC<{
         {label}
       </p>
       {locked && (
-        <p style={{ fontSize: 11, color: 'var(--kt-text-muted)', margin: 0 }}>Always on</p>
+        <p style={{ fontSize: 'var(--kt-text-xs)', color: 'var(--kt-text-muted)', margin: 0 }}>
+          Always on
+        </p>
       )}
     </div>
     <button
@@ -547,7 +549,7 @@ export const CompanyDashboard: React.FC = () => {
                     style={{
                       color: 'var(--kt-accent)',
                       fontWeight: 700,
-                      fontSize: 14,
+                      fontSize: 'var(--kt-text-sm)',
                       marginTop: 1,
                       flexShrink: 0,
                     }}
@@ -636,7 +638,7 @@ const ActiveJobsModule: React.FC<ActiveJobsModuleProps> = ({ rows }) => {
   const navigate = useNavigate()
 
   const thStyle: React.CSSProperties = {
-    fontSize: 11,
+    fontSize: 'var(--kt-text-xs)',
     fontWeight: 600,
     color: 'var(--kt-text-muted)',
     textTransform: 'uppercase',

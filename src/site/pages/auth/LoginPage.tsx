@@ -334,7 +334,7 @@ export const LoginPage: React.FC = () => {
         style={{
           textAlign: 'center',
           padding: '0 0 24px',
-          fontSize: 11,
+          fontSize: 'var(--kt-text-xs)',
           color: 'var(--kt-grey-300)',
           letterSpacing: '0.02em',
         }}

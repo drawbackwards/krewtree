@@ -169,7 +169,7 @@
   background: var(--kt-grey-100);
   border-radius: 999px;
   padding: 4px 10px;
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   font-weight: var(--kt-weight-medium);
   color: var(--kt-text);
 }
@@ -195,7 +195,7 @@
   border: none;
   cursor: pointer;
   font-family: var(--kt-font-sans);
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   font-weight: var(--kt-weight-medium);
   color: var(--kt-navy-500);
   padding: 0;
@@ -242,7 +242,7 @@
   }
 
   .title {
-    font-size: 16px;
+    font-size: var(--kt-text-md);
   }
 
   .headerRight {
@@ -250,6 +250,6 @@
   }
 
   .toggleBtn {
-    font-size: 14px;
+    font-size: var(--kt-text-sm);
   }
 }

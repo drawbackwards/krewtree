@@ -365,7 +365,7 @@ export const SignupRolePage: React.FC = () => {
         style={{
           textAlign: 'center',
           padding: '0 0 20px',
-          fontSize: 11,
+          fontSize: 'var(--kt-text-xs)',
           color: 'var(--kt-text-muted)',
           letterSpacing: '0.02em',
         }}

@@ -25,8 +25,8 @@
 
 .title {
   margin: 0 0 4px;
-  font-size: var(--kt-text-3xl, 28px);
-  font-weight: var(--kt-weight-bold);
+  font-size: var(--kt-text-2xl);
+  font-weight: var(--kt-weight-semibold);
   color: var(--kt-text);
 }
 
@@ -177,7 +177,7 @@
   border: none;
   color: var(--kt-text-muted);
   cursor: pointer;
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   line-height: 1;
 }
 
@@ -269,7 +269,7 @@
 
 .filterTitle {
   margin: 0 0 10px;
-  font-size: var(--kt-text-sm);
+  font-size: var(--kt-text-xs);
   font-weight: var(--kt-weight-semibold);
   color: var(--kt-text);
   text-transform: uppercase;
@@ -427,7 +427,7 @@
   background: transparent;
   color: var(--kt-primary);
   cursor: pointer;
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   border-radius: 50%;
 }
 
@@ -582,7 +582,7 @@
   background: transparent;
   color: var(--kt-primary);
   cursor: pointer;
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   border-radius: 50%;
   flex-shrink: 0;
 }

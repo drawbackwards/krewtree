@@ -7,6 +7,7 @@ type NavItem = { to: string; label: string }
 const ORG_NAV: NavItem[] = [
   { to: '/site/settings/profile', label: 'Profile' },
   { to: '/site/settings/pipeline', label: 'Pipeline' },
+  { to: '/site/settings/templates', label: 'Templates' },
 ]
 const ACCOUNT_NAV: NavItem[] = [{ to: '/site/settings/account', label: 'Account & billing' }]
 

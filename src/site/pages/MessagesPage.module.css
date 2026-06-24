@@ -16,14 +16,14 @@
 }
 
 .title {
-  font-size: var(--kt-font-size-2xl);
-  font-weight: var(--kt-weight-bold);
+  font-size: var(--kt-text-2xl);
+  font-weight: var(--kt-weight-semibold);
   color: var(--kt-text);
   margin: 0;
 }
 
 .unreadCount {
-  font-size: var(--kt-font-size-sm);
+  font-size: var(--kt-text-sm);
   color: var(--kt-text-muted);
 }
 
@@ -36,14 +36,14 @@
 }
 
 .emptyTitle {
-  font-size: var(--kt-font-size-lg);
+  font-size: var(--kt-text-lg);
   font-weight: var(--kt-weight-bold);
   color: var(--kt-text);
   margin: 0 0 6px;
 }
 
 .emptyHint {
-  font-size: var(--kt-font-size-sm);
+  font-size: var(--kt-text-sm);
   color: var(--kt-text-muted);
   margin: 0;
 }
@@ -115,7 +115,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 13px;
+  font-size: var(--kt-text-sm);
   font-weight: var(--kt-weight-bold);
   color: var(--kt-text);
   flex-shrink: 0;
@@ -136,7 +136,7 @@
 }
 
 .convName {
-  font-size: var(--kt-font-size-base);
+  font-size: var(--kt-text-md);
   color: var(--kt-text);
   font-weight: var(--kt-weight-medium);
   white-space: nowrap;
@@ -150,14 +150,14 @@
 }
 
 .convTime {
-  font-size: 11px;
+  font-size: var(--kt-text-xs);
   color: var(--kt-text-muted);
   white-space: nowrap;
   flex-shrink: 0;
 }
 
 .convJob {
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   color: var(--kt-text-muted);
   white-space: nowrap;
   overflow: hidden;
@@ -165,7 +165,7 @@
 }
 
 .convPreview {
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   color: var(--kt-text-muted);
   white-space: nowrap;
   overflow: hidden;
@@ -178,7 +178,7 @@
   border-radius: var(--kt-radius-full);
   background: var(--kt-navy-500);
   color: white;
-  font-size: 11px;
+  font-size: var(--kt-text-xs);
   font-weight: var(--kt-weight-bold);
   display: flex;
   align-items: center;
@@ -243,13 +243,13 @@
 }
 
 .threadName {
-  font-size: var(--kt-font-size-base);
+  font-size: var(--kt-text-md);
   font-weight: var(--kt-weight-bold);
   color: var(--kt-text);
 }
 
 .threadJobLine {
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   color: var(--kt-text-muted);
 }
 
@@ -275,7 +275,7 @@
 
 .dayDivider {
   text-align: center;
-  font-size: 11px;
+  font-size: var(--kt-text-xs);
   font-weight: var(--kt-weight-medium);
   color: var(--kt-text-muted);
   margin: 12px 0 4px;
@@ -305,7 +305,7 @@
 }
 
 .bubbleBody {
-  font-size: var(--kt-font-size-base);
+  font-size: var(--kt-text-md);
   color: var(--kt-text);
   line-height: 1.55;
   white-space: pre-wrap;
@@ -320,7 +320,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: var(--kt-font-size-sm);
+  font-size: var(--kt-text-sm);
   font-weight: var(--kt-weight-bold);
   color: var(--kt-navy-500);
   text-decoration: none;
@@ -335,7 +335,7 @@
 }
 
 .bubbleTime {
-  font-size: 10px;
+  font-size: var(--kt-text-2xs);
   color: var(--kt-text-muted);
   align-self: flex-end;
   text-align: right;
@@ -367,7 +367,7 @@
 }
 
 .sendError {
-  font-size: var(--kt-font-size-sm);
+  font-size: var(--kt-text-sm);
   color: var(--kt-danger);
   margin-bottom: 8px;
 }
@@ -386,7 +386,7 @@
   background: var(--kt-surface);
   color: var(--kt-text);
   font-family: inherit;
-  font-size: var(--kt-font-size-base);
+  font-size: var(--kt-text-md);
   line-height: 1.5;
   padding: 10px 12px;
   min-height: 44px;
@@ -408,7 +408,7 @@
   border: none;
   border-radius: var(--kt-radius-full);
   padding: 10px 22px;
-  font-size: var(--kt-font-size-sm);
+  font-size: var(--kt-text-sm);
   font-weight: var(--kt-weight-bold);
   font-family: inherit;
   cursor: pointer;
@@ -426,7 +426,7 @@
 }
 
 .composerHint {
-  font-size: 11px;
+  font-size: var(--kt-text-xs);
   color: var(--kt-text-muted);
   margin-top: 6px;
 }

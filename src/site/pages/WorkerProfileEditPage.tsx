@@ -560,8 +560,8 @@ export const WorkerProfileEditPage: React.FC = () => {
           <div>
             <h1
               style={{
-                fontSize: 'var(--kt-text-xl)',
-                fontWeight: 'var(--kt-weight-bold)',
+                fontSize: 'var(--kt-text-2xl)',
+                fontWeight: 'var(--kt-weight-semibold)',
                 color: 'var(--kt-text)',
                 margin: '0 0 2px',
               }}

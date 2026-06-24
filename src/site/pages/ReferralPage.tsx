@@ -87,7 +87,7 @@ export const ReferralPage: React.FC = () => {
           <h1
             style={{
               fontSize: 'var(--kt-text-2xl)',
-              fontWeight: 'var(--kt-weight-bold)',
+              fontWeight: 'var(--kt-weight-semibold)',
               color: 'var(--kt-text)',
               marginBottom: 6,
             }}

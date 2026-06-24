@@ -387,6 +387,9 @@ type Props = {
   // Bumped by the parent on external mutations (e.g. drawer shortlist /
   // stage change). When it changes we re-fetch so the cards stay in sync.
   refreshTick?: number
+  // When true (full Pipeline page), the board fills its bounded parent and each
+  // column scrolls its own cards. Off by default for the compact dashboard widget.
+  fillHeight?: boolean
 }
 
 export const WidgetKanbanView: React.FC<Props> = ({
@@ -395,6 +398,7 @@ export const WidgetKanbanView: React.FC<Props> = ({
   onOpenApplicant,
   cardsPerCol = DEFAULT_CARDS_PER_COL,
   refreshTick = 0,
+  fillHeight = false,
 }) => {
   const [stages, setStages] = useState<PipelineStage[]>([])
   const [applicants, setApplicants] = useState<CompanyApplicant[]>([])
@@ -578,7 +582,7 @@ export const WidgetKanbanView: React.FC<Props> = ({
   return (
     <>
       <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-        <div className={styles.board}>
+        <div className={`${styles.board} ${fillHeight ? styles.boardFill : ''}`}>
           {stages.map((stage) => {
             const colApplicants = byStage.get(stage.id) ?? []
             return (

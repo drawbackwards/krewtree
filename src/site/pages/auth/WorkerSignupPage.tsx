@@ -204,7 +204,7 @@ export const WorkerSignupPage: React.FC = () => {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      fontSize: 15,
+                      fontSize: 'var(--kt-text-md)',
                       flexShrink: 0,
                       marginTop: 1,
                       color: 'white',
@@ -246,7 +246,7 @@ export const WorkerSignupPage: React.FC = () => {
               </span>
               <span
                 style={{
-                  fontSize: 11,
+                  fontSize: 'var(--kt-text-xs)',
                   color: 'rgba(255,255,255,0.75)',
                   marginTop: 4,
                   letterSpacing: '0.02em',
@@ -267,7 +267,7 @@ export const WorkerSignupPage: React.FC = () => {
             <span
               style={{
                 display: 'block',
-                fontSize: 11,
+                fontSize: 'var(--kt-text-xs)',
                 fontWeight: 700,
                 color: 'var(--kt-navy-500)',
                 textTransform: 'uppercase',
@@ -581,7 +581,7 @@ export const WorkerSignupPage: React.FC = () => {
           zIndex: 1,
           textAlign: 'center',
           padding: '0 0 20px',
-          fontSize: 11,
+          fontSize: 'var(--kt-text-xs)',
           color: 'rgba(229,218,195,0.15)',
         }}
       >

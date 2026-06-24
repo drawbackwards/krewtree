@@ -13,8 +13,14 @@
 }
 
 @keyframes slideDown {
-  from { opacity: 0; transform: translateY(-8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .header {
@@ -86,15 +92,25 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: var(--kt-text-md);
   margin-top: 2px;
 }
 
-.iconWrap.application { background: color-mix(in srgb, var(--kt-info) 12%, transparent); }
-.iconWrap.message { background: color-mix(in srgb, var(--kt-accent) 12%, transparent); }
-.iconWrap.status_change { background: color-mix(in srgb, var(--kt-success) 12%, transparent); }
-.iconWrap.job_alert { background: color-mix(in srgb, var(--kt-warning) 12%, transparent); }
-.iconWrap.review { background: color-mix(in srgb, var(--kt-secondary) 15%, transparent); }
+.iconWrap.application {
+  background: color-mix(in srgb, var(--kt-info) 12%, transparent);
+}
+.iconWrap.message {
+  background: color-mix(in srgb, var(--kt-accent) 12%, transparent);
+}
+.iconWrap.status_change {
+  background: color-mix(in srgb, var(--kt-success) 12%, transparent);
+}
+.iconWrap.job_alert {
+  background: color-mix(in srgb, var(--kt-warning) 12%, transparent);
+}
+.iconWrap.review {
+  background: color-mix(in srgb, var(--kt-secondary) 15%, transparent);
+}
 
 .content {
   flex: 1;

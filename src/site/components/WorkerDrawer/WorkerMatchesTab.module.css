@@ -39,7 +39,7 @@
 
 .title {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--kt-text-sm);
   font-weight: var(--kt-weight-semibold);
   color: var(--kt-text);
   line-height: 1.3;
@@ -48,7 +48,7 @@
 .strongBadge {
   display: inline-flex;
   align-items: center;
-  font-size: 10px;
+  font-size: var(--kt-text-2xs);
   font-weight: var(--kt-weight-semibold);
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -65,7 +65,7 @@
   flex-wrap: wrap;
   gap: 4px 8px;
   margin-top: 4px;
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   color: var(--kt-text-muted);
 }
 
@@ -85,7 +85,7 @@
   align-items: center;
   padding: 2px 8px;
   border-radius: 999px;
-  font-size: 11px;
+  font-size: var(--kt-text-xs);
   font-weight: var(--kt-weight-medium);
   line-height: 1.4;
   background: var(--kt-grey-100);
@@ -111,7 +111,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 4px 6px;
-  font-size: 11px;
+  font-size: var(--kt-text-xs);
   color: var(--kt-text-muted);
   min-width: 0;
 }
@@ -121,7 +121,7 @@
   align-items: center;
   padding: 1px 8px;
   border-radius: 999px;
-  font-size: 10px;
+  font-size: var(--kt-text-2xs);
   font-weight: var(--kt-weight-semibold);
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -145,7 +145,7 @@
   background: transparent;
   color: var(--kt-navy-500);
   border: none;
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   font-weight: var(--kt-weight-bold);
   line-height: 1.2;
   cursor: pointer;
@@ -165,7 +165,7 @@
   border: none;
   background: var(--kt-primary);
   color: var(--kt-on-primary, #ffffff);
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   font-weight: var(--kt-weight-semibold);
   line-height: 1.2;
   cursor: pointer;
@@ -191,7 +191,7 @@
 .loading,
 .empty {
   padding: 24px 20px;
-  font-size: 13px;
+  font-size: var(--kt-text-sm);
   color: var(--kt-text-muted);
   margin: 0;
 }

@@ -77,7 +77,9 @@ export type Job = {
   viewCount: number
   postedDaysAgo: number
   createdAt: string
-  status: 'active' | 'paused' | 'closed'
+  status: 'active' | 'paused' | 'closed' | 'scheduled' | 'draft'
+  /** When a scheduled job should auto-publish. Set only while status === 'scheduled'. */
+  publishAt?: string | null
   experienceLevel?: string | null
   preInterviewQuestions?: string[]
   urgentHiring?: boolean

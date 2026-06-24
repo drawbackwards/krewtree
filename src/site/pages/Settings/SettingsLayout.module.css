@@ -5,8 +5,8 @@
 }
 
 .title {
-  font-size: var(--kt-font-size-2xl);
-  font-weight: var(--kt-weight-bold);
+  font-size: var(--kt-text-2xl);
+  font-weight: var(--kt-weight-semibold);
   color: var(--kt-text);
   margin: 0 0 24px;
   line-height: 1.2;
@@ -28,7 +28,7 @@
 }
 
 .navSection {
-  font-size: var(--kt-font-size-xs);
+  font-size: var(--kt-text-xs);
   font-weight: var(--kt-weight-bold);
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -45,7 +45,7 @@
   display: block;
   padding: 8px 12px;
   border-radius: var(--kt-radius-md);
-  font-size: var(--kt-font-size-sm);
+  font-size: var(--kt-text-sm);
   font-weight: var(--kt-weight-medium);
   color: var(--kt-text);
   text-decoration: none;

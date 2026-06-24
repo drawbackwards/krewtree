@@ -31,6 +31,7 @@ type DbJob = {
   regulix_preferred: boolean
   auto_pause_limit: number | null
   closing_at: string | null
+  publish_at: string | null
   latitude: number | null
   longitude: number | null
   company_profiles: {
@@ -70,10 +71,28 @@ export type CreateJobParams = {
   regulixPreferred: boolean
   autoPauseLimit: number | null
   closingAt?: string | null
+  /** When set (and in the future), the job is created as 'scheduled' and
+   *  auto-publishes at this ISO timestamp. Omit for immediate publish. */
+  publishAt?: string | null
+  /** Save as a 'draft' instead of publishing. Takes precedence over publishAt. */
+  asDraft?: boolean
 }
 
 export type UpdateJobParams = Partial<Omit<CreateJobParams, 'companyId'>> & {
   status?: Job['status']
+}
+
+// ── Job templates ────────────────────────────────────────────────────────────
+
+/** The job-posting form fields a template captures (everything except the
+ *  owning company). Stored as jsonb so it survives as the form grows. */
+export type JobTemplatePayload = Omit<CreateJobParams, 'companyId'>
+
+export type JobTemplate = {
+  id: string
+  name: string
+  payload: Partial<JobTemplatePayload>
+  createdAt: string
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -83,7 +102,7 @@ const JOB_SELECT = `
   pay_min, pay_max, pay_type, description, requirements, skills,
   is_sponsored, regulix_ready_applicants, total_applicants, status, created_at,
   experience_level, pre_interview_questions, urgent_hiring, regulix_preferred, auto_pause_limit, closing_at,
-  latitude, longitude,
+  publish_at, latitude, longitude,
   company_profiles(id, name, logo_url, location, industry, is_verified, description, size, website, avg_rating, review_count),
   job_analytics(views_total),
   applications(count)
@@ -131,6 +150,7 @@ function mapJob(j: DbJob): Job {
     regulixPreferred: j.regulix_preferred ?? false,
     autoPauseLimit: j.auto_pause_limit ?? null,
     closingAt: j.closing_at ?? null,
+    publishAt: j.publish_at ?? null,
     latitude: j.latitude ?? null,
     longitude: j.longitude ?? null,
   }
@@ -350,6 +370,12 @@ export async function createJob(
 ): Promise<{ data: { id: string } | null; error: string | null }> {
   const snapshot = await fetchPipelineSnapshot(params.companyId)
 
+  // A future publish_at parks the job as 'scheduled'; publish_scheduled_jobs()
+  // flips it to 'active' when the time arrives. A draft takes precedence.
+  const scheduled =
+    !params.asDraft && !!params.publishAt && new Date(params.publishAt).getTime() > Date.now()
+  const status = params.asDraft ? 'draft' : scheduled ? 'scheduled' : 'active'
+
   const { data, error } = await supabase
     .from('jobs')
     .insert({
@@ -372,7 +398,8 @@ export async function createJob(
       regulix_preferred: params.regulixPreferred,
       auto_pause_limit: params.autoPauseLimit,
       closing_at: params.closingAt ?? null,
-      status: 'active',
+      publish_at: scheduled ? params.publishAt : null,
+      status,
       pipeline_snapshot: snapshot,
     })
     .select('id')
@@ -408,6 +435,7 @@ export async function updateJob(
   if (params.regulixPreferred !== undefined) patch.regulix_preferred = params.regulixPreferred
   if (params.autoPauseLimit !== undefined) patch.auto_pause_limit = params.autoPauseLimit
   if (params.closingAt !== undefined) patch.closing_at = params.closingAt
+  if (params.publishAt !== undefined) patch.publish_at = params.publishAt
   if (params.status !== undefined) patch.status = params.status
 
   const { error } = await supabase.from('jobs').update(patch).eq('id', id)
@@ -417,6 +445,16 @@ export async function updateJob(
   if (row?.company_id) {
     invalidateSessionCache('discover_active_jobs', row.company_id)
   }
+  return { error: null }
+}
+
+/** Hard-delete a job. Intended for drafts (never public); RLS restricts
+ *  deletion to the owning company. */
+export async function deleteJob(id: string): Promise<{ error: string | null }> {
+  const { data: row } = await supabase.from('jobs').select('company_id').eq('id', id).maybeSingle()
+  const { error } = await supabase.from('jobs').delete().eq('id', id)
+  if (error) return { error: error.message }
+  if (row?.company_id) invalidateSessionCache('discover_active_jobs', row.company_id)
   return { error: null }
 }
 
@@ -437,6 +475,49 @@ export async function getCompanyJobs(
   if (!data) return { data: [], error: null }
 
   return { data: data.map((j) => mapJob(j as unknown as DbJob)), error: null }
+}
+
+// ── Job template mutations ───────────────────────────────────────────────────
+
+export async function getCompanyTemplates(
+  companyId: string
+): Promise<{ data: JobTemplate[]; error: string | null }> {
+  const { data, error } = await supabase
+    .from('job_templates')
+    .select('id, name, payload, created_at')
+    .eq('company_id', companyId)
+    .order('created_at', { ascending: false })
+
+  if (error) return { data: [], error: error.message }
+  return {
+    data: (data ?? []).map((t) => ({
+      id: t.id,
+      name: t.name,
+      payload: (t.payload ?? {}) as Partial<JobTemplatePayload>,
+      createdAt: t.created_at,
+    })),
+    error: null,
+  }
+}
+
+export async function saveJobTemplate(
+  companyId: string,
+  name: string,
+  payload: Partial<JobTemplatePayload>
+): Promise<{ data: { id: string } | null; error: string | null }> {
+  const { data, error } = await supabase
+    .from('job_templates')
+    .insert({ company_id: companyId, name, payload: payload as unknown as Json })
+    .select('id')
+    .single()
+
+  if (error) return { data: null, error: error.message }
+  return { data: { id: data.id }, error: null }
+}
+
+export async function deleteJobTemplate(id: string): Promise<{ error: string | null }> {
+  const { error } = await supabase.from('job_templates').delete().eq('id', id)
+  return { error: error?.message ?? null }
 }
 
 export async function getCompanyIndustry(

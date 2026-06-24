@@ -22,14 +22,14 @@
 }
 
 .pct {
-  font-size: 22px;
+  font-size: var(--kt-text-xl);
   font-weight: var(--kt-weight-bold);
   color: var(--kt-primary);
   line-height: 1;
 }
 
 .copy {
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   color: var(--kt-text-muted);
   line-height: 1.5;
   margin: 0 0 12px;
@@ -85,12 +85,12 @@
 }
 
 .itemLabel {
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   color: var(--kt-text);
 }
 
 .itemLabelDone {
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   color: var(--kt-text-muted);
   text-decoration: line-through;
 }
@@ -107,14 +107,14 @@
   background: none;
   border: none;
   padding: 0;
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   font-family: var(--kt-font-sans);
   color: var(--kt-text-muted);
   cursor: pointer;
 }
 
 .editLink {
-  font-size: 13px;
+  font-size: var(--kt-text-sm);
   font-weight: var(--kt-weight-bold);
   color: var(--kt-navy-500);
   text-decoration: none;
@@ -122,6 +122,6 @@
 
 @media (max-width: 640px) {
   .title {
-    font-size: 16px;
+    font-size: var(--kt-text-md);
   }
 }

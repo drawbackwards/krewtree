@@ -28,7 +28,7 @@
 .sm {
   height: 24px;
   padding: 0 8px 0 10px;
-  font-size: 11px;
+  font-size: var(--kt-text-xs);
 }
 
 .stage_new {
@@ -103,7 +103,7 @@
 
 .itemCurrent::after {
   content: '●';
-  font-size: 8px;
+  font-size: var(--kt-text-2xs);
   color: var(--kt-primary);
 }
 

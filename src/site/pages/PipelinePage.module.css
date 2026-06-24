@@ -97,7 +97,7 @@
 }
 
 .firstTag {
-  font-size: 10px;
+  font-size: var(--kt-text-2xs);
   font-weight: var(--kt-weight-medium);
   color: var(--kt-text-muted);
   background: var(--kt-bg-subtle);
@@ -110,7 +110,7 @@
   border: none;
   padding: 2px 6px;
   border-radius: var(--kt-radius-sm);
-  font-size: 16px;
+  font-size: var(--kt-text-md);
   line-height: 1;
   color: var(--kt-text-muted);
   cursor: pointer;
@@ -183,7 +183,7 @@
 }
 
 .terminalTag {
-  font-size: 10px;
+  font-size: var(--kt-text-2xs);
   font-weight: var(--kt-weight-medium);
   color: var(--kt-text-muted);
   background: var(--kt-bg-subtle);

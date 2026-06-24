@@ -10,6 +10,7 @@ import {
   DollarIcon,
   CheckIcon,
 } from '../../icons'
+import { RegulixPreferredPill } from '../RegulixLogo/RegulixPreferredPill'
 import styles from './JobCard.module.css'
 
 const formatPay = (job: Job): string | null => {
@@ -93,6 +94,7 @@ export const JobCard: React.FC<JobCardProps> = ({
             )}
           </span>
         </div>
+        {job.regulixPreferred && <RegulixPreferredPill />}
         <span className={styles.postedDate}>{postedLabel(job.postedDaysAgo)}</span>
       </div>
 

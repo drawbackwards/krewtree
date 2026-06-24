@@ -160,7 +160,7 @@
   background-color: var(--kt-danger);
   color: white;
   border-radius: var(--kt-radius-full);
-  font-size: 10px;
+  font-size: var(--kt-text-2xs);
   font-weight: var(--kt-weight-bold);
   display: flex;
   align-items: center;
@@ -176,7 +176,7 @@
   background-color: var(--kt-navy-500);
   color: white;
   border-radius: var(--kt-radius-full);
-  font-size: 10px;
+  font-size: var(--kt-text-2xs);
   font-weight: var(--kt-weight-bold);
   display: inline-flex;
   align-items: center;

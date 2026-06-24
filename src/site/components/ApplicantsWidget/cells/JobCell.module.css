@@ -6,7 +6,7 @@
 }
 
 .link {
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   color: var(--kt-text-muted);
   text-decoration: none;
   overflow: hidden;

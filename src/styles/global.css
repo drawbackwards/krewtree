@@ -33,22 +33,33 @@ body {
     color var(--kt-duration-slow) var(--kt-ease);
 }
 
-/* Display-weight headlines */
+/* Display-weight headlines — canonical sizes (STYLE_GUIDE.md §6) */
 h1 {
+  font-size: var(--kt-text-3xl);
   font-weight: var(--kt-weight-display);
   letter-spacing: -0.03em;
   line-height: var(--kt-leading-tight);
 }
 
 h2 {
+  font-size: var(--kt-text-2xl);
   font-weight: var(--kt-weight-semibold);
   letter-spacing: -0.015em;
   line-height: var(--kt-leading-tight);
 }
 
 h3 {
+  font-size: var(--kt-text-xl);
   font-weight: var(--kt-weight-medium);
   letter-spacing: -0.01em;
+  line-height: var(--kt-leading-tight);
+}
+
+h4 {
+  font-size: var(--kt-text-lg);
+  font-weight: var(--kt-weight-semibold);
+  letter-spacing: -0.01em;
+  line-height: var(--kt-leading-tight);
 }
 
 button,

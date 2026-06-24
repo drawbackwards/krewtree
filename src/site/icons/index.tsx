@@ -1434,6 +1434,17 @@ export const DotsHorizontalIcon: React.FC<{ size?: number; color?: string }> = (
   </svg>
 )
 
+export const DotsVerticalIcon: React.FC<{ size?: number; color?: string }> = ({
+  size = 16,
+  color = 'currentColor',
+}) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill={color} aria-hidden="true">
+    <circle cx="12" cy="5" r="2" />
+    <circle cx="12" cy="12" r="2" />
+    <circle cx="12" cy="19" r="2" />
+  </svg>
+)
+
 export const FlagIcon: React.FC<{ size?: number; color?: string }> = ({
   size = 16,
   color = 'currentColor',

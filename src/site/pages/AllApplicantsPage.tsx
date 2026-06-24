@@ -597,6 +597,7 @@ export const AllApplicantsPage: React.FC = () => {
               filters={widgetFilters}
               onOpenApplicant={openApplicant}
               cardsPerCol={50}
+              fillHeight
             />
           </div>
         )}

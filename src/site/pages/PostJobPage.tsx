@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { Input, Textarea, Select, Button, Alert, Switch, Divider } from '../../components'
+import { Input, Textarea, Select, Button, Alert, Switch, Divider, Modal } from '../../components'
 import styles from './PostJobPage.module.css'
 import { RegulixBadge } from '../components/RegulixBadge/RegulixBadge'
 import {
@@ -10,9 +10,19 @@ import {
   CelebrationIcon,
   LightningIcon,
   CalendarIcon,
+  ChevronDownIcon,
+  DotsVerticalIcon,
 } from '../icons'
 import { industries } from '../data/mock'
-import { createJob, updateJob, getJobById, getCompanyIndustry } from '../services/jobService'
+import {
+  createJob,
+  updateJob,
+  getJobById,
+  getCompanyIndustry,
+  getCompanyTemplates,
+  saveJobTemplate,
+} from '../services/jobService'
+import type { CreateJobParams, JobTemplate } from '../services/jobService'
 import { useAuth } from '../context/AuthContext'
 
 // ── Suggested skills by industry ────────────────────────────────────────────
@@ -158,6 +168,30 @@ const experienceOptions = [
   { value: 'lead', label: 'Lead / Expert (5+ yrs)' },
 ]
 
+// Shared style for the publish overflow-menu items.
+const menuItemStyle: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 10,
+  width: '100%',
+  padding: '10px 12px',
+  background: 'none',
+  border: 'none',
+  borderRadius: 'var(--kt-radius-sm)',
+  cursor: 'pointer',
+  fontSize: 'var(--kt-text-sm)',
+  fontFamily: 'var(--kt-font-sans)',
+  color: 'var(--kt-text)',
+  textAlign: 'left',
+}
+
+// Format an ISO timestamp as a `datetime-local` input value in local time.
+const toDatetimeLocal = (iso: string): string => {
+  const d = new Date(iso)
+  const pad = (n: number): string => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
 // ── Page component ───────────────────────────────────────────────────────────
 
 export const PostJobPage: React.FC = () => {
@@ -165,6 +199,7 @@ export const PostJobPage: React.FC = () => {
   const { id: editId } = useParams<{ id: string }>()
   const [searchParams] = useSearchParams()
   const duplicateOf = searchParams.get('duplicate')
+  const templateParam = searchParams.get('template')
   const isEditMode = !!editId
   const { user } = useAuth()
   const [submitted, setSubmitted] = useState(false)
@@ -192,6 +227,25 @@ export const PostJobPage: React.FC = () => {
   const [questions, setQuestions] = useState<string[]>([''])
   const [closingAt, setClosingAt] = useState('')
 
+  // Templates
+  const [templates, setTemplates] = useState<JobTemplate[]>([])
+  const [selectedTemplateId, setSelectedTemplateId] = useState('')
+  const [showSaveTemplate, setShowSaveTemplate] = useState(false)
+  const [templateName, setTemplateName] = useState('')
+  const [savingTemplate, setSavingTemplate] = useState(false)
+  const [templateSaved, setTemplateSaved] = useState(false)
+
+  const [showTemplateMenu, setShowTemplateMenu] = useState(false)
+
+  // Scheduling
+  const [showPublishMenu, setShowPublishMenu] = useState(false)
+  const [showSchedule, setShowSchedule] = useState(false)
+  const [scheduleAt, setScheduleAt] = useState('')
+  const [scheduledSubmit, setScheduledSubmit] = useState(false)
+  const [draftSubmit, setDraftSubmit] = useState(false)
+  // Status of the job loaded in edit mode (null when creating/duplicating).
+  const [loadedStatus, setLoadedStatus] = useState<string | null>(null)
+
   // Pre-fill industry from company profile when creating a new job from scratch
   // (skip when editing or duplicating — both already supply an industry)
   useEffect(() => {
@@ -202,6 +256,12 @@ export const PostJobPage: React.FC = () => {
       if (match) setIndustry(match.slug)
     })
   }, [editId, duplicateOf, user])
+
+  // Load saved templates for the "Start from a template" picker (create mode only).
+  useEffect(() => {
+    if (editId || !user) return
+    getCompanyTemplates(user.id).then(({ data }) => setTemplates(data))
+  }, [editId, user])
 
   // Load existing job when editing or duplicating. In duplicate mode the title
   // gets a "(Copy)" suffix and editId stays unset so submit creates a new job.
@@ -233,6 +293,11 @@ export const PostJobPage: React.FC = () => {
         setBudget(String(data.autoPauseLimit * 38))
       }
       setClosingAt(data.closingAt ? data.closingAt.slice(0, 10) : '')
+      // Carry the scheduled time + status only when editing (a duplicate publishes fresh).
+      if (editId) {
+        setLoadedStatus(data.status)
+        if (data.publishAt) setScheduleAt(toDatetimeLocal(data.publishAt))
+      }
     })
   }, [editId, duplicateOf])
 
@@ -278,14 +343,10 @@ export const PostJobPage: React.FC = () => {
     return Object.keys(e).length === 0
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!validate()) return
-    if (!user) return
-    setSubmitError('')
-
+  // Snapshot the current form into the shape createJob/templates consume.
+  const buildJobFields = (): Omit<CreateJobParams, 'companyId'> => {
     const selectedIndustry = industries.find((ind) => ind.slug === industry)
-    const jobFields = {
+    return {
       title: title.trim(),
       industry: selectedIndustry?.name ?? industry,
       industrySlug: industry,
@@ -309,24 +370,167 @@ export const PostJobPage: React.FC = () => {
         stopMode === 'limit' && Number(budget) > 0 ? Math.floor(Number(budget) / 38) : null,
       closingAt: closingAt ? closingAt : null,
     }
+  }
+
+  // Create or update the job. `publishAt` (ISO) schedules it for later;
+  // null publishes immediately.
+  const submitJob = async (publishAt: string | null): Promise<void> => {
+    if (!validate()) return
+    if (!user) return
+    setSubmitError('')
+    const jobFields = buildJobFields()
 
     if (isEditMode && editId) {
-      const { error } = await updateJob(editId, jobFields)
+      // Scheduling re-parks as 'scheduled'; publishing a draft promotes it to
+      // 'active'; editing any already-live job leaves its status untouched.
+      const editPatch = publishAt
+        ? { ...jobFields, publishAt, status: 'scheduled' as const }
+        : loadedStatus === 'draft'
+          ? { ...jobFields, status: 'active' as const, publishAt: null }
+          : jobFields
+      const { error } = await updateJob(editId, editPatch)
       if (error) {
         setSubmitError(error)
         return
       }
+      setScheduledSubmit(!!publishAt)
       setSubmitted(true)
-      setTimeout(() => navigate(`/site/jobs/${editId}`), 2500)
+      setTimeout(() => navigate(publishAt ? '/site/dashboard/jobs' : `/site/jobs/${editId}`), 2500)
     } else {
-      const { data, error } = await createJob({ companyId: user.id, ...jobFields })
+      const { data, error } = await createJob({ companyId: user.id, ...jobFields, publishAt })
       if (error) {
         setSubmitError(error)
         return
       }
+      setScheduledSubmit(!!publishAt)
       setSubmitted(true)
-      setTimeout(() => navigate(`/site/jobs/${data?.id ?? ''}`), 2500)
+      setTimeout(
+        () => navigate(publishAt ? '/site/dashboard/jobs' : `/site/jobs/${data?.id ?? ''}`),
+        2500
+      )
     }
+  }
+
+  const handleSubmit = (e: React.FormEvent): void => {
+    e.preventDefault()
+    void submitJob(null)
+  }
+
+  // Save the in-progress form as a draft (only a title is required). Drafts
+  // stay off the public board and live under the Job posts "Drafts" tab.
+  const saveDraft = async (): Promise<void> => {
+    if (!user) return
+    if (!title.trim()) {
+      setErrors({ title: 'Add a title to save a draft' })
+      return
+    }
+    setSubmitError('')
+    const jobFields = buildJobFields()
+    const { error } =
+      isEditMode && editId
+        ? await updateJob(editId, { ...jobFields, status: 'draft', publishAt: null })
+        : await createJob({ companyId: user.id, ...jobFields, asDraft: true })
+    if (error) {
+      setSubmitError(error)
+      return
+    }
+    setDraftSubmit(true)
+    setSubmitted(true)
+    setTimeout(() => navigate('/site/dashboard/jobs'), 2000)
+  }
+
+  const scheduleValid = !!scheduleAt && new Date(scheduleAt).getTime() > Date.now()
+
+  const handleScheduleConfirm = (): void => {
+    if (!scheduleValid) return
+    setShowSchedule(false)
+    void submitJob(new Date(scheduleAt).toISOString())
+  }
+
+  // ── Templates ───────────────────────────────────────────────────────────────
+
+  const applyTemplate = (p: Partial<Omit<CreateJobParams, 'companyId'>>): void => {
+    if (p.industrySlug !== undefined) setIndustry(p.industrySlug)
+    if (p.title !== undefined) setTitle(p.title)
+    if (p.type !== undefined) setJobType(p.type)
+    if (p.location !== undefined) setLocation(p.location)
+    setPayMin(p.payMin != null ? String(p.payMin) : '')
+    setPayMax(p.payMax != null ? String(p.payMax) : '')
+    if (p.payType !== undefined) setPayType(p.payType)
+    setExperience(p.experienceLevel || 'mid')
+    if (p.description !== undefined) setDescription(p.description)
+    setRequirements(p.requirements?.join('\n') ?? '')
+    setParsedSkills(p.skills ?? [])
+    setSponsorMode(p.isSponsored ? 'on' : 'off')
+    setUrgentHiring(p.urgentHiring ?? false)
+    setRegulixPreferred(p.regulixPreferred ?? false)
+    if (p.autoPauseLimit) {
+      setStopMode('limit')
+      setBudget(String(p.autoPauseLimit * 38))
+    } else {
+      setStopMode('pause')
+    }
+    setQuestions(p.preInterviewQuestions?.length ? p.preInterviewQuestions : [''])
+    setClosingAt(p.closingAt ? p.closingAt.slice(0, 10) : '')
+  }
+
+  const handleSelectTemplate = (id: string): void => {
+    setSelectedTemplateId(id)
+    const t = templates.find((x) => x.id === id)
+    if (t) applyTemplate(t.payload)
+  }
+
+  // Auto-apply a template when arriving from Settings with ?template=<id>
+  // (create mode only). Runs once, after the template list has loaded.
+  const appliedTemplateParam = useRef(false)
+  useEffect(() => {
+    if (editId || duplicateOf || !templateParam || appliedTemplateParam.current) return
+    const t = templates.find((x) => x.id === templateParam)
+    if (t) {
+      appliedTemplateParam.current = true
+      handleSelectTemplate(t.id)
+    }
+    // handleSelectTemplate is stable enough; ref guard prevents re-application.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [templates, templateParam, editId, duplicateOf])
+
+  const resetForm = (): void => {
+    setSelectedTemplateId('')
+    setTitle('')
+    setJobType('Full-time')
+    setLocation('')
+    setPayMin('')
+    setPayMax('')
+    setPayType('hour')
+    setExperience('mid')
+    setDescription('')
+    setRequirements('')
+    setParsedSkills([])
+    setSponsorMode('off')
+    setStopMode('pause')
+    setBudget('1900')
+    setUrgentHiring(false)
+    setRegulixPreferred(false)
+    setQuestions([''])
+    setClosingAt('')
+  }
+
+  const handleSaveTemplate = async (): Promise<void> => {
+    if (!user || !templateName.trim()) return
+    setSavingTemplate(true)
+    const { error } = await saveJobTemplate(user.id, templateName.trim(), buildJobFields())
+    setSavingTemplate(false)
+    if (error) {
+      setSubmitError(error)
+      setShowSaveTemplate(false)
+      return
+    }
+    const { data: list } = await getCompanyTemplates(user.id)
+    setTemplates(list)
+    setShowSaveTemplate(false)
+    setTemplateName('')
+    setTemplateSaved(true)
+    setTimeout(() => setTemplateSaved(false), 3000)
   }
 
   if (submitted) {
@@ -343,7 +547,13 @@ export const PostJobPage: React.FC = () => {
             textAlign: 'center',
           }}
         >
-          {isEditMode ? 'Job Updated!' : 'Job Posted Successfully!'}
+          {draftSubmit
+            ? 'Draft saved'
+            : scheduledSubmit
+              ? 'Job Scheduled!'
+              : isEditMode && loadedStatus !== 'draft'
+                ? 'Job Updated!'
+                : 'Job Posted Successfully!'}
         </h1>
         <p
           style={{
@@ -353,9 +563,13 @@ export const PostJobPage: React.FC = () => {
             maxWidth: 400,
           }}
         >
-          {isEditMode
-            ? 'Your changes have been saved. Redirecting you to your posting…'
-            : 'Your job listing is now live. Redirecting you to your posting…'}
+          {draftSubmit
+            ? 'Your draft is saved under Job posts. Redirecting you there…'
+            : scheduledSubmit
+              ? 'Your listing will go live at the scheduled time. Redirecting you to your job posts…'
+              : isEditMode && loadedStatus !== 'draft'
+                ? 'Your changes have been saved. Redirecting you to your posting…'
+                : 'Your job listing is now live. Redirecting you to your posting…'}
         </p>
         {regulixPreferred && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -391,10 +605,9 @@ export const PostJobPage: React.FC = () => {
           <h1
             style={{
               fontSize: 'var(--kt-text-2xl)',
-              fontWeight: 'var(--kt-weight-display)',
+              fontWeight: 'var(--kt-weight-semibold)',
               color: 'var(--kt-text)',
               marginBottom: 6,
-              letterSpacing: '-0.02em',
             }}
           >
             {isEditMode ? 'Edit Job' : 'Post a Job'}
@@ -414,6 +627,52 @@ export const PostJobPage: React.FC = () => {
             <Alert variant="danger">Please fix the errors below before submitting.</Alert>
           )}
           {submitError && <Alert variant="danger">{submitError}</Alert>}
+          {templateSaved && <Alert variant="success">Template saved.</Alert>}
+
+          {/* Start from a template (create mode only) */}
+          {!isEditMode && templates.length > 0 && (
+            <div
+              style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                alignItems: 'flex-end',
+                gap: 16,
+                padding: '18px 20px',
+                background: 'var(--kt-primary-subtle)',
+                borderRadius: 'var(--kt-radius-lg)',
+                marginBottom: 12,
+              }}
+            >
+              <div style={{ flex: '1 1 auto', minWidth: 300 }}>
+                <p
+                  style={{
+                    fontSize: 'var(--kt-text-md)',
+                    fontWeight: 'var(--kt-weight-semibold)',
+                    color: 'var(--kt-text)',
+                    marginBottom: 4,
+                  }}
+                >
+                  Start from a template
+                </p>
+                <p style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text-muted)' }}>
+                  Prefill this form with a saved posting. You can still edit any field.
+                </p>
+              </div>
+              <div style={{ flex: '0 0 240px', minWidth: 0 }}>
+                <Select
+                  placeholder="Choose a template…"
+                  value={selectedTemplateId}
+                  onChange={(e) => handleSelectTemplate(e.target.value)}
+                  options={templates.map((t) => ({ value: t.id, label: t.name }))}
+                />
+              </div>
+              {selectedTemplateId && (
+                <Button type="button" variant="ghost" size="sm" onClick={resetForm}>
+                  Clear
+                </Button>
+              )}
+            </div>
+          )}
 
           {/* Basic Info */}
           <Section
@@ -586,7 +845,7 @@ export const PostJobPage: React.FC = () => {
                         border: 'none',
                         cursor: 'pointer',
                         color: 'var(--kt-primary)',
-                        fontSize: 14,
+                        fontSize: 'var(--kt-text-sm)',
                         padding: 0,
                         lineHeight: 1,
                       }}
@@ -692,7 +951,7 @@ export const PostJobPage: React.FC = () => {
                         borderRadius: 'var(--kt-radius-sm)',
                         cursor: 'pointer',
                         color: 'var(--kt-text-muted)',
-                        fontSize: 18,
+                        fontSize: 'var(--kt-text-lg)',
                         padding: '6px 10px',
                         lineHeight: 1,
                         fontFamily: 'var(--kt-font-sans)',
@@ -1148,20 +1407,224 @@ export const PostJobPage: React.FC = () => {
             <Button
               type="button"
               variant="ghost"
-              size="lg"
+              size="md"
               onClick={() => navigate('/site/dashboard/company')}
             >
               Cancel
             </Button>
-            <Button type="button" variant="outline" size="lg" onClick={() => {}}>
-              Save Draft
-            </Button>
-            <Button type="submit" variant="primary" size="lg">
-              {isEditMode ? 'Save Changes' : 'Publish Job'}
-            </Button>
+
+            <div className={styles.submitActions}>
+              {/* Publish split-button: primary action + CTA dropdown */}
+              <div style={{ position: 'relative', display: 'inline-flex' }}>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="md"
+                  style={{ borderTopRightRadius: 0, borderBottomRightRadius: 0 }}
+                >
+                  {isEditMode && loadedStatus !== 'draft' ? 'Save Changes' : 'Publish Job'}
+                </Button>
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="md"
+                  iconOnly
+                  aria-label="More publish options"
+                  onClick={() => setShowPublishMenu((v) => !v)}
+                  style={{
+                    borderTopLeftRadius: 0,
+                    borderBottomLeftRadius: 0,
+                    marginLeft: 1,
+                    paddingLeft: 10,
+                    paddingRight: 10,
+                  }}
+                >
+                  <ChevronDownIcon size={16} color="var(--kt-on-primary, #fff)" />
+                </Button>
+                {showPublishMenu && (
+                  <>
+                    <div
+                      onClick={() => setShowPublishMenu(false)}
+                      style={{ position: 'fixed', inset: 0, zIndex: 10 }}
+                    />
+                    <div
+                      style={{
+                        position: 'absolute',
+                        bottom: 'calc(100% + 6px)',
+                        right: 0,
+                        minWidth: 220,
+                        background: 'var(--kt-bg)',
+                        borderRadius: 'var(--kt-radius-md)',
+                        boxShadow: 'var(--kt-shadow-lg, 0 8px 24px rgba(0,0,0,0.16))',
+                        padding: 6,
+                        zIndex: 11,
+                      }}
+                    >
+                      {(!isEditMode || loadedStatus === 'draft') && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowPublishMenu(false)
+                            void saveDraft()
+                          }}
+                          style={menuItemStyle}
+                          onMouseOver={(e) =>
+                            (e.currentTarget.style.background =
+                              'var(--kt-bg-subtle, rgba(0,0,0,0.04))')
+                          }
+                          onMouseOut={(e) => (e.currentTarget.style.background = 'none')}
+                        >
+                          Save as draft
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowPublishMenu(false)
+                          setShowSchedule(true)
+                        }}
+                        style={menuItemStyle}
+                        onMouseOver={(e) =>
+                          (e.currentTarget.style.background =
+                            'var(--kt-bg-subtle, rgba(0,0,0,0.04))')
+                        }
+                        onMouseOut={(e) => (e.currentTarget.style.background = 'none')}
+                      >
+                        Schedule for later…
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Kebab menu (strokeless), right of the publish button: Save as template */}
+              <div style={{ position: 'relative', display: 'inline-flex' }}>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="md"
+                  iconOnly
+                  aria-label="More actions"
+                  onClick={() => setShowTemplateMenu((v) => !v)}
+                >
+                  <DotsVerticalIcon size={18} color="var(--kt-text-muted)" />
+                </Button>
+                {showTemplateMenu && (
+                  <>
+                    <div
+                      onClick={() => setShowTemplateMenu(false)}
+                      style={{ position: 'fixed', inset: 0, zIndex: 10 }}
+                    />
+                    <div
+                      style={{
+                        position: 'absolute',
+                        bottom: 'calc(100% + 6px)',
+                        right: 0,
+                        minWidth: 200,
+                        background: 'var(--kt-bg)',
+                        borderRadius: 'var(--kt-radius-md)',
+                        boxShadow: 'var(--kt-shadow-lg, 0 8px 24px rgba(0,0,0,0.16))',
+                        padding: 6,
+                        zIndex: 11,
+                      }}
+                    >
+                      <button
+                        type="button"
+                        disabled={!title.trim()}
+                        onClick={() => {
+                          setShowTemplateMenu(false)
+                          setShowSaveTemplate(true)
+                        }}
+                        style={{
+                          ...menuItemStyle,
+                          cursor: title.trim() ? 'pointer' : 'not-allowed',
+                          opacity: title.trim() ? 1 : 0.5,
+                        }}
+                        onMouseOver={(e) => {
+                          if (title.trim())
+                            e.currentTarget.style.background =
+                              'var(--kt-bg-subtle, rgba(0,0,0,0.04))'
+                        }}
+                        onMouseOut={(e) => (e.currentTarget.style.background = 'none')}
+                      >
+                        Save as template
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </form>
+
+      {/* Save-as-template modal */}
+      <Modal
+        open={showSaveTemplate}
+        onClose={() => setShowSaveTemplate(false)}
+        size="sm"
+        title="Save as template"
+        description="Save these job details to reuse on future posts."
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setShowSaveTemplate(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              loading={savingTemplate}
+              disabled={!templateName.trim()}
+              onClick={() => void handleSaveTemplate()}
+            >
+              Save template
+            </Button>
+          </>
+        }
+      >
+        <Input
+          label="Template name"
+          placeholder="e.g. Standard CDL-A Driver"
+          value={templateName}
+          onChange={(e) => setTemplateName(e.target.value)}
+        />
+      </Modal>
+
+      {/* Schedule publishing modal */}
+      <Modal
+        open={showSchedule}
+        onClose={() => setShowSchedule(false)}
+        size="sm"
+        title="Schedule publishing"
+        description="Choose when this job goes live. It stays off the job board until then."
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setShowSchedule(false)}>
+              Cancel
+            </Button>
+            <Button variant="primary" disabled={!scheduleValid} onClick={handleScheduleConfirm}>
+              Schedule
+            </Button>
+          </>
+        }
+      >
+        <Input
+          type="datetime-local"
+          label="Publish date & time"
+          value={scheduleAt}
+          onChange={(e) => setScheduleAt(e.target.value)}
+        />
+        {scheduleAt && !scheduleValid && (
+          <p
+            style={{
+              fontSize: 'var(--kt-text-xs)',
+              color: 'var(--kt-danger)',
+              marginTop: 8,
+            }}
+          >
+            Pick a time in the future.
+          </p>
+        )}
+      </Modal>
     </div>
   )
 }

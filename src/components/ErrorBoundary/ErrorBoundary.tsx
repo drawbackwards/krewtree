@@ -28,7 +28,14 @@ export class ErrorBoundary extends React.Component<React.PropsWithChildren, Stat
             textAlign: 'center',
           }}
         >
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--kt-primary)', margin: 0 }}>
+          <h1
+            style={{
+              fontSize: 'var(--kt-text-xl)',
+              fontWeight: 700,
+              color: 'var(--kt-primary)',
+              margin: 0,
+            }}
+          >
             Something went wrong
           </h1>
           <p style={{ color: 'var(--kt-text-muted)', margin: 0 }}>Refresh the page to try again.</p>
@@ -42,7 +49,7 @@ export class ErrorBoundary extends React.Component<React.PropsWithChildren, Stat
               color: 'var(--kt-white)',
               border: 'none',
               borderRadius: 8,
-              fontSize: 14,
+              fontSize: 'var(--kt-text-sm)',
               fontWeight: 600,
             }}
           >

@@ -1,5 +1,5 @@
 import React, { Suspense, lazy, useEffect } from 'react'
-import { Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom'
+import { Routes, Route, Navigate, Outlet, useLocation, useParams } from 'react-router-dom'
 import { Spinner } from '../components'
 import { Navbar } from './components/Navbar/Navbar'
 import { DrawerStackProvider } from './components/DrawerSystem/DrawerStackContext'
@@ -56,11 +56,6 @@ const JobPostsPage = lazy(() =>
 const AllApplicantsPage = lazy(() =>
   import('./pages/AllApplicantsPage').then((m) => ({ default: m.AllApplicantsPage }))
 )
-const CompanyApplicantProfilePage = lazy(() =>
-  import('./pages/CompanyApplicantProfilePage').then((m) => ({
-    default: m.CompanyApplicantProfilePage,
-  }))
-)
 const ApplicationsPage = lazy(() =>
   import('./pages/ApplicationsPage').then((m) => ({ default: m.ApplicationsPage }))
 )
@@ -73,6 +68,7 @@ const DiscoverPage = lazy(() =>
 )
 const SettingsLayout = lazy(() => import('./pages/Settings/SettingsLayout'))
 const PipelineSettingsPage = lazy(() => import('./pages/Settings/PipelineSettingsPage'))
+const TemplatesSettingsPage = lazy(() => import('./pages/Settings/TemplatesSettingsPage'))
 const AccountSettingsPage = lazy(() =>
   import('./pages/Settings/AccountSettingsPage').then((m) => ({ default: m.AccountSettingsPage }))
 )
@@ -141,6 +137,12 @@ const RequireAuth: React.FC<{ persona?: Persona }> = ({ persona }) => {
   return <Outlet />
 }
 
+// Legacy `/site/dashboard/applicants/worker/:workerId` → unified public profile.
+const RedirectWorkerToProfile: React.FC = () => {
+  const { workerId } = useParams<{ workerId: string }>()
+  return <Navigate to={`/site/profile/${workerId}`} replace />
+}
+
 export const SiteRouter: React.FC = () => (
   <>
     <ScrollToTop />
@@ -178,15 +180,19 @@ export const SiteRouter: React.FC = () => (
             <Route path="/site/discover" element={<DiscoverPage />} />
             <Route path="/site/dashboard/jobs" element={<JobPostsPage />} />
             <Route path="/site/dashboard/applicants" element={<AllApplicantsPage />} />
+            {/* Legacy applicant-profile URL — the page merged into the public
+                worker profile. Redirect (preserving the worker id) for any
+                bookmarks/deep links still pointing here. */}
             <Route
               path="/site/dashboard/applicants/worker/:workerId"
-              element={<CompanyApplicantProfilePage />}
+              element={<RedirectWorkerToProfile />}
             />
             <Route path="/site/pipeline" element={<PipelinePage />} />
             <Route path="/site/settings" element={<SettingsLayout />}>
               <Route index element={<Navigate to="/site/settings/profile" replace />} />
               <Route path="profile" element={<CompanyProfileEditPage />} />
               <Route path="pipeline" element={<PipelineSettingsPage />} />
+              <Route path="templates" element={<TemplatesSettingsPage />} />
               <Route
                 path="pipeline-tasks"
                 element={<Navigate to="/site/settings/pipeline" replace />}

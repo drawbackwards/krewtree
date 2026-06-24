@@ -18,7 +18,7 @@
 
 .breadcrumb {
   align-self: flex-start;
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   color: var(--kt-text-muted);
   text-decoration: none;
   font-family: var(--kt-font-sans);
@@ -105,7 +105,7 @@
   padding: 0 8px;
   background: var(--kt-primary-subtle);
   border-radius: var(--kt-radius-md);
-  font-size: 11px;
+  font-size: var(--kt-text-xs);
   font-weight: var(--kt-weight-medium);
   color: var(--kt-text);
   font-family: var(--kt-font-sans);
@@ -131,7 +131,7 @@
   border: none;
   padding: 0;
   font-family: var(--kt-font-sans);
-  font-size: 11px;
+  font-size: var(--kt-text-xs);
   font-weight: var(--kt-weight-medium);
   color: var(--kt-text-muted);
   cursor: pointer;
@@ -189,7 +189,7 @@
   background: var(--kt-bg);
   color: var(--kt-text);
   font-family: var(--kt-font-sans);
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   outline: none;
 }
 
@@ -205,7 +205,7 @@
   background: var(--kt-bg);
   color: var(--kt-text);
   font-family: var(--kt-font-sans);
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   cursor: pointer;
   appearance: none;
   background-image:
@@ -222,7 +222,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   color: var(--kt-text);
   font-family: var(--kt-font-sans);
   cursor: pointer;
@@ -242,12 +242,12 @@
   background: var(--kt-bg);
   color: var(--kt-text);
   font-family: var(--kt-font-sans);
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   outline: none;
 }
 
 .dateSep {
-  font-size: 11px;
+  font-size: var(--kt-text-xs);
   color: var(--kt-text-muted);
 }
 
@@ -282,7 +282,7 @@
   border: none;
   padding: 0;
   font-family: var(--kt-font-sans);
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   color: var(--kt-primary);
   cursor: pointer;
   text-decoration: underline;
@@ -303,7 +303,7 @@
 }
 
 .bulkCount {
-  font-size: 13px;
+  font-size: var(--kt-text-sm);
   font-weight: var(--kt-weight-semibold);
   color: var(--kt-text);
 }
@@ -323,7 +323,7 @@
   background: var(--kt-surface);
   color: var(--kt-text);
   font-family: var(--kt-font-sans);
-  font-size: 11px;
+  font-size: var(--kt-text-xs);
   font-weight: var(--kt-weight-medium);
   cursor: pointer;
 }
@@ -346,7 +346,7 @@
   border: none;
   padding: 0;
   font-family: var(--kt-font-sans);
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   color: var(--kt-text-muted);
   cursor: pointer;
   text-decoration: underline;
@@ -384,7 +384,7 @@
   padding-bottom: 8px;
   min-height: 0;
   background: var(--kt-bg);
-  font-size: 11px;
+  font-size: var(--kt-text-xs);
   font-weight: var(--kt-weight-semibold);
   color: var(--kt-text-muted);
   text-transform: uppercase;
@@ -415,7 +415,7 @@
   border: none;
   padding: 0;
   font-family: var(--kt-font-sans);
-  font-size: 11px;
+  font-size: var(--kt-text-xs);
   font-weight: var(--kt-weight-semibold);
   color: var(--kt-text-muted);
   text-transform: uppercase;
@@ -432,7 +432,7 @@
 }
 
 .sortIndicator {
-  font-size: 10px;
+  font-size: var(--kt-text-2xs);
   color: var(--kt-primary);
   font-weight: var(--kt-weight-bold);
 }
@@ -473,7 +473,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 10px;
+  font-size: var(--kt-text-2xs);
   font-weight: var(--kt-weight-bold);
   flex-shrink: 0;
 }
@@ -490,7 +490,7 @@
   border: none;
   padding: 0;
   font-family: var(--kt-font-sans);
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   font-weight: var(--kt-weight-medium);
   color: var(--kt-navy-500);
   cursor: pointer;
@@ -505,7 +505,7 @@
 }
 
 .applicantTrade {
-  font-size: 11px;
+  font-size: var(--kt-text-xs);
   color: var(--kt-text-muted);
   white-space: nowrap;
   overflow: hidden;
@@ -534,7 +534,7 @@
 }
 
 .dateCell {
-  font-size: 11px;
+  font-size: var(--kt-text-xs);
   color: var(--kt-text-muted);
 }
 
@@ -552,7 +552,7 @@
   border-radius: var(--kt-radius-md);
   background: transparent;
   cursor: pointer;
-  font-size: 11px;
+  font-size: var(--kt-text-xs);
   font-family: var(--kt-font-sans);
   font-weight: var(--kt-weight-medium);
   color: var(--kt-text);
@@ -600,7 +600,7 @@
   background: transparent;
   border: none;
   cursor: pointer;
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   font-family: var(--kt-font-sans);
   color: var(--kt-text);
   font-weight: var(--kt-weight-medium);
@@ -617,7 +617,7 @@
 .emptyRow {
   padding: 48px 24px;
   text-align: center;
-  font-size: 13px;
+  font-size: var(--kt-text-sm);
   color: var(--kt-text-muted);
 }
 
@@ -632,7 +632,7 @@
 }
 
 .paginationInfo {
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   color: var(--kt-text-muted);
 }
 
@@ -647,7 +647,7 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   color: var(--kt-text-muted);
   font-family: var(--kt-font-sans);
 }
@@ -667,7 +667,7 @@
   background: var(--kt-surface);
   color: var(--kt-text);
   font-family: var(--kt-font-sans);
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   cursor: pointer;
 }
 
@@ -691,7 +691,7 @@
 }
 
 .pagerEllipsis {
-  font-size: 11px;
+  font-size: var(--kt-text-xs);
   color: var(--kt-text-muted);
   padding: 0 4px;
 }
@@ -699,7 +699,7 @@
 /* ── Bulk reject modal ──────────────────────────────────────────────────── */
 
 .confirmBody {
-  font-size: 13px;
+  font-size: var(--kt-text-sm);
   color: var(--kt-text);
   margin: 0 0 var(--kt-space-3);
   line-height: 1.5;
@@ -715,7 +715,7 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
 }
 
 .confirmList li {

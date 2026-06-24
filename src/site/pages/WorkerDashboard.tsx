@@ -341,7 +341,7 @@ export const WorkerDashboard: React.FC = () => {
             background: 'var(--kt-amber-subtle, #fffbeb)',
             borderBottom: '1px solid var(--kt-amber-border, #fde68a)',
             padding: '10px var(--kt-space-6)',
-            fontSize: 12,
+            fontSize: 'var(--kt-text-xs)',
             color: 'var(--kt-amber-text, #92400e)',
             textAlign: 'center',
           }}
@@ -356,7 +356,7 @@ export const WorkerDashboard: React.FC = () => {
             background: 'var(--kt-danger-subtle)',
             color: 'var(--kt-danger)',
             padding: '10px var(--kt-space-6)',
-            fontSize: 12,
+            fontSize: 'var(--kt-text-xs)',
             textAlign: 'center',
           }}
         >
@@ -596,7 +596,7 @@ export const WorkerDashboard: React.FC = () => {
                 <h3 className={styles.completenessTitle}>Complete your profile</h3>
                 <span
                   style={{
-                    fontSize: 22,
+                    fontSize: 'var(--kt-text-xl)',
                     fontWeight: 'var(--kt-weight-bold)',
                     color: 'var(--kt-primary)',
                     lineHeight: 1,
@@ -607,7 +607,7 @@ export const WorkerDashboard: React.FC = () => {
               </div>
               <p
                 style={{
-                  fontSize: 12,
+                  fontSize: 'var(--kt-text-xs)',
                   color: 'var(--kt-text-muted)',
                   lineHeight: 1.5,
                   margin: '0 0 12px',
@@ -684,7 +684,7 @@ export const WorkerDashboard: React.FC = () => {
                     )}
                     <span
                       style={{
-                        fontSize: 12,
+                        fontSize: 'var(--kt-text-xs)',
                         color: item.done ? 'var(--kt-text-muted)' : 'var(--kt-text)',
                         textDecoration: item.done ? 'line-through' : 'none',
                       }}
@@ -710,7 +710,7 @@ export const WorkerDashboard: React.FC = () => {
                     background: 'none',
                     border: 'none',
                     padding: 0,
-                    fontSize: 12,
+                    fontSize: 'var(--kt-text-xs)',
                     color: 'var(--kt-text-muted)',
                     cursor: 'pointer',
                   }}
@@ -720,7 +720,7 @@ export const WorkerDashboard: React.FC = () => {
                 <Link
                   to="/site/profile/edit"
                   style={{
-                    fontSize: 13,
+                    fontSize: 'var(--kt-text-sm)',
                     fontWeight: 'var(--kt-weight-bold)',
                     color: 'var(--kt-navy-600)',
                     textDecoration: 'none',
@@ -911,7 +911,7 @@ export const WorkerDashboard: React.FC = () => {
               {newJobsIsFallback && newJobs.length > 0 && (
                 <p
                   style={{
-                    fontSize: 12,
+                    fontSize: 'var(--kt-text-xs)',
                     color: 'var(--kt-text-muted)',
                     margin: '0 0 8px',
                   }}
@@ -1011,7 +1011,13 @@ export const WorkerDashboard: React.FC = () => {
             >
               Application boosted!
             </p>
-            <p style={{ fontSize: 13, color: 'var(--kt-text-muted)', lineHeight: 1.6 }}>
+            <p
+              style={{
+                fontSize: 'var(--kt-text-sm)',
+                color: 'var(--kt-text-muted)',
+                lineHeight: 1.6,
+              }}
+            >
               Your application for <strong>{boostingApp?.jobTitle}</strong> at{' '}
               <strong>{boostingApp?.companyName}</strong> has been moved to the top of the list.
             </p>
@@ -1028,7 +1034,7 @@ export const WorkerDashboard: React.FC = () => {
             >
               <p
                 style={{
-                  fontSize: 13,
+                  fontSize: 'var(--kt-text-sm)',
                   fontWeight: 'var(--kt-weight-semibold)',
                   color: 'var(--kt-text)',
                   marginBottom: 3,
@@ -1036,7 +1042,7 @@ export const WorkerDashboard: React.FC = () => {
               >
                 {boostingApp?.jobTitle}
               </p>
-              <p style={{ fontSize: 12, color: 'var(--kt-text-muted)' }}>
+              <p style={{ fontSize: 'var(--kt-text-xs)', color: 'var(--kt-text-muted)' }}>
                 {boostingApp?.companyName}
               </p>
             </div>
@@ -1051,7 +1057,13 @@ export const WorkerDashboard: React.FC = () => {
               >
                 $9.99
               </p>
-              <p style={{ fontSize: 12, color: 'var(--kt-text-muted)', marginTop: 4 }}>
+              <p
+                style={{
+                  fontSize: 'var(--kt-text-xs)',
+                  color: 'var(--kt-text-muted)',
+                  marginTop: 4,
+                }}
+              >
                 One-time boost fee
               </p>
             </div>
@@ -1065,14 +1077,20 @@ export const WorkerDashboard: React.FC = () => {
                   <span
                     style={{
                       color: 'var(--kt-primary)',
-                      fontSize: 14,
+                      fontSize: 'var(--kt-text-sm)',
                       marginTop: 1,
                       flexShrink: 0,
                     }}
                   >
                     <CheckIcon size={14} />
                   </span>
-                  <span style={{ fontSize: 12, color: 'var(--kt-text)', lineHeight: 1.5 }}>
+                  <span
+                    style={{
+                      fontSize: 'var(--kt-text-xs)',
+                      color: 'var(--kt-text)',
+                      lineHeight: 1.5,
+                    }}
+                  >
                     {item}
                   </span>
                 </div>
@@ -1113,7 +1131,7 @@ export const WorkerDashboard: React.FC = () => {
             <label
               style={{
                 display: 'block',
-                fontSize: 13,
+                fontSize: 'var(--kt-text-sm)',
                 fontWeight: 'var(--kt-weight-medium)',
                 color: 'var(--kt-text)',
                 marginBottom: 8,
@@ -1131,7 +1149,7 @@ export const WorkerDashboard: React.FC = () => {
                 borderRadius: 'var(--kt-radius-md)',
                 background: 'var(--kt-surface)',
                 color: 'var(--kt-text)',
-                fontSize: 13,
+                fontSize: 'var(--kt-text-sm)',
                 fontFamily: 'var(--kt-font-sans)',
                 outline: 'none',
               }}
@@ -1148,7 +1166,7 @@ export const WorkerDashboard: React.FC = () => {
             <label
               style={{
                 display: 'block',
-                fontSize: 13,
+                fontSize: 'var(--kt-text-sm)',
                 fontWeight: 'var(--kt-weight-medium)',
                 color: 'var(--kt-text)',
                 marginBottom: 8,
@@ -1169,7 +1187,7 @@ export const WorkerDashboard: React.FC = () => {
                 borderRadius: 'var(--kt-radius-md)',
                 background: 'var(--kt-surface)',
                 color: 'var(--kt-text)',
-                fontSize: 13,
+                fontSize: 'var(--kt-text-sm)',
                 fontFamily: 'var(--kt-font-sans)',
                 resize: 'vertical',
                 outline: 'none',
@@ -1203,7 +1221,7 @@ const modalPrimaryBtnStyle: React.CSSProperties = {
   color: 'var(--kt-text-on-primary)',
   border: 'none',
   borderRadius: 'var(--kt-radius-md)',
-  fontSize: 13,
+  fontSize: 'var(--kt-text-sm)',
   fontWeight: 'var(--kt-weight-semibold)',
   cursor: 'pointer',
   fontFamily: 'var(--kt-font-sans)',
@@ -1216,7 +1234,7 @@ const modalSecondaryBtnStyle: React.CSSProperties = {
   color: 'var(--kt-text)',
   border: '0.5px solid var(--kt-border)',
   borderRadius: 'var(--kt-radius-md)',
-  fontSize: 13,
+  fontSize: 'var(--kt-text-sm)',
   fontWeight: 'var(--kt-weight-medium)',
   cursor: 'pointer',
   fontFamily: 'var(--kt-font-sans)',

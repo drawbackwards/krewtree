@@ -116,15 +116,10 @@ export const WorkerNotesTab: React.FC<WorkerNotesTabProps> = ({
         <ul className={logStyles.list}>
           {notes.map((n) => (
             <li key={n.id} className={logStyles.item}>
-              <div className={logStyles.headlineRow}>
-                <p className={logStyles.headline}>
-                  <strong>{n.authorName}</strong>
-                </p>
-              </div>
-              <div className={logStyles.noteBox}>{n.text}</div>
-              <div className={logStyles.footer}>
+              <div className={logStyles.noteBox}>
+                <span className={logStyles.noteLabel}>Note:</span> {n.text}
                 <time
-                  className={logStyles.timestamp}
+                  className={logStyles.noteBoxTime}
                   dateTime={n.createdAt}
                   title={formatLogTimestamp(n.createdAt)}
                 >

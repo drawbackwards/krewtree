@@ -304,7 +304,7 @@
 }
 
 .successIcon {
-  font-size: 48px;
+  font-size: var(--kt-text-5xl);
   margin-bottom: var(--kt-space-4);
 }
 

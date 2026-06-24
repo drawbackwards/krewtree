@@ -35,7 +35,7 @@ const FilterSection = ({ title, children }: { title: string; children: React.Rea
   <div style={{ marginBottom: 24 }}>
     <p
       style={{
-        fontSize: 'var(--kt-text-sm)',
+        fontSize: 'var(--kt-text-xs)',
         fontWeight: 'var(--kt-weight-semibold)',
         color: 'var(--kt-text)',
         marginBottom: 10,
@@ -189,7 +189,7 @@ const DistanceFilter: React.FC<DistanceFilterProps> = ({
                 background: 'transparent',
                 color: 'var(--kt-primary)',
                 cursor: 'pointer',
-                fontSize: 12,
+                fontSize: 'var(--kt-text-xs)',
                 borderRadius: '50%',
                 flexShrink: 0,
               }}
@@ -633,10 +633,9 @@ export const JobsPage: React.FC = () => {
         <div className={styles.headerInner}>
           <h1
             style={{
-              fontSize: 'var(--kt-text-3xl)',
-              fontWeight: 'var(--kt-weight-display)',
+              fontSize: 'var(--kt-text-2xl)',
+              fontWeight: 'var(--kt-weight-semibold)',
               color: 'var(--kt-text)',
-              letterSpacing: '-0.03em',
               marginBottom: 20,
             }}
           >

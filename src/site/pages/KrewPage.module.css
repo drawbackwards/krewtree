@@ -97,7 +97,7 @@
   background: var(--kt-bg);
   color: var(--kt-text);
   font-family: var(--kt-font-sans);
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   outline: none;
 }
 
@@ -121,7 +121,7 @@
   background: var(--kt-bg);
   color: var(--kt-text);
   font-family: var(--kt-font-sans);
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   font-weight: var(--kt-weight-medium);
   cursor: pointer;
   white-space: nowrap;
@@ -150,7 +150,7 @@
   background: var(--kt-primary);
   color: var(--kt-primary-fg);
   border-radius: 999px;
-  font-size: 10px;
+  font-size: var(--kt-text-2xs);
   font-weight: var(--kt-weight-bold);
   font-variant-numeric: tabular-nums;
 }
@@ -177,7 +177,7 @@
   gap: 8px;
   padding: 6px 8px;
   border-radius: var(--kt-radius-sm);
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   color: var(--kt-text);
   font-family: var(--kt-font-sans);
   cursor: pointer;
@@ -200,7 +200,7 @@
   border-radius: var(--kt-radius-md);
   background: var(--kt-bg);
   font-family: var(--kt-font-sans);
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   font-weight: var(--kt-weight-medium);
   color: var(--kt-text);
   cursor: pointer;
@@ -227,7 +227,7 @@
   border: none;
   padding: 0;
   font-family: var(--kt-font-sans);
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   color: var(--kt-primary);
   cursor: pointer;
   text-decoration: underline;
@@ -252,7 +252,7 @@
 }
 
 .bulkCount {
-  font-size: 13px;
+  font-size: var(--kt-text-sm);
   font-weight: var(--kt-weight-semibold);
   color: var(--kt-text);
   flex-shrink: 0;
@@ -273,7 +273,7 @@
   background: var(--kt-surface);
   color: var(--kt-text);
   font-family: var(--kt-font-sans);
-  font-size: 11px;
+  font-size: var(--kt-text-xs);
   font-weight: var(--kt-weight-medium);
   cursor: pointer;
   white-space: nowrap;
@@ -297,7 +297,7 @@
   border: none;
   padding: 0;
   font-family: var(--kt-font-sans);
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   color: var(--kt-text-muted);
   cursor: pointer;
   text-decoration: underline;
@@ -323,7 +323,7 @@
 }
 
 .paginationInfo {
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   color: var(--kt-text-muted);
 }
 
@@ -338,7 +338,7 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   color: var(--kt-text-muted);
   font-family: var(--kt-font-sans);
 }
@@ -351,7 +351,7 @@
   background: var(--kt-bg);
   color: var(--kt-text);
   font-family: var(--kt-font-sans);
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   cursor: pointer;
   appearance: none;
   background-image:
@@ -379,7 +379,7 @@
   background: var(--kt-surface);
   color: var(--kt-text);
   font-family: var(--kt-font-sans);
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   cursor: pointer;
 }
 
@@ -403,7 +403,7 @@
 }
 
 .pagerEllipsis {
-  font-size: 11px;
+  font-size: var(--kt-text-xs);
   color: var(--kt-text-muted);
   padding: 0 4px;
 }
@@ -429,7 +429,7 @@
   background: transparent;
   border: none;
   cursor: pointer;
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   font-family: var(--kt-font-sans);
   color: var(--kt-text);
   font-weight: var(--kt-weight-medium);
@@ -774,7 +774,7 @@
   padding-bottom: 8px;
   min-height: 0;
   background: var(--kt-bg);
-  font-size: 11px;
+  font-size: var(--kt-text-xs);
   font-weight: var(--kt-weight-semibold);
   color: var(--kt-text-muted);
   text-transform: uppercase;
@@ -787,7 +787,7 @@
   border: none;
   padding: 0;
   font-family: var(--kt-font-sans);
-  font-size: 11px;
+  font-size: var(--kt-text-xs);
   font-weight: var(--kt-weight-semibold);
   color: var(--kt-text-muted);
   text-transform: uppercase;
@@ -804,13 +804,13 @@
 }
 
 .sortIndicator {
-  font-size: 10px;
+  font-size: var(--kt-text-2xs);
   color: var(--kt-primary);
   font-weight: var(--kt-weight-bold);
 }
 
 .regulixHeader {
-  font-size: 11px;
+  font-size: var(--kt-text-xs);
   font-weight: var(--kt-weight-semibold);
   color: var(--kt-text-muted);
   text-transform: uppercase;
@@ -838,7 +838,7 @@
 .emptyRow {
   padding: 56px 24px;
   text-align: center;
-  font-size: 13px;
+  font-size: var(--kt-text-sm);
   color: var(--kt-text-muted);
   /* Match the row min-width so the empty text stays centered when the card scrolls */
   min-width: 760px;
@@ -863,7 +863,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
+  font-size: var(--kt-text-xs);
   font-weight: var(--kt-weight-bold);
   flex-shrink: 0;
 }
@@ -876,7 +876,7 @@
 }
 
 .workerName {
-  font-size: 13px;
+  font-size: var(--kt-text-sm);
   font-weight: var(--kt-weight-semibold);
   color: var(--kt-text);
   overflow: hidden;
@@ -892,7 +892,7 @@
 }
 
 .tradeCell {
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   color: var(--kt-text);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -900,19 +900,19 @@
 }
 
 .numberCell {
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   color: var(--kt-text);
   font-variant-numeric: tabular-nums;
 }
 
 .dateCell {
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   color: var(--kt-text-muted);
   white-space: nowrap;
 }
 
 .dashCell {
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   color: var(--kt-text-placeholder);
 }
 
@@ -925,7 +925,7 @@
   background: var(--kt-accent-subtle);
   color: var(--kt-accent);
   border-radius: var(--kt-radius-md);
-  font-size: 11px;
+  font-size: var(--kt-text-xs);
   font-weight: var(--kt-weight-semibold);
   font-variant-numeric: tabular-nums;
 }
@@ -1103,7 +1103,7 @@
 }
 
 .drawerPlaceholderMuted {
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   color: var(--kt-text-muted);
   margin: 0;
   font-family: var(--kt-font-mono, monospace);

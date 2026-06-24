@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Badge } from '../../components'
 import { DotsHorizontalIcon, RocketIcon, RegulixMarkIcon, SearchIcon } from '../icons'
 import { useAuth } from '../context/AuthContext'
-import { getCompanyJobs, updateJob } from '../services/jobService'
+import { getCompanyJobs, updateJob, deleteJob } from '../services/jobService'
 import type { Job } from '../types'
 import { ManageListingModal } from '../components/ManageListingModal/ManageListingModal'
 import { ArchiveListingModal } from '../components/ArchiveListingModal/ArchiveListingModal'
@@ -18,15 +18,31 @@ function formatShortDate(isoString: string): string {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
+function formatScheduledDate(isoString: string): string {
+  const d = new Date(isoString)
+  return d.toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  })
+}
+
 function statusLabel(status: Job['status']): string {
   if (status === 'active') return 'Open'
   if (status === 'paused') return 'Paused'
+  if (status === 'scheduled') return 'Scheduled'
+  if (status === 'draft') return 'Draft'
   return 'Archived'
 }
 
-function statusVariant(status: Job['status']): 'success' | 'warning' | 'secondary' {
+function statusVariant(
+  status: Job['status']
+): 'success' | 'warning' | 'secondary' | 'info' | 'neutral' {
   if (status === 'active') return 'success'
   if (status === 'paused') return 'warning'
+  if (status === 'scheduled') return 'info'
+  if (status === 'draft') return 'neutral'
   return 'secondary'
 }
 
@@ -42,11 +58,13 @@ const ApplicantCount: React.FC<{ total: number; regulixReady: number }> = ({
   regulixReady,
 }) => (
   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-    <span style={{ fontSize: 12, color: 'var(--kt-text)' }}>{total}</span>
+    <span style={{ fontSize: 'var(--kt-text-xs)', color: 'var(--kt-text)' }}>{total}</span>
     {regulixReady > 0 && (
       <>
-        <span style={{ color: 'var(--kt-text-muted)', fontSize: 11 }}>·</span>
-        <span style={{ fontSize: 12, color: 'var(--kt-text)' }}>{regulixReady}</span>
+        <span style={{ color: 'var(--kt-text-muted)', fontSize: 'var(--kt-text-xs)' }}>·</span>
+        <span style={{ fontSize: 'var(--kt-text-xs)', color: 'var(--kt-text)' }}>
+          {regulixReady}
+        </span>
         <RegulixMarkIcon size={14} />
       </>
     )}
@@ -128,7 +146,8 @@ const SortIndicator: React.FC<{ active: boolean; direction: SortDir }> = ({
   active,
   direction,
 }) => {
-  if (!active) return <span style={{ color: 'var(--kt-text-muted)', fontSize: 10 }}>↕</span>
+  if (!active)
+    return <span style={{ color: 'var(--kt-text-muted)', fontSize: 'var(--kt-text-2xs)' }}>↕</span>
   return <span className={styles.sortIndicator}>{direction === 'asc' ? '↑' : '↓'}</span>
 }
 
@@ -211,6 +230,8 @@ export const JobPostsPage: React.FC = () => {
     () => ({
       all: filtered.length,
       active: filtered.filter((j) => j.status === 'active').length,
+      draft: filtered.filter((j) => j.status === 'draft').length,
+      scheduled: filtered.filter((j) => j.status === 'scheduled').length,
       paused: filtered.filter((j) => j.status === 'paused').length,
       closed: filtered.filter((j) => j.status === 'closed').length,
     }),
@@ -308,6 +329,25 @@ export const JobPostsPage: React.FC = () => {
     const { error } = await updateJob(jobId, { status })
     if (!error) {
       setAllJobs((prev) => prev.map((j) => (j.id === jobId ? { ...j, status } : j)))
+    }
+  }
+
+  // Publish immediately: go active and clear any pending scheduled time.
+  // Used for both scheduled jobs and drafts.
+  const handlePublishNow = async (jobId: string) => {
+    const { error } = await updateJob(jobId, { status: 'active', publishAt: null })
+    if (!error) {
+      setAllJobs((prev) =>
+        prev.map((j) => (j.id === jobId ? { ...j, status: 'active', publishAt: null } : j))
+      )
+    }
+  }
+
+  // Hard-delete a draft (drafts were never public).
+  const handleDeleteDraft = async (jobId: string) => {
+    const { error } = await deleteJob(jobId)
+    if (!error) {
+      setAllJobs((prev) => prev.filter((j) => j.id !== jobId))
     }
   }
 
@@ -420,7 +460,9 @@ export const JobPostsPage: React.FC = () => {
           {(
             [
               { key: 'all', label: 'All', count: statusCounts.all },
+              { key: 'draft', label: 'Drafts', count: statusCounts.draft },
               { key: 'active', label: 'Open', count: statusCounts.active },
+              { key: 'scheduled', label: 'Scheduled', count: statusCounts.scheduled },
               { key: 'paused', label: 'Paused', count: statusCounts.paused },
               { key: 'closed', label: 'Archived', count: statusCounts.closed },
             ] as const
@@ -549,26 +591,54 @@ export const JobPostsPage: React.FC = () => {
                       onClick: () => setArchiveTarget(job),
                     },
                   ]
-                : job.status === 'paused'
+                : job.status === 'draft'
                   ? [
                       { label: 'Edit', onClick: () => navigate(`/site/post-job/${job.id}`) },
+                      { label: 'Publish now', onClick: () => handlePublishNow(job.id) },
                       {
                         label: 'Duplicate',
                         onClick: () => navigate(`/site/post-job?duplicate=${job.id}`),
                       },
                       {
-                        label: 'Archive',
+                        label: 'Delete',
                         danger: true,
-                        onClick: () => setArchiveTarget(job),
+                        onClick: () => handleDeleteDraft(job.id),
                       },
                     ]
-                  : [
-                      {
-                        label: 'Duplicate',
-                        onClick: () => navigate(`/site/post-job?duplicate=${job.id}`),
-                      },
-                      { label: 'Delete', danger: true, onClick: () => {} },
-                    ]
+                  : job.status === 'scheduled'
+                    ? [
+                        { label: 'Edit', onClick: () => navigate(`/site/post-job/${job.id}`) },
+                        { label: 'Publish now', onClick: () => handlePublishNow(job.id) },
+                        {
+                          label: 'Duplicate',
+                          onClick: () => navigate(`/site/post-job?duplicate=${job.id}`),
+                        },
+                        {
+                          label: 'Archive',
+                          danger: true,
+                          onClick: () => setArchiveTarget(job),
+                        },
+                      ]
+                    : job.status === 'paused'
+                      ? [
+                          { label: 'Edit', onClick: () => navigate(`/site/post-job/${job.id}`) },
+                          {
+                            label: 'Duplicate',
+                            onClick: () => navigate(`/site/post-job?duplicate=${job.id}`),
+                          },
+                          {
+                            label: 'Archive',
+                            danger: true,
+                            onClick: () => setArchiveTarget(job),
+                          },
+                        ]
+                      : [
+                          {
+                            label: 'Duplicate',
+                            onClick: () => navigate(`/site/post-job?duplicate=${job.id}`),
+                          },
+                          { label: 'Delete', danger: true, onClick: () => {} },
+                        ]
 
             const primaryAction =
               job.status === 'active' ? (
@@ -578,6 +648,22 @@ export const JobPostsPage: React.FC = () => {
                   onClick={() => navigate(`/site/dashboard/applicants?jobId=${job.id}`)}
                 >
                   View applicants
+                </button>
+              ) : job.status === 'draft' ? (
+                <button
+                  type="button"
+                  className={styles.primaryAction}
+                  onClick={() => navigate(`/site/post-job/${job.id}`)}
+                >
+                  Continue editing
+                </button>
+              ) : job.status === 'scheduled' ? (
+                <button
+                  type="button"
+                  className={styles.primaryAction}
+                  onClick={() => handlePublishNow(job.id)}
+                >
+                  Publish now
                 </button>
               ) : job.status === 'paused' ? (
                 <button
@@ -613,12 +699,18 @@ export const JobPostsPage: React.FC = () => {
                   </Link>
                 </div>
                 <div>
-                  <Badge variant={statusVariant(job.status)} size="sm">
+                  <Badge
+                    variant={statusVariant(job.status)}
+                    size="sm"
+                    className={job.status === 'closed' ? styles.archivedBadge : undefined}
+                  >
                     {statusLabel(job.status)}
                   </Badge>
                 </div>
                 <div style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text-muted)' }}>
-                  {formatShortDate(job.createdAt)}
+                  {job.status === 'scheduled' && job.publishAt
+                    ? `Goes live ${formatScheduledDate(job.publishAt)}`
+                    : formatShortDate(job.createdAt)}
                 </div>
                 <div
                   className={styles.alignCenter}

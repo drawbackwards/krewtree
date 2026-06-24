@@ -77,7 +77,7 @@
 }
 
 .barDay {
-  font-size: 10px;
+  font-size: var(--kt-text-2xs);
   color: var(--kt-text-placeholder);
   margin-top: 4px;
 }
@@ -102,5 +102,10 @@
   border-radius: 2px;
 }
 
-.legendDot.views { background: var(--kt-primary); opacity: 0.7; }
-.legendDot.applications { background: var(--kt-accent); }
+.legendDot.views {
+  background: var(--kt-primary);
+  opacity: 0.7;
+}
+.legendDot.applications {
+  background: var(--kt-accent);
+}

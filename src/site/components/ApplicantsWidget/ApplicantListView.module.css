@@ -12,7 +12,7 @@
 }
 
 .headerCell {
-  font-size: 11px;
+  font-size: var(--kt-text-xs);
   font-weight: var(--kt-weight-semibold);
   color: var(--kt-text-muted);
   text-transform: uppercase;
@@ -75,7 +75,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 9px;
+  font-size: var(--kt-text-2xs);
   font-weight: var(--kt-weight-semibold);
   color: var(--kt-navy-700, var(--kt-text-muted));
   flex-shrink: 0;
@@ -98,7 +98,7 @@
 }
 
 .applicantName {
-  font-size: 13px;
+  font-size: var(--kt-text-sm);
   font-weight: var(--kt-weight-medium);
   color: var(--kt-text);
   white-space: nowrap;
@@ -108,7 +108,7 @@
 }
 
 .applicantTrade {
-  font-size: 11px;
+  font-size: var(--kt-text-xs);
   color: var(--kt-text-muted);
   white-space: nowrap;
   overflow: hidden;
@@ -139,7 +139,7 @@
 
 /* Applied date cell */
 .appliedCell {
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   color: var(--kt-text-muted);
 }
 
@@ -158,7 +158,7 @@
   border-radius: var(--kt-radius-sm);
   background: transparent;
   font-family: var(--kt-font-sans);
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   font-weight: var(--kt-weight-medium);
   color: var(--kt-text);
   cursor: pointer;
@@ -209,7 +209,7 @@
   border: none;
   background: transparent;
   font-family: var(--kt-font-sans);
-  font-size: 13px;
+  font-size: var(--kt-text-sm);
   color: var(--kt-text);
   text-align: left;
   cursor: pointer;

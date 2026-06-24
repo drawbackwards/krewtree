@@ -32,14 +32,14 @@
   border: none;
   color: var(--kt-navy-500);
   font-family: inherit;
-  font-size: 12px;
+  font-size: var(--kt-text-xs);
   font-weight: var(--kt-weight-bold);
   cursor: pointer;
   max-width: 60%;
 }
 
 .backArrow {
-  font-size: 14px;
+  font-size: var(--kt-text-sm);
   line-height: 1;
 }
 
@@ -213,7 +213,7 @@
   align-items: center;
   gap: 6px;
   padding: 10px 0;
-  font-size: 13px;
+  font-size: var(--kt-text-sm);
   font-weight: var(--kt-weight-semibold);
   font-family: var(--kt-font-sans);
   color: var(--kt-text-muted);
@@ -234,7 +234,7 @@
   border-radius: 999px;
   background: var(--kt-grey-100);
   color: var(--kt-text-muted);
-  font-size: 11px;
+  font-size: var(--kt-text-xs);
   font-weight: var(--kt-weight-semibold);
   line-height: 1;
   font-variant-numeric: tabular-nums;

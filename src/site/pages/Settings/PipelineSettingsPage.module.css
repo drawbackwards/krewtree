@@ -1,5 +1,5 @@
 .intro {
-  font-size: var(--kt-font-size-sm);
+  font-size: var(--kt-text-sm);
   color: var(--kt-text-muted);
   margin: 0 0 24px;
   max-width: 640px;
@@ -34,14 +34,14 @@
 }
 
 .stageLabel {
-  font-size: var(--kt-font-size-lg);
+  font-size: var(--kt-text-lg);
   font-weight: var(--kt-weight-bold);
   color: var(--kt-text);
   margin: 0;
 }
 
 .stageCount {
-  font-size: var(--kt-font-size-sm);
+  font-size: var(--kt-text-sm);
   color: var(--kt-text-muted);
 }
 
@@ -90,7 +90,7 @@
   border: none;
   background: transparent;
   font-family: var(--kt-font-sans);
-  font-size: 13px;
+  font-size: var(--kt-text-sm);
   color: var(--kt-text);
   text-align: left;
   cursor: pointer;
@@ -109,7 +109,7 @@
 .purposeInput {
   width: 100%;
   font-family: inherit;
-  font-size: var(--kt-font-size-sm);
+  font-size: var(--kt-text-sm);
   color: var(--kt-text);
   background: transparent;
   border: none;
@@ -141,7 +141,7 @@
 }
 
 .slaLabel {
-  font-size: var(--kt-font-size-xs);
+  font-size: var(--kt-text-xs);
   font-weight: var(--kt-weight-bold);
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -152,14 +152,14 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: var(--kt-font-size-sm);
+  font-size: var(--kt-text-sm);
   color: var(--kt-text-muted);
 }
 
 .slaInput {
   width: 60px;
   font-family: inherit;
-  font-size: var(--kt-font-size-sm);
+  font-size: var(--kt-text-sm);
   color: var(--kt-text);
   background: var(--kt-surface);
   border: 1px solid var(--kt-border);
@@ -189,7 +189,7 @@
 }
 
 .empty {
-  font-size: var(--kt-font-size-sm);
+  font-size: var(--kt-text-sm);
   color: var(--kt-text-muted);
   font-style: italic;
   padding: 8px 0;
@@ -265,7 +265,7 @@
 }
 
 .messageLabel {
-  font-size: var(--kt-font-size-xs);
+  font-size: var(--kt-text-xs);
   color: var(--kt-text-muted);
   font-weight: var(--kt-weight-bold);
   text-transform: uppercase;
@@ -273,7 +273,7 @@
 }
 
 .messageInput {
-  font-size: var(--kt-font-size-sm);
+  font-size: var(--kt-text-sm);
   font-family: inherit;
   background: var(--kt-surface);
   border: 1px solid var(--kt-border);
@@ -288,7 +288,7 @@
 }
 
 .messageTextarea {
-  font-size: var(--kt-font-size-sm);
+  font-size: var(--kt-text-sm);
   font-family: inherit;
   background: var(--kt-surface);
   border: 1px solid var(--kt-border);
@@ -316,14 +316,14 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: var(--kt-font-size-sm);
+  font-size: var(--kt-text-sm);
   color: var(--kt-text);
   cursor: pointer;
   user-select: none;
 }
 
 .messageHint {
-  font-size: var(--kt-font-size-xs);
+  font-size: var(--kt-text-xs);
   color: var(--kt-text-muted);
 }
 
@@ -331,7 +331,7 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: var(--kt-font-size-xs);
+  font-size: var(--kt-text-xs);
   color: var(--kt-navy-500);
   font-weight: var(--kt-weight-bold);
 }
@@ -340,7 +340,7 @@
   background: transparent;
   border: none;
   color: var(--kt-navy-500);
-  font-size: var(--kt-font-size-xs);
+  font-size: var(--kt-text-xs);
   font-weight: var(--kt-weight-bold);
   cursor: pointer;
   padding: 4px 8px;
@@ -352,13 +352,13 @@
 }
 
 .taskLabel {
-  font-size: var(--kt-font-size-sm);
+  font-size: var(--kt-text-sm);
   color: var(--kt-text);
 }
 
 .editInput {
   width: 100%;
-  font-size: var(--kt-font-size-sm);
+  font-size: var(--kt-text-sm);
   font-family: inherit;
   background: var(--kt-surface);
   border: 1px solid var(--kt-border);
@@ -376,7 +376,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: var(--kt-font-size-xs);
+  font-size: var(--kt-text-xs);
   color: var(--kt-text-muted);
   cursor: pointer;
   user-select: none;
@@ -399,7 +399,7 @@
   color: var(--kt-text-muted);
   padding: 4px 8px;
   border-radius: 6px;
-  font-size: var(--kt-font-size-xs);
+  font-size: var(--kt-text-xs);
   font-weight: var(--kt-weight-medium);
 }
 
@@ -424,7 +424,7 @@
 
 .addInput {
   width: 100%;
-  font-size: var(--kt-font-size-sm);
+  font-size: var(--kt-text-sm);
   font-family: inherit;
   background: transparent;
   border: none;
@@ -446,7 +446,7 @@
   border: none;
   border-radius: var(--kt-radius-md);
   padding: 6px 14px;
-  font-size: var(--kt-font-size-sm);
+  font-size: var(--kt-text-sm);
   font-weight: var(--kt-weight-bold);
   cursor: pointer;
 }
@@ -457,7 +457,7 @@
 }
 
 .loading {
-  font-size: var(--kt-font-size-sm);
+  font-size: var(--kt-text-sm);
   color: var(--kt-text-muted);
   padding: 24px 0;
   text-align: center;
@@ -473,7 +473,7 @@
 }
 
 .bulkMoveText {
-  font-size: var(--kt-font-size-sm);
+  font-size: var(--kt-text-sm);
   color: var(--kt-text);
   margin: 0;
   line-height: 1.5;
@@ -481,7 +481,7 @@
 
 .bulkMoveSelect {
   font-family: inherit;
-  font-size: var(--kt-font-size-sm);
+  font-size: var(--kt-text-sm);
   color: var(--kt-text);
   background: var(--kt-surface);
   border: 1px solid var(--kt-border);
@@ -495,7 +495,7 @@
 }
 
 .bulkMoveError {
-  font-size: var(--kt-font-size-xs);
+  font-size: var(--kt-text-xs);
   color: var(--kt-danger);
   margin: 0;
 }
