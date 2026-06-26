@@ -770,6 +770,7 @@ export const JobPostsPage: React.FC = () => {
                 </button>
                 {pageButtons.map((p, i) =>
                   p === '…' ? (
+                    // eslint-disable-next-line react/no-array-index-key
                     <span key={`ellipsis-${i}`} className={styles.pagerEllipsis}>
                       …
                     </span>

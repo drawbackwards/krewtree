@@ -62,6 +62,9 @@ export const QuickApplyModal: React.FC<QuickApplyModalProps> = ({
 
   useEffect(() => {
     setQuestionAnswers(job?.preInterviewQuestions?.map(() => '') ?? [])
+    // Re-initialize answers only when switching jobs; depending on the
+    // questions array itself would reset answers on every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [job?.id])
 
   const handleResend = async () => {
@@ -310,8 +313,8 @@ export const QuickApplyModal: React.FC<QuickApplyModalProps> = ({
                   label: 'They reach out if interested',
                   body: 'If selected, the employer will message you through krewtree to set up next steps.',
                 },
-              ].map((step, i) => (
-                <div key={i} className={styles.confirmStep}>
+              ].map((step) => (
+                <div key={step.label} className={styles.confirmStep}>
                   <div className={styles.confirmStepIcon}>{step.icon}</div>
                   <div>
                     <div className={styles.confirmStepLabel}>{step.label}</div>
@@ -383,6 +386,8 @@ export const QuickApplyModal: React.FC<QuickApplyModalProps> = ({
             <div className={styles.questionsSection}>
               <div className={styles.sectionLabel}>Questions from the employer</div>
               {job.preInterviewQuestions.map((question, i) => (
+                // Questions are positional and bound to questionAnswers[i]; the list never reorders.
+                // eslint-disable-next-line react/no-array-index-key
                 <div key={i} className={styles.questionItem}>
                   <label className={styles.questionLabel}>{question}</label>
                   <textarea

@@ -198,6 +198,9 @@ export const DiscoverPage: React.FC = () => {
       sort: stuckSort ? null : sortBy,
       radius: null,
     })
+    // updateFilters is the URL writer this self-heal effect calls; adding it
+    // to deps would re-fire on every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [coordsChecked, hasCompanyCoords, nearCity, sortBy, radiusMi])
 
   // Debounced city-typeahead lookup.

@@ -47,6 +47,7 @@ export const ChatPaneProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   return <ChatPaneContext.Provider value={value}>{children}</ChatPaneContext.Provider>
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useChatPane(): ChatPaneContextValue {
   const ctx = useContext(ChatPaneContext)
   if (!ctx) throw new Error('useChatPane must be used within ChatPaneProvider')

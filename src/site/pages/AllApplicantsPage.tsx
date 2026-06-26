@@ -850,6 +850,7 @@ export const AllApplicantsPage: React.FC = () => {
                   </button>
                   {pageButtons.map((b, i) =>
                     b === '…' ? (
+                      // eslint-disable-next-line react/no-array-index-key
                       <span key={`dots-${i}`} className={styles.pagerEllipsis}>
                         …
                       </span>

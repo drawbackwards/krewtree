@@ -206,6 +206,9 @@ export const CompanyProfilePage: React.FC = () => {
     }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
+    // stepViewer only closes over setViewerIndex (stable) and photoCount
+    // (already a dep); listing it would re-bind the listener every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [viewerIndex, photoCount])
 
   useEffect(() => {

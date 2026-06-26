@@ -568,6 +568,7 @@ export const WorkerDashboard: React.FC = () => {
                 const isLast = i === Math.max(0, 5 - applications.length) - 1
                 return (
                   <div
+                    // eslint-disable-next-line react/no-array-index-key
                     key={`filler-${i}`}
                     aria-hidden="true"
                     className={`${styles.row} ${styles.appsRow}`}

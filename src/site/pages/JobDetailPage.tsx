@@ -527,6 +527,7 @@ export const JobDetailPage: React.FC = () => {
                   }}
                 >
                   {job.requirements.map((req, i) => (
+                    // eslint-disable-next-line react/no-array-index-key
                     <li key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
                       <span
                         style={{
@@ -600,6 +601,7 @@ export const JobDetailPage: React.FC = () => {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   {questions.map((q, i) => (
                     <div
+                      // eslint-disable-next-line react/no-array-index-key
                       key={i}
                       style={{
                         display: 'flex',

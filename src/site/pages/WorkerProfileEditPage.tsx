@@ -396,6 +396,9 @@ export const WorkerProfileEditPage: React.FC = () => {
       })
       prefillDone.current = true
     })
+    // Prefill runs once the user id is known and is guarded by prefillDone;
+    // re-running on every `user` object identity change is unwanted.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id])
 
   const scrollToSection = (stepNum: number) => {

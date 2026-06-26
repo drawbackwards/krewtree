@@ -64,6 +64,9 @@ export const AccountSettingsPage: React.FC = () => {
         setPhoneOriginal(data.phone ?? '')
       }
     })
+    // Load the company phone once the user id is known; re-running on every
+    // `user` identity change is unnecessary.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id])
 
   const handleUpdatePhone = async () => {

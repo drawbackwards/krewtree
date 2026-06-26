@@ -734,6 +734,7 @@ const ActiveJobsModule: React.FC<ActiveJobsModuleProps> = ({ rows }) => {
             const isLast = i === Math.max(0, 5 - rows.length) - 1
             return (
               <div
+                // eslint-disable-next-line react/no-array-index-key
                 key={`filler-${i}`}
                 aria-hidden="true"
                 className={`${dashStyles.jobsRow} ${dashStyles.jobsRowFiller}`}

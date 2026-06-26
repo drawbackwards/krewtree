@@ -123,6 +123,7 @@ export const DrawerStackProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
 // ── Hook ────────────────────────────────────────────────────────────────────
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useDrawerStack(): DrawerStackValue {
   const ctx = useContext(DrawerStackContext)
   if (!ctx) {

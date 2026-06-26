@@ -72,8 +72,8 @@ export const ApplicantPreviewBody: React.FC<ApplicantPreviewBodyProps> = ({ appl
         <section className={styles.section}>
           <h3 className={styles.sectionHeading}>Pre-apply answers</h3>
           <ul className={styles.qaList}>
-            {applicant.preInterviewAnswers.map((qa, i) => (
-              <li key={i} className={styles.qaItem}>
+            {applicant.preInterviewAnswers.map((qa) => (
+              <li key={qa.question} className={styles.qaItem}>
                 <p className={styles.qaQuestion}>{qa.question}</p>
                 <p
                   className={[styles.qaAnswer, qa.answer.trim() ? '' : styles.qaAnswerEmpty]
@@ -96,7 +96,7 @@ export const ApplicantPreviewBody: React.FC<ApplicantPreviewBodyProps> = ({ appl
             {applicant.workerJobHistory.slice(0, 3).map((job, i, arr) => {
               const isLast = i === arr.length - 1
               return (
-                <div key={`${job.employer}-${i}`} className={styles.timelineRow}>
+                <div key={`${job.employer}-${job.title}`} className={styles.timelineRow}>
                   <div className={styles.timelineMarker}>
                     <div className={styles.timelineDot} />
                     {!isLast && <div className={styles.timelineLine} />}

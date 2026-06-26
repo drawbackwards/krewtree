@@ -77,7 +77,7 @@ export const WeekCalendarWidget: React.FC<Props> = ({ companyId }) => {
           const dayEvents = eventsForDay(day)
 
           return (
-            <div key={i} className={styles.dayCol}>
+            <div key={day.toISOString()} className={styles.dayCol}>
               <div className={styles.dayHeader}>
                 <span className={styles.weekday}>{WEEKDAYS[i]}</span>
                 <span className={isToday ? styles.dateToday : styles.date}>{day.getDate()}</span>

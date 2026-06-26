@@ -42,6 +42,7 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({ analytics }) => 
           {analytics.viewsByDay.map((views, i) => {
             const viewHeight = Math.round((views / overallMax) * 52)
             return (
+              // eslint-disable-next-line react/no-array-index-key
               <div key={i} className={styles.barWrap}>
                 <div
                   className={[styles.bar, styles.views].join(' ')}

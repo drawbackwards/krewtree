@@ -74,10 +74,9 @@ export const AvatarGroup: React.FC<AvatarGroupProps> = ({
 
   return (
     <div className={[styles.group, className ?? ''].filter(Boolean).join(' ')} {...props}>
-      {overflow > 0 && (
-        <Avatar size={size} variant="neutral" initials={`+${overflow}`} />
-      )}
+      {overflow > 0 && <Avatar size={size} variant="neutral" initials={`+${overflow}`} />}
       {[...visible].reverse().map((child, i) => (
+        // eslint-disable-next-line react/no-array-index-key
         <React.Fragment key={i}>{child}</React.Fragment>
       ))}
     </div>

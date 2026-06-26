@@ -33,7 +33,7 @@ export const WorkerSummaryTab: React.FC<WorkerSummaryTabProps> = ({ worker }) =>
             {worker.jobHistory.slice(0, 3).map((job, i, arr) => {
               const isLast = i === arr.length - 1
               return (
-                <div key={`${job.employer}-${i}`} className={previewStyles.timelineRow}>
+                <div key={`${job.employer}-${job.title}`} className={previewStyles.timelineRow}>
                   <div className={previewStyles.timelineMarker}>
                     <div className={previewStyles.timelineDot} />
                     {!isLast && <div className={previewStyles.timelineLine} />}

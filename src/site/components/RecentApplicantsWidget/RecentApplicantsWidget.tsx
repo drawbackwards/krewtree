@@ -108,6 +108,7 @@ export const RecentApplicantsWidget: React.FC<RecentApplicantsWidgetProps> = ({
               ))}
               {Array.from({ length: Math.max(0, 5 - rows.length) }).map((_, i) => (
                 <div
+                  // eslint-disable-next-line react/no-array-index-key
                   key={`filler-${i}`}
                   className={[styles.row, styles.fillerRow].join(' ')}
                   aria-hidden="true"
