@@ -25,10 +25,8 @@ export async function getWorkerProfile(
 ): Promise<{ data: WorkerProfileRow | null; error: string | null }> {
   // Reads the masked view, not the base table: phone is returned only to the
   // worker themselves or a company they applied to (authenticated can't read
-  // the raw phone column). The view isn't in the generated types, so use the
-  // same loose `from` escape hatch the services use for non-generated relations.
-  const db = supabase as unknown as { from: (t: string) => ReturnType<typeof supabase.from> }
-  const { data, error } = await db
+  // the raw phone column).
+  const { data, error } = await supabase
     .from('worker_profiles_secure')
     .select(
       'first_name, last_name, city, region, primary_trade, avatar_url, bio, phone, is_regulix_ready, performance_score, profile_complete_pct, total_hours_worked'
@@ -37,7 +35,7 @@ export async function getWorkerProfile(
     .single()
 
   if (error) return { data: null, error: error.message }
-  return { data: data as unknown as WorkerProfileRow, error: null }
+  return { data, error: null }
 }
 
 // ── Applications ───────────────────────────────────────────────────────────────
@@ -274,9 +272,7 @@ export async function getFullWorkerProfile(
 ): Promise<{ data: FullWorkerProfile | null; error: string | null }> {
   // phone comes from the masked view (returned only to the worker themselves
   // or a company they applied to); the raw column is no longer readable by
-  // authenticated. The view isn't in the generated types, so use the loose
-  // `from` escape hatch the services use for non-generated relations.
-  const db = supabase as unknown as { from: (t: string) => ReturnType<typeof supabase.from> }
+  // authenticated.
   const [
     profileRes,
     industriesRes,
@@ -287,7 +283,7 @@ export async function getFullWorkerProfile(
     resumeRes,
     referencesRes,
   ] = await Promise.all([
-    db
+    supabase
       .from('worker_profiles_secure')
       .select(
         'first_name, last_name, city, region, phone, primary_trade, bio, avatar_url, is_regulix_ready, performance_score, profile_complete_pct, total_hours_worked, references_count, references_consent_confirmed_at'
@@ -330,22 +326,7 @@ export async function getFullWorkerProfile(
   if (profileRes.error) return { data: null, error: profileRes.error.message }
   if (!profileRes.data) return { data: null, error: 'Profile not found' }
 
-  const p = profileRes.data as unknown as {
-    first_name: string | null
-    last_name: string | null
-    city: string | null
-    region: string | null
-    phone: string | null
-    primary_trade: string | null
-    bio: string | null
-    avatar_url: string | null
-    is_regulix_ready: boolean
-    performance_score: number | null
-    profile_complete_pct: number
-    total_hours_worked: number | null
-    references_count: number
-    references_consent_confirmed_at: string | null
-  }
+  const p = profileRes.data
 
   // Resumes live in a private bucket now; mint a short-lived signed URL.
   // Storage RLS lets the owner and applied-to companies through; for anyone

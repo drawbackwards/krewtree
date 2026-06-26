@@ -316,16 +316,10 @@ export async function getPublicCompanyProfile(
   // Reads the masked view, not the base table: phone/address are already
   // gated by the company's *_public flags in SQL (the anon key can't read the
   // raw contact columns), and soft-deleted companies are excluded by the view.
-  // The view isn't in the generated types, so use the same loose `from` escape
-  // hatch the services use for non-generated relations.
-  const db = supabase as unknown as { from: (t: string) => ReturnType<typeof supabase.from> }
-  const profileQuery = db
+  const profileQuery = supabase
     .from('company_public_profiles')
     .select(
-      'id, name, tagline, logo_url, industry, additional_industries, size, founded, ' +
-        'description, website, phone, hq_full_address, hq_city, hq_state, ' +
-        'service_area_radius, service_area_override, contract_types, facebook_url, ' +
-        'instagram_url, linkedin_url, youtube_url, tiktok_url, is_verified, regulix_connected'
+      'id, name, tagline, logo_url, industry, additional_industries, size, founded, description, website, phone, hq_full_address, hq_city, hq_state, service_area_radius, service_area_override, contract_types, facebook_url, instagram_url, linkedin_url, youtube_url, tiktok_url, is_verified, regulix_connected'
     )
     .eq('id', companyId)
     .maybeSingle()
@@ -351,32 +345,7 @@ export async function getPublicCompanyProfile(
   // maybeSingle returns null when the company doesn't exist or is soft-deleted
   // (the view filters deleted_at), which both surface as "not found".
   if (!profileRes.data) return { data: null, error: null }
-  const p = profileRes.data as unknown as {
-    id: string
-    name: string
-    tagline: string
-    logo_url: string | null
-    industry: string
-    additional_industries: string[]
-    size: string
-    founded: number | null
-    description: string
-    website: string
-    phone: string
-    hq_full_address: string
-    hq_city: string
-    hq_state: string
-    service_area_radius: number
-    service_area_override: string
-    contract_types: string[]
-    facebook_url: string
-    instagram_url: string
-    linkedin_url: string
-    youtube_url: string
-    tiktok_url: string
-    is_verified: boolean
-    regulix_connected: boolean
-  }
+  const p = profileRes.data
 
   // phone and hq_full_address arrive already masked by the view per the
   // company's *_public flags. Email isn't on company_profiles (it lives in

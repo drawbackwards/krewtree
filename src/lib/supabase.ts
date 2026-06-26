@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from './database.types'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
@@ -17,6 +17,17 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     detectSessionInUrl: true,
   },
 })
+
+/**
+ * Untyped escape hatch for relations not present in the generated Database
+ * types (e.g. tables we deliberately keep out of the types). It is a BARE
+ * SupabaseClient with no <Database> generic, so `untypedDb.from(name)` returns
+ * a loose builder. Crucially it does NOT reference the typed client's relation
+ * union, so adding a view/table to database.types.ts can never change how
+ * `.from()` resolves here (the old `ReturnType<typeof supabase.from>` cast did,
+ * and broke compilation whenever the types grew). Callers cast result rows.
+ */
+export const untypedDb = supabase as unknown as SupabaseClient
 
 /**
  * Current user's id from the locally cached session — no network round trip,

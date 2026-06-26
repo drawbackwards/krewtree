@@ -1874,6 +1874,8 @@ export type Database = {
           is_premium: boolean
           is_regulix_ready: boolean
           last_name: string
+          latitude: number | null
+          longitude: number | null
           performance_score: number | null
           phone: string
           primary_trade: string
@@ -1894,6 +1896,8 @@ export type Database = {
           is_premium?: boolean
           is_regulix_ready?: boolean
           last_name?: string
+          latitude?: number | null
+          longitude?: number | null
           performance_score?: number | null
           phone?: string
           primary_trade?: string
@@ -1914,6 +1918,8 @@ export type Database = {
           is_premium?: boolean
           is_regulix_ready?: boolean
           last_name?: string
+          latitude?: number | null
+          longitude?: number | null
           performance_score?: number | null
           phone?: string
           primary_trade?: string
@@ -2211,7 +2217,60 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      company_public_profiles: {
+        Row: {
+          additional_industries: string[]
+          contract_types: string[]
+          description: string
+          facebook_url: string
+          founded: number | null
+          hq_city: string
+          hq_full_address: string
+          hq_state: string
+          id: string
+          industry: string
+          instagram_url: string
+          is_verified: boolean
+          linkedin_url: string
+          logo_url: string | null
+          name: string
+          phone: string
+          regulix_connected: boolean
+          service_area_override: string
+          service_area_radius: number
+          size: string
+          tagline: string
+          tiktok_url: string
+          website: string
+          youtube_url: string
+        }
+        Relationships: []
+      }
+      worker_profiles_secure: {
+        Row: {
+          avatar_url: string | null
+          bio: string
+          city: string
+          created_at: string
+          first_name: string
+          id: string
+          is_premium: boolean
+          is_regulix_ready: boolean
+          last_name: string
+          latitude: number | null
+          longitude: number | null
+          performance_score: number | null
+          phone: string
+          primary_trade: string
+          profile_complete_pct: number
+          references_consent_confirmed_at: string | null
+          references_count: number
+          region: string
+          total_hours_worked: number | null
+          updated_at: string
+        }
+        Relationships: []
+      }
     }
     Functions: {
       compute_match_score: {

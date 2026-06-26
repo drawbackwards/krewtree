@@ -89,6 +89,7 @@ const { fromMock, eqMock, orderMock, queueResult, resetQueuedResults } = vi.hois
 
 vi.mock('../../../lib/supabase', () => ({
   supabase: { from: fromMock },
+  untypedDb: { from: fromMock },
 }))
 
 import { getKanbanApplicants } from '../applicantService'

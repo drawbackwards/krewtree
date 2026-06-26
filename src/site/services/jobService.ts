@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase'
+import { supabase, untypedDb } from '@/lib/supabase'
 import type { Json } from '@/lib/database.types'
 import type { Job } from '@site/types'
 import { daysSince } from '@site/utils/date'
@@ -307,7 +307,7 @@ export async function submitApplication(
     .single()
   if (jobErr || !jobRow) return { error: jobErr?.message ?? 'job_not_found' }
 
-  const db = supabase as unknown as { from: (t: string) => ReturnType<typeof supabase.from> }
+  const db = untypedDb
   const { data: firstStage } = await db
     .from('pipeline_stage')
     .select('id, company_pipeline!inner(company_id)')
@@ -340,7 +340,7 @@ export async function submitApplication(
 }
 
 async function fetchPipelineSnapshot(companyId: string): Promise<Json> {
-  const db = supabase as unknown as { from: (t: string) => ReturnType<typeof supabase.from> }
+  const db = untypedDb
 
   const { data: pipeline } = await db
     .from('company_pipeline')

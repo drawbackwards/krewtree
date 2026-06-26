@@ -15,11 +15,6 @@ import type { Database } from '../../lib/database.types'
 import { getPipelineStages, instantiateTemplatesForStage } from './pipelineService'
 import { FEATURES } from '../config/features'
 
-// `company_pipeline` and `pipeline_stage` are not yet in generated DB types.
-// Cast to bypass the type constraint when querying those tables.
-const _db = supabase as unknown as { from: (t: string) => ReturnType<typeof supabase.from> }
-void _db // suppress unused-variable lint; used indirectly via getPipelineStages
-
 // ── Types ─────────────────────────────────────────────────────────────────
 
 export type ApplicantSort = 'applicant' | 'job' | 'match' | 'applied'

@@ -17,7 +17,7 @@ import type {
   TaskState,
   LogEventType,
 } from '../types'
-import { supabase, getCurrentUserId } from '../../lib/supabase'
+import { supabase, getCurrentUserId, untypedDb } from '../../lib/supabase'
 import type { Database } from '../../lib/database.types'
 import shortTemplate from '../../../seeds/pipeline-templates/short.json'
 import longTemplate from '../../../seeds/pipeline-templates/long.json'
@@ -894,7 +894,7 @@ export async function sendApplicationMessage(
 // `pipeline_stage` and `company_pipeline` are new tables added in migration
 // 20260519000001 and are not yet in the generated database.types.ts. Cast
 // the supabase client to bypass the type constraint.
-const db = supabase as unknown as { from: (t: string) => ReturnType<typeof supabase.from> }
+const db = untypedDb
 
 export type PipelineStage = {
   id: string
