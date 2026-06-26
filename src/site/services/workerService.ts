@@ -235,6 +235,8 @@ export type FullWorkerProfile = {
   bio: string
   avatarUrl: string | null
   resumeUrl: string | null
+  /** Storage path of the latest resume, for minting a longer-lived share link on demand. */
+  resumePath: string | null
   isRegulixReady: boolean
   performanceScore: number | null
   profileCompletePct: number
@@ -367,6 +369,7 @@ export async function getFullWorkerProfile(
       bio: p.bio ?? '',
       avatarUrl: p.avatar_url ?? null,
       resumeUrl,
+      resumePath: resumeRes.data?.file_path ?? null,
       isRegulixReady: p.is_regulix_ready,
       performanceScore: p.performance_score,
       profileCompletePct: p.profile_complete_pct,
@@ -502,6 +505,20 @@ export async function uploadWorkerResume(
 
   if (dbError) return { error: dbError.message }
   return { error: null }
+}
+
+// Mints a 7-day signed URL for sharing a resume externally — the recipient
+// needs no account. Storage RLS still governs who can mint it: the worker and
+// companies the worker applied to. The inline "View Resume" link stays short
+// (1h, from getFullWorkerProfile); this is the deliberate, longer-lived link.
+export async function getResumeShareLink(
+  filePath: string
+): Promise<{ url: string | null; error: string | null }> {
+  const { data, error } = await supabase.storage
+    .from('resumes')
+    .createSignedUrl(filePath, 60 * 60 * 24 * 7)
+  if (error) return { url: null, error: error.message }
+  return { url: data?.signedUrl ?? null, error: null }
 }
 
 // ── Upsert Worker Profile ──────────────────────────────────────────────────────

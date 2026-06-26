@@ -24,8 +24,9 @@ import {
   VerifiedBadgeIcon,
   RegulixMarkIcon,
   CheckIcon,
+  ShareIcon,
 } from '../icons'
-import { getFullWorkerProfile } from '../services/workerService'
+import { getFullWorkerProfile, getResumeShareLink } from '../services/workerService'
 import type { FullWorkerProfile } from '../services/workerService'
 import type { CompanyApplicant } from '../types'
 import { INDUSTRIES } from '../data/industries'
@@ -168,6 +169,35 @@ export const WorkerProfilePage: React.FC = () => {
     isCompanyViewer &&
     !!primary &&
     (primary.workerRating != null || (FEATURES.regulix && primary.workerRegulixRating != null))
+
+  // Mints a 7-day signed link to the resume and copies it to the clipboard, so
+  // it can be forwarded to someone (e.g. an outside hiring manager) without an
+  // account. Distinct from the inline "View Resume" link, which is short-lived.
+  const handleCopyResumeShareLink = async (): Promise<void> => {
+    if (!profile?.resumePath) return
+    const { url, error } = await getResumeShareLink(profile.resumePath)
+    if (error || !url) {
+      toast({
+        title: 'Could not create share link',
+        description: error ?? undefined,
+        variant: 'danger',
+      })
+      return
+    }
+    try {
+      await navigator.clipboard.writeText(url)
+      toast({
+        title: 'Share link copied',
+        description: 'Anyone with this link can view the resume for 7 days.',
+      })
+    } catch {
+      toast({
+        title: 'Copy failed',
+        description: 'Could not access the clipboard.',
+        variant: 'danger',
+      })
+    }
+  }
 
   const handleToggleKrew = async (): Promise<void> => {
     if (!id || krewBusy) return
@@ -624,25 +654,48 @@ export const WorkerProfilePage: React.FC = () => {
                 >
                   <h2 style={{ ...sectionHeading, margin: 0 }}>Work Experience</h2>
                   {profile.resumeUrl && (
-                    <a
-                      href={profile.resumeUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 6,
-                        fontSize: 'var(--kt-text-xs)',
-                        fontWeight: 'var(--kt-weight-semibold)',
-                        color: 'var(--kt-primary)',
-                        textDecoration: 'none',
-                        border: '1px solid var(--kt-primary)',
-                        borderRadius: 'var(--kt-radius-md)',
-                        padding: '4px 10px',
-                      }}
-                    >
-                      View Resume
-                    </a>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                      <a
+                        href={profile.resumeUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 6,
+                          fontSize: 'var(--kt-text-xs)',
+                          fontWeight: 'var(--kt-weight-semibold)',
+                          color: 'var(--kt-primary)',
+                          textDecoration: 'none',
+                          border: '1px solid var(--kt-primary)',
+                          borderRadius: 'var(--kt-radius-md)',
+                          padding: '4px 10px',
+                        }}
+                      >
+                        View Resume
+                      </a>
+                      {profile.resumePath && (
+                        <button
+                          type="button"
+                          onClick={handleCopyResumeShareLink}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 6,
+                            fontSize: 'var(--kt-text-xs)',
+                            fontWeight: 'var(--kt-weight-semibold)',
+                            color: 'var(--kt-navy-500)',
+                            background: 'transparent',
+                            border: 'none',
+                            cursor: 'pointer',
+                            padding: '4px 6px',
+                          }}
+                        >
+                          <ShareIcon size={14} />
+                          Copy share link
+                        </button>
+                      )}
+                    </div>
                   )}
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
