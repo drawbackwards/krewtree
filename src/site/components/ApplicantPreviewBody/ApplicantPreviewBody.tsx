@@ -1,6 +1,7 @@
 import React from 'react'
 import type { CompanyApplicant } from '../../types'
 import { InfoCircleIcon, RegulixMarkIcon } from '../../icons'
+import { FEATURES } from '../../config/features'
 import { Tooltip } from '../../../components'
 import { KrewtreeMark } from '../Logo'
 import styles from './ApplicantPreviewBody.module.css'
@@ -10,7 +11,8 @@ export interface ApplicantPreviewBodyProps {
 }
 
 export const ApplicantPreviewBody: React.FC<ApplicantPreviewBodyProps> = ({ applicant }) => {
-  const hasRatings = applicant.workerRating !== null || applicant.workerRegulixRating !== null
+  const hasRatings =
+    applicant.workerRating !== null || (FEATURES.regulix && applicant.workerRegulixRating !== null)
 
   return (
     <div className={styles.body}>
@@ -168,21 +170,23 @@ export const ApplicantPreviewBody: React.FC<ApplicantPreviewBodyProps> = ({ appl
                 {applicant.workerRatingCount} job{applicant.workerRatingCount === 1 ? '' : 's'}
               </span>
             </div>
-            <div className={styles.ratingCell}>
-              <div className={styles.ratingLabel}>
-                <RegulixMarkIcon size={12} />
-                <span>Regulix</span>
+            {FEATURES.regulix && (
+              <div className={styles.ratingCell}>
+                <div className={styles.ratingLabel}>
+                  <RegulixMarkIcon size={12} />
+                  <span>Regulix</span>
+                </div>
+                <span className={styles.ratingValue}>
+                  {applicant.workerRegulixRating !== null
+                    ? applicant.workerRegulixRating.toFixed(1)
+                    : '—'}
+                </span>
+                <span className={styles.ratingMeta}>
+                  {applicant.workerRegulixRatingCount} job
+                  {applicant.workerRegulixRatingCount === 1 ? '' : 's'}
+                </span>
               </div>
-              <span className={styles.ratingValue}>
-                {applicant.workerRegulixRating !== null
-                  ? applicant.workerRegulixRating.toFixed(1)
-                  : '—'}
-              </span>
-              <span className={styles.ratingMeta}>
-                {applicant.workerRegulixRatingCount} job
-                {applicant.workerRegulixRatingCount === 1 ? '' : 's'}
-              </span>
-            </div>
+            )}
           </div>
         </section>
       )}

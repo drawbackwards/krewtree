@@ -1,10 +1,11 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Modal, Tooltip } from '../../components'
 import { useToast } from '../../components/Toast/Toast'
 import { JobCell } from '../components/ApplicantsWidget/cells/JobCell'
 import { StageCell } from '../components/ApplicantsWidget/cells/StageCell'
+import { FEATURES } from '../config/features'
 import { useAuth } from '../context/AuthContext'
 import { useDebounce } from '../hooks/useDebounce'
 import type { CompanyApplicant } from '../types'
@@ -46,7 +47,13 @@ function flagTooltip(labels: string[]): string {
 }
 import { getPipelineStages } from '../services/pipelineService'
 import { useDrawerStack } from '../components/DrawerSystem/DrawerStackContext'
-import { WidgetKanbanView } from '../components/ApplicantsWidget/WidgetKanbanView'
+// Kanban view pulls in @dnd-kit (~14KB gzip); list view is the default, so
+// defer it until the user switches to the board.
+const WidgetKanbanView = lazy(() =>
+  import('../components/ApplicantsWidget/WidgetKanbanView').then((m) => ({
+    default: m.WidgetKanbanView,
+  }))
+)
 import styles from './AllApplicantsPage.module.css'
 
 // Stage options populated dynamically from pipeline stages — see stageOptions state below.
@@ -130,7 +137,7 @@ const OverflowMenu: React.FC<{ items: OverflowItem[] }> = ({ items }) => {
 function initFiltersFromParams(params: URLSearchParams): ApplicantFilters {
   const stageId = params.get('stage')
   const jobId = params.get('job')
-  const regulix = params.get('regulix') === '1'
+  const regulix = FEATURES.regulix && params.get('regulix') === '1'
   const from = params.get('from')
   const to = params.get('to')
   const search = params.get('search') ?? ''
@@ -402,7 +409,7 @@ export const AllApplicantsPage: React.FC = () => {
       onRemove: () => updateFilter('jobId', 'all'),
     })
   }
-  if (filters.regulixOnly)
+  if (FEATURES.regulix && filters.regulixOnly)
     chips.push({ label: 'Regulix Ready', onRemove: () => updateFilter('regulixOnly', false) })
   if (filters.appliedFrom)
     chips.push({
@@ -521,14 +528,16 @@ export const AllApplicantsPage: React.FC = () => {
               </option>
             ))}
           </select>
-          <label className={styles.checkboxLabel}>
-            <input
-              type="checkbox"
-              checked={filters.regulixOnly}
-              onChange={(e) => updateFilter('regulixOnly', e.target.checked)}
-            />
-            Regulix only
-          </label>
+          {FEATURES.regulix && (
+            <label className={styles.checkboxLabel}>
+              <input
+                type="checkbox"
+                checked={filters.regulixOnly}
+                onChange={(e) => updateFilter('regulixOnly', e.target.checked)}
+              />
+              Regulix only
+            </label>
+          )}
           {view === 'list' && (
             <div className={styles.dateGroup}>
               <input
@@ -592,13 +601,15 @@ export const AllApplicantsPage: React.FC = () => {
         {/* Kanban view */}
         {view === 'kanban' && user?.id && (
           <div className={styles.kanbanWrapper}>
-            <WidgetKanbanView
-              companyId={user.id}
-              filters={widgetFilters}
-              onOpenApplicant={openApplicant}
-              cardsPerCol={50}
-              fillHeight
-            />
+            <Suspense fallback={null}>
+              <WidgetKanbanView
+                companyId={user.id}
+                filters={widgetFilters}
+                onOpenApplicant={openApplicant}
+                cardsPerCol={50}
+                fillHeight
+              />
+            </Suspense>
           </div>
         )}
 

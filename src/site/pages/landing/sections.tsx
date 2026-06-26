@@ -4,6 +4,7 @@ import { Button, Badge } from '../../../components'
 // TODO: replace with real Supabase queries for featured industries and jobs
 import { industries, jobs } from '../../data/mock'
 import { JobCard } from '../../components/JobCard/JobCard'
+import { FEATURES } from '../../config/features'
 import { CheckIcon } from '../../icons'
 import regulixStyles from './RegulixBanner.module.css'
 import s from './sections.module.css'
@@ -105,7 +106,9 @@ export const HowItWorksSection = () => (
           {
             num: '03',
             title: 'Get to Work',
-            body: "Regulix Ready workers can start the same day they're hired — all paperwork done. No delays, no back-and-forth.",
+            body: FEATURES.regulix
+              ? "Regulix Ready workers can start the same day they're hired — all paperwork done. No delays, no back-and-forth."
+              : 'Companies and workers connect directly and move from match to hire without the usual back-and-forth.',
           },
         ].map((step, i, arr) => (
           <React.Fragment key={step.num}>
@@ -373,195 +376,198 @@ const RegulixLogo = () => (
   </svg>
 )
 
-export const RegulixBannerSection = () => (
-  <section style={{ padding: '80px var(--kt-space-6)', background: 'var(--kt-navy-900)' }}>
-    <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-      {/* Section header */}
-      <div style={{ textAlign: 'center', marginBottom: 48 }}>
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
-          <RegulixLogo />
-        </div>
-        <h2
-          style={{
-            fontSize: 'var(--kt-text-3xl)',
-            fontWeight: 'var(--kt-weight-bold)',
-            color: 'white',
-            marginBottom: 12,
-            letterSpacing: '-0.3px',
-          }}
-        >
-          Compliance built in from day one.
-        </h2>
-        <p
-          style={{
-            fontSize: 'var(--kt-text-lg)',
-            color: 'rgba(255,255,255,0.65)',
-            maxWidth: 520,
-            margin: '0 auto',
-            lineHeight: 'var(--kt-leading-normal)',
-          }}
-        >
-          krewtree partners with Regulix so workers get verified faster and companies stay compliant
-          automatically.
-        </p>
-      </div>
-
-      {/* Two cards — subgrid so badge/h3/p/ul rows align across both columns */}
-      <div className={regulixStyles.cardsGrid}>
-        {/* Workers half */}
-        <div className={regulixStyles.card}>
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <Badge
-              variant="accent"
-              size="sm"
-              style={{ background: 'rgba(255,255,255,0.18)', color: 'white', border: 'none' }}
-            >
-              For Workers
-            </Badge>
+export const RegulixBannerSection = (): React.ReactElement | null => {
+  if (!FEATURES.regulix) return null
+  return (
+    <section style={{ padding: '80px var(--kt-space-6)', background: 'var(--kt-navy-900)' }}>
+      <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+        {/* Section header */}
+        <div style={{ textAlign: 'center', marginBottom: 48 }}>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
+            <RegulixLogo />
           </div>
-          <h3
+          <h2
             style={{
-              fontSize: 'var(--kt-text-xl)',
+              fontSize: 'var(--kt-text-3xl)',
               fontWeight: 'var(--kt-weight-bold)',
               color: 'white',
-              lineHeight: 1.3,
+              marginBottom: 12,
               letterSpacing: '-0.3px',
-              margin: 0,
-              alignSelf: 'start',
             }}
           >
-            Start work immediately when your employer uses Regulix.
-          </h3>
+            Compliance built in from day one.
+          </h2>
           <p
             style={{
-              fontSize: 'var(--kt-text-sm)',
-              color: 'rgba(255,255,255,0.6)',
-              lineHeight: 1.6,
-              margin: 0,
-              alignSelf: 'start',
+              fontSize: 'var(--kt-text-lg)',
+              color: 'rgba(255,255,255,0.65)',
+              maxWidth: 520,
+              margin: '0 auto',
+              lineHeight: 'var(--kt-leading-normal)',
             }}
           >
-            When you and your employer both use Regulix, compliance is already handled so you can
-            get to work immediately.
+            krewtree partners with Regulix so workers get verified faster and companies stay
+            compliant automatically.
           </p>
-          <ul
-            style={{
-              listStyle: 'none',
-              padding: 0,
-              margin: 0,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 6,
-              alignSelf: 'start',
-            }}
-          >
-            {[
-              'Classification verified upfront',
-              'Your records, always clean',
-              'Instant hire, zero friction',
-            ].map((item) => (
-              <li
-                key={item}
-                style={{
-                  fontSize: 'var(--kt-text-sm)',
-                  color: 'rgba(255,255,255,0.65)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                }}
-              >
-                <CheckIcon size={14} color="white" /> {item}
-              </li>
-            ))}
-          </ul>
         </div>
 
-        {/* Companies half */}
-        <div className={regulixStyles.card}>
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <Badge
-              variant="accent"
-              size="sm"
-              style={{ background: 'var(--kt-olive-700)', color: 'white', border: 'none' }}
+        {/* Two cards — subgrid so badge/h3/p/ul rows align across both columns */}
+        <div className={regulixStyles.cardsGrid}>
+          {/* Workers half */}
+          <div className={regulixStyles.card}>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <Badge
+                variant="accent"
+                size="sm"
+                style={{ background: 'rgba(255,255,255,0.18)', color: 'white', border: 'none' }}
+              >
+                For Workers
+              </Badge>
+            </div>
+            <h3
+              style={{
+                fontSize: 'var(--kt-text-xl)',
+                fontWeight: 'var(--kt-weight-bold)',
+                color: 'white',
+                lineHeight: 1.3,
+                letterSpacing: '-0.3px',
+                margin: 0,
+                alignSelf: 'start',
+              }}
             >
-              For Companies
-            </Badge>
+              Start work immediately when your employer uses Regulix.
+            </h3>
+            <p
+              style={{
+                fontSize: 'var(--kt-text-sm)',
+                color: 'rgba(255,255,255,0.6)',
+                lineHeight: 1.6,
+                margin: 0,
+                alignSelf: 'start',
+              }}
+            >
+              When you and your employer both use Regulix, compliance is already handled so you can
+              get to work immediately.
+            </p>
+            <ul
+              style={{
+                listStyle: 'none',
+                padding: 0,
+                margin: 0,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 6,
+                alignSelf: 'start',
+              }}
+            >
+              {[
+                'Classification verified upfront',
+                'Your records, always clean',
+                'Instant hire, zero friction',
+              ].map((item) => (
+                <li
+                  key={item}
+                  style={{
+                    fontSize: 'var(--kt-text-sm)',
+                    color: 'rgba(255,255,255,0.65)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                  }}
+                >
+                  <CheckIcon size={14} color="white" /> {item}
+                </li>
+              ))}
+            </ul>
           </div>
-          <h3
-            style={{
-              fontSize: 'var(--kt-text-xl)',
-              fontWeight: 'var(--kt-weight-bold)',
-              color: 'white',
-              lineHeight: 1.3,
-              letterSpacing: '-0.3px',
-              margin: 0,
-              alignSelf: 'start',
-            }}
-          >
-            Hire verified workers today. Compliance already done.
-          </h3>
-          <p
-            style={{
-              fontSize: 'var(--kt-text-sm)',
-              color: 'rgba(255,255,255,0.6)',
-              lineHeight: 1.6,
-              margin: 0,
-              alignSelf: 'start',
-            }}
-          >
-            When a worker already has a Regulix account, your compliance is pre-verified. Skip the
-            setup and bring them on immediately.
-          </p>
-          <ul
-            style={{
-              listStyle: 'none',
-              padding: 0,
-              margin: 0,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 6,
-              alignSelf: 'start',
-            }}
-          >
-            {[
-              'Same day onboarding',
-              'Worker classification documented',
-              'Continuous compliance logging',
-            ].map((item) => (
-              <li
-                key={item}
-                style={{
-                  fontSize: 'var(--kt-text-sm)',
-                  color: 'rgba(255,255,255,0.65)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                }}
+
+          {/* Companies half */}
+          <div className={regulixStyles.card}>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <Badge
+                variant="accent"
+                size="sm"
+                style={{ background: 'var(--kt-olive-700)', color: 'white', border: 'none' }}
               >
-                <CheckIcon size={14} color="white" /> {item}
-              </li>
-            ))}
-          </ul>
+                For Companies
+              </Badge>
+            </div>
+            <h3
+              style={{
+                fontSize: 'var(--kt-text-xl)',
+                fontWeight: 'var(--kt-weight-bold)',
+                color: 'white',
+                lineHeight: 1.3,
+                letterSpacing: '-0.3px',
+                margin: 0,
+                alignSelf: 'start',
+              }}
+            >
+              Hire verified workers today. Compliance already done.
+            </h3>
+            <p
+              style={{
+                fontSize: 'var(--kt-text-sm)',
+                color: 'rgba(255,255,255,0.6)',
+                lineHeight: 1.6,
+                margin: 0,
+                alignSelf: 'start',
+              }}
+            >
+              When a worker already has a Regulix account, your compliance is pre-verified. Skip the
+              setup and bring them on immediately.
+            </p>
+            <ul
+              style={{
+                listStyle: 'none',
+                padding: 0,
+                margin: 0,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 6,
+                alignSelf: 'start',
+              }}
+            >
+              {[
+                'Same day onboarding',
+                'Worker classification documented',
+                'Continuous compliance logging',
+              ].map((item) => (
+                <li
+                  key={item}
+                  style={{
+                    fontSize: 'var(--kt-text-sm)',
+                    color: 'rgba(255,255,255,0.65)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                  }}
+                >
+                  <CheckIcon size={14} color="white" /> {item}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        {/* Footer CTA */}
+        <div style={{ textAlign: 'center', marginTop: 36 }}>
+          <Button
+            className={s.regulixCta}
+            as="a"
+            variant="secondary"
+            size="lg"
+            href="https://regulix.com"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Learn More About Regulix →
+          </Button>
         </div>
       </div>
-
-      {/* Footer CTA */}
-      <div style={{ textAlign: 'center', marginTop: 36 }}>
-        <Button
-          className={s.regulixCta}
-          as="a"
-          variant="secondary"
-          size="lg"
-          href="https://regulix.com"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn More About Regulix →
-        </Button>
-      </div>
-    </div>
-  </section>
-)
+    </section>
+  )
+}
 
 // ── CTA ───────────────────────────────────────────────────────────────────────
 export const CTASection = () => {
@@ -638,9 +644,11 @@ export const FooterSection = () => (
       >
         krewtree
       </span>
-      <span style={{ color: 'rgba(229,218,195,0.3)', fontSize: 'var(--kt-text-sm)' }}>
-        A Regulix Partner Platform
-      </span>
+      {FEATURES.regulix && (
+        <span style={{ color: 'rgba(229,218,195,0.3)', fontSize: 'var(--kt-text-sm)' }}>
+          A Regulix Partner Platform
+        </span>
+      )}
     </div>
     <div
       className={s.footerLinks}

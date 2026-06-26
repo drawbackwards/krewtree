@@ -2222,6 +2222,31 @@ export type Database = {
         Args: { p_worker_ids: string[] }
         Returns: { worker_id: string; matches: number; strong_matches: number }[]
       }
+      rank_krew_by_matches: {
+        Args: {
+          p_search?: string | null
+          p_sources?: string[] | null
+          p_list_id?: string | null
+          p_regulix_only?: boolean
+          p_strong_only?: boolean
+          p_sort_dir?: string
+          p_page?: number
+          p_page_size?: number
+        }
+        Returns: {
+          worker_id: string
+          first_name: string | null
+          last_name: string | null
+          primary_trade: string | null
+          avatar_url: string | null
+          is_regulix_ready: boolean | null
+          source: string
+          last_interaction_at: string | null
+          matches: number
+          strong_matches: number
+          total_count: number
+        }[]
+      }
       get_conversation_summaries: {
         Args: never
         Returns: {

@@ -16,6 +16,7 @@ import {
   MessageIcon,
   CheckCircleIcon,
 } from '../../icons'
+import { FEATURES } from '../../config/features'
 import styles from './QuickApplyModal.module.css'
 
 // lottie-react + the animation JSON are ~300 KB combined — by far the heaviest
@@ -295,7 +296,9 @@ export const QuickApplyModal: React.FC<QuickApplyModalProps> = ({
                 {
                   icon: <BriefcaseIcon size={16} />,
                   label: 'Employer reviews your profile',
-                  body: 'Your full profile, work history, and Regulix verification are visible to the hiring manager.',
+                  body: FEATURES.regulix
+                    ? 'Your full profile, work history, and Regulix verification are visible to the hiring manager.'
+                    : 'Your full profile and work history are visible to the hiring manager.',
                 },
                 {
                   icon: <BellIcon size={16} />,
@@ -370,7 +373,9 @@ export const QuickApplyModal: React.FC<QuickApplyModalProps> = ({
           </div>
 
           <div className={styles.tip} style={{ marginBottom: 'var(--kt-space-5)' }}>
-            Your full profile, work history, and Regulix verification are included automatically.
+            {FEATURES.regulix
+              ? 'Your full profile, work history, and Regulix verification are included automatically.'
+              : 'Your full profile and work history are included automatically.'}
           </div>
 
           {/* Pre-interview questions */}

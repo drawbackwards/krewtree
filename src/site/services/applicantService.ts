@@ -13,6 +13,7 @@ import type { ApplicationStatus, CompanyApplicant } from '../types'
 import { supabase, getCurrentUserId } from '../../lib/supabase'
 import type { Database } from '../../lib/database.types'
 import { getPipelineStages, instantiateTemplatesForStage } from './pipelineService'
+import { FEATURES } from '../config/features'
 
 // `company_pipeline` and `pipeline_stage` are not yet in generated DB types.
 // Cast to bypass the type constraint when querying those tables.
@@ -361,7 +362,7 @@ export async function getWidgetApplicants(
     .limit(limit)
 
   if (filters.jobId !== 'all') q = q.eq('job_id', filters.jobId)
-  if (filters.regulixOnly) q = q.eq('worker_profiles.is_regulix_ready', true)
+  if (FEATURES.regulix && filters.regulixOnly) q = q.eq('worker_profiles.is_regulix_ready', true)
 
   const [{ data, error, count }, stageNameMap] = await Promise.all([
     q,
@@ -431,7 +432,7 @@ export async function getAllApplicants(
   if (filters.jobId !== 'all') q = q.eq('job_id', filters.jobId)
   if (filters.appliedFrom) q = q.gte('created_at', filters.appliedFrom)
   if (filters.appliedTo) q = q.lte('created_at', filters.appliedTo)
-  if (filters.regulixOnly) q = q.eq('worker_profiles.is_regulix_ready', true)
+  if (FEATURES.regulix && filters.regulixOnly) q = q.eq('worker_profiles.is_regulix_ready', true)
 
   // Server-side search: match worker name OR job title. PostgREST can't OR
   // across two embedded tables in one filter, so we prefilter each side with

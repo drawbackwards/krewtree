@@ -2,7 +2,8 @@ import { supabase } from '@/lib/supabase'
 import type { Json } from '@/lib/database.types'
 import type { Job } from '@site/types'
 import { daysSince } from '@site/utils/date'
-import { invalidateSessionCache } from '@site/utils/sessionCache'
+import { invalidateSessionCache, withSessionCache } from '@site/utils/sessionCache'
+import { FEATURES } from '@site/config/features'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -189,7 +190,7 @@ export async function searchJobs(
     p_industries: params.industries?.length ? params.industries : null,
     p_types: params.types?.length ? params.types : null,
     p_sponsored_only: params.sponsoredOnly ?? false,
-    p_regulix_only: params.regulixOnly ?? false,
+    p_regulix_only: FEATURES.regulix ? (params.regulixOnly ?? false) : false,
     p_pay_min: params.payMin ?? null,
     p_pay_max: params.payMax ?? null,
     p_anchor_lat: params.anchorLat ?? null,
@@ -230,16 +231,21 @@ export async function getJobFacetCounts(): Promise<{
   data: { industries: Record<string, number>; types: Record<string, number> }
   error: string | null
 }> {
-  const { data, error } = await supabase.rpc('get_job_facet_counts')
-  if (error) return { data: { industries: {}, types: {} }, error: error.message }
+  // Facet counts aggregate every active job and change slowly. Cache for the
+  // page session so revisiting the jobs board doesn't re-run the RPC on each
+  // mount; the cache clears on refresh and on logout (clearSessionCache).
+  return withSessionCache('job_facet_counts', 'global', async () => {
+    const { data, error } = await supabase.rpc('get_job_facet_counts')
+    if (error) return { data: { industries: {}, types: {} }, error: error.message }
 
-  const industries: Record<string, number> = {}
-  const types: Record<string, number> = {}
-  for (const row of data ?? []) {
-    industries[row.industry_slug] = (industries[row.industry_slug] ?? 0) + row.job_count
-    types[row.job_type] = (types[row.job_type] ?? 0) + row.job_count
-  }
-  return { data: { industries, types }, error: null }
+    const industries: Record<string, number> = {}
+    const types: Record<string, number> = {}
+    for (const row of data ?? []) {
+      industries[row.industry_slug] = (industries[row.industry_slug] ?? 0) + row.job_count
+      types[row.job_type] = (types[row.job_type] ?? 0) + row.job_count
+    }
+    return { data: { industries, types }, error: null }
+  })
 }
 
 export async function getJobById(id: string): Promise<{ data: Job | null; error: string | null }> {

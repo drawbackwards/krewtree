@@ -14,6 +14,7 @@ import {
   DotsVerticalIcon,
 } from '../icons'
 import { industries } from '../data/mock'
+import { FEATURES } from '../config/features'
 import {
   createJob,
   updateJob,
@@ -365,7 +366,9 @@ export const PostJobPage: React.FC = () => {
       experienceLevel: experience || null,
       preInterviewQuestions: questions.filter(Boolean),
       urgentHiring,
-      regulixPreferred,
+      // Defensive: never persist a Regulix-preferred job while the feature is off,
+      // even if stale state slips through.
+      regulixPreferred: FEATURES.regulix && regulixPreferred,
       autoPauseLimit:
         stopMode === 'limit' && Number(budget) > 0 ? Math.floor(Number(budget) / 38) : null,
       closingAt: closingAt ? closingAt : null,
@@ -1052,59 +1055,63 @@ export const PostJobPage: React.FC = () => {
               <Divider style={{ borderColor: 'var(--kt-border-subtle, rgba(0,0,0,0.06))' }} />
 
               {/* Regulix Preferred */}
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  justifyContent: 'space-between',
-                  gap: 16,
-                  padding: '24px 4px',
-                }}
-              >
-                <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
-                  {/* Regulix R mark — same footprint as the star in the sponsor card */}
+              {FEATURES.regulix && (
+                <>
                   <div
                     style={{
-                      width: 28,
-                      height: 28,
                       display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
+                      alignItems: 'flex-start',
+                      justifyContent: 'space-between',
+                      gap: 16,
+                      padding: '24px 4px',
                     }}
                   >
-                    <RegulixMarkIcon size={24} />
+                    <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+                      {/* Regulix R mark — same footprint as the star in the sponsor card */}
+                      <div
+                        style={{
+                          width: 28,
+                          height: 28,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                        }}
+                      >
+                        <RegulixMarkIcon size={24} />
+                      </div>
+                      <div>
+                        <p
+                          style={{
+                            fontWeight: 'var(--kt-weight-semibold)',
+                            color: 'var(--kt-text)',
+                            fontSize: 'var(--kt-text-sm)',
+                            marginBottom: 4,
+                          }}
+                        >
+                          Regulix Preferred
+                        </p>
+                        <p
+                          style={{
+                            fontSize: 'var(--kt-text-xs)',
+                            color: 'var(--kt-text-muted)',
+                            lineHeight: 1.5,
+                          }}
+                        >
+                          Mark this job as preferring candidates with up-to-date Regulix accounts.
+                        </p>
+                      </div>
+                    </div>
+                    <Switch
+                      checked={regulixPreferred}
+                      onChange={(e) => setRegulixPreferred(e.target.checked)}
+                      size="md"
+                    />
                   </div>
-                  <div>
-                    <p
-                      style={{
-                        fontWeight: 'var(--kt-weight-semibold)',
-                        color: 'var(--kt-text)',
-                        fontSize: 'var(--kt-text-sm)',
-                        marginBottom: 4,
-                      }}
-                    >
-                      Regulix Preferred
-                    </p>
-                    <p
-                      style={{
-                        fontSize: 'var(--kt-text-xs)',
-                        color: 'var(--kt-text-muted)',
-                        lineHeight: 1.5,
-                      }}
-                    >
-                      Mark this job as preferring candidates with up-to-date Regulix accounts.
-                    </p>
-                  </div>
-                </div>
-                <Switch
-                  checked={regulixPreferred}
-                  onChange={(e) => setRegulixPreferred(e.target.checked)}
-                  size="md"
-                />
-              </div>
 
-              <Divider style={{ borderColor: 'var(--kt-border-subtle, rgba(0,0,0,0.06))' }} />
+                  <Divider style={{ borderColor: 'var(--kt-border-subtle, rgba(0,0,0,0.06))' }} />
+                </>
+              )}
 
               {/* Sponsored / Featured */}
               <div>

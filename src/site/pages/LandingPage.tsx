@@ -2,6 +2,7 @@ import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Badge } from '../../components'
 import { useAuth } from '../context/AuthContext'
+import { FEATURES } from '../config/features'
 import { CheckIcon } from '../icons'
 import styles from './landing/LandingHero.module.css'
 import {
@@ -134,8 +135,9 @@ const HeroDefault = () => {
               maxWidth: 340,
             }}
           >
-            Find jobs across every industry, build a verified profile, and get hired faster with
-            Regulix.
+            {FEATURES.regulix
+              ? 'Find jobs across every industry, build a verified profile, and get hired faster with Regulix.'
+              : 'Find jobs across every industry, build a verified profile, and connect with companies hiring now.'}
           </p>
           <ul
             style={{
@@ -150,7 +152,9 @@ const HeroDefault = () => {
             {[
               'Browse 12,400+ live jobs',
               'Build a verified work profile',
-              'Get Regulix Ready — hire same day',
+              FEATURES.regulix
+                ? 'Get Regulix Ready — hire same day'
+                : 'Apply in minutes with one profile',
             ].map((item) => (
               <li
                 key={item}
@@ -255,8 +259,9 @@ const HeroDefault = () => {
               maxWidth: 340,
             }}
           >
-            Post jobs, find verified workers, and hire people who can start tomorrow — paperwork
-            already done.
+            {FEATURES.regulix
+              ? 'Post jobs, find verified workers, and hire people who can start tomorrow — paperwork already done.'
+              : 'Post jobs across every industry and find verified workers ready to get to work.'}
           </p>
           <ul
             style={{
@@ -270,8 +275,12 @@ const HeroDefault = () => {
           >
             {[
               'Post jobs across every industry',
-              'Find Regulix Ready workers instantly',
-              'Hire same-day — no onboarding delays',
+              FEATURES.regulix
+                ? 'Find Regulix Ready workers instantly'
+                : 'Find verified workers instantly',
+              FEATURES.regulix
+                ? 'Hire same-day — no onboarding delays'
+                : 'Review applicants and hire with confidence',
             ].map((item) => (
               <li
                 key={item}

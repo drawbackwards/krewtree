@@ -27,12 +27,15 @@ import {
   regulixWorkHistory,
   regulixPastHires,
 } from '@site/data/mock'
+import { FEATURES } from '@site/config/features'
 
 // ── Reads ──────────────────────────────────────────────────────────────────
 
 export async function getRegulixStatus(
   workerId: string
 ): Promise<{ data: RegulixStatus | null; error: string | null }> {
+  // Regulix gated off pre-launch — return no status so nothing surfaces.
+  if (!FEATURES.regulix) return { data: null, error: null }
   const status = regulixStatuses[workerId] ?? null
   return { data: status, error: null }
 }
@@ -40,6 +43,7 @@ export async function getRegulixStatus(
 export async function getEndorsements(
   workerId: string
 ): Promise<{ data: RegulixEndorsement[]; error: string | null }> {
+  if (!FEATURES.regulix) return { data: [], error: null }
   const data = regulixEndorsements.filter((e) => e.workerId === workerId)
   return { data, error: null }
 }
@@ -47,6 +51,7 @@ export async function getEndorsements(
 export async function getVerifiedWorkHistory(
   workerId: string
 ): Promise<{ data: VerifiedWorkHistoryEntry[]; error: string | null }> {
+  if (!FEATURES.regulix) return { data: [], error: null }
   const entries = regulixWorkHistory
     .filter((e) => e.workerId === workerId)
     .slice()
@@ -63,6 +68,7 @@ export async function getVerifiedWorkHistory(
 export async function getPastHires(
   companyId: string
 ): Promise<{ data: PastHire[]; error: string | null }> {
+  if (!FEATURES.regulix) return { data: [], error: null }
   const data = regulixPastHires.filter((p) => p.companyId === companyId)
   return { data, error: null }
 }
@@ -70,6 +76,7 @@ export async function getPastHires(
 export async function hasRegulixAccount(
   workerId: string
 ): Promise<{ data: boolean; error: string | null }> {
+  if (!FEATURES.regulix) return { data: false, error: null }
   return { data: regulixAccountMap[workerId] === true, error: null }
 }
 

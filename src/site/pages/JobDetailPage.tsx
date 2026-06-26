@@ -9,6 +9,7 @@ import { getJobById, getAppliedJobIds, getSimilarJobs } from '../services/jobSer
 import { saveJob, removeSavedJob, getIsSavedJob } from '../services/workerService'
 import type { Job } from '../types'
 import { useAuth } from '../context/AuthContext'
+import { FEATURES } from '../config/features'
 import {
   CheckIcon,
   MapPinIcon,
@@ -425,7 +426,7 @@ export const JobDetailPage: React.FC = () => {
           {/* ---- Main Content ---- */}
           <div className={styles.main}>
             {/* Regulix Ready Info Banner — worker view only; shown in sidebar for company */}
-            {!isCompany && job.regulixReadyApplicants > 0 && (
+            {FEATURES.regulix && !isCompany && job.regulixReadyApplicants > 0 && (
               <div
                 style={{
                   background: 'var(--kt-regulix-50)',
@@ -643,7 +644,7 @@ export const JobDetailPage: React.FC = () => {
           </div>
 
           {/* ---- Sidebar top ---- */}
-          {(isCompany ? job.totalApplicants > 0 : job.regulixPreferred) && (
+          {(isCompany ? job.totalApplicants > 0 : FEATURES.regulix && job.regulixPreferred) && (
             <div className={styles.sidebarTop}>
               {isCompany ? (
                 <>
@@ -678,40 +679,42 @@ export const JobDetailPage: React.FC = () => {
                         }}
                       >
                         {/* Regulix Ready box */}
-                        <div
-                          style={{
-                            background: 'rgba(255, 61, 0, 0.07)',
-                            borderRadius: 'var(--kt-radius-sm)',
-                            padding: '10px',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: 6,
-                          }}
-                        >
-                          <RegulixMarkIcon size={20} />
-                          <div>
-                            <p
-                              style={{
-                                fontSize: 'var(--kt-text-xl)',
-                                fontWeight: 'var(--kt-weight-bold)',
-                                color: 'var(--kt-navy-900)',
-                                lineHeight: 1,
-                                marginBottom: 3,
-                              }}
-                            >
-                              {job.regulixReadyApplicants}
-                            </p>
-                            <p
-                              style={{
-                                fontSize: 'var(--kt-text-xs)',
-                                color: 'var(--kt-text-muted)',
-                                lineHeight: 1.3,
-                              }}
-                            >
-                              Regulix Ready
-                            </p>
+                        {FEATURES.regulix && (
+                          <div
+                            style={{
+                              background: 'rgba(255, 61, 0, 0.07)',
+                              borderRadius: 'var(--kt-radius-sm)',
+                              padding: '10px',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: 6,
+                            }}
+                          >
+                            <RegulixMarkIcon size={20} />
+                            <div>
+                              <p
+                                style={{
+                                  fontSize: 'var(--kt-text-xl)',
+                                  fontWeight: 'var(--kt-weight-bold)',
+                                  color: 'var(--kt-navy-900)',
+                                  lineHeight: 1,
+                                  marginBottom: 3,
+                                }}
+                              >
+                                {job.regulixReadyApplicants}
+                              </p>
+                              <p
+                                style={{
+                                  fontSize: 'var(--kt-text-xs)',
+                                  color: 'var(--kt-text-muted)',
+                                  lineHeight: 1.3,
+                                }}
+                              >
+                                Regulix Ready
+                              </p>
+                            </div>
                           </div>
-                        </div>
+                        )}
 
                         {/* Standard applicants box */}
                         <div
@@ -782,26 +785,29 @@ export const JobDetailPage: React.FC = () => {
                           View Candidates →
                         </button>
                       </Link>
-                      <a
-                        href="https://regulix.com"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{
-                          display: 'block',
-                          textAlign: 'center',
-                          marginTop: 8,
-                          fontSize: 'var(--kt-text-xs)',
-                          color: 'var(--kt-regulix-500)',
-                          textDecoration: 'none',
-                          fontWeight: 'var(--kt-weight-medium)',
-                        }}
-                      >
-                        Learn more about Regulix →
-                      </a>
+                      {FEATURES.regulix && (
+                        <a
+                          href="https://regulix.com"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            display: 'block',
+                            textAlign: 'center',
+                            marginTop: 8,
+                            fontSize: 'var(--kt-text-xs)',
+                            color: 'var(--kt-regulix-500)',
+                            textDecoration: 'none',
+                            fontWeight: 'var(--kt-weight-medium)',
+                          }}
+                        >
+                          Learn more about Regulix →
+                        </a>
+                      )}
                     </div>
                   )}
                 </>
               ) : (
+                FEATURES.regulix &&
                 job.regulixPreferred && (
                   /* Regulix preferred */
                   <div

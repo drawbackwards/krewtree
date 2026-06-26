@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase'
 import type { Application, ApplicationEvent, Job, SavedJob } from '@site/types'
 import { daysSince } from '@site/utils/date'
+import { FEATURES } from '@site/config/features'
 
 // ── Worker Profile ─────────────────────────────────────────────────────────────
 
@@ -645,21 +646,29 @@ export async function getDashboardSavedJobs(
   userId: string,
   limit = 5
 ): Promise<{ data: DashboardSavedJob[]; error: string | null }> {
-  const [savedRes, appliedRes] = await Promise.all([
-    supabase
-      .from('saved_jobs')
-      .select(
-        'id, created_at, job_id, jobs(id, title, status, closing_at, created_at, company_profiles(name))'
-      )
-      .eq('worker_id', userId)
-      .order('created_at', { ascending: false })
-      .limit(limit * 2),
-    supabase.from('applications').select('job_id').eq('worker_id', userId),
-  ])
+  const savedRes = await supabase
+    .from('saved_jobs')
+    .select(
+      'id, created_at, job_id, jobs(id, title, status, closing_at, created_at, company_profiles(name))'
+    )
+    .eq('worker_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(limit * 2)
 
   if (savedRes.error) return { data: [], error: savedRes.error.message }
 
-  const appliedJobIds = new Set((appliedRes.data ?? []).map((a) => a.job_id))
+  // Only check "has applied" for the handful of saved jobs we're about to show —
+  // not the worker's entire application history (which could be hundreds of rows).
+  const savedJobIds = (savedRes.data ?? []).map((s) => s.job_id)
+  let appliedJobIds = new Set<string>()
+  if (savedJobIds.length > 0) {
+    const appliedRes = await supabase
+      .from('applications')
+      .select('job_id')
+      .eq('worker_id', userId)
+      .in('job_id', savedJobIds)
+    appliedJobIds = new Set((appliedRes.data ?? []).map((a) => a.job_id))
+  }
 
   const rows = (savedRes.data ?? []).map((s) => {
     const j = s.jobs as unknown as {
@@ -951,6 +960,8 @@ export async function getWorkerCompleteness(
 export async function getRegulixNudgeData(
   userId: string
 ): Promise<{ data: RegulixNudgeData | null; error: string | null }> {
+  // Regulix gated off pre-launch — never surface the connect/import nudge.
+  if (!FEATURES.regulix) return { data: null, error: null }
   const [intRes, prefRes] = await Promise.all([
     supabase
       .from('worker_integrations')

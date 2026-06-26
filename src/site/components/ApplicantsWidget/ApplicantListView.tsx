@@ -12,6 +12,7 @@ import {
   RocketIcon,
   StarIcon,
 } from '../../icons'
+import { FEATURES } from '../../config/features'
 import { JobCell } from './cells/JobCell'
 import { StageCell } from './cells/StageCell'
 import styles from './ApplicantListView.module.css'
@@ -239,7 +240,7 @@ export const ApplicantListView: React.FC<Props> = ({
                   </span>
                 </Tooltip>
               )}
-              {a.isRegulixReady && (
+              {FEATURES.regulix && a.isRegulixReady && (
                 <Tooltip content="Regulix Ready — paperwork complete" position="top">
                   <span className={styles.signalRegulix} aria-label="Regulix Ready">
                     <RegulixMarkIcon size={12} />

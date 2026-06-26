@@ -39,6 +39,7 @@ import {
   RocketIcon,
   StarIcon,
 } from '../../icons'
+import { FEATURES } from '../../config/features'
 import styles from './WidgetKanbanView.module.css'
 
 // ── Constants ──────────────────────────────────────────────────────────────
@@ -253,7 +254,7 @@ const KanbanCard: React.FC<CardProps> = ({
                 </span>
               </Tooltip>
             )}
-            {a.isRegulixReady && (
+            {FEATURES.regulix && a.isRegulixReady && (
               <Tooltip content="Regulix Ready — paperwork complete" position="top">
                 <span className={styles.signalRegulix} aria-label="Regulix Ready">
                   <RegulixMarkIcon size={12} />

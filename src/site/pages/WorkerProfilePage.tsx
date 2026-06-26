@@ -7,6 +7,7 @@ import { useChatPane } from '../components/ChatPane/ChatPaneContext'
 import { WorkerActivityLog } from '../components/WorkerActivityLog/WorkerActivityLog'
 import { useDrawerStack } from '../components/DrawerSystem/DrawerStackContext'
 import { KrewtreeMark } from '../components/Logo'
+import { FEATURES } from '../config/features'
 import { useAuth } from '../context/AuthContext'
 import { addWorkerToKrew, removeWorkerFromKrew, getKrewRelationship } from '../services/krewService'
 import { getWorkerApplicationsAtCompany } from '../services/applicantService'
@@ -166,7 +167,7 @@ export const WorkerProfilePage: React.FC = () => {
   const showDualRatings =
     isCompanyViewer &&
     !!primary &&
-    (primary.workerRating != null || primary.workerRegulixRating != null)
+    (primary.workerRating != null || (FEATURES.regulix && primary.workerRegulixRating != null))
 
   const handleToggleKrew = async (): Promise<void> => {
     if (!id || krewBusy) return
@@ -890,50 +891,56 @@ export const WorkerProfilePage: React.FC = () => {
             style={{ alignSelf: !hasContent ? 'stretch' : 'flex-start' }}
           >
             {/* Regulix status — always the top card. Matches the company
-              profile's box; greyed out when the worker isn't Regulix ready. */}
-            <div
-              style={{
-                background: profile.isRegulixReady
-                  ? 'var(--kt-regulix-50)'
-                  : 'var(--kt-surface-raised)',
-                borderRadius: 'var(--kt-radius-lg)',
-                padding: 18,
-                textAlign: 'center',
-                flex: !hasContent ? 1 : undefined,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: !hasContent ? 'center' : undefined,
-              }}
-            >
-              <RegulixLogo
-                height={24}
-                textColor={profile.isRegulixReady ? 'var(--kt-navy-700)' : 'var(--kt-text-muted)'}
-                opacity={profile.isRegulixReady ? 1 : 0.45}
-              />
-              <p
+              profile's box; greyed out when the worker isn't Regulix ready.
+              Gated behind the Regulix feature flag until the partner
+              connection is live. */}
+            {FEATURES.regulix && (
+              <div
                 style={{
-                  marginTop: 10,
-                  fontSize: 'var(--kt-text-sm)',
-                  fontWeight: 'var(--kt-weight-semibold)',
-                  color: profile.isRegulixReady ? 'var(--kt-regulix-500)' : 'var(--kt-text-muted)',
+                  background: profile.isRegulixReady
+                    ? 'var(--kt-regulix-50)'
+                    : 'var(--kt-surface-raised)',
+                  borderRadius: 'var(--kt-radius-lg)',
+                  padding: 18,
+                  textAlign: 'center',
+                  flex: !hasContent ? 1 : undefined,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: !hasContent ? 'center' : undefined,
                 }}
               >
-                {profile.isRegulixReady ? 'Regulix Ready' : 'Not Yet Regulix Ready'}
-              </p>
-              <p
-                style={{
-                  fontSize: 'var(--kt-text-xs)',
-                  color: 'var(--kt-text-muted)',
-                  marginTop: 4,
-                  lineHeight: 1.5,
-                }}
-              >
-                {profile.isRegulixReady
-                  ? 'All onboarding docs verified. Day-1 hire-ready.'
-                  : 'Complete onboarding to become hire-ready.'}
-              </p>
-            </div>
+                <RegulixLogo
+                  height={24}
+                  textColor={profile.isRegulixReady ? 'var(--kt-navy-700)' : 'var(--kt-text-muted)'}
+                  opacity={profile.isRegulixReady ? 1 : 0.45}
+                />
+                <p
+                  style={{
+                    marginTop: 10,
+                    fontSize: 'var(--kt-text-sm)',
+                    fontWeight: 'var(--kt-weight-semibold)',
+                    color: profile.isRegulixReady
+                      ? 'var(--kt-regulix-500)'
+                      : 'var(--kt-text-muted)',
+                  }}
+                >
+                  {profile.isRegulixReady ? 'Regulix Ready' : 'Not Yet Regulix Ready'}
+                </p>
+                <p
+                  style={{
+                    fontSize: 'var(--kt-text-xs)',
+                    color: 'var(--kt-text-muted)',
+                    marginTop: 4,
+                    lineHeight: 1.5,
+                  }}
+                >
+                  {profile.isRegulixReady
+                    ? 'All onboarding docs verified. Day-1 hire-ready.'
+                    : 'Complete onboarding to become hire-ready.'}
+                </p>
+              </div>
+            )}
 
             {/* Applications to the viewing company — moved here from the old
               full-width strip on the applicant page. Company viewers only;
@@ -996,21 +1003,23 @@ export const WorkerProfilePage: React.FC = () => {
                       {primary.workerRatingCount} job{primary.workerRatingCount === 1 ? '' : 's'}
                     </span>
                   </div>
-                  <div className={styles.ratingCell}>
-                    <div className={styles.ratingLabel}>
-                      <RegulixMarkIcon size={12} />
-                      <span>Regulix</span>
+                  {FEATURES.regulix && (
+                    <div className={styles.ratingCell}>
+                      <div className={styles.ratingLabel}>
+                        <RegulixMarkIcon size={12} />
+                        <span>Regulix</span>
+                      </div>
+                      <span className={styles.ratingValue}>
+                        {primary.workerRegulixRating != null
+                          ? primary.workerRegulixRating.toFixed(1)
+                          : '—'}
+                      </span>
+                      <span className={styles.ratingMeta}>
+                        {primary.workerRegulixRatingCount} job
+                        {primary.workerRegulixRatingCount === 1 ? '' : 's'}
+                      </span>
                     </div>
-                    <span className={styles.ratingValue}>
-                      {primary.workerRegulixRating != null
-                        ? primary.workerRegulixRating.toFixed(1)
-                        : '—'}
-                    </span>
-                    <span className={styles.ratingMeta}>
-                      {primary.workerRegulixRatingCount} job
-                      {primary.workerRegulixRatingCount === 1 ? '' : 's'}
-                    </span>
-                  </div>
+                  )}
                 </div>
               </div>
             )}

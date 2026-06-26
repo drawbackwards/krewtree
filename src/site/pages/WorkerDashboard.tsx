@@ -7,6 +7,7 @@ import { RegulixBadge } from '../components/RegulixBadge/RegulixBadge'
 import { RegulixLogo } from '../components/RegulixLogo/RegulixLogo'
 import { QuickApplyModal } from '../components/QuickApplyModal/QuickApplyModal'
 import type { Job } from '../types'
+import { FEATURES } from '../config/features'
 import { useAuth } from '../context/AuthContext'
 import { daysSince } from '../utils/date'
 import { getJobById } from '../services/jobService'
@@ -211,7 +212,9 @@ export const WorkerDashboard: React.FC = () => {
       getDashboardSavedJobs(user.id),
       getNewJobsForYou(user.id),
       getWorkerCompleteness(user.id),
-      getRegulixNudgeData(user.id),
+      FEATURES.regulix
+        ? getRegulixNudgeData(user.id)
+        : Promise.resolve({ data: null, error: null }),
     ]).then(([profileRes, appsRes, savedRes, newJobsRes, completenessRes, nudgeRes]) => {
       if (profileRes.data) setProfile(profileRes.data)
       if (appsRes.error) setDataError(appsRes.error)
@@ -267,6 +270,7 @@ export const WorkerDashboard: React.FC = () => {
   const showCompletenessModule = !completenessDismissed && cardCompletePct < 100
 
   const showRegulixNudge =
+    FEATURES.regulix &&
     nudgeData !== null &&
     nudgeData.subState !== 'complete' &&
     !nudgeDismissedLocally &&

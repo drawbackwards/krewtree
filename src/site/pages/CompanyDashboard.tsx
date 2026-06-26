@@ -7,6 +7,7 @@ import { WeekCalendarWidget } from '../components/WeekCalendarWidget/WeekCalenda
 import { CompanyCompletenessWidget } from '../components/CompanyCompletenessWidget/CompanyCompletenessWidget'
 import { RegulixLogo } from '../components/RegulixLogo/RegulixLogo'
 import { BriefcaseIcon, UsersIcon, PersonIcon, RocketIcon, CheckIcon, CloseIcon } from '../icons'
+import { FEATURES } from '../config/features'
 import { useAuth } from '../context/AuthContext'
 import { getCompanyJobs } from '../services/jobService'
 import { getCompanyDashboard, buildDashboardStats } from '../services/companyDashboardService'
@@ -280,7 +281,8 @@ export const CompanyDashboard: React.FC = () => {
         )}
 
         {/* ── Regulix promo banner ─────────────────────────────────────── */}
-        {!regulixBannerDismissed && (
+        {/* Hidden until the Regulix partner connection is live. */}
+        {FEATURES.regulix && !regulixBannerDismissed && (
           <div className={dashStyles.banner}>
             <RegulixLogo height={22} textColor="var(--kt-navy-700)" />
             <p className={dashStyles.bannerText}>
@@ -542,7 +544,8 @@ export const CompanyDashboard: React.FC = () => {
               {[
                 `Pinned to top of search results for ${boostDuration} days`,
                 'Featured badge on your listing',
-                'Priority placement in Regulix Ready worker feeds',
+                // Regulix-only benefit — hidden until the partner connection is live.
+                ...(FEATURES.regulix ? ['Priority placement in Regulix Ready worker feeds'] : []),
               ].map((item) => (
                 <div key={item} style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
                   <span

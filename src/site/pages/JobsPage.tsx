@@ -19,6 +19,7 @@ import {
   deleteSavedSearch,
 } from '../services/savedSearchService'
 import { useAuth } from '../context/AuthContext'
+import { FEATURES } from '../config/features'
 import { LocationIcon, SearchIcon, SlidersIcon, SortIcon, CloseIcon, ListIcon } from '../icons'
 import styles from './JobsPage.module.css'
 
@@ -353,7 +354,9 @@ export const JobsPage: React.FC = () => {
   )
   const selectedTypes = useMemo(() => typeParam.split(',').filter(Boolean), [typeParam])
   const payRangeIdx = Number(searchParams.get('pay') ?? '0')
-  const regulixOnly = searchParams.get('regulix') === '1'
+  // Hard-off when the Regulix feature flag is disabled so a stale or hand-typed
+  // ?regulix=1 URL can't silently filter the results.
+  const regulixOnly = FEATURES.regulix && searchParams.get('regulix') === '1'
   const sponsoredOnly = searchParams.get('sponsored') === '1'
   const sortBy = (searchParams.get('sort') ?? 'recent') as
     | 'recent'
@@ -1081,11 +1084,13 @@ export const JobsPage: React.FC = () => {
               <div style={{ height: 1, background: 'var(--kt-border)', margin: '16px 0' }} />
 
               <FilterSection title="Special">
-                <CheckFilter
-                  label="Regulix Ready Applicants"
-                  checked={regulixOnly}
-                  onChange={(v) => updateFilters({ regulix: v ? '1' : null })}
-                />
+                {FEATURES.regulix && (
+                  <CheckFilter
+                    label="Regulix Ready Applicants"
+                    checked={regulixOnly}
+                    onChange={(v) => updateFilters({ regulix: v ? '1' : null })}
+                  />
+                )}
                 <CheckFilter
                   label="Featured / Sponsored"
                   checked={sponsoredOnly}
@@ -1235,7 +1240,7 @@ export const JobsPage: React.FC = () => {
                   >
                     {total} jobs found
                   </span>
-                  {regulixOnly && (
+                  {FEATURES.regulix && regulixOnly && (
                     <Badge variant="accent" size="sm" dot>
                       Regulix Ready
                     </Badge>
@@ -1651,11 +1656,13 @@ export const JobsPage: React.FC = () => {
 
               {/* Special */}
               <FilterSection title="Special">
-                <CheckFilter
-                  label="Regulix Ready Applicants"
-                  checked={regulixOnly}
-                  onChange={(v) => updateFilters({ regulix: v ? '1' : null })}
-                />
+                {FEATURES.regulix && (
+                  <CheckFilter
+                    label="Regulix Ready Applicants"
+                    checked={regulixOnly}
+                    onChange={(v) => updateFilters({ regulix: v ? '1' : null })}
+                  />
+                )}
                 <CheckFilter
                   label="Featured / Sponsored"
                   checked={sponsoredOnly}

@@ -761,6 +761,12 @@
   transition: background 120ms ease;
 }
 
+/* Regulix feature flag OFF: drop the Regulix column so the grid stays aligned. */
+.rowNoRegulix {
+  /* Select | Worker | Trade | Matches | Last interaction | Overflow */
+  grid-template-columns: 32px minmax(160px, 1.5fr) minmax(120px, 1fr) 84px 144px 48px;
+}
+
 .row:not(.headerRow):hover {
   background: var(--kt-grey-100);
 }

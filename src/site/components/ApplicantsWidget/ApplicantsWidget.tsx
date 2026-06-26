@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { Suspense, lazy, useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { ApplicantsView } from '../../services/companyPreferenceService'
 import {
@@ -11,8 +11,13 @@ import { InfoCircleIcon } from '../../icons'
 import { Tooltip } from '../../../components'
 import { useDrawerStack } from '../DrawerSystem/DrawerStackContext'
 import { ApplicantListView } from './ApplicantListView'
-import { WidgetKanbanView } from './WidgetKanbanView'
 import styles from './ApplicantsWidget.module.css'
+
+// Kanban view pulls in @dnd-kit (~14KB gzip). The widget defaults to list view,
+// so defer that dependency until the user actually switches to the board.
+const WidgetKanbanView = lazy(() =>
+  import('./WidgetKanbanView').then((m) => ({ default: m.WidgetKanbanView }))
+)
 
 type Props = {
   view: ApplicantsView
@@ -131,12 +136,14 @@ export const ApplicantsWidget: React.FC<Props> = ({ view, onViewChange, companyI
               onRefresh={() => fetchApplicants()}
             />
           ) : (
-            <WidgetKanbanView
-              companyId={companyId}
-              filters={DEFAULT_WIDGET_FILTERS}
-              onOpenApplicant={handleOpenApplicant}
-              refreshTick={refreshTick}
-            />
+            <Suspense fallback={null}>
+              <WidgetKanbanView
+                companyId={companyId}
+                filters={DEFAULT_WIDGET_FILTERS}
+                onOpenApplicant={handleOpenApplicant}
+                refreshTick={refreshTick}
+              />
+            </Suspense>
           )}
         </div>
       </div>

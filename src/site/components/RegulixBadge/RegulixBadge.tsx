@@ -1,5 +1,6 @@
 import React from 'react'
 import { Tooltip } from '../../../components'
+import { FEATURES } from '../../config/features'
 import { ShieldCheckIcon } from '../../icons'
 import { RegulixMark } from '../RegulixLogo/RegulixMark'
 import styles from './RegulixBadge.module.css'
@@ -36,6 +37,9 @@ export const RegulixBadge: React.FC<RegulixBadgeProps> = ({
   showTooltip = true,
   className,
 }) => {
+  // Regulix is gated behind a launch flag — hide the badge entirely when off.
+  if (!FEATURES.regulix) return null
+
   // Pending = "Not Connected" — a distinct status, keep the legacy pill so
   // worker / company UIs can still surface the gap. Only the affirmative
   // Regulix Ready states swap to the R mark.

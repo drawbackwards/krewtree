@@ -20,6 +20,7 @@ import {
   deleteKrewList,
   getKrew,
   getKrewLists,
+  getKrewMatchCounts,
   getRegulixReadyCount,
   removeWorkerFromKrew,
   removeWorkerFromList,
@@ -28,6 +29,7 @@ import {
   type KrewWorker,
 } from '../services/krewService'
 import { useChatPane } from '../components/ChatPane/ChatPaneContext'
+import { FEATURES } from '../config/features'
 import { useDebounce } from '../hooks/useDebounce'
 import { useDrawerStack } from '../components/DrawerSystem/DrawerStackContext'
 import styles from './KrewPage.module.css'
@@ -213,7 +215,10 @@ const FilterDropdown: React.FC<FilterDropdownProps> = ({ label, options, selecte
 const SKELETON_ROW_KEYS = ['a', 'b', 'c', 'd', 'e', 'f'] as const
 
 const SkeletonRow: React.FC = () => (
-  <div className={styles.row} aria-hidden="true">
+  <div
+    className={[styles.row, FEATURES.regulix ? '' : styles.rowNoRegulix].filter(Boolean).join(' ')}
+    aria-hidden="true"
+  >
     <div className={styles.checkCell}>
       <span className={styles.skeletonBar} style={{ width: 14, height: 14 }} />
     </div>
@@ -222,9 +227,14 @@ const SkeletonRow: React.FC = () => (
       <span className={styles.skeletonBar} style={{ width: 80, height: 12 }} />
     </div>
     <span className={styles.skeletonBar} style={{ width: 110, height: 11 }} />
-    <div className={styles.regulixCell}>
-      <span className={styles.skeletonBar} style={{ width: 14, height: 14, borderRadius: '50%' }} />
-    </div>
+    {FEATURES.regulix && (
+      <div className={styles.regulixCell}>
+        <span
+          className={styles.skeletonBar}
+          style={{ width: 14, height: 14, borderRadius: '50%' }}
+        />
+      </div>
+    )}
     <span className={styles.skeletonBar} style={{ width: 30, height: 16 }} />
     <span className={styles.skeletonBar} style={{ width: 72, height: 11 }} />
     <div className={styles.overflowCell}>
@@ -304,7 +314,9 @@ export const KrewPage: React.FC = () => {
   const { openChat } = useChatPane()
 
   const activeListId = searchParams.get(PARAM_LIST) ?? ALL_KREW_SENTINEL
-  const isRegulixView = activeListId === REGULIX_READY_SENTINEL
+  // When the Regulix feature is off the sidebar item is hidden; force the view
+  // off too so a stale `?list=regulix-ready` URL can't filter the table to it.
+  const isRegulixView = FEATURES.regulix && activeListId === REGULIX_READY_SENTINEL
   const search = searchParams.get(PARAM_SEARCH) ?? ''
   // The input renders `search` live; the table query waits for typing to pause.
   const debouncedSearch = useDebounce(search)
@@ -426,6 +438,10 @@ export const KrewPage: React.FC = () => {
   const [workers, setWorkers] = useState<KrewWorker[]>([])
   const [pageTotal, setPageTotal] = useState<number>(0)
   const [loadingTable, setLoadingTable] = useState<boolean>(true)
+  // Match counts arrive in a second pass after the table paints (see the hydration
+  // effect below). True while that RPC is in flight so the matches cell can show a
+  // placeholder instead of a premature "—".
+  const [hydratingMatches, setHydratingMatches] = useState<boolean>(false)
   // Cached count of regulix-ready workers — drives the Regulix Ready sidebar item's
   // count badge. Fetched alongside lists and after mutations.
   const [regulixReadyCount, setRegulixReadyCount] = useState<number | null>(null)
@@ -692,15 +708,19 @@ export const KrewPage: React.FC = () => {
   useEffect(() => {
     let cancelled = false
     setLoadingTable(true)
+    // Treat the Regulix sentinel as a virtual list regardless of the flag so a
+    // stale ?list=regulix-ready URL never gets passed to getKrew as a real list
+    // id. isRegulixView folds in the flag, so the regulixReadyOnly filter below
+    // only engages when the feature is on.
     const isAll = activeListId === ALL_KREW_SENTINEL
-    const isRegulix = activeListId === REGULIX_READY_SENTINEL
-    const listId = isAll || isRegulix ? undefined : activeListId
+    const isRegulixSentinel = activeListId === REGULIX_READY_SENTINEL
+    const listId = isAll || isRegulixSentinel ? undefined : activeListId
     getKrew({
       listId,
       search: debouncedSearch || undefined,
       sources: sources.size > 0 ? Array.from(sources) : undefined,
       skills: skills.size > 0 ? Array.from(skills) : undefined,
-      regulixReadyOnly: isRegulix || undefined,
+      regulixReadyOnly: isRegulixView || undefined,
       sort,
       page,
       pageSize,
@@ -715,11 +735,32 @@ export const KrewPage: React.FC = () => {
         setKrewTotalCount(data.total)
       }
       // Regulix Ready count caches when on that view with no other row-affecting filter.
-      const isUnfilteredRegulix = isRegulix && debouncedSearch.length === 0 && sources.size === 0
+      const isUnfilteredRegulix =
+        isRegulixView && debouncedSearch.length === 0 && sources.size === 0
       if (isUnfilteredRegulix) {
         setRegulixReadyCount(data.total)
       }
       setLoadingTable(false)
+
+      // Second pass: hydrate the matches column without blocking the paint above.
+      // When sorting by matches the service already returned hydrated counts
+      // (it must, to rank), so skip the redundant RPC in that case.
+      const ids = data.workers.map((w) => w.id)
+      if (sort.column === 'matches' || ids.length === 0) {
+        setHydratingMatches(false)
+        return
+      }
+      setHydratingMatches(true)
+      getKrewMatchCounts(ids).then(({ data: counts }) => {
+        if (cancelled) return
+        setWorkers((prev) =>
+          prev.map((w) => {
+            const c = counts[w.id]
+            return c ? { ...w, ...c } : w
+          })
+        )
+        setHydratingMatches(false)
+      })
     })
     return () => {
       cancelled = true
@@ -736,6 +777,8 @@ export const KrewPage: React.FC = () => {
   // row hydration entirely — far cheaper than the embedded-join `getKrew` call
   // when all we need is a single integer.
   useEffect(() => {
+    // Sidebar item is hidden when the Regulix feature is off, so skip the fetch.
+    if (!FEATURES.regulix) return
     let cancelled = false
     getRegulixReadyCount().then(({ data }) => {
       if (cancelled) return
@@ -899,7 +942,11 @@ export const KrewPage: React.FC = () => {
             disabled={loadingLists}
           >
             <option value={ALL_KREW_SENTINEL}>All Krew ({allKrewCount})</option>
-            <option value={REGULIX_READY_SENTINEL}>Regulix Ready ({regulixReadyCount ?? 0})</option>
+            {FEATURES.regulix && (
+              <option value={REGULIX_READY_SENTINEL}>
+                Regulix Ready ({regulixReadyCount ?? 0})
+              </option>
+            )}
             {krewLists.map((list) => (
               <option key={list.id} value={list.id}>
                 {list.name} ({list.count})
@@ -935,24 +982,27 @@ export const KrewPage: React.FC = () => {
                 {/* Spacer keeps the count aligned with rows that have an overflow menu */}
                 <span className={styles.listOverflowSpacer} aria-hidden="true" />
               </button>
-              {/* Regulix Ready virtual list — filters to regulix-ready workers */}
-              <button
-                type="button"
-                className={[styles.listItem, isRegulixView ? styles.listItemActive : '']
-                  .filter(Boolean)
-                  .join(' ')}
-                aria-current={isRegulixView ? 'true' : undefined}
-                onClick={() => selectList(REGULIX_READY_SENTINEL)}
-              >
-                <span className={styles.listItemLabel}>
-                  <span className={styles.regulixListIcon} aria-hidden="true">
-                    <RegulixMarkIcon size={13} />
+              {/* Regulix Ready virtual list — filters to regulix-ready workers.
+                  Hidden until the Regulix partner connection is live. */}
+              {FEATURES.regulix && (
+                <button
+                  type="button"
+                  className={[styles.listItem, isRegulixView ? styles.listItemActive : '']
+                    .filter(Boolean)
+                    .join(' ')}
+                  aria-current={isRegulixView ? 'true' : undefined}
+                  onClick={() => selectList(REGULIX_READY_SENTINEL)}
+                >
+                  <span className={styles.listItemLabel}>
+                    <span className={styles.regulixListIcon} aria-hidden="true">
+                      <RegulixMarkIcon size={13} />
+                    </span>
+                    Regulix Ready
                   </span>
-                  Regulix Ready
-                </span>
-                <span className={styles.listItemCount}>{regulixReadyCount ?? 0}</span>
-                <span className={styles.listOverflowSpacer} aria-hidden="true" />
-              </button>
+                  <span className={styles.listItemCount}>{regulixReadyCount ?? 0}</span>
+                  <span className={styles.listOverflowSpacer} aria-hidden="true" />
+                </button>
+              )}
               {krewLists.map((list) => {
                 const isActive = list.id === activeListId
                 const isRenaming = renamingListId === list.id
@@ -1137,7 +1187,15 @@ export const KrewPage: React.FC = () => {
             )}
 
             <div className={styles.tableCard}>
-              <div className={[styles.row, styles.headerRow].join(' ')}>
+              <div
+                className={[
+                  styles.row,
+                  styles.headerRow,
+                  FEATURES.regulix ? '' : styles.rowNoRegulix,
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+              >
                 <div className={styles.checkCell}>
                   <input
                     ref={headerCheckRef}
@@ -1164,7 +1222,7 @@ export const KrewPage: React.FC = () => {
                   Trade{' '}
                   <SortIndicator active={sort.column === 'trade'} direction={sort.direction} />
                 </button>
-                <div className={styles.regulixHeader}>Regulix</div>
+                {FEATURES.regulix && <div className={styles.regulixHeader}>Regulix</div>}
                 <button
                   type="button"
                   className={styles.sortableHeader}
@@ -1198,7 +1256,11 @@ export const KrewPage: React.FC = () => {
                   return (
                     <div
                       key={w.id}
-                      className={[styles.row, isSelected ? styles.rowSelected : '']
+                      className={[
+                        styles.row,
+                        isSelected ? styles.rowSelected : '',
+                        FEATURES.regulix ? '' : styles.rowNoRegulix,
+                      ]
                         .filter(Boolean)
                         .join(' ')}
                       role="button"
@@ -1240,21 +1302,25 @@ export const KrewPage: React.FC = () => {
                       <div className={styles.tradeCell}>
                         {w.trade ?? <span className={styles.dashCell}>—</span>}
                       </div>
-                      <div className={styles.regulixCell}>
-                        {w.isRegulixReady && (
-                          <Tooltip content="Regulix Ready" position="top">
-                            <span aria-label="Regulix Ready">
-                              <RegulixMarkIcon size={14} />
-                            </span>
-                          </Tooltip>
-                        )}
-                      </div>
+                      {FEATURES.regulix && (
+                        <div className={styles.regulixCell}>
+                          {w.isRegulixReady && (
+                            <Tooltip content="Regulix Ready" position="top">
+                              <span aria-label="Regulix Ready">
+                                <RegulixMarkIcon size={14} />
+                              </span>
+                            </Tooltip>
+                          )}
+                        </div>
+                      )}
                       <div>
                         {w.matchesCount > 0 ? (
                           <span className={styles.matchesBadge}>
                             <SparkleIcon size={11} />
                             {w.matchesCount}
                           </span>
+                        ) : hydratingMatches ? (
+                          <span className={styles.skeletonBar} style={{ width: 30, height: 16 }} />
                         ) : (
                           <span className={styles.dashCell}>—</span>
                         )}

@@ -1,4 +1,10 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
+
+// Regulix ships behind a build-time flag that defaults OFF (the service returns
+// empty data when off). These tests exercise the real fixture-backed behavior,
+// so force the flag ON for the suite.
+vi.mock('@site/config/features', () => ({ FEATURES: { regulix: true } }))
+
 import {
   getRegulixStatus,
   getEndorsements,

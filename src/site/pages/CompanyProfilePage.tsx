@@ -21,6 +21,7 @@ import { QuickApplyModal } from '../components/QuickApplyModal/QuickApplyModal'
 import { getAppliedJobIds } from '../services/jobService'
 import type { Job } from '../types'
 import { RegulixLogo } from '../components/RegulixLogo/RegulixLogo'
+import { FEATURES } from '../config/features'
 import { getIndustryById, INDUSTRIES } from '../data/industries'
 import { getLicenseTypeById } from '../data/licenseTypes'
 import { BENEFIT_GROUPS, CONTRACT_TYPE_OPTIONS } from './CompanyProfileEdit/types'
@@ -574,52 +575,55 @@ export const CompanyProfilePage: React.FC = () => {
 
               <div className={styles.sidebar}>
                 {/* Regulix status — matches the worker profile's box; greyed out
-                  when the company hasn't connected Regulix. */}
-                <div
-                  style={{
-                    background: data.regulix_connected
-                      ? 'var(--kt-regulix-50)'
-                      : 'var(--kt-surface-raised)',
-                    borderRadius: 'var(--kt-radius-lg)',
-                    padding: 18,
-                    textAlign: 'center',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                  }}
-                >
-                  <RegulixLogo
-                    height={24}
-                    textColor={
-                      data.regulix_connected ? 'var(--kt-navy-700)' : 'var(--kt-text-muted)'
-                    }
-                    opacity={data.regulix_connected ? 1 : 0.45}
-                  />
-                  <p
+                  when the company hasn't connected Regulix. Hidden entirely until
+                  the Regulix partner connection is live. */}
+                {FEATURES.regulix && (
+                  <div
                     style={{
-                      marginTop: 10,
-                      fontSize: 'var(--kt-text-sm)',
-                      fontWeight: 'var(--kt-weight-semibold)',
-                      color: data.regulix_connected
-                        ? 'var(--kt-regulix-500)'
-                        : 'var(--kt-text-muted)',
+                      background: data.regulix_connected
+                        ? 'var(--kt-regulix-50)'
+                        : 'var(--kt-surface-raised)',
+                      borderRadius: 'var(--kt-radius-lg)',
+                      padding: 18,
+                      textAlign: 'center',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
                     }}
                   >
-                    {data.regulix_connected ? 'Regulix Connected' : 'Not on Regulix'}
-                  </p>
-                  <p
-                    style={{
-                      fontSize: 'var(--kt-text-xs)',
-                      color: 'var(--kt-text-muted)',
-                      marginTop: 4,
-                      lineHeight: 1.5,
-                    }}
-                  >
-                    {data.regulix_connected
-                      ? 'Verified workforce compliance through Regulix.'
-                      : 'This company has not connected Regulix yet.'}
-                  </p>
-                </div>
+                    <RegulixLogo
+                      height={24}
+                      textColor={
+                        data.regulix_connected ? 'var(--kt-navy-700)' : 'var(--kt-text-muted)'
+                      }
+                      opacity={data.regulix_connected ? 1 : 0.45}
+                    />
+                    <p
+                      style={{
+                        marginTop: 10,
+                        fontSize: 'var(--kt-text-sm)',
+                        fontWeight: 'var(--kt-weight-semibold)',
+                        color: data.regulix_connected
+                          ? 'var(--kt-regulix-500)'
+                          : 'var(--kt-text-muted)',
+                      }}
+                    >
+                      {data.regulix_connected ? 'Regulix Connected' : 'Not on Regulix'}
+                    </p>
+                    <p
+                      style={{
+                        fontSize: 'var(--kt-text-xs)',
+                        color: 'var(--kt-text-muted)',
+                        marginTop: 4,
+                        lineHeight: 1.5,
+                      }}
+                    >
+                      {data.regulix_connected
+                        ? 'Verified workforce compliance through Regulix.'
+                        : 'This company has not connected Regulix yet.'}
+                    </p>
+                  </div>
+                )}
 
                 <SidebarCard title="Company details">
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>

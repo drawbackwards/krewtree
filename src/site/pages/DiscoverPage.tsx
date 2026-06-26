@@ -22,6 +22,7 @@ import {
 } from '../services/krewService'
 import { useChatPane } from '../components/ChatPane/ChatPaneContext'
 import { useDebounce } from '../hooks/useDebounce'
+import { FEATURES } from '../config/features'
 import { SearchIcon } from '../icons'
 import styles from './DiscoverPage.module.css'
 
@@ -84,7 +85,18 @@ export const DiscoverPage: React.FC = () => {
     () => searchParams.get('skill')?.split(',').filter(Boolean) ?? [],
     [searchParams]
   )
-  const regulixOnly = searchParams.get('regulix') === '1'
+  // Debounce the skill set that drives the query (not the checkboxes) so rapidly
+  // ticking several skills fires one request, not one per click. Debounce the raw
+  // param string — debouncing selectedSkills' array reference would also stall
+  // unrelated param changes (sort, search) that recompute the memo.
+  const skillParam = searchParams.get('skill') ?? ''
+  const debouncedSkillParam = useDebounce(skillParam)
+  const debouncedSelectedSkills = useMemo(
+    () => debouncedSkillParam.split(',').filter(Boolean),
+    [debouncedSkillParam]
+  )
+  // Regulix gated off pre-launch — never honor the filter (incl. stale URLs).
+  const regulixOnly = FEATURES.regulix && searchParams.get('regulix') === '1'
   const sortBy = (searchParams.get('sort') ?? 'recent') as DiscoverSort
   const matchJobId = searchParams.get('job') ?? null
   const radiusParam = Number(searchParams.get('radius') ?? '')
@@ -213,7 +225,7 @@ export const DiscoverPage: React.FC = () => {
     setError(null)
     discoverWorkers({
       search: debouncedSearchQ || undefined,
-      skills: selectedSkills.length > 0 ? selectedSkills : undefined,
+      skills: debouncedSelectedSkills.length > 0 ? debouncedSelectedSkills : undefined,
       regulixReadyOnly: regulixOnly || undefined,
       sort: sortBy,
       matchJobId: matchJobId ?? undefined,
@@ -232,7 +244,7 @@ export const DiscoverPage: React.FC = () => {
 
   useEffect(refetch, [
     debouncedSearchQ,
-    selectedSkills,
+    debouncedSelectedSkills,
     regulixOnly,
     sortBy,
     matchJobId,
@@ -632,14 +644,18 @@ export const DiscoverPage: React.FC = () => {
               </p>
             )}
 
-            <div className={styles.divider} />
+            {FEATURES.regulix && (
+              <>
+                <div className={styles.divider} />
 
-            <FilterSectionTitle>Special</FilterSectionTitle>
-            <Checkbox
-              label="Regulix Ready only"
-              checked={regulixOnly}
-              onChange={(v) => updateFilters({ regulix: v ? '1' : null })}
-            />
+                <FilterSectionTitle>Special</FilterSectionTitle>
+                <Checkbox
+                  label="Regulix Ready only"
+                  checked={regulixOnly}
+                  onChange={(v) => updateFilters({ regulix: v ? '1' : null })}
+                />
+              </>
+            )}
 
             <div className={styles.divider} />
 

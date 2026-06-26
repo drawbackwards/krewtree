@@ -10,6 +10,7 @@ import {
   deleteMessageTemplate,
   type MessageTemplate,
 } from '../../services/messageTemplateService'
+import { FEATURES } from '../../config/features'
 
 const EXPERIENCE_LABELS: Record<string, string> = {
   entry: 'Entry Level (0–1 yr)',
@@ -126,7 +127,7 @@ function optionFlags(p: JobTemplate['payload']): string {
   const flags: string[] = []
   if (p.isSponsored) flags.push('Boosted')
   if (p.urgentHiring) flags.push('Urgently hiring')
-  if (p.regulixPreferred) flags.push('Regulix preferred')
+  if (FEATURES.regulix && p.regulixPreferred) flags.push('Regulix preferred')
   return flags.join(', ')
 }
 

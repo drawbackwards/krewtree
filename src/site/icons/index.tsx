@@ -1,4 +1,5 @@
 import React from 'react'
+import { FEATURES } from '../config/features'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Krewtree shared icon library
@@ -1405,6 +1406,8 @@ export const SortIcon: React.FC<{ size?: number; color?: string }> = ({
 )
 
 export const RegulixMarkIcon: React.FC<{ size?: number }> = ({ size = 24 }) => {
+  // Regulix is gated behind a launch flag — hide the mark entirely when off.
+  if (!FEATURES.regulix) return null
   const h = Math.round((size * 699.83) / 600)
   return (
     <svg

@@ -14,6 +14,7 @@ import {
 } from './locationService'
 import type { Job } from '../types'
 import { invalidateSessionCache, withSessionCache } from '../utils/sessionCache'
+import { FEATURES } from '../config/features'
 
 // ─── Public types ──────────────────────────────────────────────────────────
 
@@ -140,14 +141,22 @@ async function fetchMatchCounts(workerIds: string[]): Promise<Map<string, MatchC
   return map
 }
 
-function applyCounts(worker: KrewWorker, counts: Map<string, MatchCountRow>): KrewWorker {
-  const row = counts.get(worker.id)
-  if (!row) return worker
-  return {
-    ...worker,
-    matchesCount: row.matches,
-    strongMatchesCount: row.strong_matches,
+/** Per-worker match counts, keyed by worker id. */
+export type KrewMatchCounts = Record<string, { matchesCount: number; strongMatchesCount: number }>
+
+// Public second-pass hydration. The default `getKrew` path returns relationship
+// rows immediately so the table paints, then the page calls this to fill in the
+// matches column. Keeping it separate stops the cross-join match RPC from
+// blocking first render. Failure is non-fatal — counts stay at 0.
+export async function getKrewMatchCounts(
+  workerIds: string[]
+): Promise<{ data: KrewMatchCounts; error: ServiceError }> {
+  const counts = await fetchMatchCounts(workerIds)
+  const out: KrewMatchCounts = {}
+  for (const [id, row] of counts) {
+    out[id] = { matchesCount: row.matches, strongMatchesCount: row.strong_matches }
   }
+  return { data: out, error: null }
 }
 
 // ─── Procedures: krew.list ─────────────────────────────────────────────────
@@ -204,7 +213,7 @@ export async function getKrew(
       .eq('company_id', companyId)
       .eq('in_krew', true)
 
-    if (opts.regulixReadyOnly) {
+    if (FEATURES.regulix && opts.regulixReadyOnly) {
       q = q.eq('worker_profiles.is_regulix_ready', true)
     }
     if (opts.sources && opts.sources.length > 0) {
@@ -225,37 +234,44 @@ export async function getKrew(
   }
 
   // ─── Match-driven path ────────────────────────────────────────────────────
-  // Sort by matches OR filter to strong-only. Fetch everything, score, prune,
-  // sort, then paginate in JS. The unpaginated set is bounded by the company's
-  // krew size (small in practice) so this is acceptable.
+  // Sort by matches OR filter to strong-only. Ranking needs every worker's
+  // count before paginating, so we push the whole operation — filter, score,
+  // sort, prune, paginate, total — into the rank_krew_by_matches RPC and read
+  // back only the visible page. (The previous version fetched the entire krew
+  // and sorted in JS.) The search term is escaped server-side via ILIKE; we
+  // pass it raw because Postgres treats the wildcards in the function body.
   if (matchDriven) {
-    // Stable tiebreaker — workers with the same match count fall back to
-    // last-interaction order so the ranking doesn't shuffle between requests.
-    const all = await buildBaseQuery(false)
-      .order('last_interaction_at', { ascending: false, nullsFirst: false })
-      .range(0, 9999)
+    const search = opts.search?.trim()
+    const { data, error } = await supabase.rpc('rank_krew_by_matches', {
+      p_search: search && search.length > 0 ? search : null,
+      p_sources: opts.sources && opts.sources.length > 0 ? opts.sources : null,
+      p_list_id: opts.listId ?? null,
+      p_regulix_only: FEATURES.regulix ? (opts.regulixReadyOnly ?? false) : false,
+      p_strong_only: opts.strongMatchesOnly ?? false,
+      p_sort_dir: opts.sort?.direction === 'asc' ? 'asc' : 'desc',
+      p_page: page,
+      p_page_size: pageSize,
+    })
 
-    if (all.error) return { data: { workers: [], total: 0 }, error: all.error.message }
+    if (error) return { data: { workers: [], total: 0 }, error: error.message }
 
-    const baseRows = ((all.data ?? []) as unknown as KrewRelWithProfile[]).map(mapWorker)
-    const counts = await fetchMatchCounts(baseRows.map((w) => w.id))
-    let scored = baseRows.map((w) => applyCounts(w, counts))
-
-    if (opts.strongMatchesOnly) {
-      scored = scored.filter((w) => w.strongMatchesCount > 0)
-    }
-
-    if (opts.sort?.column === 'matches') {
-      const asc = opts.sort.direction === 'asc'
-      scored.sort((a, b) =>
-        asc ? a.matchesCount - b.matchesCount : b.matchesCount - a.matchesCount
-      )
-    }
-
-    const total = scored.length
-    const from = (page - 1) * pageSize
-    const slice = scored.slice(from, from + pageSize)
-    return { data: { workers: slice, total }, error: null }
+    const rows = data ?? []
+    const total = rows.length > 0 ? Number(rows[0].total_count) : 0
+    const workers: KrewWorker[] = rows.map((r) => ({
+      id: r.worker_id,
+      firstName: r.first_name ?? '',
+      lastName: r.last_name ?? '',
+      trade: r.primary_trade ?? null,
+      isRegulixReady: r.is_regulix_ready === true,
+      avatarUrl: r.avatar_url ?? null,
+      source: r.source as KrewSource,
+      lastHired: null, // deferred — see note on KrewWorker.lastHired
+      lastInteraction: r.last_interaction_at,
+      matchesCount: r.matches,
+      strongMatchesCount: r.strong_matches,
+      inKrew: true,
+    }))
+    return { data: { workers, total }, error: null }
   }
 
   // ─── Default path ─────────────────────────────────────────────────────────
@@ -281,9 +297,10 @@ export async function getKrew(
   const { data, count, error } = await query
   if (error) return { data: { workers: [], total: 0 }, error: error.message }
 
-  const baseRows = ((data ?? []) as unknown as KrewRelWithProfile[]).map(mapWorker)
-  const counts = await fetchMatchCounts(baseRows.map((w) => w.id))
-  const workers = baseRows.map((w) => applyCounts(w, counts))
+  // Match counts are hydrated by the caller in a second pass (getKrewMatchCounts)
+  // so the table paints on the relationship rows without waiting on the match
+  // RPC's cross-join over active jobs. Rows render with matchesCount = 0 until then.
+  const workers = ((data ?? []) as unknown as KrewRelWithProfile[]).map(mapWorker)
   return { data: { workers, total: count ?? 0 }, error: null }
 }
 
@@ -297,6 +314,9 @@ export async function getRegulixReadyCount(): Promise<{
   data: number
   error: ServiceError
 }> {
+  // Regulix gated off pre-launch — no count to surface.
+  if (!FEATURES.regulix) return { data: 0, error: null }
+
   const companyId = await currentCompanyId()
   if (!companyId) return { data: 0, error: 'Not signed in' }
 
@@ -507,7 +527,7 @@ export async function discoverWorkers(
       q = q.or(`first_name.ilike.%${term}%,last_name.ilike.%${term}%,primary_trade.ilike.%${term}%`)
     }
     if (opts.skills && opts.skills.length > 0) q = q.in('worker_skills.name', opts.skills)
-    if (opts.regulixReadyOnly) q = q.eq('is_regulix_ready', true)
+    if (FEATURES.regulix && opts.regulixReadyOnly) q = q.eq('is_regulix_ready', true)
     if (opts.sort === 'recent') {
       q = q.order('updated_at', { ascending: false, nullsFirst: false })
     } else {
@@ -538,7 +558,7 @@ export async function discoverWorkers(
     )
   }
   if (opts.skills && opts.skills.length > 0) baseQ = baseQ.in('worker_skills.name', opts.skills)
-  if (opts.regulixReadyOnly) baseQ = baseQ.eq('is_regulix_ready', true)
+  if (FEATURES.regulix && opts.regulixReadyOnly) baseQ = baseQ.eq('is_regulix_ready', true)
   // SQL-side order: name (A–Z) only when explicitly requested; otherwise
   // updated_at desc. This is the order workers retain when no JS-side sort
   // (matchJobId or nearest) overrides it, and provides a stable tiebreaker.

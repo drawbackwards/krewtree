@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { Link, useNavigate } from 'react-router-dom'
 import { Badge } from '../../components'
 import { DotsHorizontalIcon, RocketIcon, RegulixMarkIcon, SearchIcon } from '../icons'
+import { FEATURES } from '../config/features'
 import { useAuth } from '../context/AuthContext'
 import { getCompanyJobs, updateJob, deleteJob } from '../services/jobService'
 import type { Job } from '../types'
@@ -59,7 +60,7 @@ const ApplicantCount: React.FC<{ total: number; regulixReady: number }> = ({
 }) => (
   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
     <span style={{ fontSize: 'var(--kt-text-xs)', color: 'var(--kt-text)' }}>{total}</span>
-    {regulixReady > 0 && (
+    {FEATURES.regulix && regulixReady > 0 && (
       <>
         <span style={{ color: 'var(--kt-text-muted)', fontSize: 'var(--kt-text-xs)' }}>·</span>
         <span style={{ fontSize: 'var(--kt-text-xs)', color: 'var(--kt-text)' }}>

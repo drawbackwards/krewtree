@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react'
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import type { User, Session } from '@supabase/supabase-js'
 import { supabase } from '../../lib/supabase'
 import { clearSessionCache } from '../utils/sessionCache'
@@ -101,70 +101,84 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => subscription.unsubscribe()
   }, [])
 
-  const login = async (
-    email: string,
-    password: string
-  ): Promise<{ error: string | null; persona?: Persona }> => {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) return { error: error.message }
-    if (!data.user) return { error: 'Login failed.' }
-    const { data: roleData } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('id', data.user.id)
-      .single()
-    const role = roleData?.role as Persona | undefined
-    if (role) setPersonaState(role)
-    return { error: null, persona: role }
-  }
+  const login = useCallback(
+    async (
+      email: string,
+      password: string
+    ): Promise<{ error: string | null; persona?: Persona }> => {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+      if (error) return { error: error.message }
+      if (!data.user) return { error: 'Login failed.' }
+      // Persona rides on user_metadata (set at signup) — read it off the session
+      // instead of a user_roles round trip. Fall back to the table only for legacy
+      // accounts whose metadata predates the role being written there.
+      const metaRole = (data.user.user_metadata?.role as Persona | undefined) ?? undefined
+      let role: Persona | undefined =
+        metaRole === 'worker' || metaRole === 'company' ? metaRole : undefined
+      if (!role) {
+        const { data: roleData } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('id', data.user.id)
+          .single()
+        role = roleData?.role as Persona | undefined
+      }
+      if (role) setPersonaState(role)
+      return { error: null, persona: role }
+    },
+    []
+  )
 
-  const signUp = async (
-    email: string,
-    password: string,
-    role: Persona,
-    displayName = '',
-    lastName = '',
-    industry = '',
-    phone = '',
-    hqCity = '',
-    hqState = ''
-  ): Promise<{ error: string | null; persona?: Persona; userId?: string }> => {
-    // Pass role + name in metadata — the handle_new_user trigger creates the rows
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          role,
-          first_name: role === 'worker' ? displayName : '',
-          last_name: role === 'worker' ? lastName : '',
-          company_name: role === 'company' ? displayName : '',
-          industry: role === 'company' ? industry : '',
-          phone: role === 'company' ? phone : '',
-          hq_city: role === 'company' ? hqCity : '',
-          hq_state: role === 'company' ? hqState : '',
+  const signUp = useCallback(
+    async (
+      email: string,
+      password: string,
+      role: Persona,
+      displayName = '',
+      lastName = '',
+      industry = '',
+      phone = '',
+      hqCity = '',
+      hqState = ''
+    ): Promise<{ error: string | null; persona?: Persona; userId?: string }> => {
+      // Pass role + name in metadata — the handle_new_user trigger creates the rows
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            role,
+            first_name: role === 'worker' ? displayName : '',
+            last_name: role === 'worker' ? lastName : '',
+            company_name: role === 'company' ? displayName : '',
+            industry: role === 'company' ? industry : '',
+            phone: role === 'company' ? phone : '',
+            hq_city: role === 'company' ? hqCity : '',
+            hq_state: role === 'company' ? hqState : '',
+          },
         },
-      },
-    })
-    if (error) return { error: error.message }
-    if (!data.user) return { error: 'Sign-up failed. No user returned.' }
-    setPersonaState(role)
-    return { error: null, persona: role, userId: data.user.id }
-  }
+      })
+      if (error) return { error: error.message }
+      if (!data.user) return { error: 'Sign-up failed. No user returned.' }
+      setPersonaState(role)
+      return { error: null, persona: role, userId: data.user.id }
+    },
+    []
+  )
 
-  const resendVerificationEmail = async (): Promise<{ error: string | null }> => {
+  const resendVerificationEmail = useCallback(async (): Promise<{ error: string | null }> => {
     const { error } = await supabase.auth.resend({ type: 'signup', email: user?.email ?? '' })
     if (error) return { error: error.message }
     return { error: null }
-  }
+  }, [user?.email])
 
-  const updateEmail = async (newEmail: string): Promise<{ error: string | null }> => {
+  const updateEmail = useCallback(async (newEmail: string): Promise<{ error: string | null }> => {
     const { error } = await supabase.auth.updateUser({ email: newEmail })
     if (error) return { error: error.message }
     return { error: null }
-  }
+  }, [])
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     await supabase.auth.signOut()
     setPersonaState(null)
     // Profile-edit drafts are keyed per account (see WorkerProfileEditPage /
@@ -173,30 +187,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Drop cached company-scoped Discover data so a fresh login doesn't read
     // the previous account's skills/coords/active-jobs entries.
     clearSessionCache()
-  }
+  }, [])
 
-  const setPersona = (p: Persona) => setPersonaState(p)
+  const setPersona = useCallback((p: Persona) => setPersonaState(p), [])
 
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        session,
-        persona,
-        isLoggedIn: !!user,
-        isEmailVerified: !!user?.email_confirmed_at,
-        isLoading,
-        login,
-        signUp,
-        logout,
-        resendVerificationEmail,
-        updateEmail,
-        setPersona,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
+  // Memoize the context value so consumers (Navbar, route guards, every useAuth()
+  // caller) only re-render when auth state actually changes, not on every render
+  // of the provider's parent. Handlers above are stable via useCallback.
+  const value = useMemo<AuthState>(
+    () => ({
+      user,
+      session,
+      persona,
+      isLoggedIn: !!user,
+      isEmailVerified: !!user?.email_confirmed_at,
+      isLoading,
+      login,
+      signUp,
+      logout,
+      resendVerificationEmail,
+      updateEmail,
+      setPersona,
+    }),
+    [
+      user,
+      session,
+      persona,
+      isLoading,
+      login,
+      signUp,
+      logout,
+      resendVerificationEmail,
+      updateEmail,
+      setPersona,
+    ]
   )
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
 export const useAuth = () => useContext(AuthContext)

@@ -2,6 +2,7 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 import { Badge } from '../../../components'
 import { KrewtreeLogo } from '../../components/Logo'
+import { FEATURES } from '../../config/features'
 import { CheckIcon } from '../../icons'
 import styles from './SignupRolePage.module.css'
 
@@ -172,7 +173,9 @@ export const SignupRolePage: React.FC = () => {
                 maxWidth: 340,
               }}
             >
-              Browse jobs, build a verified profile, and get hired faster with Regulix.
+              {FEATURES.regulix
+                ? 'Browse jobs, build a verified profile, and get hired faster with Regulix.'
+                : 'Browse jobs, build a verified profile, and connect with companies hiring now.'}
             </p>
             <ul
               style={{
@@ -187,7 +190,7 @@ export const SignupRolePage: React.FC = () => {
               {[
                 'Browse 12,400+ live jobs',
                 'One profile works everywhere',
-                'Become Regulix Ready',
+                FEATURES.regulix ? 'Become Regulix Ready' : 'Apply in minutes',
               ].map((item) => (
                 <li
                   key={item}
@@ -287,7 +290,9 @@ export const SignupRolePage: React.FC = () => {
                 maxWidth: 340,
               }}
             >
-              Post jobs and find Regulix Ready workers who can start the day they're hired.
+              {FEATURES.regulix
+                ? "Post jobs and find Regulix Ready workers who can start the day they're hired."
+                : 'Post jobs and find verified workers ready to get to work.'}
             </p>
             <ul
               style={{
@@ -302,7 +307,7 @@ export const SignupRolePage: React.FC = () => {
               {[
                 'Post jobs across every industry',
                 'Access 54,000+ verified workers',
-                'Hire same-day — no delays',
+                FEATURES.regulix ? 'Hire same-day — no delays' : 'Manage applicants in one place',
               ].map((item) => (
                 <li
                   key={item}
@@ -370,7 +375,7 @@ export const SignupRolePage: React.FC = () => {
           letterSpacing: '0.02em',
         }}
       >
-        A Regulix Partner Platform · © 2026 krewtree
+        {FEATURES.regulix ? 'A Regulix Partner Platform · ' : ''}© 2026 krewtree
       </p>
     </div>
   )
