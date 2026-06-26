@@ -313,17 +313,22 @@ export type PublicCompanyProfile = {
 export async function getPublicCompanyProfile(
   companyId: string
 ): Promise<{ data: PublicCompanyProfile | null; error: string | null }> {
-  const profileQuery = supabase
-    .from('company_profiles')
+  // Reads the masked view, not the base table: phone/address are already
+  // gated by the company's *_public flags in SQL (the anon key can't read the
+  // raw contact columns), and soft-deleted companies are excluded by the view.
+  // The view isn't in the generated types, so use the same loose `from` escape
+  // hatch the services use for non-generated relations.
+  const db = supabase as unknown as { from: (t: string) => ReturnType<typeof supabase.from> }
+  const profileQuery = db
+    .from('company_public_profiles')
     .select(
       'id, name, tagline, logo_url, industry, additional_industries, size, founded, ' +
-        'description, website, phone, phone_public, email_public, address_public, ' +
-        'hq_street, hq_city, hq_state, hq_postal_code, service_area_radius, ' +
-        'service_area_override, contract_types, facebook_url, instagram_url, linkedin_url, ' +
-        'youtube_url, tiktok_url, is_verified, regulix_connected, deleted_at'
+        'description, website, phone, hq_full_address, hq_city, hq_state, ' +
+        'service_area_radius, service_area_override, contract_types, facebook_url, ' +
+        'instagram_url, linkedin_url, youtube_url, tiktok_url, is_verified, regulix_connected'
     )
     .eq('id', companyId)
-    .single()
+    .maybeSingle()
 
   const [profileRes, licensesRes, locationsRes, photosRes, benefitsRes, jobsRes] =
     await Promise.all([
@@ -343,6 +348,9 @@ export async function getPublicCompanyProfile(
     ])
 
   if (profileRes.error) return { data: null, error: profileRes.error.message }
+  // maybeSingle returns null when the company doesn't exist or is soft-deleted
+  // (the view filters deleted_at), which both surface as "not found".
+  if (!profileRes.data) return { data: null, error: null }
   const p = profileRes.data as unknown as {
     id: string
     name: string
@@ -355,13 +363,9 @@ export async function getPublicCompanyProfile(
     description: string
     website: string
     phone: string
-    phone_public: boolean
-    email_public: boolean
-    address_public: boolean
-    hq_street: string
+    hq_full_address: string
     hq_city: string
     hq_state: string
-    hq_postal_code: string
     service_area_radius: number
     service_area_override: string
     contract_types: string[]
@@ -372,19 +376,12 @@ export async function getPublicCompanyProfile(
     tiktok_url: string
     is_verified: boolean
     regulix_connected: boolean
-    deleted_at: string | null
   }
 
-  // Soft-deleted companies render as missing to workers.
-  if (p.deleted_at) return { data: null, error: null }
-
-  // Email and the full address aren't on company_profiles; email lives in auth.
-  // Since RLS doesn't let workers read auth.users, we leave email blank for now
-  // and let messaging flows do the contact (per spec §8.7). When email_public
-  // is later wired, a public_email column would be added.
-  const fullAddress = p.address_public
-    ? [p.hq_street, p.hq_city, p.hq_state, p.hq_postal_code].filter(Boolean).join(', ')
-    : ''
+  // phone and hq_full_address arrive already masked by the view per the
+  // company's *_public flags. Email isn't on company_profiles (it lives in
+  // auth, which RLS won't expose to workers), so contact happens via messaging
+  // (per spec §8.7); when email_public is wired, add a public_email column.
 
   return {
     data: {
@@ -398,9 +395,9 @@ export async function getPublicCompanyProfile(
       founded: p.founded,
       description: p.description,
       website: p.website,
-      phone: p.phone_public ? p.phone : '',
+      phone: p.phone,
       email: '',
-      hq_full_address: fullAddress,
+      hq_full_address: p.hq_full_address,
       hq_city: p.hq_city,
       hq_state: p.hq_state,
       service_area_radius: p.service_area_radius,
