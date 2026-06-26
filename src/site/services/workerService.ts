@@ -23,8 +23,13 @@ export type WorkerProfileRow = {
 export async function getWorkerProfile(
   userId: string
 ): Promise<{ data: WorkerProfileRow | null; error: string | null }> {
-  const { data, error } = await supabase
-    .from('worker_profiles')
+  // Reads the masked view, not the base table: phone is returned only to the
+  // worker themselves or a company they applied to (authenticated can't read
+  // the raw phone column). The view isn't in the generated types, so use the
+  // same loose `from` escape hatch the services use for non-generated relations.
+  const db = supabase as unknown as { from: (t: string) => ReturnType<typeof supabase.from> }
+  const { data, error } = await db
+    .from('worker_profiles_secure')
     .select(
       'first_name, last_name, city, region, primary_trade, avatar_url, bio, phone, is_regulix_ready, performance_score, profile_complete_pct, total_hours_worked'
     )
@@ -32,7 +37,7 @@ export async function getWorkerProfile(
     .single()
 
   if (error) return { data: null, error: error.message }
-  return { data, error: null }
+  return { data: data as unknown as WorkerProfileRow, error: null }
 }
 
 // ── Applications ───────────────────────────────────────────────────────────────
@@ -265,6 +270,11 @@ export type FullWorkerProfile = {
 export async function getFullWorkerProfile(
   userId: string
 ): Promise<{ data: FullWorkerProfile | null; error: string | null }> {
+  // phone comes from the masked view (returned only to the worker themselves
+  // or a company they applied to); the raw column is no longer readable by
+  // authenticated. The view isn't in the generated types, so use the loose
+  // `from` escape hatch the services use for non-generated relations.
+  const db = supabase as unknown as { from: (t: string) => ReturnType<typeof supabase.from> }
   const [
     profileRes,
     industriesRes,
@@ -275,8 +285,8 @@ export async function getFullWorkerProfile(
     resumeRes,
     referencesRes,
   ] = await Promise.all([
-    supabase
-      .from('worker_profiles')
+    db
+      .from('worker_profiles_secure')
       .select(
         'first_name, last_name, city, region, phone, primary_trade, bio, avatar_url, is_regulix_ready, performance_score, profile_complete_pct, total_hours_worked, references_count, references_consent_confirmed_at'
       )
@@ -318,7 +328,33 @@ export async function getFullWorkerProfile(
   if (profileRes.error) return { data: null, error: profileRes.error.message }
   if (!profileRes.data) return { data: null, error: 'Profile not found' }
 
-  const p = profileRes.data
+  const p = profileRes.data as unknown as {
+    first_name: string | null
+    last_name: string | null
+    city: string | null
+    region: string | null
+    phone: string | null
+    primary_trade: string | null
+    bio: string | null
+    avatar_url: string | null
+    is_regulix_ready: boolean
+    performance_score: number | null
+    profile_complete_pct: number
+    total_hours_worked: number | null
+    references_count: number
+    references_consent_confirmed_at: string | null
+  }
+
+  // Resumes live in a private bucket now; mint a short-lived signed URL.
+  // Storage RLS lets the owner and applied-to companies through; for anyone
+  // else createSignedUrl fails and the link is omitted.
+  let resumeUrl: string | null = null
+  if (resumeRes.data?.file_path) {
+    const { data: signed } = await supabase.storage
+      .from('resumes')
+      .createSignedUrl(resumeRes.data.file_path, 60 * 60)
+    resumeUrl = signed?.signedUrl ?? null
+  }
 
   return {
     data: {
@@ -330,9 +366,7 @@ export async function getFullWorkerProfile(
       primaryTrade: p.primary_trade ?? '',
       bio: p.bio ?? '',
       avatarUrl: p.avatar_url ?? null,
-      resumeUrl: resumeRes.data?.file_path
-        ? supabase.storage.from('resumes').getPublicUrl(resumeRes.data.file_path).data.publicUrl
-        : null,
+      resumeUrl,
       isRegulixReady: p.is_regulix_ready,
       performanceScore: p.performance_score,
       profileCompletePct: p.profile_complete_pct,
