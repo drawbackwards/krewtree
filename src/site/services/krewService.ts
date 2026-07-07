@@ -1340,67 +1340,6 @@ function mapApplicationRowsToHistoryCards(rows: JoinedApplicationRow[]): WorkerH
     })
 }
 
-// ─── DEMO SEED (REMOVE) ───────────────────────────────────────────────────
-// Throwaway: previews the finished cards (Completed with rating + review
-// pills, Completed with em-dash) plus a Terminated and a Rejected card.
-// Delete this whole helper + its call sites when job_engagement + the review
-// flow ship.
-function seedDemoHistoryCards(cards: WorkerHistoryCard[]): void {
-  const firstActive = cards.find((c) => c.state === 'active')
-  if (!firstActive) return
-  firstActive.state = 'completed'
-  firstActive.rating = 4.6
-  firstActive.reviewTags = ['Punctual', 'Reliable', 'Great attitude']
-  const baseTime = new Date(firstActive.primaryDate).getTime()
-  const dayMs = 24 * 60 * 60 * 1000
-  cards.push({
-    applicationId: `${firstActive.applicationId}-demo-empty`,
-    jobId: firstActive.jobId,
-    jobTitle: firstActive.jobTitle,
-    state: 'completed',
-    primaryDate: new Date(baseTime - 7 * dayMs).toISOString(),
-    currentStageName: null,
-    rating: null,
-    reviewTags: [],
-    jobLocation: firstActive.jobLocation,
-    jobType: firstActive.jobType,
-    jobPayMin: firstActive.jobPayMin,
-    jobPayMax: firstActive.jobPayMax,
-    jobPayType: firstActive.jobPayType,
-  })
-  cards.push({
-    applicationId: `${firstActive.applicationId}-demo-terminated`,
-    jobId: firstActive.jobId,
-    jobTitle: firstActive.jobTitle,
-    state: 'terminated',
-    primaryDate: new Date(baseTime - 14 * dayMs).toISOString(),
-    currentStageName: null,
-    rating: null,
-    reviewTags: ['No-show', 'Poor work ethic'],
-    jobLocation: firstActive.jobLocation,
-    jobType: firstActive.jobType,
-    jobPayMin: firstActive.jobPayMin,
-    jobPayMax: firstActive.jobPayMax,
-    jobPayType: firstActive.jobPayType,
-  })
-  cards.push({
-    applicationId: `${firstActive.applicationId}-demo-rejected`,
-    jobId: firstActive.jobId,
-    jobTitle: firstActive.jobTitle,
-    state: 'rejected',
-    primaryDate: new Date(baseTime - 21 * dayMs).toISOString(),
-    currentStageName: null,
-    rating: null,
-    reviewTags: [],
-    jobLocation: firstActive.jobLocation,
-    jobType: firstActive.jobType,
-    jobPayMin: firstActive.jobPayMin,
-    jobPayMax: firstActive.jobPayMax,
-    jobPayType: firstActive.jobPayType,
-  })
-}
-// ─── END DEMO SEED ────────────────────────────────────────────────────────
-
 export async function getWorkerApplications(
   workerId: string
 ): Promise<{ data: WorkerHistoryCard[]; error: ServiceError }> {
@@ -1418,7 +1357,6 @@ export async function getWorkerApplications(
   if (error) return { data: [], error: error.message }
 
   const cards = mapApplicationRowsToHistoryCards((data ?? []) as unknown as JoinedApplicationRow[])
-  seedDemoHistoryCards(cards)
 
   // Strict reverse chronological by primary date — see spec §7.
   cards.sort((a, b) => (a.primaryDate < b.primaryDate ? 1 : -1))
@@ -1448,7 +1386,6 @@ export async function getWorkerActivityLog(
   if (error) return { data: [], error: error.message }
 
   const cards = mapApplicationRowsToHistoryCards((data ?? []) as unknown as JoinedApplicationRow[])
-  seedDemoHistoryCards(cards)
 
   // Strict reverse chronological by primary date — see spec §7.
   cards.sort((a, b) => (a.primaryDate < b.primaryDate ? 1 : -1))

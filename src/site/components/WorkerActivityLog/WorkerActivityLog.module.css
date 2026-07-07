@@ -252,6 +252,33 @@
   color: var(--kt-text-muted);
 }
 
+/* ── Feedback affordances on hired cards ───────────────────────────────────── */
+
+.topRight {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* Anchor-style link standard: navy-500 + bold. */
+.leaveFeedbackBtn {
+  border: none;
+  background: none;
+  padding: 0;
+  font-family: var(--kt-font-sans);
+  font-size: var(--kt-text-sm);
+  font-weight: var(--kt-weight-bold);
+  color: var(--kt-navy-500);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.leaveFeedbackBtn:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 /* ── State badge ─────────────────────────────────────────────────────────── */
 
 .badge {

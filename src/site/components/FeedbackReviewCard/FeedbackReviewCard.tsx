@@ -1,0 +1,105 @@
+import React from 'react'
+import { CheckIcon, XIcon, EditIcon, EyeIcon } from '../../icons'
+import type { FeedbackHistoryEntry, WouldHireAgain } from '../../services/feedbackService'
+import styles from './FeedbackReviewCard.module.css'
+
+type FeedbackReviewCardProps = {
+  entry: FeedbackHistoryEntry
+  /** ISO date to display; defaults to the feedback's created date. */
+  date?: string
+  /** Optional label shown before the date, e.g. "Hired". */
+  dateLabel?: string
+  /**
+   * Shows the edit/view icon (by 24h window state) when the viewer authored the
+   * entry. Omit to render a read-only card.
+   */
+  onOpen?: (entry: FeedbackHistoryEntry) => void
+}
+
+const formatDate = (iso: string): string =>
+  new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+
+// "Would hire again" reads as a status chip, mirroring the "In Krew" badge.
+const WouldHireChip: React.FC<{ value: WouldHireAgain }> = ({ value }) => {
+  if (value === 'yes') {
+    return (
+      <span className={`${styles.hireChip} ${styles.hireYes}`}>
+        <CheckIcon size={12} />
+        Would hire again
+      </span>
+    )
+  }
+  if (value === 'no') {
+    return (
+      <span className={`${styles.hireChip} ${styles.hireNo}`}>
+        <XIcon size={12} />
+        Would not hire again
+      </span>
+    )
+  }
+  return <span className={`${styles.hireChip} ${styles.hireUnsure}`}>Unsure about rehiring</span>
+}
+
+/**
+ * A single feedback review card — the canonical presentation shared by the
+ * feedback history modal and the worker-profile activity tab. Visibility is
+ * already applied upstream by the history RPC (commentary/edit only on the
+ * viewer's own entries). `dateLabel` lets callers prefix the date (e.g.
+ * "Hired") and `date` overrides which date is shown.
+ */
+export const FeedbackReviewCard: React.FC<FeedbackReviewCardProps> = ({
+  entry,
+  date,
+  dateLabel,
+  onOpen,
+}) => {
+  const pills = [
+    ...entry.positivePills.map((label) => ({ label, tone: 'positive' as const })),
+    ...entry.negativePills.map((label) => ({ label, tone: 'negative' as const })),
+  ]
+
+  return (
+    <div className={styles.entry}>
+      <div className={styles.entryHead}>
+        <div className={styles.titleBlock}>
+          <span className={styles.jobTitle}>{entry.jobTitle ?? 'Untitled role'}</span>
+          <span className={styles.date}>
+            {dateLabel && <span className={styles.dateLabel}>{dateLabel} </span>}
+            {formatDate(date ?? entry.createdAt)}
+          </span>
+        </div>
+        <div className={styles.headRight}>
+          <span className={styles.ratingNum}>
+            {entry.starRating}
+            <span className={styles.ratingMax}>/5</span>
+          </span>
+          {entry.isOwn && onOpen && (
+            <button
+              type="button"
+              className={styles.iconBtn}
+              onClick={() => onOpen(entry)}
+              aria-label={entry.isEditable ? 'Edit feedback' : 'View feedback'}
+              title={entry.isEditable ? 'Edit feedback' : 'View feedback'}
+            >
+              {entry.isEditable ? <EditIcon size={15} /> : <EyeIcon size={15} />}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {entry.commentary && <p className={styles.commentary}>{entry.commentary}</p>}
+
+      <div className={styles.signals}>
+        <WouldHireChip value={entry.wouldHireAgain} />
+        {pills.map((pill) => (
+          <span
+            key={`${pill.tone}-${pill.label}`}
+            className={`${styles.pill} ${pill.tone === 'negative' ? styles.pillNegative : styles.pillPositive}`}
+          >
+            {pill.label}
+          </span>
+        ))}
+      </div>
+    </div>
+  )
+}

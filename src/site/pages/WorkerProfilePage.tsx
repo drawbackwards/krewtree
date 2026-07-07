@@ -2,18 +2,15 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Badge, Button } from '../../components'
 import { useToast } from '../../components/Toast/Toast'
-import { RegulixLogo } from '../components/RegulixLogo/RegulixLogo'
 import { useChatPane } from '../components/ChatPane/ChatPaneContext'
 import { WorkerActivityLog } from '../components/WorkerActivityLog/WorkerActivityLog'
 import { useDrawerStack } from '../components/DrawerSystem/DrawerStackContext'
-import { KrewtreeMark } from '../components/Logo'
 import { FEATURES } from '../config/features'
 import { useAuth } from '../context/AuthContext'
 import { addWorkerToKrew, removeWorkerFromKrew, getKrewRelationship } from '../services/krewService'
 import { getWorkerApplicationsAtCompany } from '../services/applicantService'
 import {
   MapPinIcon,
-  StarIcon,
   LinkedInSimpleIcon,
   InstagramIcon,
   FacebookSimpleIcon,
@@ -22,12 +19,16 @@ import {
   EnvelopeIcon,
   PhoneIcon,
   VerifiedBadgeIcon,
-  RegulixMarkIcon,
   CheckIcon,
   ShareIcon,
 } from '../icons'
 import { getFullWorkerProfile, getResumeShareLink } from '../services/workerService'
 import type { FullWorkerProfile } from '../services/workerService'
+import { WorkerRatingCard } from '../components/WorkerRatingCard/WorkerRatingCard'
+import { WorkerFeedbackHistory } from '../components/WorkerFeedbackHistory/WorkerFeedbackHistory'
+import { FeedbackFormModal } from '../components/FeedbackFormModal/FeedbackFormModal'
+import { getWorkerFeedbackAggregate, getWorkerFeedbackTopPills } from '../services/feedbackService'
+import type { WorkerFeedbackAggregate, TopPills } from '../services/feedbackService'
 import type { CompanyApplicant } from '../types'
 import { INDUSTRIES } from '../data/industries'
 import { getContractTypeLabel } from '../data/contractTypes'
@@ -112,6 +113,19 @@ export const WorkerProfilePage: React.FC = () => {
   const [applications, setApplications] = useState<CompanyApplicant[]>([])
   const [showPast, setShowPast] = useState(false)
 
+  // Krewtree Worker Feedback — aggregate shows for the worker's own view and any
+  // company viewer; top pills load only for company viewers (RLS returns nothing
+  // to a worker regardless). The history overlay is mounted in Chunk 4.
+  const [feedback, setFeedback] = useState<WorkerFeedbackAggregate>({
+    averageRating: null,
+    reviewCount: 0,
+  })
+  const [feedbackPills, setFeedbackPills] = useState<TopPills | undefined>(undefined)
+  const [historyOpen, setHistoryOpen] = useState(false)
+  // Set when the reviewing company opens one of its own entries from the
+  // history view to edit it (spec §6.3).
+  const [editFeedbackAppId, setEditFeedbackAppId] = useState<string | null>(null)
+
   useEffect(() => {
     if (!id) return
     setLoading(true)
@@ -148,8 +162,19 @@ export const WorkerProfilePage: React.FC = () => {
     loadApplications()
   }, [loadApplications])
 
-  // Newest application — drives the ratings card + the hero Shortlist toggle.
-  const primary = applications[0] ?? null
+  const reloadFeedback = useCallback(() => {
+    if (!id) return
+    getWorkerFeedbackAggregate(id).then(({ data }) => setFeedback(data))
+    if (isCompanyViewer) {
+      getWorkerFeedbackTopPills(id).then(({ data }) => setFeedbackPills(data))
+    } else {
+      setFeedbackPills(undefined)
+    }
+  }, [id, isCompanyViewer])
+
+  useEffect(() => {
+    reloadFeedback()
+  }, [reloadFeedback])
 
   // Clicking an application opens the full applicant drawer on its Pipeline tab
   // (stage + tasks live there); onWrite refreshes the sidebar after any change.
@@ -162,13 +187,6 @@ export const WorkerProfilePage: React.FC = () => {
       onWrite: loadApplications,
     })
   }
-
-  // Company viewers with a scored application get the richer dual-rating card;
-  // everyone else falls back to the generic profile stats card.
-  const showDualRatings =
-    isCompanyViewer &&
-    !!primary &&
-    (primary.workerRating != null || (FEATURES.regulix && primary.workerRegulixRating != null))
 
   // Mints a 7-day signed link to the resume and copies it to the clipboard, so
   // it can be forwarded to someone (e.g. an outside hiring manager) without an
@@ -521,6 +539,7 @@ export const WorkerProfilePage: React.FC = () => {
               workerId={id!}
               isOwnProfile={isOwnProfile}
               isCompanyViewer={isCompanyViewer}
+              onFeedbackSaved={reloadFeedback}
             />
           </div>
         </div>
@@ -943,56 +962,24 @@ export const WorkerProfilePage: React.FC = () => {
             className={styles.sidebar}
             style={{ alignSelf: !hasContent ? 'stretch' : 'flex-start' }}
           >
-            {/* Regulix status — always the top card. Matches the company
-              profile's box; greyed out when the worker isn't Regulix ready.
-              Gated behind the Regulix feature flag until the partner
-              connection is live. */}
-            {FEATURES.regulix && (
-              <div
-                style={{
-                  background: profile.isRegulixReady
-                    ? 'var(--kt-regulix-50)'
-                    : 'var(--kt-surface-raised)',
-                  borderRadius: 'var(--kt-radius-lg)',
-                  padding: 18,
-                  textAlign: 'center',
-                  flex: !hasContent ? 1 : undefined,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: !hasContent ? 'center' : undefined,
-                }}
-              >
-                <RegulixLogo
-                  height={24}
-                  textColor={profile.isRegulixReady ? 'var(--kt-navy-700)' : 'var(--kt-text-muted)'}
-                  opacity={profile.isRegulixReady ? 1 : 0.45}
-                />
-                <p
-                  style={{
-                    marginTop: 10,
-                    fontSize: 'var(--kt-text-sm)',
-                    fontWeight: 'var(--kt-weight-semibold)',
-                    color: profile.isRegulixReady
-                      ? 'var(--kt-regulix-500)'
-                      : 'var(--kt-text-muted)',
-                  }}
-                >
-                  {profile.isRegulixReady ? 'Regulix Ready' : 'Not Yet Regulix Ready'}
-                </p>
-                <p
-                  style={{
-                    fontSize: 'var(--kt-text-xs)',
-                    color: 'var(--kt-text-muted)',
-                    marginTop: 4,
-                    lineHeight: 1.5,
-                  }}
-                >
-                  {profile.isRegulixReady
-                    ? 'All onboarding docs verified. Day-1 hire-ready.'
-                    : 'Complete onboarding to become hire-ready.'}
-                </p>
-              </div>
+            {/* Feedback — top card. krewtree aggregate + (flag-gated) Regulix,
+              as two source cards. Worker's own view sees only the krewtree
+              aggregate + count (spec §6.1); a company viewer also sees top pills
+              + the history link. The Regulix card carries the onboarding empty
+              state (moved from the old standalone Regulix status card). */}
+            {(isOwnProfile || isCompanyViewer) && (
+              <WorkerRatingCard
+                averageRating={feedback.averageRating}
+                reviewCount={feedback.reviewCount}
+                topPills={isCompanyViewer ? feedbackPills : undefined}
+                onViewHistory={
+                  isCompanyViewer && feedback.reviewCount > 0
+                    ? () => setHistoryOpen(true)
+                    : undefined
+                }
+                showRegulix={FEATURES.regulix}
+                regulixConnected={profile.isRegulixReady}
+              />
             )}
 
             {/* Applications to the viewing company — moved here from the old
@@ -1038,130 +1025,67 @@ export const WorkerProfilePage: React.FC = () => {
                 )
               })()}
 
-            {/* Ratings — dual krewtree + Regulix card, company viewers with a
-              scored application. Replaces the generic stats card below. */}
-            {showDualRatings && primary && (
-              <div className={styles.sidebarCard}>
-                <h3 className={styles.sidebarHeading}>Ratings</h3>
-                <div className={styles.ratingsGrid}>
-                  <div className={styles.ratingCell}>
-                    <div className={styles.ratingLabel}>
-                      <KrewtreeMark size={14} />
-                      <span>krewtree</span>
-                    </div>
-                    <span className={styles.ratingValue}>
-                      {primary.workerRating != null ? primary.workerRating.toFixed(1) : '—'}
-                    </span>
-                    <span className={styles.ratingMeta}>
-                      {primary.workerRatingCount} job{primary.workerRatingCount === 1 ? '' : 's'}
-                    </span>
-                  </div>
-                  {FEATURES.regulix && (
-                    <div className={styles.ratingCell}>
-                      <div className={styles.ratingLabel}>
-                        <RegulixMarkIcon size={12} />
-                        <span>Regulix</span>
-                      </div>
-                      <span className={styles.ratingValue}>
-                        {primary.workerRegulixRating != null
-                          ? primary.workerRegulixRating.toFixed(1)
-                          : '—'}
-                      </span>
-                      <span className={styles.ratingMeta}>
-                        {primary.workerRegulixRatingCount} job
-                        {primary.workerRegulixRatingCount === 1 ? '' : 's'}
-                      </span>
-                    </div>
-                  )}
-                </div>
+            {/* Stats — verified hours only. The rating signal now lives in the
+              Feedback card above (the legacy performance-score "Rating" was
+              removed to avoid two competing rating numbers). */}
+            {profile.totalHoursWorked != null && profile.totalHoursWorked > 0 && (
+              <div
+                style={{
+                  background: 'var(--kt-surface)',
+                  border: '1px solid var(--kt-border)',
+                  borderRadius: 'var(--kt-radius-lg)',
+                  padding: 18,
+                  textAlign: 'center',
+                }}
+              >
+                <p
+                  style={{
+                    fontSize: 'var(--kt-text-3xl)',
+                    fontWeight: 'var(--kt-weight-bold)',
+                    color: 'var(--kt-text)',
+                    margin: '0 0 4px',
+                    lineHeight: 1,
+                  }}
+                >
+                  {profile.totalHoursWorked.toLocaleString()}
+                </p>
+                <p
+                  style={{
+                    fontSize: 'var(--kt-text-xs)',
+                    color: 'var(--kt-text-muted)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    margin: 0,
+                  }}
+                >
+                  Verified hrs
+                </p>
               </div>
             )}
 
-            {/* Stats — generic profile rating + verified hours. Hidden when the
-              dual ratings card above is shown (company viewer with an app). */}
-            {!showDualRatings &&
-              (profile.performanceScore != null ||
-                (profile.totalHoursWorked != null && profile.totalHoursWorked > 0)) && (
-                <div
-                  style={{
-                    background: 'var(--kt-surface)',
-                    border: '1px solid var(--kt-border)',
-                    borderRadius: 'var(--kt-radius-lg)',
-                    padding: 18,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 16,
-                  }}
-                >
-                  {profile.performanceScore != null && (
-                    <div style={{ textAlign: 'center' }}>
-                      <div
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: 6,
-                          marginBottom: 4,
-                        }}
-                      >
-                        <StarIcon size={18} color="var(--kt-warning)" />
-                        <span
-                          style={{
-                            fontSize: 'var(--kt-text-3xl)',
-                            fontWeight: 'var(--kt-weight-bold)',
-                            color: 'var(--kt-text)',
-                            lineHeight: 1,
-                          }}
-                        >
-                          {profile.performanceScore}
-                        </span>
-                      </div>
-                      <p
-                        style={{
-                          fontSize: 'var(--kt-text-xs)',
-                          color: 'var(--kt-text-muted)',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.5px',
-                          margin: 0,
-                        }}
-                      >
-                        Rating
-                      </p>
-                    </div>
-                  )}
-                  {profile.performanceScore != null &&
-                    profile.totalHoursWorked != null &&
-                    profile.totalHoursWorked > 0 && (
-                      <div style={{ height: 1, background: 'var(--kt-border)' }} />
-                    )}
-                  {profile.totalHoursWorked != null && profile.totalHoursWorked > 0 && (
-                    <div style={{ textAlign: 'center' }}>
-                      <p
-                        style={{
-                          fontSize: 'var(--kt-text-3xl)',
-                          fontWeight: 'var(--kt-weight-bold)',
-                          color: 'var(--kt-text)',
-                          margin: '0 0 4px',
-                          lineHeight: 1,
-                        }}
-                      >
-                        {profile.totalHoursWorked.toLocaleString()}
-                      </p>
-                      <p
-                        style={{
-                          fontSize: 'var(--kt-text-xs)',
-                          color: 'var(--kt-text-muted)',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.5px',
-                          margin: 0,
-                        }}
-                      >
-                        Verified hrs
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )}
+            {isCompanyViewer && id && (
+              <WorkerFeedbackHistory
+                open={historyOpen}
+                onClose={() => setHistoryOpen(false)}
+                workerId={id}
+                onOpenEntry={(entry) => {
+                  if (!entry.applicationId) return
+                  // One modal at a time: close history, open the edit form.
+                  setHistoryOpen(false)
+                  setEditFeedbackAppId(entry.applicationId)
+                }}
+              />
+            )}
+
+            {isCompanyViewer && id && editFeedbackAppId && (
+              <FeedbackFormModal
+                open
+                onClose={() => setEditFeedbackAppId(null)}
+                workerId={id}
+                applicationId={editFeedbackAppId}
+                onSaved={reloadFeedback}
+              />
+            )}
 
             {/* References indicator — count only, never names; hidden until
               consent is confirmed so the count never advertises hidden refs.

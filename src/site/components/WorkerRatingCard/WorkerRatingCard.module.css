@@ -1,0 +1,128 @@
+/* "Feedback" card — mirrors the Applications sidebar card: a subtle container
+   with a heading and bordered inner "source" cards (like the application rows). */
+.card {
+  background: var(--kt-bg-subtle);
+  border-radius: var(--kt-radius-lg);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.heading {
+  font-size: var(--kt-text-sm);
+  font-weight: var(--kt-weight-semibold);
+  color: var(--kt-text);
+  margin: 0;
+}
+
+.sources {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Wider surfaces (e.g. the applicant drawer): source cards side by side. */
+.sourcesRow {
+  flex-direction: row;
+}
+
+.sourcesRow .source {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Inner source card — same treatment as .appRow (bordered surface box), but
+   center-aligned so the rating reads as a stat. */
+.source {
+  background: var(--kt-surface);
+  border: 1px solid var(--kt-border);
+  border-radius: var(--kt-radius-md);
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+}
+
+.empty {
+  font-size: var(--kt-text-sm);
+  color: var(--kt-text-muted);
+  margin: 4px 0 0;
+}
+
+.score {
+  margin-top: 4px;
+  font-size: var(--kt-text-3xl);
+  font-weight: var(--kt-weight-bold);
+  color: var(--kt-text);
+  line-height: 1;
+}
+
+.count {
+  font-size: var(--kt-text-xs);
+  color: var(--kt-text-muted);
+}
+
+.pillRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: center;
+  margin-top: 4px;
+}
+
+/* Strokeless pills on the surface card sit on the subtle tone; sentiment shown
+   via text color. No section captions (positive/negative read from color). */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: var(--kt-text-xs);
+  font-weight: var(--kt-weight-medium);
+  line-height: 1.4;
+  background: var(--kt-bg-subtle);
+  color: var(--kt-text-muted);
+}
+
+.pillPositive {
+  color: var(--kt-success);
+}
+
+.pillNegative {
+  color: var(--kt-danger);
+}
+
+/* Anchor-style link standard: navy-500 + bold. */
+.historyLink {
+  margin-top: 2px;
+  border: none;
+  background: none;
+  padding: 2px 0;
+  font-family: var(--kt-font-sans);
+  font-size: var(--kt-text-xs);
+  font-weight: var(--kt-weight-bold);
+  color: var(--kt-navy-500);
+  cursor: pointer;
+}
+
+.historyLink:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.regulixTitle {
+  margin: 6px 0 0;
+  font-size: var(--kt-text-sm);
+  font-weight: var(--kt-weight-semibold);
+  color: var(--kt-text-muted);
+}
+
+.regulixSub {
+  margin: 2px 0 0;
+  font-size: var(--kt-text-xs);
+  color: var(--kt-text-muted);
+  line-height: 1.5;
+}

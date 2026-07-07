@@ -1,0 +1,145 @@
+.entry {
+  background: var(--kt-surface);
+  border: 1px solid var(--kt-border);
+  border-radius: var(--kt-radius-lg);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.entryHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.titleBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.jobTitle {
+  font-size: var(--kt-text-sm);
+  font-weight: var(--kt-weight-semibold);
+  color: var(--kt-text);
+  line-height: 1.3;
+}
+
+.date {
+  font-size: var(--kt-text-xs);
+  color: var(--kt-text-muted);
+}
+
+.dateLabel {
+  font-weight: var(--kt-weight-semibold);
+  color: var(--kt-text);
+}
+
+.headRight {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.ratingNum {
+  font-size: var(--kt-text-xl);
+  font-weight: var(--kt-weight-bold);
+  color: var(--kt-text);
+  line-height: 1;
+}
+
+.ratingMax {
+  font-size: var(--kt-text-xs);
+  font-weight: var(--kt-weight-medium);
+  color: var(--kt-text-muted);
+  margin-left: 1px;
+}
+
+.iconBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  background: transparent;
+  color: var(--kt-text-muted);
+  border-radius: var(--kt-radius-md);
+  cursor: pointer;
+  transition: background var(--kt-duration-fast) var(--kt-ease);
+}
+
+.iconBtn:hover {
+  background: var(--kt-secondary);
+  color: var(--kt-text);
+}
+
+.commentary {
+  font-size: var(--kt-text-sm);
+  color: var(--kt-text);
+  line-height: 1.55;
+  margin: 2px 0 0;
+}
+
+/* One compact signals row: would-hire chip + strength/concern pills, no captions. */
+.signals {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+/* Status chip, mirroring the "In Krew" badge. */
+.hireChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: var(--kt-radius-md);
+  font-size: var(--kt-text-xs);
+  font-weight: var(--kt-weight-semibold);
+  white-space: nowrap;
+}
+
+.hireYes {
+  background: var(--kt-navy-50);
+  color: var(--kt-navy-500);
+}
+
+.hireNo {
+  background: var(--kt-bg-subtle);
+  color: var(--kt-danger);
+}
+
+.hireUnsure {
+  background: var(--kt-bg-subtle);
+  color: var(--kt-text-muted);
+}
+
+/* Strokeless pills; sentiment shown via text color. */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: var(--kt-text-xs);
+  font-weight: var(--kt-weight-medium);
+  line-height: 1.4;
+  background: var(--kt-bg-subtle);
+  color: var(--kt-text-muted);
+}
+
+.pillPositive {
+  color: var(--kt-success);
+}
+
+.pillNegative {
+  color: var(--kt-danger);
+}

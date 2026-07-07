@@ -1,9 +1,9 @@
 import React from 'react'
 import type { CompanyApplicant } from '../../types'
-import { InfoCircleIcon, RegulixMarkIcon } from '../../icons'
+import { InfoCircleIcon } from '../../icons'
 import { FEATURES } from '../../config/features'
 import { Tooltip } from '../../../components'
-import { KrewtreeMark } from '../Logo'
+import { WorkerRatingCard } from '../WorkerRatingCard/WorkerRatingCard'
 import styles from './ApplicantPreviewBody.module.css'
 
 export interface ApplicantPreviewBodyProps {
@@ -11,9 +11,6 @@ export interface ApplicantPreviewBodyProps {
 }
 
 export const ApplicantPreviewBody: React.FC<ApplicantPreviewBodyProps> = ({ applicant }) => {
-  const hasRatings =
-    applicant.workerRating !== null || (FEATURES.regulix && applicant.workerRegulixRating !== null)
-
   return (
     <div className={styles.body}>
       {/* Match score */}
@@ -153,43 +150,16 @@ export const ApplicantPreviewBody: React.FC<ApplicantPreviewBodyProps> = ({ appl
         </section>
       )}
 
-      {/* Ratings */}
-      {hasRatings && (
-        <section className={styles.section}>
-          <h3 className={styles.sectionHeading}>Ratings</h3>
-          <div className={styles.ratingsGrid}>
-            <div className={styles.ratingCell}>
-              <div className={styles.ratingLabel}>
-                <KrewtreeMark size={14} />
-                <span>krewtree</span>
-              </div>
-              <span className={styles.ratingValue}>
-                {applicant.workerRating !== null ? applicant.workerRating.toFixed(1) : '—'}
-              </span>
-              <span className={styles.ratingMeta}>
-                {applicant.workerRatingCount} job{applicant.workerRatingCount === 1 ? '' : 's'}
-              </span>
-            </div>
-            {FEATURES.regulix && (
-              <div className={styles.ratingCell}>
-                <div className={styles.ratingLabel}>
-                  <RegulixMarkIcon size={12} />
-                  <span>Regulix</span>
-                </div>
-                <span className={styles.ratingValue}>
-                  {applicant.workerRegulixRating !== null
-                    ? applicant.workerRegulixRating.toFixed(1)
-                    : '—'}
-                </span>
-                <span className={styles.ratingMeta}>
-                  {applicant.workerRegulixRatingCount} job
-                  {applicant.workerRegulixRatingCount === 1 ? '' : 's'}
-                </span>
-              </div>
-            )}
-          </div>
-        </section>
-      )}
+      {/* Feedback — same card as the worker profile sidebar, for consistency. */}
+      <section className={styles.section}>
+        <WorkerRatingCard
+          averageRating={applicant.workerRating}
+          reviewCount={applicant.workerRatingCount}
+          showRegulix={FEATURES.regulix}
+          regulixConnected={applicant.isRegulixReady}
+          sourcesLayout="row"
+        />
+      </section>
     </div>
   )
 }

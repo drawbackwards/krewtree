@@ -10,6 +10,9 @@ import {
 } from '../../services/krewService'
 import { useAuth } from '../../context/AuthContext'
 import { PlusIcon } from '../../icons'
+import { FeedbackReviewCard } from '../FeedbackReviewCard/FeedbackReviewCard'
+import { FeedbackFormModal } from '../FeedbackFormModal/FeedbackFormModal'
+import { getWorkerFeedbackHistory, type FeedbackHistoryEntry } from '../../services/feedbackService'
 import styles from './WorkerActivityLog.module.css'
 // Reuse the canonical notes UI (note card + composer) from the Worker Drawer's
 // Notes tab — same designed styles, single source of truth.
@@ -23,6 +26,9 @@ export interface WorkerActivityLogProps {
    *  company-scoped (per company × worker), so they never apply to the worker's
    *  own view or the public view. */
   isCompanyViewer: boolean
+  /** Fired after a company leaves/edits feedback from a hired job card, so the
+   *  profile's Feedback aggregate can refresh. */
+  onFeedbackSaved?: () => void
 }
 
 type ActivityFilter = 'all' | 'jobs' | 'notes'
@@ -121,6 +127,7 @@ export const WorkerActivityLog: React.FC<WorkerActivityLogProps> = ({
   workerId,
   isOwnProfile,
   isCompanyViewer,
+  onFeedbackSaved,
 }) => {
   const { user } = useAuth()
   const [cards, setCards] = useState<WorkerHistoryCard[]>([])
@@ -155,6 +162,29 @@ export const WorkerActivityLog: React.FC<WorkerActivityLogProps> = ({
     }
     listWorkerNotes(workerId).then(({ data }) => setNotes(data))
   }, [workerId, isCompanyViewer])
+
+  // The company's own feedback, keyed by application, so a hired card can render
+  // its review (rating + pills + commentary) inline. Only own entries carry an
+  // application_id + commentary from the RPC.
+  const [feedbackByApp, setFeedbackByApp] = useState<Record<string, FeedbackHistoryEntry>>({})
+  // Application whose feedback form is open (leave from a hired card, or edit
+  // from a review card).
+  const [formAppId, setFormAppId] = useState<string | null>(null)
+  const loadFeedback = useCallback(() => {
+    if (!isCompanyViewer) {
+      setFeedbackByApp({})
+      return
+    }
+    getWorkerFeedbackHistory(workerId).then(({ data }) => {
+      const map: Record<string, FeedbackHistoryEntry> = {}
+      for (const entry of data) if (entry.applicationId) map[entry.applicationId] = entry
+      setFeedbackByApp(map)
+    })
+  }, [workerId, isCompanyViewer])
+
+  useEffect(() => {
+    loadFeedback()
+  }, [loadFeedback])
 
   useEffect(() => {
     loadNotes()
@@ -280,7 +310,12 @@ export const WorkerActivityLog: React.FC<WorkerActivityLogProps> = ({
           {feed.map((item) =>
             item.kind === 'job' ? (
               <li key={item.card.applicationId}>
-                <HistoryCard card={item.card} />
+                <HistoryCard
+                  card={item.card}
+                  canLeaveFeedback={isCompanyViewer}
+                  feedback={feedbackByApp[item.card.applicationId]}
+                  onOpenForm={setFormAppId}
+                />
               </li>
             ) : (
               <li key={item.note.id}>
@@ -289,6 +324,19 @@ export const WorkerActivityLog: React.FC<WorkerActivityLogProps> = ({
             )
           )}
         </ul>
+      )}
+
+      {formAppId && (
+        <FeedbackFormModal
+          open
+          onClose={() => setFormAppId(null)}
+          workerId={workerId}
+          applicationId={formAppId}
+          onSaved={() => {
+            loadFeedback()
+            onFeedbackSaved?.()
+          }}
+        />
       )}
     </div>
   )
@@ -316,7 +364,28 @@ const NoteCard: React.FC<{ note: WorkerNote }> = ({ note }) => (
 // row and finished/standard layouts, but no "See Status" drawer action — the
 // job title links to the public job instead.
 
-const HistoryCard: React.FC<{ card: WorkerHistoryCard }> = ({ card }) => {
+const HistoryCard: React.FC<{
+  card: WorkerHistoryCard
+  /** Company viewers can leave feedback on hired (terminal_hired) cards. */
+  canLeaveFeedback: boolean
+  /** The company's own feedback for this application, if any. */
+  feedback?: FeedbackHistoryEntry
+  /** Opens the feedback form for an application (leave or edit). */
+  onOpenForm: (applicationId: string) => void
+}> = ({ card, canLeaveFeedback, feedback, onOpenForm }) => {
+  // A hired job this company has reviewed → the exact feedback review card,
+  // with a "Hired" label on the hire date. Edit/view opens the form.
+  if (feedback) {
+    return (
+      <FeedbackReviewCard
+        entry={feedback}
+        date={card.primaryDate}
+        dateLabel="Hired"
+        onOpen={() => onOpenForm(card.applicationId)}
+      />
+    )
+  }
+
   const treatment = treatmentClass(card.state)
   const hasRatingSlot = RATED_STATES.has(card.state)
 
@@ -329,14 +398,16 @@ const HistoryCard: React.FC<{ card: WorkerHistoryCard }> = ({ card }) => {
   ) : null
 
   const pay = formatPay(card)
-  const hasMeta = !!(card.jobLocation || card.jobType || pay)
-  const metaRow = hasMeta && (
+  // Date leads the subtext, then location · type · pay.
+  const metaItems = [dateLine, card.jobLocation, card.jobType, pay].filter(Boolean) as string[]
+  const metaRow = (
     <div className={styles.metaRow}>
-      {card.jobLocation && <span>{card.jobLocation}</span>}
-      {card.jobLocation && (card.jobType || pay) && <span className={styles.middot}>·</span>}
-      {card.jobType && <span>{card.jobType}</span>}
-      {card.jobType && pay && <span className={styles.middot}>·</span>}
-      {pay && <span>{pay}</span>}
+      {metaItems.map((item, i) => (
+        <React.Fragment key={item}>
+          {i > 0 && <span className={styles.middot}>·</span>}
+          <span>{item}</span>
+        </React.Fragment>
+      ))}
     </div>
   )
 
@@ -381,8 +452,9 @@ const HistoryCard: React.FC<{ card: WorkerHistoryCard }> = ({ card }) => {
     )
   }
 
-  // All other states mirror the matches card: title, meta row, pills, footer
-  // with the date line on the left and the state badge on the right.
+  // Other states: title + (stage pill / "Leave feedback") on the right, date-led
+  // meta row. A hired-but-unreviewed card offers Leave feedback.
+  const canLeave = card.state === 'active' && canLeaveFeedback
   return (
     <article className={[styles.card, treatment].join(' ')}>
       <div className={styles.topRow}>
@@ -391,15 +463,21 @@ const HistoryCard: React.FC<{ card: WorkerHistoryCard }> = ({ card }) => {
             {card.jobTitle}
           </Link>
         </h4>
+        <div className={styles.topRight}>
+          {badge}
+          {canLeave && (
+            <button
+              type="button"
+              className={styles.leaveFeedbackBtn}
+              onClick={() => onOpenForm(card.applicationId)}
+            >
+              Leave feedback
+            </button>
+          )}
+        </div>
       </div>
       {metaRow}
       {pills}
-      <div className={styles.footer}>
-        <div className={styles.context}>
-          <span>{dateLine}</span>
-        </div>
-        {badge && <div className={styles.actionRow}>{badge}</div>}
-      </div>
     </article>
   )
 }
