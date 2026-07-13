@@ -70,7 +70,7 @@ export const FeaturedJobsSection = () => {
           }}
         >
           {featuredJobs.map((job) => (
-            <JobCard key={job.id} job={job} />
+            <JobCard key={job.id} job={job} source="landing" />
           ))}
         </div>
       </div>

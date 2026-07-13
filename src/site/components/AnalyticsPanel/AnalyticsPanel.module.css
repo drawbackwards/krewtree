@@ -60,20 +60,29 @@
   justify-content: flex-end;
 }
 
-.bar {
+.barGroup {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 2px;
   width: 100%;
+  height: 100%;
+}
+
+.bar {
+  flex: 1;
+  min-width: 0;
   border-radius: var(--kt-radius-sm) var(--kt-radius-sm) 0 0;
   transition: height var(--kt-duration-base) var(--kt-ease);
-  min-height: 4px;
+  min-height: 2px;
 }
 
 .bar.views {
-  background: var(--kt-primary);
-  opacity: 0.7;
+  background: var(--kt-navy-400);
 }
 
 .bar.applications {
-  background: var(--kt-accent);
+  background: var(--kt-olive-500);
 }
 
 .barDay {
@@ -103,9 +112,8 @@
 }
 
 .legendDot.views {
-  background: var(--kt-primary);
-  opacity: 0.7;
+  background: var(--kt-navy-400);
 }
 .legendDot.applications {
-  background: var(--kt-accent);
+  background: var(--kt-olive-500);
 }

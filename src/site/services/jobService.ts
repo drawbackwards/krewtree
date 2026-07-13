@@ -1,6 +1,12 @@
 import { supabase, untypedDb } from '@/lib/supabase'
 import type { Json } from '@/lib/database.types'
-import type { Job } from '@site/types'
+import type {
+  Job,
+  JobAnalytics,
+  JobFunnelStage,
+  JobSearchKeyword,
+  JobViewSource,
+} from '@site/types'
 import { daysSince } from '@site/utils/date'
 import { invalidateSessionCache, withSessionCache } from '@site/utils/sessionCache'
 import { FEATURES } from '@site/config/features'
@@ -537,4 +543,89 @@ export async function getCompanyIndustry(
 
   if (error) return { data: null, error: error.message }
   return { data: (data?.industry as string | null) ?? null, error: null }
+}
+
+// ── Analytics ────────────────────────────────────────────────────────────────
+
+// Shape of the jsonb payload returned by the get_job_analytics RPC.
+type DbJobAnalytics = {
+  kpis: {
+    views_total: number
+    applications_total: number
+    conversion_rate: number
+    avg_time_to_apply_hours: number
+  }
+  views_by_day: number[]
+  applications_by_day: number[]
+  funnel: Array<{ stage_id: string; stage_name: string; sort_order: number; count: number }>
+  outcomes: { hired: number; rejected: number }
+  sources: Array<{ source: string; count: number }>
+  keywords: Array<{ keyword: string; count: number }>
+}
+
+/**
+ * Per-job analytics for the owning company (KPIs, day-by-day views/applications,
+ * pipeline funnel, traffic sources, and top search keywords). The RPC is
+ * owner-gated server-side, so a job the caller does not own resolves to null.
+ */
+export async function getJobAnalytics(
+  jobId: string
+): Promise<{ data: JobAnalytics | null; error: string | null }> {
+  const { data, error } = await supabase.rpc('get_job_analytics', { p_job_id: jobId })
+  if (error) return { data: null, error: error.message }
+  if (!data) return { data: null, error: null }
+
+  const raw = data as unknown as DbJobAnalytics
+  const funnel: JobFunnelStage[] = (raw.funnel ?? []).map((s) => ({
+    stageId: s.stage_id,
+    stageName: s.stage_name,
+    sortOrder: s.sort_order,
+    count: s.count,
+  }))
+  const sources: JobViewSource[] = (raw.sources ?? []).map((s) => ({
+    source: s.source,
+    count: s.count,
+  }))
+  const keywords: JobSearchKeyword[] = (raw.keywords ?? []).map((k) => ({
+    keyword: k.keyword,
+    count: k.count,
+  }))
+
+  return {
+    data: {
+      jobId,
+      viewsTotal: raw.kpis?.views_total ?? 0,
+      applicationsTotal: raw.kpis?.applications_total ?? 0,
+      viewsByDay: raw.views_by_day ?? [],
+      applicationsByDay: raw.applications_by_day ?? [],
+      conversionRate: raw.kpis?.conversion_rate ?? 0,
+      avgTimeToApplyHours: raw.kpis?.avg_time_to_apply_hours ?? 0,
+      funnel,
+      outcomes: {
+        hired: raw.outcomes?.hired ?? 0,
+        rejected: raw.outcomes?.rejected ?? 0,
+      },
+      sources,
+      keywords,
+    },
+    error: null,
+  }
+}
+
+/**
+ * Record a job view with its traffic source (and, for search traffic, the
+ * keyword). Fire-and-forget: analytics must never block or break a page render,
+ * so errors are swallowed. Owner self-views are filtered by the caller.
+ */
+export async function trackJobView(
+  jobId: string,
+  source: string,
+  searchKeyword?: string | null
+): Promise<{ error: string | null }> {
+  const { error } = await supabase.rpc('track_job_view', {
+    p_job_id: jobId,
+    p_source: source,
+    p_search_keyword: searchKeyword ?? null,
+  })
+  return { error: error?.message ?? null }
 }

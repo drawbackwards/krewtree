@@ -2359,7 +2359,18 @@ export type Database = {
         Returns: { industry_slug: string; job_type: string; job_count: number }[]
       }
       get_my_role: { Args: never; Returns: string }
-      increment_job_view: { Args: { p_job_id: string }; Returns: undefined }
+      get_job_analytics: {
+        Args: { p_job_id: string }
+        Returns: Json
+      }
+      track_job_view: {
+        Args: {
+          p_job_id: string
+          p_source?: string
+          p_search_keyword?: string | null
+        }
+        Returns: undefined
+      }
       soft_delete_company: { Args: never; Returns: undefined }
       hard_delete_expired_companies: { Args: never; Returns: number }
       setup_company_profile: {

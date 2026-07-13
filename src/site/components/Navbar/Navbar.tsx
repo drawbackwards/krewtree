@@ -141,11 +141,18 @@ export const Navbar: React.FC = () => {
       ? ((`${firstName} ${lastName}`.trim() || user?.email) ?? '')
       : ((companyName || user?.email) ?? '')
 
+  // Logged-in users land on their own dashboard from the logo; visitors go home.
+  const logoTarget = !isLoggedIn
+    ? '/site'
+    : persona === 'company'
+      ? '/site/dashboard/company'
+      : '/site/dashboard/worker'
+
   return (
     <nav className={styles.nav}>
       <div className={styles.inner}>
         {/* Logo */}
-        <Link to="/site" className={styles.logo}>
+        <Link to={logoTarget} className={styles.logo}>
           <KrewtreeLogo height={30} onDark={false} />
         </Link>
 
@@ -211,18 +218,12 @@ export const Navbar: React.FC = () => {
                   My Krew
                 </Link>
                 <Link
-                  to="/site/jobs"
-                  className={[styles.link, isActive('/site/jobs')].filter(Boolean).join(' ')}
-                >
-                  Jobs
-                </Link>
-                <Link
-                  to="/site/dashboard/applicants?view=kanban"
-                  className={[styles.link, isActive('/site/dashboard/applicants')]
+                  to="/site/dashboard/jobs"
+                  className={[styles.link, isActive('/site/dashboard/jobs')]
                     .filter(Boolean)
                     .join(' ')}
                 >
-                  Pipeline
+                  My Jobs
                 </Link>
                 <Link
                   to="/site/messages"

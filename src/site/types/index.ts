@@ -442,6 +442,23 @@ export type ApplicationLogEvent = {
 }
 
 // ---- Job Analytics ----
+export type JobFunnelStage = {
+  stageId: string
+  stageName: string
+  sortOrder: number
+  count: number
+}
+
+export type JobViewSource = {
+  source: string
+  count: number
+}
+
+export type JobSearchKeyword = {
+  keyword: string
+  count: number
+}
+
 export type JobAnalytics = {
   jobId: string
   viewsTotal: number
@@ -450,6 +467,10 @@ export type JobAnalytics = {
   applicationsByDay: number[]
   conversionRate: number
   avgTimeToApplyHours: number
+  funnel: JobFunnelStage[]
+  outcomes: { hired: number; rejected: number }
+  sources: JobViewSource[]
+  keywords: JobSearchKeyword[]
 }
 
 // ============================================================

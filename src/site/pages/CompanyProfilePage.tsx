@@ -775,6 +775,7 @@ export const CompanyProfilePage: React.FC = () => {
                     <JobCard
                       key={j.id}
                       job={job}
+                      source="company_profile"
                       appliedAt={isWorker ? (appliedDates.get(j.id) ?? null) : null}
                       onQuickApply={isWorker ? () => setQuickApplyJob(job) : undefined}
                     />

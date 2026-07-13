@@ -1,0 +1,169 @@
+/* Content-only (no page chrome) — JobDetailPage's layoutWrapper owns width + padding. */
+.layout {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+/* Shared bordered-card shell (matches the dashboard widgets). */
+.card {
+  background: var(--kt-surface);
+  border: 1px solid var(--kt-border);
+  border-radius: var(--kt-radius-lg);
+  overflow: hidden;
+}
+
+.cardHeader {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--kt-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cardTitle {
+  font-weight: var(--kt-weight-semibold);
+  color: var(--kt-text);
+  font-size: var(--kt-text-md);
+  margin: 0;
+}
+
+.cardSubtitle {
+  font-size: var(--kt-text-xs);
+  color: var(--kt-text-muted);
+  margin-top: 2px;
+}
+
+.cardBody {
+  padding: var(--kt-space-5);
+}
+
+/* Pipeline card body: let the kanban board own its own padding/scroll. */
+.pipelineBody {
+  padding: var(--kt-space-4) var(--kt-space-5);
+}
+
+/* Terminal-outcome chips shown next to the pipeline title. */
+.outcomes {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* Two-up row for sources + keywords */
+.twoUp {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+/* Sources */
+.sourceRow {
+  display: grid;
+  grid-template-columns: 120px 1fr 36px;
+  align-items: center;
+  gap: 12px;
+  padding: 7px 0;
+}
+
+.sourceLabel {
+  font-size: var(--kt-text-sm);
+  color: var(--kt-text);
+}
+
+.sourceTrack {
+  height: 10px;
+  background: var(--kt-bg-subtle);
+  border-radius: var(--kt-radius-full);
+  overflow: hidden;
+}
+
+.sourceFill {
+  height: 100%;
+  border-radius: var(--kt-radius-full);
+  background: var(--kt-navy-400);
+  min-width: 2px;
+}
+
+.sourceCount {
+  font-size: var(--kt-text-sm);
+  font-weight: var(--kt-weight-semibold);
+  color: var(--kt-text-muted);
+  text-align: right;
+}
+
+/* Keywords */
+.keywordRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--kt-border);
+}
+
+.keywordRow:last-child {
+  border-bottom: none;
+}
+
+.keywordText {
+  font-size: var(--kt-text-sm);
+  color: var(--kt-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.keywordCount {
+  font-size: var(--kt-text-xs);
+  font-weight: var(--kt-weight-semibold);
+  color: var(--kt-text-muted);
+  flex-shrink: 0;
+}
+
+/* "See all →" — the standard dashboard anchor style (navy-500, bold). */
+.seeAll {
+  margin-top: 8px;
+  padding: 8px 0 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-family: var(--kt-font-sans);
+  font-size: var(--kt-text-sm);
+  font-weight: var(--kt-weight-bold);
+  color: var(--kt-navy-500);
+}
+
+.loading {
+  min-height: 40vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (max-width: 960px) {
+  .kpis {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .twoUp {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .kpis {
+    grid-template-columns: 1fr;
+  }
+  .sourceRow {
+    grid-template-columns: 90px 1fr 32px;
+    gap: 8px;
+  }
+}

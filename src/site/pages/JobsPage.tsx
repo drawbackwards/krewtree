@@ -1340,6 +1340,8 @@ export const JobsPage: React.FC = () => {
                           job={job}
                           appliedAt={appliedDates.get(job.id) ?? null}
                           onQuickApply={() => setQuickApplyJob(job)}
+                          source={debouncedSearchQ ? 'search' : 'browse'}
+                          searchKeyword={debouncedSearchQ || undefined}
                         />
                       </div>
                     ))}

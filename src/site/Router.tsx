@@ -160,6 +160,9 @@ export const SiteRouter: React.FC = () => (
           <Route path="/site" element={<LandingPage />} />
           <Route path="/site/jobs" element={<JobsPage />} />
           <Route path="/site/jobs/:id" element={<JobDetailPage />} />
+          {/* Analytics is an owner-only tab inside JobDetailPage; this path just
+              deep-links that tab (JobDetailPage gates it to the job owner). */}
+          <Route path="/site/jobs/:id/analytics" element={<JobDetailPage />} />
           <Route path="/site/profile/:id" element={<WorkerProfilePage />} />
           <Route path="/site/company/:id" element={<CompanyProfilePage />} />
 

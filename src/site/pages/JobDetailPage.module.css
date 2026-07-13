@@ -59,6 +59,36 @@
   gap: 8px;
 }
 
+/* ── Tab strip (owner view: Job Details | Analytics) ── */
+.tabStrip {
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid var(--kt-border);
+}
+
+.tab {
+  padding: 12px 20px;
+  margin-bottom: -1px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--kt-text-muted);
+  font-weight: var(--kt-weight-medium);
+  font-size: var(--kt-text-sm);
+  font-family: var(--kt-font-sans);
+  cursor: pointer;
+}
+
+.tab:hover {
+  color: var(--kt-text);
+}
+
+.tabActive {
+  border-bottom-color: var(--kt-primary);
+  color: var(--kt-text);
+  font-weight: var(--kt-weight-bold);
+}
+
 /* ── Two-column body grid ── */
 .body {
   display: grid;

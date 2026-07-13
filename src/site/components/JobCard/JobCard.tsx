@@ -39,6 +39,10 @@ interface JobCardProps {
   compact?: boolean
   appliedAt?: string | null
   onQuickApply?: () => void
+  /** Traffic source recorded when this card is opened (analytics). */
+  source?: string
+  /** Search query that surfaced this card, recorded when source is 'search'. */
+  searchKeyword?: string
 }
 
 export const JobCard: React.FC<JobCardProps> = ({
@@ -46,8 +50,13 @@ export const JobCard: React.FC<JobCardProps> = ({
   compact = false,
   appliedAt = null,
   onQuickApply,
+  source = 'browse',
+  searchKeyword,
 }) => {
   const navigate = useNavigate()
+  const openJob = (): void => {
+    navigate(`/site/jobs/${job.id}`, { state: { source, searchKeyword } })
+  }
   const SKILL_LIMIT = 3
   const applied = !!appliedAt
   const appliedLabel = appliedAt
@@ -67,10 +76,10 @@ export const JobCard: React.FC<JobCardProps> = ({
   return (
     <article
       className={[styles.card, job.isSponsored ? styles.sponsored : ''].filter(Boolean).join(' ')}
-      onClick={() => navigate(`/site/jobs/${job.id}`)}
+      onClick={openJob}
       role="button"
       tabIndex={0}
-      onKeyDown={(e) => e.key === 'Enter' && navigate(`/site/jobs/${job.id}`)}
+      onKeyDown={(e) => e.key === 'Enter' && openJob()}
       aria-label={`${job.title} at ${job.company.name}`}
     >
       {job.isSponsored && <span className={styles.sponsoredBanner}>{job.industry}</span>}
