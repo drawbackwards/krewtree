@@ -35,3 +35,4 @@ krewtree-monthly-budget.xlsx
 
 # Supabase CLI — local scratch (linkage cache, version checks), not for version control
 supabase/.temp/
+supabase/.branches/

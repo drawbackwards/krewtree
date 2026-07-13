@@ -163,11 +163,14 @@
   font-weight: var(--kt-weight-semibold);
 }
 
-/* Gray card around the note body — same surface as the in-place
-   task note (PipelineTab `taskNoteBody`). */
+/* Clear/white card around the note body, so notes read as neutral against
+   the sentiment-tinted job history cards. */
 .noteBox {
   padding: 8px 10px;
-  background: var(--kt-bg-subtle);
+  background: var(--kt-surface);
+  /* Same stroke as the job/application history cards (WorkerActivityLog
+     `.treatmentOutlined`) — a 0.5px inset ring in --kt-border. */
+  box-shadow: inset 0 0 0 0.5px var(--kt-border);
   border-radius: var(--kt-radius-md);
   font-size: var(--kt-text-sm);
   color: var(--kt-text);

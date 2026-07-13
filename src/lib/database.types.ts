@@ -2014,56 +2014,133 @@ export type Database = {
           },
         ]
       }
-      worker_reviews: {
+      feedback_pill: {
         Row: {
-          commentary: string
+          active: boolean
           created_at: string
-          employer_initials: string
-          employer_name: string
+          display_order: number
           id: string
-          rating: number
-          reviewer_id: string | null
-          source: string
-          worker_id: string
-          worker_reply: string | null
+          label: string
+          sentiment: string
+          slug: string
         }
         Insert: {
-          commentary?: string
+          active?: boolean
           created_at?: string
-          employer_initials?: string
-          employer_name?: string
+          display_order?: number
           id?: string
-          rating: number
-          reviewer_id?: string | null
-          source?: string
-          worker_id: string
-          worker_reply?: string | null
+          label: string
+          sentiment: string
+          slug: string
         }
         Update: {
-          commentary?: string
+          active?: boolean
           created_at?: string
-          employer_initials?: string
-          employer_name?: string
+          display_order?: number
           id?: string
-          rating?: number
-          reviewer_id?: string | null
-          source?: string
+          label?: string
+          sentiment?: string
+          slug?: string
+        }
+        Relationships: []
+      }
+      worker_feedback: {
+        Row: {
+          application_id: string
+          commentary: string | null
+          created_at: string
+          id: string
+          job_id: string
+          locked_at: string
+          reviewing_company_id: string | null
+          star_rating: number
+          updated_at: string
+          worker_id: string
+          would_hire_again: string
+        }
+        Insert: {
+          application_id: string
+          commentary?: string | null
+          created_at?: string
+          id?: string
+          job_id?: string
+          locked_at?: string
+          reviewing_company_id?: string | null
+          star_rating: number
+          updated_at?: string
+          worker_id: string
+          would_hire_again: string
+        }
+        Update: {
+          application_id?: string
+          commentary?: string | null
+          created_at?: string
+          id?: string
+          job_id?: string
+          locked_at?: string
+          reviewing_company_id?: string | null
+          star_rating?: number
+          updated_at?: string
           worker_id?: string
-          worker_reply?: string | null
+          would_hire_again?: string
         }
         Relationships: [
           {
-            foreignKeyName: 'worker_reviews_reviewer_id_fkey'
-            columns: ['reviewer_id']
+            foreignKeyName: 'worker_feedback_application_id_fkey'
+            columns: ['application_id']
+            isOneToOne: false
+            referencedRelation: 'applications'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'worker_feedback_job_id_fkey'
+            columns: ['job_id']
+            isOneToOne: false
+            referencedRelation: 'jobs'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'worker_feedback_reviewing_company_id_fkey'
+            columns: ['reviewing_company_id']
             isOneToOne: false
             referencedRelation: 'company_profiles'
             referencedColumns: ['id']
           },
           {
-            foreignKeyName: 'worker_reviews_worker_id_fkey'
+            foreignKeyName: 'worker_feedback_worker_id_fkey'
             columns: ['worker_id']
             isOneToOne: false
             referencedRelation: 'worker_profiles'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      worker_feedback_pill: {
+        Row: {
+          feedback_id: string
+          pill_id: string
+        }
+        Insert: {
+          feedback_id: string
+          pill_id: string
+        }
+        Update: {
+          feedback_id?: string
+          pill_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'worker_feedback_pill_feedback_id_fkey'
+            columns: ['feedback_id']
+            isOneToOne: false
+            referencedRelation: 'worker_feedback'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'worker_feedback_pill_pill_id_fkey'
+            columns: ['pill_id']
+            isOneToOne: false
+            referencedRelation: 'feedback_pill'
             referencedColumns: ['id']
           },
         ]
@@ -2276,6 +2353,37 @@ export type Database = {
       compute_match_score: {
         Args: { p_job_id: string; p_worker_id: string }
         Returns: number
+      }
+      get_worker_feedback_aggregate: {
+        Args: { p_worker_id: string }
+        Returns: { average_rating: number | null; review_count: number }[]
+      }
+      get_worker_feedback_top_pills: {
+        Args: { p_worker_id: string }
+        Returns: {
+          pill_id: string
+          slug: string
+          label: string
+          sentiment: string
+          cnt: number
+        }[]
+      }
+      get_worker_feedback_history: {
+        Args: { p_worker_id: string }
+        Returns: {
+          id: string
+          application_id: string | null
+          job_id: string
+          job_title: string | null
+          star_rating: number
+          would_hire_again: string
+          created_at: string
+          is_own: boolean
+          is_editable: boolean
+          commentary: string | null
+          positive_pills: string[]
+          negative_pills: string[]
+        }[]
       }
       compute_krew_match_counts: {
         Args: { p_worker_ids: string[] }

@@ -4,6 +4,7 @@ import {
   type WorkerHistoryCard,
   type WorkerHistoryCardState,
 } from '../../services/krewService'
+import { FeedbackCardOverflow } from '../FeedbackFormModal/FeedbackCardOverflow'
 import { useDrawerStack } from '../DrawerSystem/DrawerStackContext'
 import styles from './WorkerHistoryTab.module.css'
 
@@ -77,8 +78,14 @@ function formatPay(card: WorkerHistoryCard): string | null {
   return `$${(card.jobPayMin / 1000).toFixed(0)}k–${(card.jobPayMax / 1000).toFixed(0)}k/yr`
 }
 
-export const WorkerHistoryTab: React.FC<WorkerHistoryTabProps> = ({ cards, loading, onWrite }) => {
+export const WorkerHistoryTab: React.FC<WorkerHistoryTabProps> = ({
+  cards,
+  loading,
+  worker,
+  onWrite,
+}) => {
   const { openDrawer } = useDrawerStack()
+  const workerId = worker?.id ?? null
 
   if (loading) {
     return (
@@ -103,6 +110,8 @@ export const WorkerHistoryTab: React.FC<WorkerHistoryTabProps> = ({ cards, loadi
           <li key={c.applicationId}>
             <HistoryCard
               card={c}
+              workerId={workerId}
+              onFeedbackSaved={onWrite}
               onOpen={() => {
                 if (!APPLICATION_STATES.has(c.state)) return
                 // "See Status" jumps straight to the Pipeline tab — that's the
@@ -128,10 +137,15 @@ export const WorkerHistoryTab: React.FC<WorkerHistoryTabProps> = ({ cards, loadi
 const HistoryCard: React.FC<{
   card: WorkerHistoryCard
   onOpen: () => void
-}> = ({ card, onOpen }) => {
+  /** Worker id — enables the feedback overflow on hired cards (spec §5.2). */
+  workerId: string | null
+  onFeedbackSaved?: () => void
+}> = ({ card, onOpen, workerId, onFeedbackSaved }) => {
   const treatment = treatmentClass(card.state)
   const isApplicationCard = APPLICATION_STATES.has(card.state)
   const hasRatingSlot = RATED_STATES.has(card.state)
+  // A hired application at the viewing company can receive feedback.
+  const canLeaveFeedback = card.state === 'active' && !!workerId
 
   const dateLine = `${DATE_VERB[card.state]} ${shortDate(card.primaryDate)}`
   const showBadge = BADGED_STATES.has(card.state)
@@ -201,6 +215,13 @@ const HistoryCard: React.FC<{
     <article className={[styles.card, treatment].join(' ')}>
       <div className={styles.topRow}>
         <h4 className={styles.title}>{card.jobTitle}</h4>
+        {canLeaveFeedback && workerId && (
+          <FeedbackCardOverflow
+            workerId={workerId}
+            applicationId={card.applicationId}
+            onSaved={onFeedbackSaved}
+          />
+        )}
       </div>
       {metaRow}
       {pills}

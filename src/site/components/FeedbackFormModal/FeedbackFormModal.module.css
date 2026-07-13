@@ -1,0 +1,150 @@
+.center {
+  display: flex;
+  justify-content: center;
+  padding: 32px 0;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.lockedNote {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--kt-radius-md);
+  background: var(--kt-bg-subtle);
+  color: var(--kt-text-muted);
+  font-size: var(--kt-text-sm);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.label {
+  font-size: var(--kt-text-sm);
+  font-weight: var(--kt-weight-semibold);
+  color: var(--kt-text);
+}
+
+/* Stacked would-hire radios. Match the form's body text size (the shared Radio
+   label defaults to --kt-text-md, larger than this form). */
+.hireRadios {
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.hireRadios span {
+  font-size: var(--kt-text-sm);
+}
+
+/* Half-star rating input. */
+.rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.stars {
+  display: inline-flex;
+  gap: 3px;
+}
+
+.star {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  line-height: 0;
+}
+
+/* Gold overlay clipped to the fill width, sitting over the grey base star. */
+.starFill {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  line-height: 0;
+  pointer-events: none;
+}
+
+/* Two invisible hit zones per star for half / full selection + hover. */
+.hit {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: 50%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.hitLeft {
+  left: 0;
+}
+
+.hitRight {
+  right: 0;
+}
+
+.ratingValue {
+  font-size: var(--kt-text-lg);
+  font-weight: var(--kt-weight-bold);
+  color: var(--kt-text);
+  min-width: 2.5ch;
+}
+
+.chipRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* Selectable, strokeless pills. Unselected sit on the subtle surface; selected
+   flip to a filled sentiment tone. */
+.chip {
+  padding: 4px 10px;
+  border-radius: var(--kt-radius-full);
+  background: var(--kt-bg-subtle);
+  color: var(--kt-text-muted);
+  font-family: var(--kt-font-sans);
+  font-size: var(--kt-text-xs);
+  font-weight: var(--kt-weight-medium);
+  cursor: pointer;
+  border: none;
+  transition:
+    background var(--kt-duration-fast) var(--kt-ease),
+    color var(--kt-duration-fast) var(--kt-ease);
+}
+
+.chip:disabled {
+  cursor: default;
+}
+
+.chipPositive.chipSelected {
+  background: var(--kt-success);
+  color: #fff;
+}
+
+.chipNegative.chipSelected {
+  background: var(--kt-danger);
+  color: #fff;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.error {
+  margin-right: auto;
+  color: var(--kt-danger);
+  font-size: var(--kt-text-sm);
+}

@@ -13,6 +13,7 @@ import type { ApplicationStatus, CompanyApplicant } from '../types'
 import { supabase, getCurrentUserId } from '../../lib/supabase'
 import type { Database } from '../../lib/database.types'
 import { getPipelineStages, instantiateTemplatesForStage } from './pipelineService'
+import { getWorkerFeedbackAggregate } from './feedbackService'
 import { FEATURES } from '../config/features'
 
 // ── Types ─────────────────────────────────────────────────────────────────
@@ -319,10 +320,16 @@ export async function getApplicantDetail(
 
   if (error) return { data: null, error: error.message }
   if (!data) return { data: null, error: null }
-  return {
-    data: toCompanyApplicant(data as unknown as JoinedApplicantRow, stageNameMap),
-    error: null,
-  }
+
+  const applicant = toCompanyApplicant(data as unknown as JoinedApplicantRow, stageNameMap)
+  // Krewtree feedback rating is rich detail data (like skills/certs) — populated
+  // here on hydration, then rendered by the applicant preview. Regulix rating
+  // stays null until the Regulix connection is wired.
+  const { data: agg } = await getWorkerFeedbackAggregate(applicant.workerId)
+  applicant.workerRating = agg.averageRating
+  applicant.workerRatingCount = agg.reviewCount
+
+  return { data: applicant, error: null }
 }
 
 export type WidgetFilters = {

@@ -1,0 +1,50 @@
+.center {
+  display: flex;
+  justify-content: center;
+  padding: 32px 0;
+}
+
+.message {
+  font-size: var(--kt-text-sm);
+  color: var(--kt-text-muted);
+  margin: 0;
+  padding: 16px 0;
+  text-align: center;
+}
+
+/* Filter segmented control (All / My company / Other companies). */
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.filterBtn {
+  padding: 6px 14px;
+  border-radius: var(--kt-radius-full);
+  background: var(--kt-bg-subtle);
+  color: var(--kt-text-muted);
+  border: none;
+  font-family: var(--kt-font-sans);
+  font-size: var(--kt-text-sm);
+  font-weight: var(--kt-weight-semibold);
+  cursor: pointer;
+  transition:
+    background var(--kt-duration-fast) var(--kt-ease),
+    color var(--kt-duration-fast) var(--kt-ease);
+}
+
+.filterActive {
+  background: var(--kt-navy-500);
+  color: var(--kt-navy-50);
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
