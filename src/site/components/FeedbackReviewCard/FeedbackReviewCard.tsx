@@ -58,8 +58,15 @@ export const FeedbackReviewCard: React.FC<FeedbackReviewCardProps> = ({
     ...entry.negativePills.map((label) => ({ label, tone: 'negative' as const })),
   ]
 
+  // Card tone: a low score (≤2) or an explicit "would not hire again" reads as
+  // negative and wins over a high score; a high score (≥3) or "would hire
+  // again" reads as positive. Anything else stays the neutral gray default.
+  const isNegative = entry.starRating <= 2 || entry.wouldHireAgain === 'no'
+  const isPositive = entry.starRating >= 3 || entry.wouldHireAgain === 'yes'
+  const toneClass = isNegative ? styles.entryNegative : isPositive ? styles.entryPositive : ''
+
   return (
-    <div className={styles.entry}>
+    <div className={[styles.entry, toneClass].filter(Boolean).join(' ')}>
       <div className={styles.entryHead}>
         <div className={styles.titleBlock}>
           <span className={styles.jobTitle}>{entry.jobTitle ?? 'Untitled role'}</span>
