@@ -63,9 +63,8 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({ analytics, showS
             const v = views[i] ?? 0
             const a = apps[i] ?? 0
             return (
-              // eslint-disable-next-line react/no-array-index-key
               <div
-                key={i}
+                key={labels[i]}
                 className={styles.barWrap}
                 title={`${labels[i]} — ${v} views · ${a} applies`}
               >
@@ -86,8 +85,7 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({ analytics, showS
         {/* Day labels — sparse when the range is long, to avoid clutter */}
         <div style={{ display: 'flex', gap: 'var(--kt-space-2)' }}>
           {labels.map((d, i) => (
-            // eslint-disable-next-line react/no-array-index-key
-            <div key={i} className={styles.barDay} style={{ flex: 1, textAlign: 'center' }}>
+            <div key={d} className={styles.barDay} style={{ flex: 1, textAlign: 'center' }}>
               {n <= 7 || i % 2 === 0 ? d : ''}
             </div>
           ))}
