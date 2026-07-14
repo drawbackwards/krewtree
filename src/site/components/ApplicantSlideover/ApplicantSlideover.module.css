@@ -316,6 +316,12 @@
   cursor: not-allowed;
 }
 
+.stageMenuDivider {
+  height: 1px;
+  background: var(--kt-border);
+  margin: 6px 0;
+}
+
 .stageMenuHint {
   margin: 4px 0 2px;
   padding: 6px 14px 0;
@@ -507,6 +513,8 @@
   display: flex;
   gap: var(--kt-space-3);
 }
+
+/* Reject-dialog fields moved to the shared RejectConfirmModal component. */
 
 /* Mobile — full-screen sheet */
 @media (max-width: 640px) {

@@ -421,6 +421,15 @@ const HistoryCard: React.FC<{
     </div>
   )
 
+  // Internal, company-only reason captured when the applicant was rejected.
+  const rejectionNote =
+    card.state === 'rejected' && card.rejectionReason ? (
+      <div className={styles.internalNote}>
+        <span className={styles.internalNoteLabel}>Internal note</span>
+        <span className={styles.internalNoteText}>{card.rejectionReason}</span>
+      </div>
+    ) : null
+
   // Finished cards (Completed) keep the 2-col rating layout, with the job
   // meta row inserted between title and pills.
   if (hasRatingSlot) {
@@ -478,6 +487,7 @@ const HistoryCard: React.FC<{
       </div>
       {metaRow}
       {pills}
+      {rejectionNote}
     </article>
   )
 }

@@ -7,6 +7,7 @@ import { CloseIcon, StarIcon, MessageIcon, ChevronDownIcon, DotsHorizontalIcon }
 import { RegulixBadge } from '../RegulixBadge/RegulixBadge'
 import { Modal, useToast } from '../../../components'
 import { ApplicantPreviewBody } from '../ApplicantPreviewBody/ApplicantPreviewBody'
+import { RejectConfirmModal } from '../RejectConfirmModal/RejectConfirmModal'
 import { PipelineTab } from './PipelineTab'
 import { LogTab } from './LogTab'
 import {
@@ -271,23 +272,10 @@ export const ApplicantSlideover: React.FC<ApplicantSlideoverProps> = ({
                     }
                   },
                 },
-                ...(isTerminal(applicant.status)
-                  ? []
-                  : [{ label: 'Mark hired', onClick: () => setHireConfirm(true) }]),
                 {
                   label: 'Archive',
                   onClick: () => setArchiveConfirm(true),
                 },
-                { divider: true },
-                ...(isTerminal(applicant.status)
-                  ? []
-                  : [
-                      {
-                        label: 'Reject',
-                        danger: true,
-                        onClick: () => setRejectConfirm(true),
-                      },
-                    ]),
               ]}
             />
           </div>
@@ -327,6 +315,8 @@ export const ApplicantSlideover: React.FC<ApplicantSlideoverProps> = ({
                   await setApplicantStage(applicant.id, stageId)
                   entry.onWrite?.()
                 }}
+                onMarkHired={() => setHireConfirm(true)}
+                onReject={() => setRejectConfirm(true)}
               />
             </div>
           </div>
@@ -370,43 +360,22 @@ export const ApplicantSlideover: React.FC<ApplicantSlideoverProps> = ({
       </div>
 
       {/* Reject confirmation */}
-      <Modal
+      <RejectConfirmModal
         open={rejectConfirm}
         onClose={() => setRejectConfirm(false)}
-        size="sm"
-        title="Reject applicant"
-        footer={
-          <div style={{ display: 'flex', gap: 'var(--kt-space-3)' }}>
-            <button
-              type="button"
-              className={styles.modalBtnSecondary}
-              onClick={() => setRejectConfirm(false)}
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              className={styles.modalBtnDanger}
-              onClick={async () => {
-                setRejectConfirm(false)
-                await rejectApplicant(applicant.id)
-                entry.onWrite?.()
-                onClose()
-              }}
-            >
-              Reject
-            </button>
-          </div>
-        }
-      >
-        <p className={styles.modalBody}>
-          This will send{' '}
-          <strong>
-            {applicant.workerFirstName} {applicant.workerLastInitial}.
-          </strong>{' '}
-          a rejection notification. This can't be undone. Proceed?
-        </p>
-      </Modal>
+        applicants={[
+          {
+            id: applicant.id,
+            name: `${applicant.workerFirstName} ${applicant.workerLastInitial}.`,
+          },
+        ]}
+        onConfirm={async ({ reason, sendNotification }) => {
+          await rejectApplicant(applicant.id, reason, sendNotification)
+          entry.onWrite?.()
+          setRejectConfirm(false)
+          onClose()
+        }}
+      />
 
       {/* Mark hired confirmation */}
       <Modal
@@ -491,6 +460,9 @@ interface StagePillControlProps {
   stages: PipelineStage[]
   requiredIncomplete: number
   onMoveTo: (stageId: string) => void
+  /** Terminal outcomes — always selectable (not gated by required tasks). */
+  onMarkHired: () => void
+  onReject: () => void
 }
 
 const StagePillControl: React.FC<StagePillControlProps> = ({
@@ -498,6 +470,8 @@ const StagePillControl: React.FC<StagePillControlProps> = ({
   stages,
   requiredIncomplete,
   onMoveTo,
+  onMarkHired,
+  onReject,
 }) => {
   const [open, setOpen] = useState(false)
   const [pos, setPos] = useState({ top: 0, left: 0, width: 0 })
@@ -599,6 +573,35 @@ const StagePillControl: React.FC<StagePillControlProps> = ({
               <p className={styles.stageMenuHint}>
                 Complete required tasks to unlock later stages.
               </p>
+            )}
+
+            {/* Terminal outcomes — always selectable, no task gating. */}
+            {!statusIsTerminal && (
+              <>
+                <div className={styles.stageMenuDivider} />
+                <button
+                  type="button"
+                  role="menuitem"
+                  className={styles.stageMenuItem}
+                  onClick={() => {
+                    setOpen(false)
+                    onMarkHired()
+                  }}
+                >
+                  <span>Mark hired</span>
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  className={[styles.stageMenuItem, styles.stageMenuItemDanger].join(' ')}
+                  onClick={() => {
+                    setOpen(false)
+                    onReject()
+                  }}
+                >
+                  <span>Reject</span>
+                </button>
+              </>
             )}
           </div>,
           document.body

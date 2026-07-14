@@ -1029,6 +1029,7 @@ export type Database = {
           company_id: string
           created_at: string
           id: string
+          kind: string
           name: string
           updated_at: string
         }
@@ -1037,6 +1038,7 @@ export type Database = {
           company_id: string
           created_at?: string
           id?: string
+          kind?: string
           name: string
           updated_at?: string
         }
@@ -1045,6 +1047,7 @@ export type Database = {
           company_id?: string
           created_at?: string
           id?: string
+          kind?: string
           name?: string
           updated_at?: string
         }

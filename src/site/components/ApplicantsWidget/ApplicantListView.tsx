@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import { Modal, Tooltip } from '../../../components'
+import { RejectConfirmModal } from '../RejectConfirmModal/RejectConfirmModal'
 import type { CompanyApplicant } from '../../types'
 import { advanceApplicant, rejectApplicant, hireApplicant } from '../../services/applicantService'
 import {
@@ -146,14 +147,11 @@ export const ApplicantListView: React.FC<Props> = ({
     [onRefresh]
   )
 
-  const handleConfirmAction = useCallback(async () => {
+  // Hire is confirmed here; reject is handled by the shared RejectConfirmModal.
+  const handleConfirmHire = useCallback(async () => {
     if (!confirm) return
     setActionPending(true)
-    if (confirm.type === 'reject') {
-      await rejectApplicant(confirm.applicant.id)
-    } else {
-      await hireApplicant(confirm.applicant.id)
-    }
+    await hireApplicant(confirm.applicant.id)
     setActionPending(false)
     setConfirm(null)
     onRefresh()
@@ -312,26 +310,21 @@ export const ApplicantListView: React.FC<Props> = ({
 
       {/* Confirm modals */}
       {confirm?.type === 'reject' && (
-        <Modal open title="Reject applicant" onClose={() => setConfirm(null)}>
-          <p className={styles.confirmBody}>
-            Reject {confirm.applicant.workerFirstName} {confirm.applicant.workerLastInitial}. for{' '}
-            <strong>{confirm.applicant.jobTitle}</strong>? This will remove them from your active
-            pipeline.
-          </p>
-          <div className={styles.confirmActions}>
-            <button type="button" className={styles.confirmCancel} onClick={() => setConfirm(null)}>
-              Cancel
-            </button>
-            <button
-              type="button"
-              className={styles.confirmDanger}
-              onClick={handleConfirmAction}
-              disabled={actionPending}
-            >
-              {actionPending ? 'Rejecting…' : 'Reject'}
-            </button>
-          </div>
-        </Modal>
+        <RejectConfirmModal
+          open
+          onClose={() => setConfirm(null)}
+          applicants={[
+            {
+              id: confirm.applicant.id,
+              name: `${confirm.applicant.workerFirstName} ${confirm.applicant.workerLastInitial}.`,
+            },
+          ]}
+          onConfirm={async ({ reason, sendNotification }) => {
+            await rejectApplicant(confirm.applicant.id, reason, sendNotification)
+            setConfirm(null)
+            onRefresh()
+          }}
+        />
       )}
       {confirm?.type === 'hire' && (
         <Modal open title="Mark as hired" onClose={() => setConfirm(null)}>
@@ -346,7 +339,7 @@ export const ApplicantListView: React.FC<Props> = ({
             <button
               type="button"
               className={styles.confirmDanger}
-              onClick={handleConfirmAction}
+              onClick={handleConfirmHire}
               disabled={actionPending}
             >
               {actionPending ? 'Marking…' : 'Mark hired'}

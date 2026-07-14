@@ -1,8 +1,9 @@
 import React, { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { Modal, Tooltip } from '../../components'
+import { Tooltip } from '../../components'
 import { useToast } from '../../components/Toast/Toast'
+import { RejectConfirmModal } from '../components/RejectConfirmModal/RejectConfirmModal'
 import { JobCell } from '../components/ApplicantsWidget/cells/JobCell'
 import { StageCell } from '../components/ApplicantsWidget/cells/StageCell'
 import { FEATURES } from '../config/features'
@@ -24,7 +25,6 @@ import {
   type WidgetFilters,
 } from '../services/applicantService'
 import {
-  CheckSmallIcon,
   CloseIcon,
   DotsHorizontalIcon,
   FlagFilledIcon,
@@ -181,6 +181,7 @@ export const AllApplicantsPage: React.FC = () => {
   const [stageOptions, setStageOptions] = useState<Array<{ id: string; name: string }>>([])
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [confirmBulkReject, setConfirmBulkReject] = useState(false)
+  const [confirmReject, setConfirmReject] = useState<CompanyApplicant | null>(null)
   const { openDrawer, stack, closeAllDrawers } = useDrawerStack()
 
   const openApplicant = useCallback(
@@ -330,9 +331,10 @@ export const AllApplicantsPage: React.FC = () => {
     closeDrawerIfMatches(id)
     load()
   }
-  const handleReject = async (id: string) => {
-    await rejectApplicant(id)
+  const doReject = async (id: string, reason: string, sendNotification: boolean) => {
+    await rejectApplicant(id, reason, sendNotification)
     closeDrawerIfMatches(id)
+    setConfirmReject(null)
     load()
   }
   const handleShortlist = async (id: string) => {
@@ -378,8 +380,8 @@ export const AllApplicantsPage: React.FC = () => {
         'Message threads are one-on-one — select one applicant to open their conversation.',
     })
   }
-  const doBulkReject = async () => {
-    await bulkReject(bulkIds)
+  const doBulkReject = async (reason: string, sendNotification: boolean) => {
+    await bulkReject(bulkIds, reason, sendNotification)
     setSelected(new Set())
     setConfirmBulkReject(false)
     load()
@@ -710,7 +712,7 @@ export const AllApplicantsPage: React.FC = () => {
                     overflowItems.push({
                       label: 'Reject',
                       danger: true,
-                      onClick: () => handleReject(a.id),
+                      onClick: () => setConfirmReject(a),
                     })
                   }
 
@@ -882,47 +884,34 @@ export const AllApplicantsPage: React.FC = () => {
         )}
       </div>
 
+      {/* Single reject confirmation */}
+      {confirmReject && (
+        <RejectConfirmModal
+          open
+          onClose={() => setConfirmReject(null)}
+          applicants={[
+            {
+              id: confirmReject.id,
+              name: `${confirmReject.workerFirstName} ${confirmReject.workerLastInitial}.`,
+            },
+          ]}
+          onConfirm={({ reason, sendNotification }) =>
+            doReject(confirmReject.id, reason, sendNotification)
+          }
+        />
+      )}
+
       {/* Bulk reject confirmation */}
-      <Modal
+      <RejectConfirmModal
         open={confirmBulkReject}
         onClose={() => setConfirmBulkReject(false)}
-        size="sm"
-        title={
-          <>
-            <CloseIcon size={16} color="var(--kt-danger)" /> Reject {bulkApplicants.length}{' '}
-            applicant{bulkApplicants.length === 1 ? '' : 's'}?
-          </>
-        }
-        footer={
-          <div style={{ display: 'flex', gap: 'var(--kt-space-3)' }}>
-            <button
-              type="button"
-              onClick={() => setConfirmBulkReject(false)}
-              className={styles.modalSecondary}
-            >
-              Cancel
-            </button>
-            <button type="button" onClick={doBulkReject} className={styles.modalDanger}>
-              Reject {bulkApplicants.length}
-            </button>
-          </div>
-        }
-      >
-        <p className={styles.confirmBody}>
-          This will move the following applicants to the Rejected stage. Already-rejected applicants
-          are skipped.
-        </p>
-        <ul className={styles.confirmList}>
-          {bulkApplicants.slice(0, 6).map((a) => (
-            <li key={a.id}>
-              <CheckSmallIcon size={10} /> {a.workerFirstName} {a.workerLastInitial}. — {a.jobTitle}
-            </li>
-          ))}
-          {bulkApplicants.length > 6 && (
-            <li className={styles.confirmMore}>+{bulkApplicants.length - 6} more</li>
-          )}
-        </ul>
-      </Modal>
+        applicants={bulkApplicants.map((a) => ({
+          id: a.id,
+          name: `${a.workerFirstName} ${a.workerLastInitial}.`,
+          jobTitle: a.jobTitle,
+        }))}
+        onConfirm={({ reason, sendNotification }) => doBulkReject(reason, sendNotification)}
+      />
     </div>
   )
 }
