@@ -646,7 +646,7 @@ export const JobPostsPage: React.FC = () => {
                 <button
                   type="button"
                   className={styles.primaryAction}
-                  onClick={() => navigate(`/site/dashboard/applicants?jobId=${job.id}`)}
+                  onClick={() => navigate(`/site/dashboard/applicants?job=${job.id}`)}
                 >
                   View applicants
                 </button>

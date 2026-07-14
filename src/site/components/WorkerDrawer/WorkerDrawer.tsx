@@ -15,11 +15,10 @@ import {
 import { useChatPane } from '../ChatPane/ChatPaneContext'
 import { WorkerSummaryTab } from './WorkerSummaryTab'
 import { WorkerMatchesTab } from './WorkerMatchesTab'
-import { WorkerHistoryTab } from './WorkerHistoryTab'
-import { WorkerNotesTab } from './WorkerNotesTab'
+import { WorkerActivityLog } from '../WorkerActivityLog/WorkerActivityLog'
 import styles from './WorkerDrawer.module.css'
 
-type Tab = 'summary' | 'matches' | 'history' | 'notes'
+type Tab = 'summary' | 'matches' | 'activity'
 
 export interface WorkerDrawerProps {
   entry: WorkerDrawerEntry
@@ -67,7 +66,8 @@ export const WorkerDrawer: React.FC<WorkerDrawerProps> = ({
   }, [bootstrap])
 
   const matchesCount: number | null = bootstrap ? matches.length : null
-  const historyCount: number | null = bootstrap ? history.length : null
+  // Activity merges history + notes into one feed; the badge counts both.
+  const activityCount: number | null = bootstrap ? history.length + (notesCount ?? 0) : null
 
   // Bootstrap display fields from the preload so the hero renders immediately;
   // hydrate from `detail` once it arrives.
@@ -170,15 +170,8 @@ export const WorkerDrawer: React.FC<WorkerDrawerProps> = ({
 
       {/* ── Tab strip ────────────────────────────────────────────────── */}
       <div className={styles.tabStrip} role="tablist">
-        {(['summary', 'matches', 'history', 'notes'] as Tab[]).map((tab) => {
-          const count =
-            tab === 'matches'
-              ? matchesCount
-              : tab === 'history'
-                ? historyCount
-                : tab === 'notes'
-                  ? notesCount
-                  : null
+        {(['summary', 'matches', 'activity'] as Tab[]).map((tab) => {
+          const count = tab === 'matches' ? matchesCount : tab === 'activity' ? activityCount : null
           return (
             <button
               key={tab}
@@ -209,24 +202,25 @@ export const WorkerDrawer: React.FC<WorkerDrawerProps> = ({
           </div>
         )}
         {activeTab === 'matches' && <WorkerMatchesTab matches={matches} loading={!bootstrap} />}
-        {activeTab === 'history' && (
-          <WorkerHistoryTab
-            cards={history}
-            loading={!bootstrap}
-            worker={detail}
-            onWrite={entry.onWrite}
-          />
-        )}
-        {activeTab === 'notes' && (
-          <WorkerNotesTab
-            workerId={entry.workerId}
-            initialNotes={initialNotes}
-            loading={!bootstrap}
-            onWrite={() => {
-              entry.onWrite?.()
-              setNotesCount((c) => (c == null ? c : c + 1))
-            }}
-          />
+        {activeTab === 'activity' && (
+          <div className={styles.tabScroll}>
+            {/* Same unified Activity feed as the worker profile's Activity tab:
+                job/application cards + interleaved notes + jobs/notes filter.
+                History and notes come from the bootstrap so nothing refetches. */}
+            <WorkerActivityLog
+              workerId={entry.workerId}
+              isOwnProfile={false}
+              isCompanyViewer
+              showHeading={false}
+              preloadedCards={history}
+              preloadedNotes={initialNotes}
+              onFeedbackSaved={entry.onWrite}
+              onNoteAdded={() => {
+                entry.onWrite?.()
+                setNotesCount((c) => (c == null ? c : c + 1))
+              }}
+            />
+          </div>
         )}
       </div>
     </>

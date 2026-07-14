@@ -9,7 +9,8 @@ import {
   type WorkerNote,
 } from '../../services/krewService'
 import { useAuth } from '../../context/AuthContext'
-import { PlusIcon } from '../../icons'
+import { PlusIcon, ChevronRightIcon } from '../../icons'
+import { useDrawerStack } from '../DrawerSystem/DrawerStackContext'
 import { FeedbackReviewCard } from '../FeedbackReviewCard/FeedbackReviewCard'
 import { FeedbackFormModal } from '../FeedbackFormModal/FeedbackFormModal'
 import { getWorkerFeedbackHistory, type FeedbackHistoryEntry } from '../../services/feedbackService'
@@ -29,6 +30,19 @@ export interface WorkerActivityLogProps {
   /** Fired after a company leaves/edits feedback from a hired job card, so the
    *  profile's Feedback aggregate can refresh. */
   onFeedbackSaved?: () => void
+  /** Fired after a note is added, so a host (e.g. the Worker Drawer) can bump
+   *  its own activity count without a refetch. */
+  onNoteAdded?: () => void
+  /** History cards supplied by a host (e.g. the Worker Drawer bootstrap). When
+   *  provided, the initial fetch is skipped — the two callers share the same
+   *  company-scoped query, so the data is identical. */
+  preloadedCards?: WorkerHistoryCard[]
+  /** Notes supplied by a host (drawer bootstrap). When provided, the initial
+   *  listWorkerNotes() fetch is skipped. */
+  preloadedNotes?: WorkerNote[]
+  /** The "Activity" title. Hidden inside the Worker Drawer, where the tab strip
+   *  already labels the panel. Defaults to shown (worker profile). */
+  showHeading?: boolean
 }
 
 type ActivityFilter = 'all' | 'jobs' | 'notes'
@@ -46,8 +60,9 @@ function formatLogTimestamp(iso: string): string {
   return `${date} · ${time}`
 }
 
-// Label + date-line verb come from the same state — duplicated from the My Krew
-// drawer history (WorkerHistoryTab) so both logs cover the identical events.
+// Label + date-line verb come from the same state. This component is the single
+// activity feed for both the worker profile's Activity tab and the My Krew
+// worker drawer's Activity tab, so both cover the identical events.
 const BADGE_LABEL: Record<WorkerHistoryCardState, string> = {
   applied: 'Applied',
   in_review: 'In review',
@@ -74,6 +89,17 @@ const DATE_VERB: Record<WorkerHistoryCardState, string> = {
 // layout). Terminated also closes an engagement but renders pills only and
 // stays single-column.
 const RATED_STATES: ReadonlySet<WorkerHistoryCardState> = new Set(['completed'])
+
+// Open/closed applications that still have a pipeline record — these get the
+// chevron that jumps to the application's Pipeline tab. (active/completed are
+// engagements, terminated is closed; none of those route to a pipeline here.)
+const APPLICATION_STATES: ReadonlySet<WorkerHistoryCardState> = new Set([
+  'applied',
+  'in_review',
+  'rejected',
+  'withdrawn',
+  'archived',
+])
 
 // Open applications keep the badge as a hard signal of an in-flight item.
 // Rejected also surfaces a badge because its outlined treatment alone doesn't
@@ -128,11 +154,16 @@ export const WorkerActivityLog: React.FC<WorkerActivityLogProps> = ({
   isOwnProfile,
   isCompanyViewer,
   onFeedbackSaved,
+  onNoteAdded,
+  preloadedCards,
+  preloadedNotes,
+  showHeading = true,
 }) => {
   const { user } = useAuth()
-  const [cards, setCards] = useState<WorkerHistoryCard[]>([])
-  const [notes, setNotes] = useState<WorkerNote[]>([])
-  const [loading, setLoading] = useState(true)
+  const { openDrawer } = useDrawerStack()
+  const [cards, setCards] = useState<WorkerHistoryCard[]>(preloadedCards ?? [])
+  const [notes, setNotes] = useState<WorkerNote[]>(preloadedNotes ?? [])
+  const [loading, setLoading] = useState(preloadedCards == null)
   const [error, setError] = useState<string | null>(null)
   const [filter, setFilter] = useState<ActivityFilter>('all')
 
@@ -142,6 +173,12 @@ export const WorkerActivityLog: React.FC<WorkerActivityLogProps> = ({
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
+    // Host supplied the history (drawer bootstrap) — use it and skip the fetch.
+    if (preloadedCards != null) {
+      setCards(preloadedCards)
+      setLoading(false)
+      return
+    }
     let active = true
     setLoading(true)
     getWorkerActivityLog(workerId).then(({ data, error }) => {
@@ -153,15 +190,20 @@ export const WorkerActivityLog: React.FC<WorkerActivityLogProps> = ({
     return () => {
       active = false
     }
-  }, [workerId])
+  }, [workerId, preloadedCards])
 
-  const loadNotes = useCallback(() => {
+  useEffect(() => {
     if (!isCompanyViewer) {
       setNotes([])
       return
     }
+    // Host supplied the notes (drawer bootstrap) — use them and skip the fetch.
+    if (preloadedNotes != null) {
+      setNotes(preloadedNotes)
+      return
+    }
     listWorkerNotes(workerId).then(({ data }) => setNotes(data))
-  }, [workerId, isCompanyViewer])
+  }, [workerId, isCompanyViewer, preloadedNotes])
 
   // The company's own feedback, keyed by application, so a hired card can render
   // its review (rating + pills + commentary) inline. Only own entries carry an
@@ -186,10 +228,6 @@ export const WorkerActivityLog: React.FC<WorkerActivityLogProps> = ({
     loadFeedback()
   }, [loadFeedback])
 
-  useEffect(() => {
-    loadNotes()
-  }, [loadNotes])
-
   const draftReady = draft.trim().length > 0
 
   const handleSaveNote = async (): Promise<void> => {
@@ -205,6 +243,7 @@ export const WorkerActivityLog: React.FC<WorkerActivityLogProps> = ({
       setAdding(false)
       // Make the new note visible if the user was filtered to jobs only.
       if (filter === 'jobs') setFilter('all')
+      onNoteAdded?.()
     }
     setSaving(false)
   }
@@ -212,6 +251,18 @@ export const WorkerActivityLog: React.FC<WorkerActivityLogProps> = ({
   const handleCancelNote = (): void => {
     setAdding(false)
     setDraft('')
+  }
+
+  // Jump to the application's Pipeline tab (stage + tasks) in a stacked
+  // application drawer — the action the My Krew drawer history used to expose as
+  // "See Status". onWrite bubbles so the host can refresh after any change.
+  const openPipeline = (applicationId: string): void => {
+    openDrawer({
+      type: 'application',
+      applicationId,
+      defaultTab: 'pipeline',
+      onWrite: onFeedbackSaved,
+    })
   }
 
   // Build the feed for the active filter. Jobs sort by their primaryDate, notes
@@ -236,34 +287,40 @@ export const WorkerActivityLog: React.FC<WorkerActivityLogProps> = ({
 
   return (
     <div className={styles.root}>
-      {/* Header — title + "Add note" (top right, company viewers). */}
-      <div className={styles.header}>
-        <h2 className={styles.heading}>Activity</h2>
-        {isCompanyViewer && !adding && (
-          <button type="button" className={logStyles.addNoteBtn} onClick={() => setAdding(true)}>
-            <PlusIcon size={12} />
-            Add note
-          </button>
-        )}
-      </div>
+      {/* Title — hidden in the drawer, where the tab strip already labels the
+          panel. Company viewers get the "Add note" action on the filter row. */}
+      {showHeading && (
+        <div className={styles.header}>
+          <h2 className={styles.heading}>Activity</h2>
+        </div>
+      )}
 
-      {/* Jobs / notes filter — only company viewers have notes to filter. */}
+      {/* Jobs / notes filter + "Add note" — one row, filter chips left, action
+          right. Only company viewers have notes to filter or add. */}
       {isCompanyViewer && (
-        <div className={styles.filterRow} role="tablist" aria-label="Activity filter">
-          {(['all', 'jobs', 'notes'] as const).map((f) => (
-            <button
-              key={f}
-              type="button"
-              role="tab"
-              aria-selected={filter === f}
-              className={[styles.filterChip, filter === f ? styles.filterChipActive : '']
-                .filter(Boolean)
-                .join(' ')}
-              onClick={() => setFilter(f)}
-            >
-              {f === 'all' ? 'All' : f === 'jobs' ? 'Jobs' : 'Notes'}
+        <div className={styles.filterRow}>
+          <div className={styles.filterChips} role="tablist" aria-label="Activity filter">
+            {(['all', 'jobs', 'notes'] as const).map((f) => (
+              <button
+                key={f}
+                type="button"
+                role="tab"
+                aria-selected={filter === f}
+                className={[styles.filterChip, filter === f ? styles.filterChipActive : '']
+                  .filter(Boolean)
+                  .join(' ')}
+                onClick={() => setFilter(f)}
+              >
+                {f === 'all' ? 'All' : f === 'jobs' ? 'Jobs' : 'Notes'}
+              </button>
+            ))}
+          </div>
+          {!adding && (
+            <button type="button" className={logStyles.addNoteBtn} onClick={() => setAdding(true)}>
+              <PlusIcon size={12} />
+              Add note
             </button>
-          ))}
+          )}
         </div>
       )}
 
@@ -315,6 +372,7 @@ export const WorkerActivityLog: React.FC<WorkerActivityLogProps> = ({
                   canLeaveFeedback={isCompanyViewer}
                   feedback={feedbackByApp[item.card.applicationId]}
                   onOpenForm={setFormAppId}
+                  onOpenPipeline={isCompanyViewer ? openPipeline : undefined}
                 />
               </li>
             ) : (
@@ -360,9 +418,9 @@ const NoteCard: React.FC<{ note: WorkerNote }> = ({ note }) => (
 )
 
 // ── Card ──────────────────────────────────────────────────────────────────
-// Read-only mirror of the drawer's HistoryCard: same treatments, badges, meta
-// row and finished/standard layouts, but no "See Status" drawer action — the
-// job title links to the public job instead.
+// Job/application card: treatments, badges, meta row and finished/standard
+// layouts. The job title links to the public job (no "See Status" drawer
+// action). Shared by the worker profile and the My Krew worker drawer.
 
 const HistoryCard: React.FC<{
   card: WorkerHistoryCard
@@ -372,7 +430,10 @@ const HistoryCard: React.FC<{
   feedback?: FeedbackHistoryEntry
   /** Opens the feedback form for an application (leave or edit). */
   onOpenForm: (applicationId: string) => void
-}> = ({ card, canLeaveFeedback, feedback, onOpenForm }) => {
+  /** Company viewers get a chevron on application cards that jumps to the
+   *  application's Pipeline tab. Undefined hides it (e.g. worker's own view). */
+  onOpenPipeline?: (applicationId: string) => void
+}> = ({ card, canLeaveFeedback, feedback, onOpenForm, onOpenPipeline }) => {
   // A hired job this company has reviewed → the exact feedback review card,
   // with a "Hired" label on the hire date. Edit/view opens the form.
   if (feedback) {
@@ -464,6 +525,7 @@ const HistoryCard: React.FC<{
   // Other states: title + (stage pill / "Leave feedback") on the right, date-led
   // meta row. A hired-but-unreviewed card offers Leave feedback.
   const canLeave = card.state === 'active' && canLeaveFeedback
+  const canOpenPipeline = APPLICATION_STATES.has(card.state) && !!onOpenPipeline
   return (
     <article className={[styles.card, treatment].join(' ')}>
       <div className={styles.topRow}>
@@ -481,6 +543,17 @@ const HistoryCard: React.FC<{
               onClick={() => onOpenForm(card.applicationId)}
             >
               Leave feedback
+            </button>
+          )}
+          {canOpenPipeline && (
+            <button
+              type="button"
+              className={styles.pipelineBtn}
+              onClick={() => onOpenPipeline?.(card.applicationId)}
+              aria-label="View application pipeline"
+              title="View pipeline"
+            >
+              <ChevronRightIcon size={16} />
             </button>
           )}
         </div>
