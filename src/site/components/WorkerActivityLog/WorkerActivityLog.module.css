@@ -1,7 +1,7 @@
-/* Worker profile → Activity tab. Card visuals duplicate the My Krew drawer
-   history (WorkerHistoryTab.module.css) so the two logs stay identical; the
-   only differences are the page-level list spacing and the read-only cards
-   (no "See Status" drawer action). */
+/* Activity feed — shared by the worker profile's Activity tab and the My Krew
+   worker drawer's Activity tab (WorkerActivityLog). Job cards link the title to
+   the public job (no "See Status" drawer action); notes reuse the LogTab
+   styles. */
 
 .root {
   display: flex;
@@ -36,6 +36,13 @@
 /* ── Jobs / notes filter ───────────────────────────────────────────────────── */
 
 .filterRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.filterChips {
   display: flex;
   gap: 6px;
 }
@@ -277,6 +284,30 @@
 .leaveFeedbackBtn:hover {
   text-decoration: underline;
   text-underline-offset: 3px;
+}
+
+/* Chevron that jumps to the application's Pipeline tab. Icon-only, no stroke. */
+.pipelineBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--kt-text-muted);
+  border-radius: var(--kt-radius-sm);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition:
+    background var(--kt-duration-fast) var(--kt-ease),
+    color var(--kt-duration-fast) var(--kt-ease);
+}
+
+.pipelineBtn:hover {
+  background: var(--kt-secondary);
+  color: var(--kt-navy-500);
 }
 
 /* ── State badge ─────────────────────────────────────────────────────────── */

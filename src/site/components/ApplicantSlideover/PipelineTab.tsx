@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import type { ApplicationTask, ApplicationTaskNote, CompanyApplicant } from '../../types'
-import { isTerminal } from '../../types'
+import { isTerminal, TERMINAL_LABEL } from '../../types'
 import { CheckIcon, PlusIcon, DotsHorizontalIcon, ClipboardIcon, FlagFilledIcon } from '../../icons'
 import { Modal, Tooltip } from '../../../components'
 import type { PipelineStage } from '../../services/pipelineService'
@@ -64,6 +64,12 @@ export const PipelineTab: React.FC<PipelineTabProps> = ({
   onChanged,
 }) => {
   const terminal = isTerminal(applicant.status)
+  // Terminal applications keep the stage record (current_stage_id isn't cleared
+  // on reject/withdraw/etc.), so show the outcome label instead of the stale
+  // last stage — and drop the live "time in stage" clock, which would otherwise
+  // keep ticking as if the applicant were still progressing. Mirrors the
+  // drawer header (ApplicantSlideover).
+  const stageLabel = terminal ? TERMINAL_LABEL[applicant.status] : applicant.currentStageName
 
   const [tasks, setTasks] = useState<ApplicationTask[]>([])
   const [loaded, setLoaded] = useState(false)
@@ -170,8 +176,8 @@ export const PipelineTab: React.FC<PipelineTabProps> = ({
       <div className={styles.body}>
         {/* Stage indicator */}
         <div className={styles.stageBlock}>
-          <span className={styles.stageName}>{applicant.currentStageName}</span>
-          {applicant.stageEnteredAt && (
+          <span className={styles.stageName}>{stageLabel}</span>
+          {!terminal && applicant.stageEnteredAt && (
             <span className={styles.timeInStage}>
               {formatTimeInStage(applicant.stageEnteredAt)}
             </span>

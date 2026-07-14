@@ -10,7 +10,7 @@ import type { KrewWorker } from '../../services/krewService'
 // so the opener can refetch its own list/table.
 
 export type ApplicationDrawerTab = 'summary' | 'pipeline' | 'log'
-export type WorkerDrawerTab = 'summary' | 'matches' | 'history' | 'notes'
+export type WorkerDrawerTab = 'summary' | 'matches' | 'activity'
 
 export type ApplicationDrawerEntry = {
   type: 'application'
