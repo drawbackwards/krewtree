@@ -333,19 +333,36 @@ export const TemplatesSettingsPage: React.FC = () => {
                 }}
               >
                 <div style={{ minWidth: 0 }}>
-                  <p
-                    style={{
-                      margin: 0,
-                      fontSize: 'var(--kt-text-sm)',
-                      fontWeight: 'var(--kt-weight-semibold)',
-                      color: 'var(--kt-text)',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {t.name}
-                  </p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                    <p
+                      style={{
+                        margin: 0,
+                        fontSize: 'var(--kt-text-sm)',
+                        fontWeight: 'var(--kt-weight-semibold)',
+                        color: 'var(--kt-text)',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {t.name}
+                    </p>
+                    {t.kind === 'rejection' && (
+                      <span
+                        style={{
+                          flexShrink: 0,
+                          fontSize: 'var(--kt-text-xs)',
+                          fontWeight: 'var(--kt-weight-semibold)',
+                          color: 'var(--kt-text-muted)',
+                          background: 'var(--kt-bg-subtle)',
+                          padding: '2px 8px',
+                          borderRadius: 'var(--kt-radius-sm)',
+                        }}
+                      >
+                        Reject flow
+                      </span>
+                    )}
+                  </div>
                   <p
                     style={{
                       ...mutedText,
@@ -364,14 +381,16 @@ export const TemplatesSettingsPage: React.FC = () => {
                   <Button variant="ghost" size="sm" onClick={() => setEditorTarget(t)}>
                     Edit
                   </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setDeleteMsgTarget(t)}
-                    style={{ color: 'var(--kt-danger)' }}
-                  >
-                    Delete
-                  </Button>
+                  {t.kind !== 'rejection' && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setDeleteMsgTarget(t)}
+                      style={{ color: 'var(--kt-danger)' }}
+                    >
+                      Delete
+                    </Button>
+                  )}
                 </div>
               </div>
             ))}
@@ -530,6 +549,7 @@ const MessageTemplateEditor: React.FC<{
   onSave: (input: { name: string; body: string }) => Promise<string | null>
 }> = ({ target, onClose, onSave }) => {
   const isEdit = target !== null && target !== 'new'
+  const isRejection = isEdit && target.kind === 'rejection'
   const [name, setName] = useState('')
   const [body, setBody] = useState('')
   const [saving, setSaving] = useState(false)
@@ -565,7 +585,13 @@ const MessageTemplateEditor: React.FC<{
       open={target !== null}
       onClose={() => (saving ? undefined : onClose())}
       size="md"
-      title={isEdit ? 'Edit message template' : 'New message template'}
+      title={
+        isRejection
+          ? 'Edit rejection template'
+          : isEdit
+            ? 'Edit message template'
+            : 'New message template'
+      }
       footer={
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
           <Button variant="ghost" onClick={onClose} disabled={saving}>
@@ -589,13 +615,34 @@ const MessageTemplateEditor: React.FC<{
           </label>
           <input
             id="mt-name"
-            style={fieldInput}
+            style={
+              isRejection
+                ? {
+                    ...fieldInput,
+                    background: 'var(--kt-bg-subtle)',
+                    color: 'var(--kt-text-muted)',
+                  }
+                : fieldInput
+            }
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="e.g. Interview invite"
             maxLength={120}
-            autoFocus
+            autoFocus={!isRejection}
+            disabled={isRejection}
           />
+          {isRejection && (
+            <p
+              style={{
+                margin: '6px 0 0',
+                fontSize: 'var(--kt-text-xs)',
+                color: 'var(--kt-text-muted)',
+              }}
+            >
+              This template is linked to the reject flow — its name can't be changed, but you can
+              edit the message below.
+            </p>
+          )}
         </div>
         <div>
           <label style={fieldLabel} htmlFor="mt-body">
@@ -608,6 +655,7 @@ const MessageTemplateEditor: React.FC<{
             onChange={(e) => setBody(e.target.value)}
             placeholder="Write the message workers will receive… Paste any links inline."
             maxLength={10000}
+            autoFocus={isRejection}
           />
         </div>
         {error && (

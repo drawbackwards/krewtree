@@ -1,0 +1,119 @@
+.actions {
+  display: flex;
+  gap: var(--kt-space-3);
+}
+
+.btnSecondary,
+.btnDanger {
+  padding: 0 16px;
+  height: 34px;
+  font-size: var(--kt-text-sm);
+  font-weight: var(--kt-weight-semibold);
+  font-family: var(--kt-font-sans);
+  border-radius: var(--kt-radius-md);
+  cursor: pointer;
+}
+
+.btnSecondary {
+  border: 1px solid var(--kt-border);
+  background: var(--kt-surface);
+  color: var(--kt-text);
+}
+
+.btnDanger {
+  border: none;
+  background: var(--kt-danger);
+  color: #fff;
+}
+
+.btnSecondary:disabled,
+.btnDanger:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.body {
+  font-size: var(--kt-text-sm);
+  color: var(--kt-text);
+  margin: 0;
+  line-height: 1.6;
+}
+
+.list {
+  margin: var(--kt-space-3) 0 0;
+  padding: 0 0 0 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: var(--kt-text-sm);
+  color: var(--kt-text);
+}
+
+.more {
+  list-style: none;
+  margin-left: -18px;
+  color: var(--kt-text-muted);
+  font-size: var(--kt-text-xs);
+}
+
+.reasonLabel {
+  display: block;
+  margin: var(--kt-space-4) 0 2px;
+  font-size: var(--kt-text-sm);
+  font-weight: var(--kt-weight-bold);
+  color: var(--kt-text);
+}
+
+/* Tertiary gray blurb — under the reason subhead + as the checkbox's second line. */
+.reasonHint {
+  margin: 0 0 var(--kt-space-2);
+  font-size: var(--kt-text-xs);
+  color: var(--kt-text-muted);
+  line-height: 1.4;
+}
+
+.reasonInput {
+  width: 100%;
+  box-sizing: border-box;
+  padding: var(--kt-space-2) var(--kt-space-3);
+  font-family: var(--kt-font-sans);
+  font-size: var(--kt-text-sm);
+  line-height: 1.5;
+  color: var(--kt-text);
+  background: var(--kt-surface);
+  border: 1px solid var(--kt-border);
+  border-radius: var(--kt-radius-md);
+  resize: vertical;
+}
+
+.sendRow {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--kt-space-2);
+  margin-top: var(--kt-space-4);
+  font-size: var(--kt-text-sm);
+  line-height: 1.4;
+  color: var(--kt-text);
+  cursor: pointer;
+}
+
+.sendRow input {
+  margin-top: 2px;
+  flex-shrink: 0;
+  cursor: pointer;
+  /* Match the app's checkbox (see components/Checkbox) instead of browser blue. */
+  accent-color: var(--kt-accent);
+}
+
+.sendText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sendTitle {
+  font-size: var(--kt-text-sm);
+  font-weight: var(--kt-weight-bold);
+  color: var(--kt-text);
+  line-height: 1.4;
+}

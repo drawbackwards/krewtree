@@ -14,6 +14,8 @@ import { supabase, getCurrentUserId } from '../../lib/supabase'
 import type { Database } from '../../lib/database.types'
 import { getPipelineStages, instantiateTemplatesForStage } from './pipelineService'
 import { getWorkerFeedbackAggregate } from './feedbackService'
+import { getRejectionTemplate } from './messageTemplateService'
+import { sendMessage } from './messageService'
 import { FEATURES } from '../config/features'
 
 // ── Types ─────────────────────────────────────────────────────────────────
@@ -598,12 +600,47 @@ export async function setApplicantStage(
   return { error: null }
 }
 
-export async function rejectApplicant(applicationId: string): Promise<{ error: string | null }> {
-  const { error } = await supabase
+/**
+ * Records an internal (company-only) rejection reason on the application's log.
+ * `application_log` is readable only by the owning company (RLS), so this note
+ * is never visible to the worker. Best-effort — a log failure never blocks the
+ * reject itself. Surfaces in the applicant Log tab and on the worker's rejected
+ * history card (company views only).
+ */
+async function logRejectionReason(applicationId: string, reason: string): Promise<void> {
+  await supabase.from('application_log').insert({
+    application_id: applicationId,
+    event_type: 'application_rejected',
+    actor: 'You',
+    description: 'Application rejected',
+    note_body: reason,
+    stage_id: null,
+  })
+}
+
+export async function rejectApplicant(
+  applicationId: string,
+  reason?: string,
+  sendNotification = false
+): Promise<{ error: string | null }> {
+  const { data, error } = await supabase
     .from('applications')
     .update({ status: 'terminal_rejected' } as unknown as Record<string, unknown>)
     .eq('id', applicationId)
-  return { error: error?.message ?? null }
+    .select('company_id, worker_id')
+    .single()
+  if (error) return { error: error.message }
+
+  const trimmedReason = reason?.trim()
+  if (trimmedReason) await logRejectionReason(applicationId, trimmedReason)
+
+  // Opt-in (reject-modal checkbox): send the reserved rejection template to the
+  // worker on the pair thread, tagged with the application for context.
+  if (sendNotification && data?.company_id && data?.worker_id) {
+    const { data: template } = await getRejectionTemplate(data.company_id)
+    await sendMessage(data.company_id, data.worker_id, template.body, { applicationId })
+  }
+  return { error: null }
 }
 
 export async function hireApplicant(applicationId: string): Promise<{ error: string | null }> {
@@ -623,16 +660,39 @@ export async function archiveApplicant(applicationId: string): Promise<{ error: 
 }
 
 export async function bulkReject(
-  applicationIds: string[]
+  applicationIds: string[],
+  reason?: string,
+  sendNotification = false
 ): Promise<{ affected: number; error: string | null }> {
   const { data, error } = await supabase
     .from('applications')
     .update({ status: 'terminal_rejected' } as unknown as Record<string, unknown>)
     .in('id', applicationIds)
     .neq('status', 'terminal_rejected')
-    .select('id')
+    .select('id, company_id, worker_id')
   if (error) return { affected: 0, error: error.message }
-  return { affected: data?.length ?? 0, error: null }
+  const rows = data ?? []
+
+  // Record the shared reason (internal) against each newly-rejected applicant.
+  const trimmedReason = reason?.trim()
+  if (trimmedReason) {
+    await Promise.all(rows.map((r) => logRejectionReason(r.id, trimmedReason)))
+  }
+
+  // Opt-in: send the reserved rejection template to each newly-rejected worker.
+  // All rows belong to the current company, so the template is fetched once.
+  if (sendNotification) {
+    const targets = rows.filter((r) => r.company_id && r.worker_id)
+    if (targets.length > 0) {
+      const { data: template } = await getRejectionTemplate(targets[0].company_id)
+      await Promise.all(
+        targets.map((r) =>
+          sendMessage(r.company_id, r.worker_id, template.body, { applicationId: r.id })
+        )
+      )
+    }
+  }
+  return { affected: rows.length, error: null }
 }
 
 export async function shortlistApplicant(

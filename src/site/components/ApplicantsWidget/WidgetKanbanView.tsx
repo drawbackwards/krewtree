@@ -14,6 +14,7 @@ import {
   type DragStartEvent,
 } from '@dnd-kit/core'
 import { Modal, Tooltip } from '../../../components'
+import { RejectConfirmModal } from '../RejectConfirmModal/RejectConfirmModal'
 import type { CompanyApplicant } from '../../types'
 import {
   getWidgetApplicants,
@@ -558,6 +559,7 @@ export const WidgetKanbanView: React.FC<Props> = ({
   }, [])
 
   // Confirm actions
+  // Hire + archive are confirmed here; reject uses the shared RejectConfirmModal.
   const handleConfirm = useCallback(async () => {
     if (!confirm) return
     setActionPending(true)
@@ -566,11 +568,7 @@ export const WidgetKanbanView: React.FC<Props> = ({
     // Optimistic remove
     setApplicants((prev) => prev.filter((a) => a.id !== applicant.id))
     const { error } =
-      type === 'reject'
-        ? await rejectApplicant(applicant.id)
-        : type === 'hire'
-          ? await hireApplicant(applicant.id)
-          : await archiveApplicant(applicant.id)
+      type === 'hire' ? await hireApplicant(applicant.id) : await archiveApplicant(applicant.id)
     if (error) {
       // Restore on failure
       setApplicants((prev) => [applicant, ...prev])
@@ -647,26 +645,22 @@ export const WidgetKanbanView: React.FC<Props> = ({
 
       {/* Confirm modals */}
       {confirm?.type === 'reject' && (
-        <Modal open title="Reject applicant" onClose={() => setConfirm(null)}>
-          <p className={styles.confirmBody}>
-            Reject {confirm.applicant.workerFirstName} {confirm.applicant.workerLastInitial}. for{' '}
-            <strong>{confirm.applicant.jobTitle}</strong>? This removes them from your active
-            pipeline.
-          </p>
-          <div className={styles.confirmActions}>
-            <button type="button" className={styles.confirmCancel} onClick={() => setConfirm(null)}>
-              Cancel
-            </button>
-            <button
-              type="button"
-              className={styles.confirmDanger}
-              onClick={handleConfirm}
-              disabled={actionPending}
-            >
-              {actionPending ? 'Rejecting…' : 'Reject'}
-            </button>
-          </div>
-        </Modal>
+        <RejectConfirmModal
+          open
+          onClose={() => setConfirm(null)}
+          applicants={[
+            {
+              id: confirm.applicant.id,
+              name: `${confirm.applicant.workerFirstName} ${confirm.applicant.workerLastInitial}.`,
+            },
+          ]}
+          onConfirm={async ({ reason, sendNotification }) => {
+            const applicant = confirm.applicant
+            const { error } = await rejectApplicant(applicant.id, reason, sendNotification)
+            if (!error) setApplicants((prev) => prev.filter((a) => a.id !== applicant.id))
+            setConfirm(null)
+          }}
+        />
       )}
       {confirm?.type === 'hire' && (
         <Modal open title="Mark as hired" onClose={() => setConfirm(null)}>

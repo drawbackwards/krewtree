@@ -330,3 +330,29 @@
   color: var(--kt-text-muted);
   margin: 0;
 }
+
+/* Internal, company-only rejection reason on a rejected card. Fill, no stroke. */
+.internalNote {
+  margin-top: 8px;
+  padding: 8px 10px;
+  background: var(--kt-bg-subtle);
+  border-radius: var(--kt-radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.internalNoteLabel {
+  font-size: var(--kt-text-xs);
+  font-weight: var(--kt-weight-semibold);
+  color: var(--kt-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.internalNoteText {
+  font-size: var(--kt-text-sm);
+  color: var(--kt-text);
+  line-height: 1.45;
+  white-space: pre-wrap;
+}

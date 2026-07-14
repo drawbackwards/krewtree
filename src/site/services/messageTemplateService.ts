@@ -12,12 +12,28 @@ import type { Database } from '../../lib/database.types'
 
 type MessageTemplateRow = Database['public']['Tables']['message_templates']['Row']
 
+export type MessageTemplateKind = 'custom' | 'rejection'
+
 export type MessageTemplate = {
   id: string
   name: string
   body: string
   createdAt: string
+  /** 'rejection' = the reserved template linked to the reject modal (name
+   *  locked, not deletable). 'custom' = an ordinary user template. */
+  kind: MessageTemplateKind
 }
+
+/** Fixed display name of the reserved rejection template (title is not editable). */
+export const REJECTION_TEMPLATE_NAME = 'Rejection notification'
+
+/** Fallback body if the reserved row is somehow missing (kept in sync with the
+ *  SQL `default_rejection_template_body()` used to seed it). */
+export const DEFAULT_REJECTION_TEMPLATE_BODY = `Thank you for taking the time to apply and for your interest in this role.
+
+After careful consideration, we have decided to move forward with other candidates at this time. This was a difficult decision and is not a reflection of your experience or effort.
+
+We would genuinely welcome a future application from you and wish you the very best in your search.`
 
 function toTemplate(row: MessageTemplateRow): MessageTemplate {
   return {
@@ -25,6 +41,7 @@ function toTemplate(row: MessageTemplateRow): MessageTemplate {
     name: row.name,
     body: row.body,
     createdAt: row.created_at,
+    kind: row.kind === 'rejection' ? 'rejection' : 'custom',
   }
 }
 
@@ -33,12 +50,33 @@ export async function getMessageTemplates(
 ): Promise<{ data: MessageTemplate[]; error: string | null }> {
   const { data, error } = await supabase
     .from('message_templates')
-    .select('id, name, body, created_at')
+    .select('id, name, body, created_at, kind')
     .eq('company_id', companyId)
     .order('name', { ascending: true })
 
   if (error) return { data: [], error: error.message }
   return { data: (data ?? []).map((r) => toTemplate(r as MessageTemplateRow)), error: null }
+}
+
+/**
+ * Returns the company's reserved rejection template body — what the reject
+ * modal sends when the "send a rejection message" box is checked. Falls back to
+ * the code default if the reserved row is missing.
+ */
+export async function getRejectionTemplate(
+  companyId: string
+): Promise<{ data: { id: string | null; body: string }; error: string | null }> {
+  const { data, error } = await supabase
+    .from('message_templates')
+    .select('id, body')
+    .eq('company_id', companyId)
+    .eq('kind', 'rejection')
+    .maybeSingle()
+
+  if (error)
+    return { data: { id: null, body: DEFAULT_REJECTION_TEMPLATE_BODY }, error: error.message }
+  if (!data) return { data: { id: null, body: DEFAULT_REJECTION_TEMPLATE_BODY }, error: null }
+  return { data: { id: data.id, body: data.body }, error: null }
 }
 
 export async function createMessageTemplate(
@@ -53,7 +91,7 @@ export async function createMessageTemplate(
   const { data, error } = await supabase
     .from('message_templates')
     .insert({ company_id: companyId, name, body })
-    .select('id, name, body, created_at')
+    .select('id, name, body, created_at, kind')
     .single()
 
   if (error || !data) return { data: null, error: error?.message ?? 'insert_failed' }
@@ -85,7 +123,7 @@ export async function updateMessageTemplate(
     .from('message_templates')
     .update(dbPatch)
     .eq('id', id)
-    .select('id, name, body, created_at')
+    .select('id, name, body, created_at, kind')
     .single()
 
   if (error || !data) return { data: null, error: error?.message ?? 'update_failed' }

@@ -1255,6 +1255,9 @@ export type WorkerHistoryCard = {
   jobPayMin: number | null
   jobPayMax: number | null
   jobPayType: string | null
+  /** Internal, company-only reason captured at reject time (from application_log).
+   *  Null for non-rejected cards and for the worker's own view (RLS hides it). */
+  rejectionReason: string | null
 }
 
 type ApplicationStatusRaw =
@@ -1336,8 +1339,40 @@ function mapApplicationRowsToHistoryCards(rows: JoinedApplicationRow[]): WorkerH
         jobPayMin: job.pay_min,
         jobPayMax: job.pay_max,
         jobPayType: job.pay_type,
+        rejectionReason: null,
       }
     })
+}
+
+// Enriches rejected cards with the internal reason captured at reject time.
+// Reasons live in application_log ('application_rejected' events), which is
+// company-only under RLS — so this returns nothing for a worker viewing their
+// own history, keeping the note invisible to them. Mutates + returns the cards.
+async function attachRejectionReasons(cards: WorkerHistoryCard[]): Promise<WorkerHistoryCard[]> {
+  const rejectedIds = cards.filter((c) => c.state === 'rejected').map((c) => c.applicationId)
+  if (rejectedIds.length === 0) return cards
+
+  const { data } = await supabase
+    .from('application_log')
+    .select('application_id, note_body, created_at')
+    .in('application_id', rejectedIds)
+    .eq('event_type', 'application_rejected')
+    .not('note_body', 'is', null)
+    .order('created_at', { ascending: false })
+
+  if (!data) return cards
+
+  // Rows are newest-first, so the first note_body seen per application wins.
+  const latest = new Map<string, string>()
+  for (const row of data as { application_id: string; note_body: string | null }[]) {
+    if (row.note_body && !latest.has(row.application_id)) {
+      latest.set(row.application_id, row.note_body)
+    }
+  }
+  for (const card of cards) {
+    if (card.state === 'rejected') card.rejectionReason = latest.get(card.applicationId) ?? null
+  }
+  return cards
 }
 
 export async function getWorkerApplications(
@@ -1360,6 +1395,7 @@ export async function getWorkerApplications(
 
   // Strict reverse chronological by primary date — see spec §7.
   cards.sort((a, b) => (a.primaryDate < b.primaryDate ? 1 : -1))
+  await attachRejectionReasons(cards)
   return { data: cards, error: null }
 }
 
@@ -1389,6 +1425,7 @@ export async function getWorkerActivityLog(
 
   // Strict reverse chronological by primary date — see spec §7.
   cards.sort((a, b) => (a.primaryDate < b.primaryDate ? 1 : -1))
+  await attachRejectionReasons(cards)
   return { data: cards, error: null }
 }
 
