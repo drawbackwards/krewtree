@@ -1,7 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import type { Notification } from '../../types'
-import { ClipboardIcon, MessageIcon, RefreshIcon, BellIcon, StarIcon } from '../../icons'
 import styles from './NotificationDrawer.module.css'
 
 interface NotificationDrawerProps {
@@ -10,18 +9,18 @@ interface NotificationDrawerProps {
   onNotificationClick: (id: string) => void
 }
 
-const TYPE_ICONS: Record<Notification['type'], React.ReactNode> = {
-  application: <ClipboardIcon size={14} />,
-  message: <MessageIcon size={14} />,
-  status_change: <RefreshIcon size={14} />,
-  job_alert: <BellIcon size={14} />,
-  review: <StarIcon size={14} />,
-}
-
-function timeLabel(daysAgo: number): string {
-  if (daysAgo === 0) return 'Today'
-  if (daysAgo === 1) return '1 day ago'
-  return `${daysAgo} days ago`
+function timeLabel(createdAt: string): string {
+  const then = new Date(createdAt).getTime()
+  if (Number.isNaN(then)) return ''
+  const mins = Math.floor((Date.now() - then) / 60000)
+  if (mins < 1) return 'Just now'
+  if (mins < 60) return `${mins}m ago`
+  const hours = Math.floor(mins / 60)
+  if (hours < 24) return `${hours}h ago`
+  const days = Math.floor(hours / 24)
+  if (days === 1) return '1 day ago'
+  if (days < 7) return `${days} days ago`
+  return new Date(createdAt).toLocaleDateString()
 }
 
 export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({
@@ -53,14 +52,11 @@ export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({
               className={[styles.item, !n.isRead ? styles.unread : ''].filter(Boolean).join(' ')}
               onClick={() => onNotificationClick(n.id)}
             >
-              <div className={[styles.iconWrap, styles[n.type]].join(' ')}>
-                {TYPE_ICONS[n.type]}
-              </div>
               <div className={styles.content}>
                 <div className={styles.title}>{n.title}</div>
                 <div className={styles.body}>{n.body}</div>
                 <div className={styles.meta}>
-                  <span className={styles.time}>{timeLabel(n.createdDaysAgo)}</span>
+                  <span className={styles.time}>{timeLabel(n.createdAt)}</span>
                   {!n.isRead && <span className={styles.unreadDot} aria-label="unread" />}
                 </div>
               </div>
@@ -70,8 +66,8 @@ export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({
       </div>
 
       <div className={styles.footer}>
-        <Link to="/site/dashboard/worker" className={styles.viewAllLink}>
-          View all activity
+        <Link to="/site/notifications" className={styles.viewAllLink}>
+          View all
         </Link>
       </div>
     </div>

@@ -1321,6 +1321,7 @@ export type Database = {
         Row: {
           body: string
           created_at: string
+          dedup_key: string | null
           id: string
           is_read: boolean
           link: string
@@ -1331,6 +1332,7 @@ export type Database = {
         Insert: {
           body?: string
           created_at?: string
+          dedup_key?: string | null
           id?: string
           is_read?: boolean
           link?: string
@@ -1341,6 +1343,7 @@ export type Database = {
         Update: {
           body?: string
           created_at?: string
+          dedup_key?: string | null
           id?: string
           is_read?: boolean
           link?: string
@@ -1349,6 +1352,86 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      notification_type: {
+        Row: {
+          key: string
+          persona: string
+          subject: string
+          label: string
+          description: string
+          mandatory_inapp: boolean
+          default_inapp: boolean
+          default_email: boolean
+          default_sms: boolean
+          is_badge: boolean
+          is_digest: boolean
+          sort_order: number
+          active: boolean
+        }
+        Insert: {
+          key: string
+          persona: string
+          subject: string
+          label: string
+          description?: string
+          mandatory_inapp?: boolean
+          default_inapp?: boolean
+          default_email?: boolean
+          default_sms?: boolean
+          is_badge?: boolean
+          is_digest?: boolean
+          sort_order?: number
+          active?: boolean
+        }
+        Update: {
+          key?: string
+          persona?: string
+          subject?: string
+          label?: string
+          description?: string
+          mandatory_inapp?: boolean
+          default_inapp?: boolean
+          default_email?: boolean
+          default_sms?: boolean
+          is_badge?: boolean
+          is_digest?: boolean
+          sort_order?: number
+          active?: boolean
+        }
+        Relationships: []
+      }
+      notification_preference: {
+        Row: {
+          user_id: string
+          notification_key: string
+          channel: string
+          enabled: boolean
+          updated_at: string
+        }
+        Insert: {
+          user_id: string
+          notification_key: string
+          channel: string
+          enabled: boolean
+          updated_at?: string
+        }
+        Update: {
+          user_id?: string
+          notification_key?: string
+          channel?: string
+          enabled?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'notification_preference_notification_key_fkey'
+            columns: ['notification_key']
+            isOneToOne: false
+            referencedRelation: 'notification_type'
+            referencedColumns: ['key']
+          },
+        ]
       }
       pipeline_stage: {
         Row: {

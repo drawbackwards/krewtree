@@ -8,6 +8,14 @@ import { BellIcon, ChevronDownIcon } from '../../icons'
 import { getWorkerProfile } from '../../services/workerService'
 import { getCompanyLogoUrl } from '../../services/companyService'
 import { getUnreadMessageCount, MESSAGES_READ_EVENT } from '../../services/messageService'
+import {
+  getNotifications,
+  markNotificationRead,
+  markAllNotificationsRead,
+  getMessageBadgeEnabled,
+  NOTIFICATIONS_READ_EVENT,
+  NOTIFICATION_PREFS_CHANGED_EVENT,
+} from '../../services/notificationService'
 import styles from './Navbar.module.css'
 
 // Keep Persona export so existing imports don't break
@@ -22,6 +30,30 @@ export const Navbar: React.FC = () => {
   const [notifOpen, setNotifOpen] = useState(false)
   const [notifs, setNotifs] = useState<Notification[]>([])
   const notifRef = useRef<HTMLDivElement>(null)
+
+  // Fetch in-app notifications for the bell. Rows are created server-side by
+  // triggers; here we just read, poll (60s), and refresh when a mark-read
+  // happens elsewhere — the same shape as the Messages unread badge below.
+  useEffect(() => {
+    if (!isLoggedIn || !persona) {
+      setNotifs([])
+      return
+    }
+    let cancelled = false
+    const refresh = () => {
+      getNotifications().then(({ data }) => {
+        if (!cancelled) setNotifs(data)
+      })
+    }
+    refresh()
+    const interval = window.setInterval(refresh, 60_000)
+    window.addEventListener(NOTIFICATIONS_READ_EVENT, refresh)
+    return () => {
+      cancelled = true
+      window.clearInterval(interval)
+      window.removeEventListener(NOTIFICATIONS_READ_EVENT, refresh)
+    }
+  }, [isLoggedIn, persona])
 
   const [avatarMenuOpen, setAvatarMenuOpen] = useState(false)
   const avatarRef = useRef<HTMLDivElement>(null)
@@ -93,10 +125,33 @@ export const Navbar: React.FC = () => {
     }
   }, [isLoggedIn, persona])
 
+  // The Messages unread badge is the in-app alert for new messages, gated on
+  // the user's `message_inapp` notification preference. Refetched when prefs
+  // are saved (Settings → Notifications) so the toggle takes effect live.
+  const [msgBadgeOn, setMsgBadgeOn] = useState(true)
+  useEffect(() => {
+    if (!isLoggedIn || !persona) {
+      setMsgBadgeOn(true)
+      return
+    }
+    let cancelled = false
+    const refresh = () => {
+      getMessageBadgeEnabled(persona).then((on) => {
+        if (!cancelled) setMsgBadgeOn(on)
+      })
+    }
+    refresh()
+    window.addEventListener(NOTIFICATION_PREFS_CHANGED_EVENT, refresh)
+    return () => {
+      cancelled = true
+      window.removeEventListener(NOTIFICATION_PREFS_CHANGED_EVENT, refresh)
+    }
+  }, [isLoggedIn, persona])
+
   const messagesLabel = (
     <>
       Messages
-      {msgUnread > 0 && (
+      {msgBadgeOn && msgUnread > 0 && (
         <span className={styles.msgBadge} aria-label={`${msgUnread} unread messages`}>
           {msgUnread > 9 ? '9+' : msgUnread}
         </span>
@@ -106,11 +161,13 @@ export const Navbar: React.FC = () => {
 
   const handleMarkAllRead = () => {
     setNotifs((prev) => prev.map((n) => ({ ...n, isRead: true })))
+    markAllNotificationsRead().then(() => window.dispatchEvent(new Event(NOTIFICATIONS_READ_EVENT)))
   }
 
   const handleNotifClick = (id: string) => {
     setNotifs((prev) => prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)))
     setNotifOpen(false)
+    markNotificationRead(id).then(() => window.dispatchEvent(new Event(NOTIFICATIONS_READ_EVENT)))
   }
 
   const handleLogout = () => {
@@ -361,7 +418,10 @@ export const Navbar: React.FC = () => {
                       <button
                         className={styles.menuItem}
                         role="menuitem"
-                        onClick={() => setAvatarMenuOpen(false)}
+                        onClick={() => {
+                          setAvatarMenuOpen(false)
+                          navigate('/site/settings/notifications')
+                        }}
                       >
                         Personal Settings
                       </button>
