@@ -72,6 +72,14 @@ const TemplatesSettingsPage = lazy(() => import('./pages/Settings/TemplatesSetti
 const AccountSettingsPage = lazy(() =>
   import('./pages/Settings/AccountSettingsPage').then((m) => ({ default: m.AccountSettingsPage }))
 )
+const NotificationsSettingsPage = lazy(() =>
+  import('./pages/Settings/NotificationsSettingsPage').then((m) => ({
+    default: m.NotificationsSettingsPage,
+  }))
+)
+const NotificationsPage = lazy(() =>
+  import('./pages/NotificationsPage').then((m) => ({ default: m.NotificationsPage }))
+)
 const LoginPage = lazy(() =>
   import('./pages/auth/LoginPage').then((m) => ({ default: m.LoginPage }))
 )
@@ -137,6 +145,18 @@ const RequireAuth: React.FC<{ persona?: Persona }> = ({ persona }) => {
   return <Outlet />
 }
 
+// Settings index → the first tab that persona can see. Companies land on their
+// profile; workers only have personal preferences.
+const SettingsIndexRedirect: React.FC = () => {
+  const { persona } = useAuth()
+  return (
+    <Navigate
+      to={persona === 'company' ? '/site/settings/profile' : '/site/settings/notifications'}
+      replace
+    />
+  )
+}
+
 // Legacy `/site/dashboard/applicants/worker/:workerId` → unified public profile.
 const RedirectWorkerToProfile: React.FC = () => {
   const { workerId } = useParams<{ workerId: string }>()
@@ -191,17 +211,6 @@ export const SiteRouter: React.FC = () => (
               element={<RedirectWorkerToProfile />}
             />
             <Route path="/site/pipeline" element={<PipelinePage />} />
-            <Route path="/site/settings" element={<SettingsLayout />}>
-              <Route index element={<Navigate to="/site/settings/profile" replace />} />
-              <Route path="profile" element={<CompanyProfileEditPage />} />
-              <Route path="pipeline" element={<PipelineSettingsPage />} />
-              <Route path="templates" element={<TemplatesSettingsPage />} />
-              <Route
-                path="pipeline-tasks"
-                element={<Navigate to="/site/settings/pipeline" replace />}
-              />
-              <Route path="account" element={<AccountSettingsPage />} />
-            </Route>
             <Route path="/site/post-job" element={<PostJobPage />} />
             <Route path="/site/post-job/:id" element={<PostJobPage />} />
             <Route
@@ -213,6 +222,24 @@ export const SiteRouter: React.FC = () => (
           {/* Requires auth (any persona) */}
           <Route element={<RequireAuth />}>
             <Route path="/site/messages" element={<MessagesPage />} />
+            <Route path="/site/notifications" element={<NotificationsPage />} />
+            {/* Settings shell is shared: the Notifications tab is personal and
+                available to both personas; organization tabs are nested behind
+                a company guard below. */}
+            <Route path="/site/settings" element={<SettingsLayout />}>
+              <Route index element={<SettingsIndexRedirect />} />
+              <Route path="notifications" element={<NotificationsSettingsPage />} />
+              <Route element={<RequireAuth persona="company" />}>
+                <Route path="profile" element={<CompanyProfileEditPage />} />
+                <Route path="pipeline" element={<PipelineSettingsPage />} />
+                <Route path="templates" element={<TemplatesSettingsPage />} />
+                <Route
+                  path="pipeline-tasks"
+                  element={<Navigate to="/site/settings/pipeline" replace />}
+                />
+                <Route path="account" element={<AccountSettingsPage />} />
+              </Route>
+            </Route>
           </Route>
 
           {/* Catch-all redirect */}

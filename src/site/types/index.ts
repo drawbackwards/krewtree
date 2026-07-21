@@ -252,13 +252,16 @@ export type Conversation = {
 }
 
 // ---- Notifications ----
+// A notification's type is the catalog key, e.g. 'company.applicants.new_application'.
+export type NotificationType = string
+
 export type Notification = {
   id: string
-  type: 'application' | 'message' | 'status_change' | 'job_alert' | 'review'
+  type: NotificationType
   title: string
   body: string
   isRead: boolean
-  createdDaysAgo: number
+  createdAt: string
   link: string
 }
 
