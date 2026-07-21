@@ -1,14 +1,11 @@
 import React from 'react'
 import { KrewtreeLogo } from '../Logo'
 import { RegulixLogo } from '../RegulixLogo/RegulixLogo'
-import type { TopPills } from '../../services/feedbackService'
 import styles from './WorkerRatingCard.module.css'
 
 type WorkerRatingCardProps = {
   averageRating: number | null
   reviewCount: number
-  /** Top pills by sentiment — company viewers only (spec §6.1). */
-  topPills?: TopPills
   /** Opens the full history view — company viewers only. */
   onViewHistory?: () => void
   /** FEATURES.regulix — the Regulix source card only renders when true. */
@@ -27,22 +24,23 @@ const pluralReviews = (n: number): string => `${n} review${n === 1 ? '' : 's'}`
 /**
  * "Feedback" sidebar card. Follows the Applications-card pattern: a subtle
  * container with a heading and bordered inner source cards — one krewtree
- * (aggregate rating + pills), one Regulix (flag-gated). The worker's own view
- * passes only aggregate + count; a company viewer also passes topPills and
+ * (aggregate rating), one Regulix (flag-gated). A company viewer also passes
  * onViewHistory. The Regulix card shows the onboarding empty state until the
  * worker is Regulix-connected, then a reviews shell.
+ *
+ * Attribute pills are intentionally not surfaced: companies may not
+ * characterize workers with negative traits, so only the aggregate rating and
+ * review count are shown.
  */
 export const WorkerRatingCard: React.FC<WorkerRatingCardProps> = ({
   averageRating,
   reviewCount,
-  topPills,
   onViewHistory,
   showRegulix = false,
   regulixConnected = false,
   sourcesLayout = 'column',
 }) => {
   const hasFeedback = reviewCount > 0
-  const hasPills = !!topPills && (topPills.positive.length > 0 || topPills.negative.length > 0)
 
   return (
     <div className={styles.card}>
@@ -57,20 +55,6 @@ export const WorkerRatingCard: React.FC<WorkerRatingCardProps> = ({
             <>
               <span className={styles.score}>{averageRating?.toFixed(1)}</span>
               <span className={styles.count}>{pluralReviews(reviewCount)}</span>
-              {hasPills && topPills && (
-                <div className={styles.pillRow}>
-                  {topPills.positive.map((pill) => (
-                    <span key={pill.id} className={`${styles.pill} ${styles.pillPositive}`}>
-                      {pill.label}
-                    </span>
-                  ))}
-                  {topPills.negative.map((pill) => (
-                    <span key={pill.id} className={`${styles.pill} ${styles.pillNegative}`}>
-                      {pill.label}
-                    </span>
-                  ))}
-                </div>
-              )}
               {onViewHistory && (
                 <button type="button" className={styles.historyLink} onClick={onViewHistory}>
                   View history →

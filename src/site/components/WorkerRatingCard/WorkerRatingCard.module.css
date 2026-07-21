@@ -65,36 +65,6 @@
   color: var(--kt-text-muted);
 }
 
-.pillRow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  justify-content: center;
-  margin-top: 4px;
-}
-
-/* Strokeless pills on the surface card sit on the subtle tone; sentiment shown
-   via text color. No section captions (positive/negative read from color). */
-.pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 8px;
-  border-radius: 999px;
-  font-size: var(--kt-text-xs);
-  font-weight: var(--kt-weight-medium);
-  line-height: 1.4;
-  background: var(--kt-bg-subtle);
-  color: var(--kt-text-muted);
-}
-
-.pillPositive {
-  color: var(--kt-success);
-}
-
-.pillNegative {
-  color: var(--kt-danger);
-}
-
 /* Anchor-style link standard: navy-500 + bold. */
 .historyLink {
   margin-top: 2px;

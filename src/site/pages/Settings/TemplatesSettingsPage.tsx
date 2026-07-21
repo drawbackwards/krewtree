@@ -333,36 +333,19 @@ export const TemplatesSettingsPage: React.FC = () => {
                 }}
               >
                 <div style={{ minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-                    <p
-                      style={{
-                        margin: 0,
-                        fontSize: 'var(--kt-text-sm)',
-                        fontWeight: 'var(--kt-weight-semibold)',
-                        color: 'var(--kt-text)',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {t.name}
-                    </p>
-                    {t.kind === 'rejection' && (
-                      <span
-                        style={{
-                          flexShrink: 0,
-                          fontSize: 'var(--kt-text-xs)',
-                          fontWeight: 'var(--kt-weight-semibold)',
-                          color: 'var(--kt-text-muted)',
-                          background: 'var(--kt-bg-subtle)',
-                          padding: '2px 8px',
-                          borderRadius: 'var(--kt-radius-sm)',
-                        }}
-                      >
-                        Reject flow
-                      </span>
-                    )}
-                  </div>
+                  <p
+                    style={{
+                      margin: 0,
+                      fontSize: 'var(--kt-text-sm)',
+                      fontWeight: 'var(--kt-weight-semibold)',
+                      color: 'var(--kt-text)',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {t.name}
+                  </p>
                   <p
                     style={{
                       ...mutedText,

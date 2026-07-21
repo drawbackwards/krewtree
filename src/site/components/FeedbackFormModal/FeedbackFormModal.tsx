@@ -2,11 +2,9 @@ import React, { useEffect, useState } from 'react'
 import { Modal, Button, Textarea, Spinner, RadioGroup } from '../../../components'
 import { StarIcon } from '../../icons'
 import {
-  getFeedbackPills,
   getFeedbackForApplication,
   submitFeedback,
   updateFeedback,
-  type FeedbackPillLists,
   type WouldHireAgain,
 } from '../../services/feedbackService'
 import styles from './FeedbackFormModal.module.css'
@@ -112,12 +110,10 @@ export const FeedbackFormModal: React.FC<FeedbackFormModalProps> = ({
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [mode, setMode] = useState<Mode>('create')
-  const [pills, setPills] = useState<FeedbackPillLists>({ positive: [], negative: [] })
   const [feedbackId, setFeedbackId] = useState<string | null>(null)
 
   const [rating, setRating] = useState(0)
   const [wouldHire, setWouldHire] = useState<WouldHireAgain | null>(null)
-  const [selectedPills, setSelectedPills] = useState<Set<string>>(new Set())
   const [commentary, setCommentary] = useState('')
 
   useEffect(() => {
@@ -125,29 +121,24 @@ export const FeedbackFormModal: React.FC<FeedbackFormModalProps> = ({
     let cancelled = false
     setLoading(true)
     setError(null)
-    Promise.all([getFeedbackPills(), getFeedbackForApplication(applicationId)]).then(
-      ([pillsRes, recordRes]) => {
-        if (cancelled) return
-        setPills(pillsRes.data)
-        const record = recordRes.data
-        if (record) {
-          setMode(record.isEditable ? 'edit' : 'view')
-          setFeedbackId(record.id)
-          setRating(record.starRating)
-          setWouldHire(record.wouldHireAgain)
-          setSelectedPills(new Set(record.pillIds))
-          setCommentary(record.commentary ?? '')
-        } else {
-          setMode('create')
-          setFeedbackId(null)
-          setRating(0)
-          setWouldHire(null)
-          setSelectedPills(new Set())
-          setCommentary('')
-        }
-        setLoading(false)
+    getFeedbackForApplication(applicationId).then((recordRes) => {
+      if (cancelled) return
+      const record = recordRes.data
+      if (record) {
+        setMode(record.isEditable ? 'edit' : 'view')
+        setFeedbackId(record.id)
+        setRating(record.starRating)
+        setWouldHire(record.wouldHireAgain)
+        setCommentary(record.commentary ?? '')
+      } else {
+        setMode('create')
+        setFeedbackId(null)
+        setRating(0)
+        setWouldHire(null)
+        setCommentary('')
       }
-    )
+      setLoading(false)
+    })
     return () => {
       cancelled = true
     }
@@ -156,29 +147,20 @@ export const FeedbackFormModal: React.FC<FeedbackFormModalProps> = ({
   const readOnly = mode === 'view'
   const canSave = rating >= 0.5 && wouldHire !== null && !saving
 
-  const togglePill = (pillId: string): void => {
-    if (readOnly) return
-    setSelectedPills((prev) => {
-      const next = new Set(prev)
-      if (next.has(pillId)) next.delete(pillId)
-      else next.add(pillId)
-      return next
-    })
-  }
-
   const handleSave = async (): Promise<void> => {
     if (!canSave || wouldHire === null) return
     setSaving(true)
     setError(null)
-    const pillIds = Array.from(selectedPills)
     const trimmed = commentary.trim()
+    // Attribute pills are no longer collected; clear any that a prior version
+    // may have stored by passing an empty list.
     const result =
       mode === 'edit' && feedbackId
         ? await updateFeedback(feedbackId, {
             starRating: rating,
             wouldHireAgain: wouldHire,
             commentary: trimmed || null,
-            pillIds,
+            pillIds: [],
           })
         : await submitFeedback({
             workerId,
@@ -186,7 +168,7 @@ export const FeedbackFormModal: React.FC<FeedbackFormModalProps> = ({
             starRating: rating,
             wouldHireAgain: wouldHire,
             commentary: trimmed || null,
-            pillIds,
+            pillIds: [],
           })
     setSaving(false)
     if (result.error) {
@@ -254,46 +236,6 @@ export const FeedbackFormModal: React.FC<FeedbackFormModalProps> = ({
               }))}
             />
           </div>
-
-          {pills.positive.length > 0 && (
-            <div className={styles.field}>
-              <span className={styles.label}>What went well</span>
-              <div className={styles.chipRow}>
-                {pills.positive.map((pill) => (
-                  <button
-                    key={pill.id}
-                    type="button"
-                    className={`${styles.chip} ${styles.chipPositive} ${selectedPills.has(pill.id) ? styles.chipSelected : ''}`}
-                    onClick={() => togglePill(pill.id)}
-                    disabled={readOnly}
-                    aria-pressed={selectedPills.has(pill.id)}
-                  >
-                    {pill.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {pills.negative.length > 0 && (
-            <div className={styles.field}>
-              <span className={styles.label}>Concerns</span>
-              <div className={styles.chipRow}>
-                {pills.negative.map((pill) => (
-                  <button
-                    key={pill.id}
-                    type="button"
-                    className={`${styles.chip} ${styles.chipNegative} ${selectedPills.has(pill.id) ? styles.chipSelected : ''}`}
-                    onClick={() => togglePill(pill.id)}
-                    disabled={readOnly}
-                    aria-pressed={selectedPills.has(pill.id)}
-                  >
-                    {pill.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
 
           <Textarea
             label="Private notes (optional)"

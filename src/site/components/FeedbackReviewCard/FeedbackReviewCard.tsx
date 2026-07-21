@@ -1,5 +1,5 @@
 import React from 'react'
-import { CheckIcon, XIcon, EditIcon, EyeIcon } from '../../icons'
+import { CheckIcon, CloseIcon, EditIcon, EyeIcon } from '../../icons'
 import type { FeedbackHistoryEntry, WouldHireAgain } from '../../services/feedbackService'
 import styles from './FeedbackReviewCard.module.css'
 
@@ -32,7 +32,7 @@ const WouldHireChip: React.FC<{ value: WouldHireAgain }> = ({ value }) => {
   if (value === 'no') {
     return (
       <span className={`${styles.hireChip} ${styles.hireNo}`}>
-        <XIcon size={12} />
+        <CloseIcon size={12} />
         Would not hire again
       </span>
     )
@@ -53,11 +53,6 @@ export const FeedbackReviewCard: React.FC<FeedbackReviewCardProps> = ({
   dateLabel,
   onOpen,
 }) => {
-  const pills = [
-    ...entry.positivePills.map((label) => ({ label, tone: 'positive' as const })),
-    ...entry.negativePills.map((label) => ({ label, tone: 'negative' as const })),
-  ]
-
   // Card tone: a low score (≤2) or an explicit "would not hire again" reads as
   // negative and wins over a high score; a high score (≥3) or "would hire
   // again" reads as positive. Anything else stays the neutral gray default.
@@ -98,14 +93,6 @@ export const FeedbackReviewCard: React.FC<FeedbackReviewCardProps> = ({
 
       <div className={styles.signals}>
         <WouldHireChip value={entry.wouldHireAgain} />
-        {pills.map((pill) => (
-          <span
-            key={`${pill.tone}-${pill.label}`}
-            className={`${styles.pill} ${pill.tone === 'negative' ? styles.pillNegative : styles.pillPositive}`}
-          >
-            {pill.label}
-          </span>
-        ))}
       </div>
     </div>
   )

@@ -1,7 +1,5 @@
 .panel {
   padding: var(--kt-space-5);
-  background: color-mix(in srgb, var(--kt-primary) 3%, var(--kt-surface));
-  border-top: 1px solid var(--kt-border);
 }
 
 .statsRow {
