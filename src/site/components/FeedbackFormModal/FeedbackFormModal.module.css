@@ -98,43 +98,6 @@
   min-width: 2.5ch;
 }
 
-.chipRow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-/* Selectable, strokeless pills. Unselected sit on the subtle surface; selected
-   flip to a filled sentiment tone. */
-.chip {
-  padding: 4px 10px;
-  border-radius: var(--kt-radius-full);
-  background: var(--kt-bg-subtle);
-  color: var(--kt-text-muted);
-  font-family: var(--kt-font-sans);
-  font-size: var(--kt-text-xs);
-  font-weight: var(--kt-weight-medium);
-  cursor: pointer;
-  border: none;
-  transition:
-    background var(--kt-duration-fast) var(--kt-ease),
-    color var(--kt-duration-fast) var(--kt-ease);
-}
-
-.chip:disabled {
-  cursor: default;
-}
-
-.chipPositive.chipSelected {
-  background: var(--kt-success);
-  color: #fff;
-}
-
-.chipNegative.chipSelected {
-  background: var(--kt-danger);
-  color: #fff;
-}
-
 .footer {
   display: flex;
   align-items: center;

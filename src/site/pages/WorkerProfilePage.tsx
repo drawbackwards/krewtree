@@ -27,8 +27,8 @@ import type { FullWorkerProfile } from '../services/workerService'
 import { WorkerRatingCard } from '../components/WorkerRatingCard/WorkerRatingCard'
 import { WorkerFeedbackHistory } from '../components/WorkerFeedbackHistory/WorkerFeedbackHistory'
 import { FeedbackFormModal } from '../components/FeedbackFormModal/FeedbackFormModal'
-import { getWorkerFeedbackAggregate, getWorkerFeedbackTopPills } from '../services/feedbackService'
-import type { WorkerFeedbackAggregate, TopPills } from '../services/feedbackService'
+import { getWorkerFeedbackAggregate } from '../services/feedbackService'
+import type { WorkerFeedbackAggregate } from '../services/feedbackService'
 import type { CompanyApplicant } from '../types'
 import { INDUSTRIES } from '../data/industries'
 import { getContractTypeLabel } from '../data/contractTypes'
@@ -120,7 +120,6 @@ export const WorkerProfilePage: React.FC = () => {
     averageRating: null,
     reviewCount: 0,
   })
-  const [feedbackPills, setFeedbackPills] = useState<TopPills | undefined>(undefined)
   const [historyOpen, setHistoryOpen] = useState(false)
   // Set when the reviewing company opens one of its own entries from the
   // history view to edit it (spec §6.3).
@@ -165,12 +164,7 @@ export const WorkerProfilePage: React.FC = () => {
   const reloadFeedback = useCallback(() => {
     if (!id) return
     getWorkerFeedbackAggregate(id).then(({ data }) => setFeedback(data))
-    if (isCompanyViewer) {
-      getWorkerFeedbackTopPills(id).then(({ data }) => setFeedbackPills(data))
-    } else {
-      setFeedbackPills(undefined)
-    }
-  }, [id, isCompanyViewer])
+  }, [id])
 
   useEffect(() => {
     reloadFeedback()
@@ -971,7 +965,6 @@ export const WorkerProfilePage: React.FC = () => {
               <WorkerRatingCard
                 averageRating={feedback.averageRating}
                 reviewCount={feedback.reviewCount}
-                topPills={isCompanyViewer ? feedbackPills : undefined}
                 onViewHistory={
                   isCompanyViewer && feedback.reviewCount > 0
                     ? () => setHistoryOpen(true)

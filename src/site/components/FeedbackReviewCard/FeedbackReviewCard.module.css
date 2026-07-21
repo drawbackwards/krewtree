@@ -95,7 +95,8 @@
   margin: 2px 0 0;
 }
 
-/* One compact signals row: would-hire chip + strength/concern pills, no captions. */
+/* One compact signals row: the would-hire chip. Attribute pills are not shown
+   — companies may not characterize workers with negative traits. */
 .signals {
   display: flex;
   flex-wrap: wrap;
@@ -130,25 +131,4 @@
 .hireUnsure {
   background: var(--kt-bg-subtle);
   color: var(--kt-text-muted);
-}
-
-/* Strokeless pills; sentiment shown via text color. */
-.pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 8px;
-  border-radius: 999px;
-  font-size: var(--kt-text-xs);
-  font-weight: var(--kt-weight-medium);
-  line-height: 1.4;
-  background: var(--kt-bg-subtle);
-  color: var(--kt-text-muted);
-}
-
-.pillPositive {
-  color: var(--kt-success);
-}
-
-.pillNegative {
-  color: var(--kt-danger);
 }
