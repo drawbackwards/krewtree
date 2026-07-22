@@ -220,28 +220,7 @@ export const Navbar: React.FC = () => {
 
   const firstName: string = user?.user_metadata?.first_name ?? ''
   const lastName: string = user?.user_metadata?.last_name ?? ''
-  const companyName: string = user?.user_metadata?.company_name ?? ''
-  const userInitials =
-    persona === 'company'
-      ? companyName
-        ? companyName
-            .trim()
-            .split(/\s+/)
-            .slice(0, 2)
-            .map((w) => w[0])
-            .join('')
-            .toUpperCase()
-        : (user?.email?.[0]?.toUpperCase() ?? '')
-      : firstName
-        ? `${firstName[0]}${lastName[0] ?? ''}`.toUpperCase()
-        : (user?.email?.[0]?.toUpperCase() ?? '')
-  const displayName =
-    persona === 'worker'
-      ? ((`${firstName} ${lastName}`.trim() || user?.email) ?? '')
-      : ((companyName || user?.email) ?? '')
 
-  // The company the user is currently acting as (for the switcher menu header).
-  const activeCompany = memberships.find((m) => m.companyId === activeCompanyId) ?? null
   const companyInitials = (name: string): string =>
     (name || 'Company')
       .split(/\s+/)
@@ -250,6 +229,25 @@ export const Navbar: React.FC = () => {
       .join('')
       .slice(0, 2)
       .toUpperCase()
+
+  // The company the user is currently acting as drives the navbar identity, so
+  // switching companies updates the avatar + label. Fall back to the signup
+  // company_name only until memberships load.
+  const activeCompany = memberships.find((m) => m.companyId === activeCompanyId) ?? null
+  const companyName: string = activeCompany?.companyName ?? user?.user_metadata?.company_name ?? ''
+
+  const userInitials =
+    persona === 'company'
+      ? companyName
+        ? companyInitials(companyName)
+        : (user?.email?.[0]?.toUpperCase() ?? '')
+      : firstName
+        ? `${firstName[0]}${lastName[0] ?? ''}`.toUpperCase()
+        : (user?.email?.[0]?.toUpperCase() ?? '')
+  const displayName =
+    persona === 'worker'
+      ? ((`${firstName} ${lastName}`.trim() || user?.email) ?? '')
+      : ((companyName || user?.email) ?? '')
 
   // Logged-in users land on their own dashboard from the logo; visitors go home.
   const logoTarget = !isLoggedIn
