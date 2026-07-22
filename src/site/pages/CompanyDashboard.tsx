@@ -207,12 +207,10 @@ export const CompanyDashboard: React.FC = () => {
 
   useEffect(() => {
     if (!activeCompanyId) return
-    getCompanyJobs(activeCompanyId).then(({ data }) => {
-      if (data) setCompanyJobs(data)
-    })
-    getCompanyDashboard(activeCompanyId).then(({ data }) => {
-      if (data) setDashboardData(data)
-    })
+    // Assign unconditionally so switching to a company with no jobs/data clears
+    // the previous company's values instead of leaving them stale.
+    getCompanyJobs(activeCompanyId).then(({ data }) => setCompanyJobs(data ?? []))
+    getCompanyDashboard(activeCompanyId).then(({ data }) => setDashboardData(data))
   }, [activeCompanyId])
 
   const boostingJob = boostJobId ? companyJobs.find((j) => j.id === boostJobId) : null
