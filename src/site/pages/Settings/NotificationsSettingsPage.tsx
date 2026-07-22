@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Checkbox, Spinner, useToast } from '../../../components'
 import { useAuth } from '../../context/AuthContext'
+import { SettingsPageHeader } from './SettingsPageHeader'
 import {
   getNotificationCatalog,
   getNotificationPreferenceOverrides,
@@ -124,22 +125,10 @@ export const NotificationsSettingsPage: React.FC = () => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-      <div>
-        <h1
-          style={{
-            fontSize: 'var(--kt-text-xl)',
-            fontWeight: 'var(--kt-weight-bold)',
-            color: 'var(--kt-text)',
-            margin: '0 0 4px',
-          }}
-        >
-          Notifications
-        </h1>
-        <p style={{ margin: 0, fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text-muted)' }}>
-          Choose what you're notified about and how it reaches you. Email and SMS delivery are
-          coming soon.
-        </p>
-      </div>
+      <SettingsPageHeader
+        title="Notifications"
+        description="Choose what you're notified about and how it reaches you. Email and SMS delivery are coming soon."
+      />
 
       {groups.map(([subject, items]) => {
         const regular = items.filter((i) => !i.isDigest)

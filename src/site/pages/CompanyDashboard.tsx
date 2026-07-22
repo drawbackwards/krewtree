@@ -135,7 +135,7 @@ const ToggleRow: React.FC<{
 // ── Main component ────────────────────────────────────────────────────────────
 
 export const CompanyDashboard: React.FC = () => {
-  const { user } = useAuth()
+  const { user, activeCompanyId } = useAuth()
 
   const firstName: string =
     (user?.user_metadata?.first_name as string) ||
@@ -187,15 +187,15 @@ export const CompanyDashboard: React.FC = () => {
 
   // Load stored view preference from DB on mount
   useEffect(() => {
-    if (!user?.id) return
-    getApplicantsView(user.id).then(({ data }) => {
+    if (!activeCompanyId) return
+    getApplicantsView(activeCompanyId).then(({ data }) => {
       if (data) setApplicantsViewState(data)
     })
-  }, [user?.id])
+  }, [activeCompanyId])
 
   const handleViewChange = (v: ApplicantsView) => {
     setApplicantsViewState(v) // optimistic
-    if (user?.id) setApplicantsView(user.id, v) // async write, silent on failure
+    if (activeCompanyId) setApplicantsView(activeCompanyId, v) // async write, silent on failure
   }
 
   // Boost modal state
@@ -206,14 +206,14 @@ export const CompanyDashboard: React.FC = () => {
   const totalRegulixApplicants = companyJobs.reduce((s, j) => s + j.regulixReadyApplicants, 0)
 
   useEffect(() => {
-    if (!user?.id) return
-    getCompanyJobs(user.id).then(({ data }) => {
+    if (!activeCompanyId) return
+    getCompanyJobs(activeCompanyId).then(({ data }) => {
       if (data) setCompanyJobs(data)
     })
-    getCompanyDashboard().then(({ data }) => {
+    getCompanyDashboard(activeCompanyId).then(({ data }) => {
       if (data) setDashboardData(data)
     })
-  }, [user?.id])
+  }, [activeCompanyId])
 
   const boostingJob = boostJobId ? companyJobs.find((j) => j.id === boostJobId) : null
   const boostPrice = boostTiers.find((t) => t.days === boostDuration)?.price ?? 35
@@ -271,9 +271,9 @@ export const CompanyDashboard: React.FC = () => {
         {/* ── Two-column module grid ───────────────────────────────────── */}
 
         {/* Row 1: Week calendar 2/3 + Profile completeness 1/3, stacks on mobile */}
-        {(moduleConfig.calendar || moduleConfig.profileCompleteness) && user?.id && (
+        {(moduleConfig.calendar || moduleConfig.profileCompleteness) && activeCompanyId && (
           <div className={dashStyles.row1}>
-            {moduleConfig.calendar && <WeekCalendarWidget companyId={user.id} />}
+            {moduleConfig.calendar && <WeekCalendarWidget companyId={activeCompanyId} />}
             {moduleConfig.profileCompleteness && (
               <CompanyCompletenessWidget data={dashboardData?.completeness ?? null} />
             )}
@@ -305,9 +305,9 @@ export const CompanyDashboard: React.FC = () => {
         )}
 
         {/* Block 3: Applicants widget — full width */}
-        {moduleConfig.applicants && user?.id && (
+        {moduleConfig.applicants && activeCompanyId && (
           <ApplicantsWidget
-            companyId={user.id}
+            companyId={activeCompanyId}
             view={applicantsView}
             onViewChange={handleViewChange}
           />

@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react'
 import { Button, Modal } from '../../components'
 import { useAuth } from '../context/AuthContext'
@@ -115,7 +114,7 @@ const StageRow: React.FC<StageRowProps> = ({ stage, index, isFirst, onRename, on
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export const PipelinePage: React.FC = () => {
-  const { user } = useAuth()
+  const { activeCompanyId } = useAuth()
   const [stages, setStages] = useState<PipelineStage[]>([])
   const [loading, setLoading] = useState(true)
   const [addName, setAddName] = useState('')
@@ -134,12 +133,12 @@ export const PipelinePage: React.FC = () => {
   const [replaceError, setReplaceError] = useState('')
 
   useEffect(() => {
-    if (!user) return
-    getPipelineStages(user.id).then(({ data }) => {
+    if (!activeCompanyId) return
+    getPipelineStages(activeCompanyId).then(({ data }) => {
       setStages(data)
       setLoading(false)
     })
-  }, [user])
+  }, [activeCompanyId])
 
   const handleRename = async (id: string, name: string) => {
     const prev = stages.find((s) => s.id === id)?.name ?? ''
@@ -160,7 +159,7 @@ export const PipelinePage: React.FC = () => {
     }
     setAdding(true)
     setAddError('')
-    const { data, error } = await addPipelineStage(user!.id, trimmed)
+    const { data, error } = await addPipelineStage(activeCompanyId!, trimmed)
     setAdding(false)
     if (error) {
       setAddError(error)
@@ -187,13 +186,13 @@ export const PipelinePage: React.FC = () => {
   const handleReplace = async () => {
     setReplacing(true)
     setReplaceError('')
-    const { error } = await replacePipelineFromTemplate(user!.id, selectedTemplate)
+    const { error } = await replacePipelineFromTemplate(activeCompanyId!, selectedTemplate)
     setReplacing(false)
     if (error) {
       setReplaceError(error)
       return
     }
-    const { data } = await getPipelineStages(user!.id)
+    const { data } = await getPipelineStages(activeCompanyId!)
     setStages(data)
     setTemplateModal(false)
   }

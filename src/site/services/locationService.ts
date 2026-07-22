@@ -7,7 +7,7 @@
 // latitude / longitude directly.
 // ────────────────────────────────────────────────────────────────────────────
 
-import { supabase, getCurrentUserId } from '../../lib/supabase'
+import { supabase, getCurrentUserId, getActiveCompanyId } from '../../lib/supabase'
 import { withSessionCache } from '../utils/sessionCache'
 
 export type Coords = { latitude: number; longitude: number }
@@ -82,7 +82,7 @@ export async function getCompanyCoords(): Promise<{
   data: Coords | null
   error: string | null
 }> {
-  const id = await getCurrentUserId()
+  const id = await getActiveCompanyId()
   if (!id) return { data: null, error: 'Not signed in' }
   return withSessionCache('company_coords', id, async () => {
     const { data, error } = await supabase

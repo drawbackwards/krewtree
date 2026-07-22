@@ -41,3 +41,37 @@ export async function getCurrentUserId(): Promise<string | null> {
   } = await supabase.auth.getSession()
   return session?.user.id ?? null
 }
+
+/**
+ * localStorage key holding the id of the company a company-persona seat is
+ * currently acting as. Written by AuthContext when memberships load / the user
+ * switches companies; read by getActiveCompanyId() so plain service functions
+ * can resolve the org without the React context.
+ */
+export const ACTIVE_COMPANY_KEY = 'kt_active_company'
+
+/**
+ * The organization the current seat is acting as — distinct from the seat's own
+ * user id (getCurrentUserId). A login may belong to several companies, so this
+ * is a selection, not an identity: AuthContext persists the active choice under
+ * ACTIVE_COMPANY_KEY. Falls back to the user's earliest membership when nothing
+ * is persisted yet. RLS enforces that the caller is actually a member.
+ */
+export async function getActiveCompanyId(): Promise<string | null> {
+  try {
+    const stored = localStorage.getItem(ACTIVE_COMPANY_KEY)
+    if (stored) return stored
+  } catch {
+    // localStorage unavailable (SSR/tests) — fall through to the DB lookup.
+  }
+  const uid = await getCurrentUserId()
+  if (!uid) return null
+  const { data } = await supabase
+    .from('company_members')
+    .select('company_id')
+    .eq('user_id', uid)
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .maybeSingle()
+  return data?.company_id ?? null
+}

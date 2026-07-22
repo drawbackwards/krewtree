@@ -9,6 +9,7 @@ import {
   type WorkerNote,
 } from '../../services/krewService'
 import { useAuth } from '../../context/AuthContext'
+import { userDisplayName } from '../../utils/userName'
 import { PlusIcon, ChevronRightIcon } from '../../icons'
 import { useDrawerStack } from '../DrawerSystem/DrawerStackContext'
 import { FeedbackReviewCard } from '../FeedbackReviewCard/FeedbackReviewCard'
@@ -233,10 +234,7 @@ export const WorkerActivityLog: React.FC<WorkerActivityLogProps> = ({
   const handleSaveNote = async (): Promise<void> => {
     if (!draftReady || saving) return
     setSaving(true)
-    const meta = (user?.user_metadata ?? {}) as Record<string, unknown>
-    const authorName =
-      (meta.company_name as string) || (meta.first_name as string) || user?.email || 'You'
-    const { data } = await addWorkerNote(workerId, draft, authorName)
+    const { data } = await addWorkerNote(workerId, draft, userDisplayName(user))
     if (data) {
       setNotes((prev) => [data, ...prev])
       setDraft('')
@@ -412,6 +410,7 @@ const NoteCard: React.FC<{ note: WorkerNote }> = ({ note }) => (
         title={formatLogTimestamp(note.createdAt)}
       >
         {formatLogTimestamp(note.createdAt)}
+        {note.authorName ? ` · ${note.authorName}` : ''}
       </time>
     </div>
   </div>

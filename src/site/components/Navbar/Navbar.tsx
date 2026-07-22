@@ -3,8 +3,17 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { NotificationDrawer } from '../NotificationDrawer/NotificationDrawer'
 import type { Notification } from '../../types'
 import { KrewtreeLogo } from '../Logo'
+import { Avatar, Button, Input, Modal } from '../../../components'
 import { useAuth } from '../../context/AuthContext'
-import { BellIcon, ChevronDownIcon } from '../../icons'
+import {
+  BellIcon,
+  BuildingIcon,
+  CheckIcon,
+  ChevronDownIcon,
+  LogoutIcon,
+  PersonIcon,
+  PlusIcon,
+} from '../../icons'
 import { getWorkerProfile } from '../../services/workerService'
 import { getCompanyLogoUrl } from '../../services/companyService'
 import { getUnreadMessageCount, MESSAGES_READ_EVENT } from '../../services/messageService'
@@ -22,7 +31,38 @@ import styles from './Navbar.module.css'
 export type Persona = 'worker' | 'company'
 
 export const Navbar: React.FC = () => {
-  const { isLoggedIn, persona, logout, user } = useAuth()
+  const {
+    isLoggedIn,
+    persona,
+    logout,
+    user,
+    activeCompanyId,
+    memberships,
+    setActiveCompany,
+    createCompany,
+  } = useAuth()
+
+  // "Create company" modal (from the switcher).
+  const [createOpen, setCreateOpen] = useState(false)
+  const [newCompanyName, setNewCompanyName] = useState('')
+  const [creating, setCreating] = useState(false)
+  const [createError, setCreateError] = useState('')
+
+  const handleCreateCompany = async () => {
+    const name = newCompanyName.trim()
+    if (!name) return
+    setCreating(true)
+    setCreateError('')
+    const { companyId, error } = await createCompany(name)
+    setCreating(false)
+    if (error || !companyId) {
+      setCreateError(error ?? 'Could not create company.')
+      return
+    }
+    setCreateOpen(false)
+    setNewCompanyName('')
+    navigate('/site/settings/profile')
+  }
   const location = useLocation()
   const navigate = useNavigate()
   const isActive = (path: string) => (location.pathname.startsWith(path) ? styles.active : '')
@@ -88,17 +128,19 @@ export const Navbar: React.FC = () => {
   // companies. Keyed on user id (not the user object) so auth events like
   // hourly token refresh don't refetch.
   useEffect(() => {
-    if (!isLoggedIn || !user?.id) return
-    if (persona === 'worker') {
+    if (!isLoggedIn) return
+    if (persona === 'worker' && user?.id) {
       getWorkerProfile(user.id).then(({ data }) => {
         if (data?.avatar_url) setAvatarUrl(data.avatar_url)
       })
-    } else if (persona === 'company') {
-      getCompanyLogoUrl(user.id).then(({ data }) => {
-        if (data) setAvatarUrl(data)
+    } else if (persona === 'company' && activeCompanyId) {
+      // Reset on switch so a logo-less company doesn't keep showing the
+      // previously active company's logo (Avatar falls back to initials).
+      getCompanyLogoUrl(activeCompanyId).then(({ data }) => {
+        setAvatarUrl(data ?? '')
       })
     }
-  }, [isLoggedIn, persona, user?.id])
+  }, [isLoggedIn, persona, user?.id, activeCompanyId])
 
   // Unread message count for the Messages nav badge. Refreshed when the
   // messages page marks a thread read and on a slow poll — NOT on every
@@ -111,7 +153,7 @@ export const Navbar: React.FC = () => {
     }
     let cancelled = false
     const refresh = () => {
-      getUnreadMessageCount().then(({ data }) => {
+      getUnreadMessageCount(persona === 'company' ? activeCompanyId : null).then(({ data }) => {
         if (!cancelled) setMsgUnread(data)
       })
     }
@@ -123,7 +165,7 @@ export const Navbar: React.FC = () => {
       window.clearInterval(interval)
       window.removeEventListener(MESSAGES_READ_EVENT, refresh)
     }
-  }, [isLoggedIn, persona])
+  }, [isLoggedIn, persona, activeCompanyId])
 
   // The Messages unread badge is the in-app alert for new messages, gated on
   // the user's `message_inapp` notification preference. Refetched when prefs
@@ -197,6 +239,17 @@ export const Navbar: React.FC = () => {
     persona === 'worker'
       ? ((`${firstName} ${lastName}`.trim() || user?.email) ?? '')
       : ((companyName || user?.email) ?? '')
+
+  // The company the user is currently acting as (for the switcher menu header).
+  const activeCompany = memberships.find((m) => m.companyId === activeCompanyId) ?? null
+  const companyInitials = (name: string): string =>
+    (name || 'Company')
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((w) => w[0])
+      .join('')
+      .slice(0, 2)
+      .toUpperCase()
 
   // Logged-in users land on their own dashboard from the logo; visitors go home.
   const logoTarget = !isLoggedIn
@@ -387,56 +440,117 @@ export const Navbar: React.FC = () => {
 
                 {avatarMenuOpen && (
                   <div className={styles.avatarMenu} role="menu">
-                    {/* User identity header */}
-                    <div className={styles.menuHeader}>
-                      <span className={styles.menuHeaderName}>{displayName}</span>
-                      {persona === 'company' && user?.email && (
-                        <span className={styles.menuHeaderSub}>{user.email}</span>
-                      )}
-                    </div>
-
-                    <div className={styles.menuDivider} />
-
-                    {/* Company settings */}
                     {persona === 'company' && (
-                      <div className={styles.menuSection}>
-                        <button
-                          className={styles.menuItem}
-                          role="menuitem"
-                          onClick={() => {
-                            setAvatarMenuOpen(false)
-                            navigate('/site/settings')
-                          }}
-                        >
-                          Organization Settings
-                        </button>
-                      </div>
+                      <>
+                        {/* Companies: switch between, or create a new one. */}
+                        <span className={styles.menuSectionLabel}>Companies</span>
+                        <div className={styles.menuSection}>
+                          {memberships.map((m) => (
+                            <button
+                              key={m.companyId}
+                              className={[
+                                styles.menuItem,
+                                styles.menuItemRow,
+                                m.companyId === activeCompanyId ? styles.menuItemActive : '',
+                              ].join(' ')}
+                              role="menuitem"
+                              aria-current={m.companyId === activeCompanyId}
+                              onClick={() => {
+                                setActiveCompany(m.companyId)
+                                setAvatarMenuOpen(false)
+                                navigate('/site/dashboard/company')
+                              }}
+                            >
+                              <Avatar
+                                src={m.companyLogo ?? undefined}
+                                size="sm"
+                                shape="rounded"
+                                alt={m.companyName || 'Company'}
+                                initials={companyInitials(m.companyName)}
+                              />
+                              <span className={styles.menuItemLabel}>
+                                {m.companyName || 'Company'}
+                              </span>
+                              {m.companyId === activeCompanyId && (
+                                <span className={styles.menuCheck}>
+                                  <CheckIcon size={16} />
+                                </span>
+                              )}
+                            </button>
+                          ))}
+                          <button
+                            className={[styles.menuItem, styles.menuItemRow].join(' ')}
+                            role="menuitem"
+                            onClick={() => {
+                              setAvatarMenuOpen(false)
+                              setCreateError('')
+                              setNewCompanyName('')
+                              setCreateOpen(true)
+                            }}
+                          >
+                            <span className={styles.createIconBox}>
+                              <PlusIcon size={16} />
+                            </span>
+                            <span className={styles.menuItemLabel}>Create company</span>
+                          </button>
+                        </div>
+
+                        <div className={styles.menuDivider} />
+
+                        {/* Company settings (its own page). */}
+                        <div className={styles.menuSection}>
+                          <button
+                            className={[styles.menuItem, styles.menuItemRow].join(' ')}
+                            role="menuitem"
+                            onClick={() => {
+                              setAvatarMenuOpen(false)
+                              navigate('/site/settings')
+                            }}
+                          >
+                            <span className={styles.menuIconSlot}>
+                              <BuildingIcon size={18} />
+                            </span>
+                            <span className={styles.menuItemLabel}>
+                              {activeCompany?.companyName || 'Company'} settings
+                            </span>
+                          </button>
+                        </div>
+                      </>
                     )}
 
-                    {/* Personal */}
+                    {/* Personal settings (its own page). */}
                     <div className={styles.menuSection}>
                       <button
-                        className={styles.menuItem}
+                        className={[styles.menuItem, styles.menuItemRow].join(' ')}
                         role="menuitem"
                         onClick={() => {
                           setAvatarMenuOpen(false)
-                          navigate('/site/settings/notifications')
+                          navigate('/site/settings/my-profile')
                         }}
                       >
-                        Personal Settings
+                        <span className={styles.menuIconSlot}>
+                          <PersonIcon size={18} />
+                        </span>
+                        <span className={styles.menuItemLabel}>Personal settings</span>
                       </button>
                     </div>
 
                     <div className={styles.menuDivider} />
 
-                    {/* Log out */}
                     <div className={styles.menuSection}>
                       <button
-                        className={[styles.menuItem, styles.menuItemDanger].join(' ')}
+                        className={[
+                          styles.menuItem,
+                          styles.menuItemRow,
+                          styles.menuItemDanger,
+                        ].join(' ')}
                         role="menuitem"
                         onClick={handleLogout}
                       >
-                        Log Out
+                        <span className={styles.menuIconSlot}>
+                          <LogoutIcon size={18} />
+                        </span>
+                        <span className={styles.menuItemLabel}>Log out</span>
                       </button>
                     </div>
                   </div>
@@ -446,6 +560,45 @@ export const Navbar: React.FC = () => {
           )}
         </div>
       </div>
+
+      <Modal
+        open={createOpen}
+        onClose={() => (creating ? undefined : setCreateOpen(false))}
+        size="sm"
+        title="Create a company"
+        footer={
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+            <Button variant="ghost" onClick={() => setCreateOpen(false)} disabled={creating}>
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              onClick={handleCreateCompany}
+              disabled={creating || !newCompanyName.trim()}
+            >
+              {creating ? 'Creating…' : 'Create company'}
+            </Button>
+          </div>
+        }
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <p style={{ margin: 0, fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text-muted)' }}>
+            You'll be the owner of the new company and switched into it. You can finish its profile
+            next.
+          </p>
+          <Input
+            label="Company name"
+            value={newCompanyName}
+            onChange={(e) => setNewCompanyName(e.target.value)}
+            placeholder="Acme Interiors"
+          />
+          {createError && (
+            <p style={{ margin: 0, fontSize: 'var(--kt-text-sm)', color: 'var(--kt-danger)' }}>
+              {createError}
+            </p>
+          )}
+        </div>
+      </Modal>
     </nav>
   )
 }

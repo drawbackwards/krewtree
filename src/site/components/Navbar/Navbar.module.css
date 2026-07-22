@@ -240,7 +240,7 @@
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  min-width: 220px;
+  min-width: 260px;
   background: var(--kt-white);
   border: 1px solid var(--kt-border);
   border-radius: var(--kt-radius-lg);
@@ -299,6 +299,57 @@
 }
 .menuItem:hover {
   background-color: var(--kt-grey-50);
+}
+
+/* Icon/avatar + label rows (company switcher, settings, log out). */
+.menuItemRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.menuItemLabel {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.menuItemActive {
+  background-color: var(--kt-grey-100);
+}
+.menuItemActive:hover {
+  background-color: var(--kt-grey-100);
+}
+
+.menuCheck {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--kt-accent);
+}
+
+/* Fixed slot so settings/log-out icons occupy the same width as the company
+   avatars, keeping every row's label left-aligned. */
+.menuIconSlot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 32px;
+}
+
+/* Dashed placeholder tile for "Create company", matching the sm Avatar size. */
+.createIconBox {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border: 1px dashed var(--kt-border);
+  border-radius: var(--kt-radius-md);
+  color: var(--kt-text-muted);
 }
 
 .menuItemDanger {

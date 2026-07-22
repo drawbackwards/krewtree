@@ -325,6 +325,9 @@ export type CompanyApplicant = {
   isBoosted: boolean
   appliedAt: string // ISO
   stageEnteredAt: string | null
+  /** Who last moved this applicant to their current stage (name snapshot), and when. */
+  stageMovedBy: string | null
+  stageMovedAt: string | null
   slaState: SlaState
   flagged: boolean
   notes: Array<{ text: string; authorName: string; createdAt: string }>

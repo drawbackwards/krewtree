@@ -85,11 +85,11 @@ const EMPTY_COMPLETENESS: CompanyCompleteness = {
   },
 }
 
-export async function getCompanyDashboard(): Promise<{
+export async function getCompanyDashboard(companyId: string): Promise<{
   data: CompanyDashboardData | null
   error: string | null
 }> {
-  const { data, error } = await supabase.rpc('get_company_dashboard')
+  const { data, error } = await supabase.rpc('get_company_dashboard', { p_company_id: companyId })
   if (error) return { data: null, error: error.message }
 
   // jsonb comes back loosely typed; narrow defensively.

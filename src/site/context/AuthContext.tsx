@@ -1,9 +1,19 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import type { User, Session } from '@supabase/supabase-js'
-import { supabase } from '../../lib/supabase'
+import { supabase, ACTIVE_COMPANY_KEY } from '../../lib/supabase'
 import { clearSessionCache } from '../utils/sessionCache'
 
 export type Persona = 'worker' | 'company'
+
+export type CompanyRole = 'owner' | 'admin' | 'member'
+
+/** A company seat the logged-in user holds. A user may hold several (agencies). */
+export interface CompanyMembership {
+  companyId: string
+  companyName: string
+  companyLogo: string | null
+  role: CompanyRole
+}
 
 interface AuthState {
   user: User | null
@@ -13,6 +23,22 @@ interface AuthState {
   /** True once the user has clicked the verification link in their email. */
   isEmailVerified: boolean
   isLoading: boolean
+  /** Company seats the user holds (empty for workers / non-members). */
+  memberships: CompanyMembership[]
+  /** Id of the company the user is currently acting as, or null. */
+  activeCompanyId: string | null
+  /** The user's role in the active company, or null. */
+  companyRole: CompanyRole | null
+  /** Switch which company the user is acting as (must be one they belong to). */
+  setActiveCompany: (companyId: string) => void
+  /** Re-fetch memberships (e.g. after accepting an invite). */
+  refreshMemberships: () => Promise<void>
+  /** Create a new company, become its owner, and switch into it. */
+  createCompany: (
+    name: string,
+    industry?: string
+  ) => Promise<{ companyId: string | null; error: string | null }>
+
   login: (email: string, password: string) => Promise<{ error: string | null; persona?: Persona }>
   signUp: (
     email: string,
@@ -40,6 +66,12 @@ const AuthContext = createContext<AuthState>({
   isLoggedIn: false,
   isEmailVerified: false,
   isLoading: true,
+  memberships: [],
+  activeCompanyId: null,
+  companyRole: null,
+  setActiveCompany: () => {},
+  refreshMemberships: async () => {},
+  createCompany: async () => ({ companyId: null, error: null }),
   login: async () => ({ error: null, persona: undefined }),
   signUp: async () => ({ error: null, persona: undefined, userId: undefined }),
   logout: async () => {},
@@ -53,6 +85,56 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null)
   const [persona, setPersonaState] = useState<Persona | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [memberships, setMemberships] = useState<CompanyMembership[]>([])
+  const [activeCompanyId, setActiveCompanyId] = useState<string | null>(null)
+
+  // Load the user's company seats and resolve which one is active. Multi-org:
+  // a user may belong to several companies, so the active company is a persisted
+  // selection (ACTIVE_COMPANY_KEY) rather than an identity. Falls back to the
+  // earliest membership when the stored choice is gone / absent.
+  const loadMemberships = async (userId: string) => {
+    const { data } = await supabase
+      .from('company_members')
+      .select('company_id, role, company_profiles(name, logo_url)')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: true })
+    type Prof = { name: string | null; logo_url: string | null }
+    const rows = (data ?? []).map((r) => {
+      const raw = r.company_profiles as Prof | Prof[] | null
+      const prof = Array.isArray(raw) ? (raw[0] ?? null) : raw
+      return {
+        companyId: r.company_id,
+        companyName: prof?.name ?? '',
+        companyLogo: prof?.logo_url ?? null,
+        role: r.role as CompanyRole,
+      }
+    })
+    setMemberships(rows)
+    let stored: string | null = null
+    try {
+      stored = localStorage.getItem(ACTIVE_COMPANY_KEY)
+    } catch {
+      stored = null
+    }
+    const active = rows.find((m) => m.companyId === stored)?.companyId ?? rows[0]?.companyId ?? null
+    setActiveCompanyId(active)
+    try {
+      if (active) localStorage.setItem(ACTIVE_COMPANY_KEY, active)
+      else localStorage.removeItem(ACTIVE_COMPANY_KEY)
+    } catch {
+      // ignore persistence failures
+    }
+  }
+
+  const clearMemberships = () => {
+    setMemberships([])
+    setActiveCompanyId(null)
+    try {
+      localStorage.removeItem(ACTIVE_COMPANY_KEY)
+    } catch {
+      // ignore
+    }
+  }
 
   // Resolve the user's persona. The role is set in user_metadata at signup
   // (handle_new_user reads raw_user_meta_data->>'role'), so it rides on the
@@ -80,6 +162,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(s?.user ?? null)
       if (s?.user) {
         loadRole(s.user).finally(() => setIsLoading(false))
+        loadMemberships(s.user.id)
       } else {
         setIsLoading(false)
       }
@@ -93,8 +176,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(s?.user ?? null)
       if (s?.user) {
         loadRole(s.user)
+        loadMemberships(s.user.id)
       } else {
         setPersonaState(null)
+        clearMemberships()
       }
     })
 
@@ -124,6 +209,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         role = roleData?.role as Persona | undefined
       }
       if (role) setPersonaState(role)
+      void loadMemberships(data.user.id)
       return { error: null, persona: role }
     },
     []
@@ -181,6 +267,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = useCallback(async () => {
     await supabase.auth.signOut()
     setPersonaState(null)
+    clearMemberships()
     // Profile-edit drafts are keyed per account (see WorkerProfileEditPage /
     // CompanyProfileEditPage storageKey), so they no longer need clearing here —
     // one account's draft can't leak into another's form.
@@ -190,6 +277,56 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [])
 
   const setPersona = useCallback((p: Persona) => setPersonaState(p), [])
+
+  const setActiveCompany = useCallback(
+    (companyId: string) => {
+      setActiveCompanyId((prev) => {
+        // Guard: only switch to a company the user actually belongs to.
+        if (companyId === prev) return prev
+        if (!memberships.some((m) => m.companyId === companyId)) return prev
+        try {
+          localStorage.setItem(ACTIVE_COMPANY_KEY, companyId)
+        } catch {
+          // ignore
+        }
+        return companyId
+      })
+    },
+    [memberships]
+  )
+
+  const companyRole = useMemo<CompanyRole | null>(
+    () => memberships.find((m) => m.companyId === activeCompanyId)?.role ?? null,
+    [memberships, activeCompanyId]
+  )
+
+  const refreshMemberships = useCallback(async () => {
+    // loadMemberships closes over stable state setters; only the user id matters.
+    if (user?.id) await loadMemberships(user.id)
+  }, [user?.id])
+
+  const createCompany = useCallback(
+    async (name: string, industry?: string) => {
+      const { data, error } = await supabase.rpc('create_company', {
+        p_name: name,
+        p_industry: industry ?? '',
+      })
+      if (error) return { companyId: null, error: error.message }
+      const id = data as string
+      // Persist the new company as active BEFORE reloading so loadMemberships
+      // resolves it as the active selection.
+      try {
+        localStorage.setItem(ACTIVE_COMPANY_KEY, id)
+      } catch {
+        // ignore
+      }
+      if (user?.id) await loadMemberships(user.id)
+      // A brand-new company account is a company persona.
+      setPersonaState('company')
+      return { companyId: id, error: null }
+    },
+    [user?.id]
+  )
 
   // Memoize the context value so consumers (Navbar, route guards, every useAuth()
   // caller) only re-render when auth state actually changes, not on every render
@@ -202,6 +339,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       isLoggedIn: !!user,
       isEmailVerified: !!user?.email_confirmed_at,
       isLoading,
+      memberships,
+      activeCompanyId,
+      companyRole,
+      setActiveCompany,
+      refreshMemberships,
+      createCompany,
       login,
       signUp,
       logout,
@@ -214,6 +357,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       session,
       persona,
       isLoading,
+      memberships,
+      activeCompanyId,
+      companyRole,
+      setActiveCompany,
+      refreshMemberships,
+      createCompany,
       login,
       signUp,
       logout,

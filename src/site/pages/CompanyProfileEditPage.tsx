@@ -29,6 +29,7 @@ import type {
   StepHiringData,
 } from './CompanyProfileEdit/types'
 import styles from './CompanyProfileEditPage.module.css'
+import { SettingsPageHeader } from './Settings/SettingsPageHeader'
 
 // Bumped to v2 so cached states from the Phase 2 build don't poison the new shape.
 // Scoped per account so a draft from one company never leaks into another that
@@ -261,9 +262,11 @@ const SectionCard: React.FC<SectionCardProps> = ({
 
 export const CompanyProfileEditPage: React.FC = () => {
   const navigate = useNavigate()
-  const { user } = useAuth()
+  const { activeCompanyId } = useAuth()
 
-  const [editState, setEditState] = useState<EditState>(() => loadState(user?.id))
+  const [editState, setEditState] = useState<EditState>(() =>
+    loadState(activeCompanyId ?? undefined)
+  )
   const [activeSection, setActiveSection] = useState(1)
   const [savedStep, setSavedStep] = useState<number | null>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
@@ -278,13 +281,13 @@ export const CompanyProfileEditPage: React.FC = () => {
   const sectionRefs = useRef<Record<number, HTMLDivElement | null>>({})
 
   useEffect(() => {
-    saveState(user?.id, editState)
+    saveState(activeCompanyId ?? undefined, editState)
     if (skipDirtyOnce.current) {
       skipDirtyOnce.current = false
       return
     }
     if (prefillDone.current) setIsDirty(true)
-  }, [editState, user?.id])
+  }, [editState, activeCompanyId])
 
   useEffect(() => {
     const handler = (e: BeforeUnloadEvent) => {
@@ -303,8 +306,8 @@ export const CompanyProfileEditPage: React.FC = () => {
   }
 
   useEffect(() => {
-    if (!user) return
-    const userId = user.id
+    if (!activeCompanyId) return
+    const userId = activeCompanyId
     Promise.all([
       getCompanyProfile(userId),
       getCompanyLicenses(userId),
@@ -384,8 +387,7 @@ export const CompanyProfileEditPage: React.FC = () => {
     })
     // Prefill runs once the user id is known and is guarded by prefillDone;
     // re-running on every `user` object identity change is unwanted.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id])
+  }, [activeCompanyId])
 
   const scrollToSection = (stepNum: number) => {
     setActiveSection(stepNum)
@@ -412,13 +414,13 @@ export const CompanyProfileEditPage: React.FC = () => {
       return
     }
 
-    if (!user) return
+    if (!activeCompanyId) return
 
     setIsSaving(true)
     let error: string | null = null
 
     if (stepNum === 1 || stepNum === 2) {
-      const res = await upsertCompanyBasics(user.id, {
+      const res = await upsertCompanyBasics(activeCompanyId, {
         name: editState.step1.name,
         tagline: editState.step1.tagline,
         industry: editState.step1.industry,
@@ -435,7 +437,7 @@ export const CompanyProfileEditPage: React.FC = () => {
       error = res.error
     } else if (stepNum === 3) {
       const res = await saveCompanyLicenses(
-        user.id,
+        activeCompanyId,
         editState.stepLicenses.licenses.map((l) => ({
           license_type: l.licenseType,
           jurisdiction: l.jurisdiction,
@@ -445,13 +447,13 @@ export const CompanyProfileEditPage: React.FC = () => {
       )
       error = res.error
     } else if (stepNum === 4) {
-      const res = await saveCompanyContractBenefits(user.id, {
+      const res = await saveCompanyContractBenefits(activeCompanyId, {
         contract_types: editState.stepContractBenefits.contractTypes,
         benefits: editState.stepContractBenefits.benefits,
       })
       error = res.error
     } else if (stepNum === 5) {
-      const res = await saveCompanyHiring(user.id, {
+      const res = await saveCompanyHiring(activeCompanyId, {
         photos: editState.stepHiring.photos.map((p) => ({ url: p.url, caption: p.caption })),
         facebook_url: editState.stepHiring.facebookUrl,
         instagram_url: editState.stepHiring.instagramUrl,
@@ -471,7 +473,7 @@ export const CompanyProfileEditPage: React.FC = () => {
 
     // After any successful save, re-read the canonical pct from the DB so the
     // header stays in sync with whatever changed (including cross-section).
-    const { pct } = await recomputeProfileCompletePct(user.id)
+    const { pct } = await recomputeProfileCompletePct(activeCompanyId)
     setIsSaving(false)
     setProfileCompletePct(pct)
     setIsDirty(false)
@@ -599,41 +601,23 @@ export const CompanyProfileEditPage: React.FC = () => {
   )
 
   const header = (
-    <div
-      style={{
-        flex: 1,
-        display: 'flex',
-        alignItems: 'flex-start',
-        justifyContent: 'space-between',
-        gap: 16,
-      }}
-    >
-      <div>
-        <h2
-          style={{
-            fontSize: 'var(--kt-text-xl)',
-            fontWeight: 'var(--kt-weight-bold)',
-            color: 'var(--kt-text)',
-            margin: '0 0 2px',
-          }}
-        >
-          Company profile
-        </h2>
-        <p style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text-muted)', margin: 0 }}>
-          Keep your profile current so workers know what you're about
-          {profileCompletePct > 0 && ` · ${profileCompletePct}% complete`}.
-        </p>
-      </div>
-      {user && (
-        <Button
-          variant="outline"
-          size="md"
-          onClick={() => safeNavigate(`/site/company/${user.id}`)}
-        >
-          View public profile
-        </Button>
-      )}
-    </div>
+    <SettingsPageHeader
+      title="Company profile"
+      description={`Keep your profile current so workers know what you're about${
+        profileCompletePct > 0 ? ` · ${profileCompletePct}% complete` : ''
+      }.`}
+      action={
+        activeCompanyId ? (
+          <Button
+            variant="outline"
+            size="md"
+            onClick={() => safeNavigate(`/site/company/${activeCompanyId}`)}
+          >
+            View public profile
+          </Button>
+        ) : undefined
+      }
+    />
   )
 
   // Rendered inside SettingsLayout (Settings → Profile), which supplies the page

@@ -18,6 +18,7 @@ import type {
   LogEventType,
 } from '../types'
 import { supabase, getCurrentUserId, untypedDb } from '../../lib/supabase'
+import { userDisplayName } from '../utils/userName'
 import type { Database } from '../../lib/database.types'
 import shortTemplate from '../../../seeds/pipeline-templates/short.json'
 import longTemplate from '../../../seeds/pipeline-templates/long.json'
@@ -139,6 +140,20 @@ function toLogEvent(row: LogRow): ApplicationLogEvent {
 
 // ── Best-effort log append ───────────────────────────────────────────────────
 
+/**
+ * Resolve the acting user's display name for the log actor snapshot. Callers
+ * pass the placeholder 'You'; we substitute the real name so teammates viewing
+ * the log see who did it (multi-seat). Non-'You' actors (e.g. 'System') pass
+ * through unchanged.
+ */
+async function resolveActor(actor: string): Promise<string> {
+  if (actor !== 'You') return actor
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
+  return userDisplayName(session?.user ?? null)
+}
+
 async function appendLog(
   applicationId: string,
   event: {
@@ -153,7 +168,7 @@ async function appendLog(
   await supabase.from('application_log').insert({
     application_id: applicationId,
     event_type: event.eventType,
-    actor: event.actor,
+    actor: await resolveActor(event.actor),
     description: event.description,
     stage_id: event.stageId ?? null,
     task_label: event.taskLabel ?? null,
@@ -542,7 +557,7 @@ export async function addLogNote(
     .insert({
       application_id: applicationId,
       event_type: 'note_added',
-      actor: 'You',
+      actor: await resolveActor('You'),
       description: 'Note added',
       note_body: trimmed,
       stage_id: null,

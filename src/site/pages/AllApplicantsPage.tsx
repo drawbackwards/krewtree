@@ -8,6 +8,7 @@ import { JobCell } from '../components/ApplicantsWidget/cells/JobCell'
 import { StageCell } from '../components/ApplicantsWidget/cells/StageCell'
 import { FEATURES } from '../config/features'
 import { useAuth } from '../context/AuthContext'
+import { userDisplayName } from '../utils/userName'
 import { useDebounce } from '../hooks/useDebounce'
 import type { CompanyApplicant } from '../types'
 import {
@@ -157,7 +158,7 @@ function initFiltersFromParams(params: URLSearchParams): ApplicantFilters {
 // ── Main component ─────────────────────────────────────────────────────────
 
 export const AllApplicantsPage: React.FC = () => {
-  const { user } = useAuth()
+  const { user, activeCompanyId } = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
   const navigate = useNavigate()
   const { toast } = useToast()
@@ -241,37 +242,39 @@ export const AllApplicantsPage: React.FC = () => {
   )
 
   const load = useCallback(() => {
-    if (!user?.id) return
-    getAllApplicants(user.id, { filters: queryFilters, sort, page, pageSize }).then((res) => {
-      const isDemo =
-        typeof window !== 'undefined' && window.sessionStorage.getItem('kt:demoCard') === 'full'
-      const data = res.data
-      if (isDemo && data.length > 0) {
-        data[0] = {
-          ...data[0],
-          isRegulixReady: true,
-          isShortlisted: true,
-          isBoosted: true,
-          flagged: true,
-          flaggedTaskLabels: ['Verify references'],
-          slaState: 'breached',
-          jobStatus: 'paused',
+    if (!activeCompanyId) return
+    getAllApplicants(activeCompanyId, { filters: queryFilters, sort, page, pageSize }).then(
+      (res) => {
+        const isDemo =
+          typeof window !== 'undefined' && window.sessionStorage.getItem('kt:demoCard') === 'full'
+        const data = res.data
+        if (isDemo && data.length > 0) {
+          data[0] = {
+            ...data[0],
+            isRegulixReady: true,
+            isShortlisted: true,
+            isBoosted: true,
+            flagged: true,
+            flaggedTaskLabels: ['Verify references'],
+            slaState: 'breached',
+            jobStatus: 'paused',
+          }
         }
+        setRows(data)
+        setTotal(res.total)
       }
-      setRows(data)
-      setTotal(res.total)
-    })
-  }, [user?.id, queryFilters, sort, page, pageSize])
+    )
+  }, [activeCompanyId, queryFilters, sort, page, pageSize])
 
   useEffect(() => {
     load()
   }, [load])
 
   useEffect(() => {
-    if (!user?.id) return
-    getJobFilterOptions(user.id).then(({ data }) => setJobOptions(data))
-    getPipelineStages(user.id).then(({ data }) => setStageOptions(data))
-  }, [user?.id])
+    if (!activeCompanyId) return
+    getJobFilterOptions(activeCompanyId).then(({ data }) => setJobOptions(data))
+    getPipelineStages(activeCompanyId).then(({ data }) => setStageOptions(data))
+  }, [activeCompanyId])
 
   // Clear selection when page/filters/sort change
   useEffect(() => {
@@ -349,10 +352,7 @@ export const AllApplicantsPage: React.FC = () => {
   const handleAddNote = async (id: string) => {
     const text = window.prompt('Add a note about this applicant:')
     if (text && text.trim()) {
-      const meta = (user?.user_metadata ?? {}) as Record<string, unknown>
-      const authorName =
-        (meta.company_name as string) || (meta.first_name as string) || user?.email || 'Unknown'
-      await addApplicantNote(id, text.trim(), authorName)
+      await addApplicantNote(id, text.trim(), userDisplayName(user))
       load()
     }
   }
@@ -601,11 +601,11 @@ export const AllApplicantsPage: React.FC = () => {
         )}
 
         {/* Kanban view */}
-        {view === 'kanban' && user?.id && (
+        {view === 'kanban' && activeCompanyId && (
           <div className={styles.kanbanWrapper}>
             <Suspense fallback={null}>
               <WidgetKanbanView
-                companyId={user.id}
+                companyId={activeCompanyId}
                 filters={widgetFilters}
                 onOpenApplicant={openApplicant}
                 cardsPerCol={50}

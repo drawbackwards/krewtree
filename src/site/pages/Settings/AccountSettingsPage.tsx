@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button, Input, Modal } from '../../../components'
 import { useAuth } from '../../context/AuthContext'
-import { deleteCompany, getCompanyProfile, updateCompanyPhone } from '../../services/companyService'
+import { deleteCompany } from '../../services/companyService'
+import { SettingsPageHeader } from './SettingsPageHeader'
 
 const SectionCard: React.FC<{
   title: string
@@ -41,65 +42,21 @@ const SectionCard: React.FC<{
   </section>
 )
 
+/**
+ * Organization-level account settings (owner/admin only — the whole section is
+ * hidden from members by SettingsLayout). Personal sign-in details (name, email,
+ * password) live on the Personal → My profile page; the company phone lives on
+ * the Company Profile page.
+ */
 export const AccountSettingsPage: React.FC = () => {
   const navigate = useNavigate()
-  const { user, updateEmail, logout } = useAuth()
-
-  const [emailInput, setEmailInput] = useState(user?.email ?? '')
-  const emailChanged = emailInput.trim() !== (user?.email ?? '')
-  const [emailStatus, setEmailStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
-  const [emailError, setEmailError] = useState('')
-
-  const [phoneInput, setPhoneInput] = useState('')
-  const [phoneOriginal, setPhoneOriginal] = useState('')
-  const [phoneStatus, setPhoneStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
-  const [phoneError, setPhoneError] = useState('')
-  const phoneChanged = phoneInput.trim() !== phoneOriginal
-
-  useEffect(() => {
-    if (!user) return
-    getCompanyProfile(user.id).then(({ data }) => {
-      if (data) {
-        setPhoneInput(data.phone ?? '')
-        setPhoneOriginal(data.phone ?? '')
-      }
-    })
-    // Load the company phone once the user id is known; re-running on every
-    // `user` identity change is unnecessary.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id])
-
-  const handleUpdatePhone = async () => {
-    if (!user || !phoneChanged) return
-    setPhoneStatus('saving')
-    setPhoneError('')
-    const { error } = await updateCompanyPhone(user.id, phoneInput.trim())
-    if (error) {
-      setPhoneStatus('error')
-      setPhoneError(error)
-      return
-    }
-    setPhoneOriginal(phoneInput.trim())
-    setPhoneStatus('saved')
-  }
+  const { companyRole, logout } = useAuth()
+  const isOwner = companyRole === 'owner'
 
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState('')
   const [isDeleting, setIsDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState('')
-
-  const handleUpdateEmail = async () => {
-    if (!emailInput.trim() || !emailChanged) return
-    setEmailStatus('sending')
-    setEmailError('')
-    const { error } = await updateEmail(emailInput.trim())
-    if (error) {
-      setEmailStatus('error')
-      setEmailError(error)
-      return
-    }
-    setEmailStatus('sent')
-  }
 
   const handleConfirmDelete = async () => {
     if (deleteConfirm.trim().toUpperCase() !== 'DELETE') return
@@ -111,8 +68,6 @@ export const AccountSettingsPage: React.FC = () => {
       setDeleteError(error)
       return
     }
-    // Sign out and route to the landing page. The user's posts have closed and
-    // applicants archived; restoration is via support during the 30-day grace.
     await logout()
     setIsDeleting(false)
     setDeleteOpen(false)
@@ -121,96 +76,33 @@ export const AccountSettingsPage: React.FC = () => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <SettingsPageHeader
+        title="Account & billing"
+        description="Billing and account-level actions for this company."
+      />
       <SectionCard
-        title="Email"
-        description="Used to sign in. Changing it sends a confirmation link to the new address; the old address is also notified."
-      >
-        <Input
-          label="Email address"
-          type="email"
-          value={emailInput}
-          onChange={(e) => {
-            setEmailInput(e.target.value)
-            setEmailStatus('idle')
-          }}
-        />
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <Button
-            variant="outline"
-            onClick={handleUpdateEmail}
-            disabled={!emailChanged || emailStatus === 'sending'}
-          >
-            {emailStatus === 'sending' ? 'Sending…' : 'Update email'}
-          </Button>
-          {emailStatus === 'sent' && (
-            <span style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-success)' }}>
-              Check your new email to confirm.
-            </span>
-          )}
-          {emailStatus === 'error' && (
-            <span style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-danger)' }}>
-              {emailError}
-            </span>
-          )}
-        </div>
-      </SectionCard>
-
-      <SectionCard
-        title="Phone"
-        description="Used for account recovery and (later) for SMS verification. Phone verification is coming in a future update."
-      >
-        <Input
-          label="Phone number"
-          type="tel"
-          value={phoneInput}
-          onChange={(e) => {
-            setPhoneInput(e.target.value)
-            setPhoneStatus('idle')
-          }}
-          placeholder="(555) 123-4567"
-        />
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <Button
-            variant="outline"
-            onClick={handleUpdatePhone}
-            disabled={!phoneChanged || phoneStatus === 'saving'}
-          >
-            {phoneStatus === 'saving' ? 'Saving…' : 'Update phone'}
-          </Button>
-          {phoneStatus === 'saved' && (
-            <span style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-success)' }}>
-              Saved.
-            </span>
-          )}
-          {phoneStatus === 'error' && (
-            <span style={{ fontSize: 'var(--kt-text-sm)', color: 'var(--kt-danger)' }}>
-              {phoneError}
-            </span>
-          )}
-        </div>
-      </SectionCard>
-
-      <SectionCard
-        title="Password"
-        description="To change your password, sign out and use the password reset flow from the sign-in page."
+        title="Billing"
+        description="Krewtree is free while in preview. Paid plans and per-seat billing are coming soon."
       >
         <div>
-          <Button variant="outline" onClick={() => navigate('/site/login?type=company')}>
-            Go to sign-in
+          <Button variant="outline" disabled>
+            Manage billing
           </Button>
         </div>
       </SectionCard>
 
-      <SectionCard
-        title="Delete account"
-        description="Closes all of your job posts, archives every active applicant, and removes your company profile from public view. You have 30 days to recover via support before everything is permanently deleted."
-      >
-        <div>
-          <Button variant="outline" onClick={() => setDeleteOpen(true)}>
-            Delete company account…
-          </Button>
-        </div>
-      </SectionCard>
+      {isOwner && (
+        <SectionCard
+          title="Delete account"
+          description="Closes all of your job posts, archives every active applicant, and removes your company profile from public view. You have 30 days to recover via support before everything is permanently deleted."
+        >
+          <div>
+            <Button variant="outline" onClick={() => setDeleteOpen(true)}>
+              Delete company account…
+            </Button>
+          </div>
+        </SectionCard>
+      )}
 
       <Modal
         open={deleteOpen}

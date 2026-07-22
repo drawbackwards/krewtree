@@ -78,7 +78,7 @@ export const ApplicantSlideover: React.FC<ApplicantSlideoverProps> = ({
   onBack,
   backLabel,
 }) => {
-  const { user } = useAuth()
+  const { activeCompanyId } = useAuth()
   const navigate = useNavigate()
   const { toast } = useToast()
   const defaultTab: Tab = entry.defaultTab ?? 'summary'
@@ -97,12 +97,12 @@ export const ApplicantSlideover: React.FC<ApplicantSlideoverProps> = ({
 
   // Fetch org-level pipeline stages once per company session.
   useEffect(() => {
-    if (!user?.id) return
-    getPipelineStages(user.id).then(({ data }) => {
+    if (!activeCompanyId) return
+    getPipelineStages(activeCompanyId).then(({ data }) => {
       const sorted = [...data].sort((a, b) => a.sortOrder - b.sortOrder)
       setStageOptions(sorted)
     })
-  }, [user?.id])
+  }, [activeCompanyId])
 
   // Seed the required-task gate from the current stage.
   const currentStageId = applicant?.currentStageId
@@ -122,15 +122,15 @@ export const ApplicantSlideover: React.FC<ApplicantSlideoverProps> = ({
 
   // Hydrate the full record (skills / certs / work history) for the Summary tab.
   useEffect(() => {
-    if (!user?.id) return
+    if (!activeCompanyId) return
     let cancelled = false
-    getApplicantDetail(entry.applicationId, user.id).then(({ data }) => {
+    getApplicantDetail(entry.applicationId, activeCompanyId).then(({ data }) => {
       if (!cancelled && data) setApplicant(data)
     })
     return () => {
       cancelled = true
     }
-  }, [entry.applicationId, user?.id])
+  }, [entry.applicationId, activeCompanyId])
 
   // Fetch the krew relationship summary for the strip at the top of the
   // Summary tab. Light query; runs once per worker.
