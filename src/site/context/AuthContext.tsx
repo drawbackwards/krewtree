@@ -95,20 +95,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const loadMemberships = async (userId: string) => {
     const { data } = await supabase
       .from('company_members')
-      .select('company_id, role, company_profiles(name, logo_url)')
+      .select('company_id, role, company_profiles(name, logo_url, deleted_at)')
       .eq('user_id', userId)
       .order('created_at', { ascending: true })
-    type Prof = { name: string | null; logo_url: string | null }
-    const rows = (data ?? []).map((r) => {
-      const raw = r.company_profiles as Prof | Prof[] | null
-      const prof = Array.isArray(raw) ? (raw[0] ?? null) : raw
-      return {
-        companyId: r.company_id,
-        companyName: prof?.name ?? '',
-        companyLogo: prof?.logo_url ?? null,
-        role: r.role as CompanyRole,
-      }
-    })
+    type Prof = { name: string | null; logo_url: string | null; deleted_at: string | null }
+    const rows = (data ?? [])
+      .map((r) => {
+        const raw = r.company_profiles as Prof | Prof[] | null
+        const prof = Array.isArray(raw) ? (raw[0] ?? null) : raw
+        return {
+          companyId: r.company_id,
+          companyName: prof?.name ?? '',
+          companyLogo: prof?.logo_url ?? null,
+          role: r.role as CompanyRole,
+          // Soft-deleted companies are excluded below; keep the flag local.
+          deletedAt: prof?.deleted_at ?? null,
+        }
+      })
+      // Drop soft-deleted companies so they don't linger in the switcher.
+      .filter((r) => r.deletedAt === null)
+      .map(({ deletedAt: _deletedAt, ...m }) => m)
     setMemberships(rows)
     let stored: string | null = null
     try {
