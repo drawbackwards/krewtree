@@ -6,6 +6,7 @@ import {
   getConversationStub,
   getApplicationThreadRef,
   getThreadMessages,
+  getThreadSenders,
   sendMessage,
   markThreadRead,
   conversationKey,
@@ -62,9 +63,12 @@ function parseConversationKey(key: string): { companyId: string; workerId: strin
 }
 
 export const MessagesPage: React.FC = () => {
-  const { persona, user } = useAuth()
+  const { persona, user, activeCompanyId } = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
-  const myId = user?.id ?? null
+  // "My side" of a pair thread: a company viewer is identified by the active
+  // company id (the conversation key is <companyId>:<workerId>), NOT the seat's
+  // own user id — those differ for invited teammates. A worker is their user id.
+  const myId = persona === 'company' ? activeCompanyId : (user?.id ?? null)
 
   // Deep links: ?dm=<otherPartyId> opens the pair thread with that
   // counterpart (worker id for company viewers, company id for worker
@@ -107,6 +111,8 @@ export const MessagesPage: React.FC = () => {
 
   const [thread, setThread] = useState<ThreadMessage[]>([])
   const [threadLoading, setThreadLoading] = useState(false)
+  // Company-side sender id -> teammate name, for per-seat message attribution.
+  const [senders, setSenders] = useState<Record<string, string>>({})
 
   const [draft, setDraft] = useState('')
   const [sending, setSending] = useState(false)
@@ -130,7 +136,7 @@ export const MessagesPage: React.FC = () => {
   const loadConversations = useCallback(async () => {
     if (!persona) return
     setLoading(true)
-    const { data, error } = await getConversations()
+    const { data, error } = await getConversations(persona === 'company' ? activeCompanyId : null)
     let list = data
     // Deep link to a pair with no messages yet (e.g. company starting a
     // conversation from the pipeline or chat pane) — fetch its header.
@@ -144,7 +150,7 @@ export const MessagesPage: React.FC = () => {
     setConversations(list)
     setLoadError(error)
     setLoading(false)
-  }, [persona, deepLinkKey])
+  }, [persona, activeCompanyId, deepLinkKey])
 
   useEffect(() => {
     loadConversations()
@@ -166,6 +172,9 @@ export const MessagesPage: React.FC = () => {
       if (cancelled) return
       setThread(data)
       setThreadLoading(false)
+    })
+    getThreadSenders(parsed.companyId, parsed.workerId).then(({ data }) => {
+      if (!cancelled) setSenders(data)
     })
     return () => {
       cancelled = true
@@ -418,6 +427,10 @@ export const MessagesPage: React.FC = () => {
                     thread.map((msg, i) => {
                       const prev = thread[i - 1]
                       const mine = msg.senderRole === persona
+                      // Per-seat attribution: label company-side messages with
+                      // the teammate who sent them (both parties see it).
+                      const senderName =
+                        msg.senderRole === 'company' ? senders[msg.sentBy] : undefined
                       const newDay =
                         !prev ||
                         new Date(prev.sentAt).toDateString() !== new Date(msg.sentAt).toDateString()
@@ -436,6 +449,14 @@ export const MessagesPage: React.FC = () => {
                                   mine ? styles.bubbleTimeMine : ''
                                 }`}
                               >
+                                {senderName && (
+                                  <>
+                                    <strong style={{ fontWeight: 'var(--kt-weight-bold)' }}>
+                                      {senderName}
+                                    </strong>
+                                    {' · '}
+                                  </>
+                                )}
                                 {msg.applicationId && msg.jobTitle && (
                                   <>
                                     <Link

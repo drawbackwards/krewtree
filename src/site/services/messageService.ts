@@ -94,11 +94,16 @@ function toThreadMessage(row: MessageRowWithContext): ThreadMessage {
  * row per (company, worker) pair, aggregated in Postgres. unreadCount
  * counts messages sent by the other party that the viewer hasn't read.
  */
-export async function getConversations(): Promise<{
+export async function getConversations(companyId?: string | null): Promise<{
   data: Conversation[]
   error: string | null
 }> {
-  const { data, error } = await supabase.rpc('get_conversation_summaries')
+  // A company seat scopes summaries (and unread math) to its active company;
+  // a worker viewer passes nothing and sees their own threads across companies.
+  const { data, error } = await supabase.rpc(
+    'get_conversation_summaries',
+    companyId ? { p_company_id: companyId } : {}
+  )
 
   if (error) return { data: [], error: error.message }
 
@@ -224,6 +229,26 @@ export async function getThreadMessages(
   }
 }
 
+/**
+ * Display names for the company-side senders in a pair thread, keyed by user id.
+ * With multiple seats a company message is sent by an individual teammate; the
+ * UI uses this to label company bubbles ("Jane · 3:42 PM"). Visible to both the
+ * company's members and the worker on the thread (SECURITY DEFINER RPC).
+ */
+export async function getThreadSenders(
+  companyId: string,
+  workerId: string
+): Promise<{ data: Record<string, string>; error: string | null }> {
+  const { data, error } = await supabase.rpc('get_thread_senders', {
+    p_company_id: companyId,
+    p_worker_id: workerId,
+  })
+  if (error) return { data: {}, error: error.message }
+  const map: Record<string, string> = {}
+  for (const row of data ?? []) map[row.user_id] = row.display_name
+  return { data: map, error: null }
+}
+
 // ── Send ─────────────────────────────────────────────────────────────────────
 
 /**
@@ -288,11 +313,14 @@ export async function markThreadRead(
  * Total unread messages from the other party across all threads —
  * drives the nav badge. Single integer computed in Postgres.
  */
-export async function getUnreadMessageCount(): Promise<{
+export async function getUnreadMessageCount(companyId?: string | null): Promise<{
   data: number
   error: string | null
 }> {
-  const { data, error } = await supabase.rpc('get_unread_message_count')
+  const { data, error } = await supabase.rpc(
+    'get_unread_message_count',
+    companyId ? { p_company_id: companyId } : {}
+  )
 
   if (error) return { data: 0, error: error.message }
   return { data: data ?? 0, error: null }

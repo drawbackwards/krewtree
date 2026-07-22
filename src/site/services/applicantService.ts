@@ -11,6 +11,7 @@
 
 import type { ApplicationStatus, CompanyApplicant } from '../types'
 import { supabase, getCurrentUserId } from '../../lib/supabase'
+import { userDisplayName } from '../utils/userName'
 import type { Database } from '../../lib/database.types'
 import { getPipelineStages, instantiateTemplatesForStage } from './pipelineService'
 import { getWorkerFeedbackAggregate } from './feedbackService'
@@ -196,6 +197,8 @@ function toCompanyApplicant(
     isBoosted: a.is_boosted,
     appliedAt: a.created_at,
     stageEnteredAt: a.status_updated_at ?? a.created_at,
+    stageMovedBy: ((a as unknown as Record<string, unknown>).stage_moved_by as string) ?? null,
+    stageMovedAt: ((a as unknown as Record<string, unknown>).stage_moved_at as string) ?? null,
     slaState: 'none',
     flagged: (a.application_task ?? []).some((t) => t.is_flagged),
     flaggedTaskLabels: (a.application_task ?? []).filter((t) => t.is_flagged).map((t) => t.label),
@@ -608,10 +611,13 @@ export async function setApplicantStage(
  * history card (company views only).
  */
 async function logRejectionReason(applicationId: string, reason: string): Promise<void> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
   await supabase.from('application_log').insert({
     application_id: applicationId,
     event_type: 'application_rejected',
-    actor: 'You',
+    actor: userDisplayName(session?.user ?? null),
     description: 'Application rejected',
     note_body: reason,
     stage_id: null,

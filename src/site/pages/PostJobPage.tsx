@@ -202,7 +202,7 @@ export const PostJobPage: React.FC = () => {
   const duplicateOf = searchParams.get('duplicate')
   const templateParam = searchParams.get('template')
   const isEditMode = !!editId
-  const { user } = useAuth()
+  const { activeCompanyId } = useAuth()
   const [submitted, setSubmitted] = useState(false)
   const [submitError, setSubmitError] = useState('')
   const [loadError, setLoadError] = useState('')
@@ -250,19 +250,19 @@ export const PostJobPage: React.FC = () => {
   // Pre-fill industry from company profile when creating a new job from scratch
   // (skip when editing or duplicating — both already supply an industry)
   useEffect(() => {
-    if (editId || duplicateOf || !user) return
-    getCompanyIndustry(user.id).then(({ data }) => {
+    if (editId || duplicateOf || !activeCompanyId) return
+    getCompanyIndustry(activeCompanyId).then(({ data }) => {
       if (!data) return
       const match = industries.find((i) => i.name.toLowerCase() === data.toLowerCase())
       if (match) setIndustry(match.slug)
     })
-  }, [editId, duplicateOf, user])
+  }, [editId, duplicateOf, activeCompanyId])
 
   // Load saved templates for the "Start from a template" picker (create mode only).
   useEffect(() => {
-    if (editId || !user) return
-    getCompanyTemplates(user.id).then(({ data }) => setTemplates(data))
-  }, [editId, user])
+    if (editId || !activeCompanyId) return
+    getCompanyTemplates(activeCompanyId).then(({ data }) => setTemplates(data))
+  }, [editId, activeCompanyId])
 
   // Load existing job when editing or duplicating. In duplicate mode the title
   // gets a "(Copy)" suffix and editId stays unset so submit creates a new job.
@@ -379,7 +379,7 @@ export const PostJobPage: React.FC = () => {
   // null publishes immediately.
   const submitJob = async (publishAt: string | null): Promise<void> => {
     if (!validate()) return
-    if (!user) return
+    if (!activeCompanyId) return
     setSubmitError('')
     const jobFields = buildJobFields()
 
@@ -400,7 +400,11 @@ export const PostJobPage: React.FC = () => {
       setSubmitted(true)
       setTimeout(() => navigate(publishAt ? '/site/dashboard/jobs' : `/site/jobs/${editId}`), 2500)
     } else {
-      const { data, error } = await createJob({ companyId: user.id, ...jobFields, publishAt })
+      const { data, error } = await createJob({
+        companyId: activeCompanyId,
+        ...jobFields,
+        publishAt,
+      })
       if (error) {
         setSubmitError(error)
         return
@@ -422,7 +426,7 @@ export const PostJobPage: React.FC = () => {
   // Save the in-progress form as a draft (only a title is required). Drafts
   // stay off the public board and live under the Job posts "Drafts" tab.
   const saveDraft = async (): Promise<void> => {
-    if (!user) return
+    if (!activeCompanyId) return
     if (!title.trim()) {
       setErrors({ title: 'Add a title to save a draft' })
       return
@@ -432,7 +436,7 @@ export const PostJobPage: React.FC = () => {
     const { error } =
       isEditMode && editId
         ? await updateJob(editId, { ...jobFields, status: 'draft', publishAt: null })
-        : await createJob({ companyId: user.id, ...jobFields, asDraft: true })
+        : await createJob({ companyId: activeCompanyId, ...jobFields, asDraft: true })
     if (error) {
       setSubmitError(error)
       return
@@ -519,16 +523,16 @@ export const PostJobPage: React.FC = () => {
   }
 
   const handleSaveTemplate = async (): Promise<void> => {
-    if (!user || !templateName.trim()) return
+    if (!activeCompanyId || !templateName.trim()) return
     setSavingTemplate(true)
-    const { error } = await saveJobTemplate(user.id, templateName.trim(), buildJobFields())
+    const { error } = await saveJobTemplate(activeCompanyId, templateName.trim(), buildJobFields())
     setSavingTemplate(false)
     if (error) {
       setSubmitError(error)
       setShowSaveTemplate(false)
       return
     }
-    const { data: list } = await getCompanyTemplates(user.id)
+    const { data: list } = await getCompanyTemplates(activeCompanyId)
     setTemplates(list)
     setShowSaveTemplate(false)
     setTemplateName('')

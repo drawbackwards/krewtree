@@ -68,7 +68,7 @@ export const JobDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const location = useLocation()
-  const { persona, user } = useAuth()
+  const { persona, user, activeCompanyId } = useAuth()
   const isCompany = persona === 'company'
   const trackedJobId = useRef<string | null>(null)
   const [appliedAt, setAppliedAt] = useState<string | null>(null)
@@ -114,7 +114,7 @@ export const JobDetailPage: React.FC = () => {
   // with a ref so re-renders (and StrictMode's double-invoke) don't double-count.
   useEffect(() => {
     if (!job || !id) return
-    if (user?.id && job.companyId === user.id) return
+    if (activeCompanyId && job.companyId === activeCompanyId) return
     if (trackedJobId.current === id) return
     trackedJobId.current = id
     const navState = (location.state ?? {}) as { source?: string; searchKeyword?: string }
@@ -122,7 +122,7 @@ export const JobDetailPage: React.FC = () => {
     // referrer (search engine vs another site) so off-platform traffic shows up.
     const source = navState.source ?? classifyReferrer()
     void trackJobView(id, source, navState.searchKeyword)
-  }, [job, id, user?.id, location.state])
+  }, [job, id, activeCompanyId, location.state])
 
   if (jobLoading) {
     return (
@@ -172,7 +172,7 @@ export const JobDetailPage: React.FC = () => {
 
   // Owner-only Analytics tab; the /analytics path deep-links it. Non-owners
   // (workers, other companies, public) only ever see the Job Details view.
-  const isOwner = isCompany && !!user?.id && job.companyId === user.id
+  const isOwner = isCompany && !!activeCompanyId && job.companyId === activeCompanyId
   const activeTab: 'details' | 'analytics' =
     isOwner && location.pathname.endsWith('/analytics') ? 'analytics' : 'details'
 
@@ -490,8 +490,8 @@ export const JobDetailPage: React.FC = () => {
         )}
 
         {/* ---- Analytics tab ---- */}
-        {isOwner && activeTab === 'analytics' && user?.id && (
-          <JobAnalyticsTab jobId={job.id} companyId={user.id} />
+        {isOwner && activeTab === 'analytics' && activeCompanyId && (
+          <JobAnalyticsTab jobId={job.id} companyId={activeCompanyId} />
         )}
 
         {/* ---- Body (Job Details tab) ---- */}

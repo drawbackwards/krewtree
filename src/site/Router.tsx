@@ -72,6 +72,13 @@ const TemplatesSettingsPage = lazy(() => import('./pages/Settings/TemplatesSetti
 const AccountSettingsPage = lazy(() =>
   import('./pages/Settings/AccountSettingsPage').then((m) => ({ default: m.AccountSettingsPage }))
 )
+const TeamSettingsPage = lazy(() => import('./pages/Settings/TeamSettingsPage'))
+const PersonalProfilePage = lazy(() =>
+  import('./pages/Settings/PersonalProfilePage').then((m) => ({ default: m.PersonalProfilePage }))
+)
+const AcceptInvitePage = lazy(() =>
+  import('./pages/AcceptInvitePage').then((m) => ({ default: m.AcceptInvitePage }))
+)
 const NotificationsSettingsPage = lazy(() =>
   import('./pages/Settings/NotificationsSettingsPage').then((m) => ({
     default: m.NotificationsSettingsPage,
@@ -185,6 +192,8 @@ export const SiteRouter: React.FC = () => (
           <Route path="/site/jobs/:id/analytics" element={<JobDetailPage />} />
           <Route path="/site/profile/:id" element={<WorkerProfilePage />} />
           <Route path="/site/company/:id" element={<CompanyProfilePage />} />
+          {/* Company invite acceptance — works logged-out (prompts sign-in). */}
+          <Route path="/site/join" element={<AcceptInvitePage />} />
 
           {/* Worker-only */}
           <Route element={<RequireAuth persona="worker" />}>
@@ -228,6 +237,7 @@ export const SiteRouter: React.FC = () => (
                 a company guard below. */}
             <Route path="/site/settings" element={<SettingsLayout />}>
               <Route index element={<SettingsIndexRedirect />} />
+              <Route path="my-profile" element={<PersonalProfilePage />} />
               <Route path="notifications" element={<NotificationsSettingsPage />} />
               <Route element={<RequireAuth persona="company" />}>
                 <Route path="profile" element={<CompanyProfileEditPage />} />
@@ -238,6 +248,7 @@ export const SiteRouter: React.FC = () => (
                   element={<Navigate to="/site/settings/pipeline" replace />}
                 />
                 <Route path="account" element={<AccountSettingsPage />} />
+                <Route path="team" element={<TeamSettingsPage />} />
               </Route>
             </Route>
           </Route>

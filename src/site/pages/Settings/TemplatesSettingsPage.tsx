@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button, Modal, EmptyState } from '../../../components'
 import { useAuth } from '../../context/AuthContext'
+import { SettingsPageHeader } from './SettingsPageHeader'
 import { getCompanyTemplates, deleteJobTemplate, type JobTemplate } from '../../services/jobService'
 import {
   getMessageTemplates,
@@ -221,6 +222,10 @@ export const TemplatesSettingsPage: React.FC = () => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <SettingsPageHeader
+        title="Templates"
+        description="Reusable job posts and message templates your team can apply when posting jobs and messaging applicants."
+      />
       <SectionCard
         title="Job templates"
         description="Reusable job postings your team has saved. Load one from the Post a Job screen to prefill the form. Save a new one there with “Save as template”."

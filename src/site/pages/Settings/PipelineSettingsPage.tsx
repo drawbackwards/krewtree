@@ -34,6 +34,7 @@ import {
 } from '../../services/pipelineService'
 import { getMessageTemplates, type MessageTemplate } from '../../services/messageTemplateService'
 import styles from './PipelineSettingsPage.module.css'
+import { SettingsPageHeader } from './SettingsPageHeader'
 
 const PipelineSettingsPage: React.FC = () => {
   const { user } = useAuth()
@@ -276,11 +277,12 @@ const PipelineSettingsPage: React.FC = () => {
 
   return (
     <div>
-      <p className={styles.intro}>
-        This is your starting pipeline. Tailor it to fit your hiring process. Add stages, rename
-        them, or switch one off to hide it from new jobs without losing its tasks. Drag the grip
-        handle on the left to reorder stages and tasks.
-      </p>
+      <div style={{ marginBottom: 20 }}>
+        <SettingsPageHeader
+          title="Pipeline"
+          description="Tailor your hiring stages and their tasks. Add or rename stages, switch one off to hide it from new jobs without losing its tasks, and drag the grip handle to reorder."
+        />
+      </div>
 
       {loading ? (
         <div className={styles.loading}>Loading pipeline…</div>

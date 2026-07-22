@@ -174,13 +174,23 @@ export const PipelineTab: React.FC<PipelineTabProps> = ({
     <div className={styles.root}>
       {/* Scrollable body */}
       <div className={styles.body}>
-        {/* Stage indicator */}
+        {/* Stage indicator: title, then labeled metadata, then a divider. */}
         <div className={styles.stageBlock}>
           <span className={styles.stageName}>{stageLabel}</span>
-          {!terminal && applicant.stageEnteredAt && (
-            <span className={styles.timeInStage}>
-              {formatTimeInStage(applicant.stageEnteredAt)}
-            </span>
+          {!terminal && (applicant.stageMovedBy || applicant.stageEnteredAt) && (
+            <div className={styles.stageMeta}>
+              {applicant.stageMovedBy && (
+                <div className={styles.metaRow}>
+                  <span className={styles.metaLabel}>Moved by:</span> {applicant.stageMovedBy}
+                </div>
+              )}
+              {applicant.stageEnteredAt && (
+                <div className={styles.metaRow}>
+                  <span className={styles.metaLabel}>Time in Stage:</span>{' '}
+                  {formatTimeInStage(applicant.stageEnteredAt)}
+                </div>
+              )}
+            </div>
           )}
         </div>
 

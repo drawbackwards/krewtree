@@ -1,17 +1,24 @@
 import React from 'react'
-import { NavLink, Outlet } from 'react-router-dom'
+import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import styles from './SettingsLayout.module.css'
+
+// Personal-settings pages; everything else under /site/settings is company.
+const PERSONAL_PATHS = new Set(['/site/settings/my-profile', '/site/settings/notifications'])
 
 type NavItem = { to: string; label: string }
 
 const ORG_NAV: NavItem[] = [
   { to: '/site/settings/profile', label: 'Profile' },
+  { to: '/site/settings/team', label: 'Team' },
   { to: '/site/settings/pipeline', label: 'Pipeline' },
   { to: '/site/settings/templates', label: 'Templates' },
 ]
 const ACCOUNT_NAV: NavItem[] = [{ to: '/site/settings/account', label: 'Account & billing' }]
-const PERSONAL_NAV: NavItem[] = [{ to: '/site/settings/notifications', label: 'Notifications' }]
+const PERSONAL_NAV: NavItem[] = [
+  { to: '/site/settings/my-profile', label: 'My profile' },
+  { to: '/site/settings/notifications', label: 'Notifications' },
+]
 
 const NavList: React.FC<{ items: NavItem[] }> = ({ items }) => (
   <>
@@ -29,27 +36,31 @@ const NavList: React.FC<{ items: NavItem[] }> = ({ items }) => (
   </>
 )
 
-// Companies get organization + account settings alongside their personal
-// preferences; workers have only personal preferences (no org concept).
+// Two separate settings areas share this shell, each reached from the account
+// dropdown: "Company settings" (organization + account nav) and "Personal
+// settings" (personal nav). The current route decides which nav is shown, so
+// the two never appear together. Workers only have the personal area.
 const SettingsLayout: React.FC = () => {
-  const { persona } = useAuth()
+  const { persona, companyRole, memberships, activeCompanyId } = useAuth()
   const isCompany = persona === 'company'
+  // Account & billing (delete company, billing) is owner/admin-only.
+  const canSeeAccount = companyRole === 'owner' || companyRole === 'admin'
+  const { pathname } = useLocation()
+  const isPersonal = !isCompany || PERSONAL_PATHS.has(pathname)
+  const companyName = memberships.find((m) => m.companyId === activeCompanyId)?.companyName
 
   return (
     <div className={styles.page}>
-      <h1 className={styles.title}>Settings</h1>
+      <h1 className={styles.title}>
+        {isPersonal ? 'Personal settings' : `${companyName || 'Company'} settings`}
+      </h1>
       <div className={styles.shell}>
         <nav className={styles.nav} aria-label="Settings navigation">
-          {isCompany && (
-            <>
-              <div className={styles.navSection}>Organization</div>
-              <NavList items={ORG_NAV} />
-              <div className={styles.navSection}>Account</div>
-              <NavList items={ACCOUNT_NAV} />
-            </>
+          {isPersonal ? (
+            <NavList items={PERSONAL_NAV} />
+          ) : (
+            <NavList items={canSeeAccount ? [...ORG_NAV, ...ACCOUNT_NAV] : ORG_NAV} />
           )}
-          <div className={styles.navSection}>Personal</div>
-          <NavList items={PERSONAL_NAV} />
         </nav>
         <main className={styles.content}>
           <Outlet />

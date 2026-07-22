@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import {
   getThreadMessages,
+  getThreadSenders,
   sendMessage,
   markThreadRead,
   MESSAGES_READ_EVENT,
@@ -42,11 +43,13 @@ function initials(name: string): string {
  * persona only, since direct threads are opened from company-side pages.
  */
 export const ChatPane: React.FC = () => {
-  const { user, persona } = useAuth()
+  const { activeCompanyId, persona, user } = useAuth()
   const { target, minimized, closeChat, toggleMinimized } = useChatPane()
   const navigate = useNavigate()
 
   const [thread, setThread] = useState<ThreadMessage[]>([])
+  // Company-side sender id -> teammate name, for per-seat attribution.
+  const [senders, setSenders] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
   const [draft, setDraft] = useState('')
   const [sending, setSending] = useState(false)
@@ -55,7 +58,7 @@ export const ChatPane: React.FC = () => {
   const scrollRef = useRef<HTMLDivElement>(null)
   const composerRef = useRef<HTMLTextAreaElement>(null)
 
-  const companyId = user?.id ?? null
+  const companyId = activeCompanyId
   const workerId = target?.workerId ?? null
 
   // Load the thread whenever the target changes, and mark incoming
@@ -79,6 +82,9 @@ export const ChatPane: React.FC = () => {
           window.dispatchEvent(new Event(MESSAGES_READ_EVENT))
         })
       }
+    })
+    getThreadSenders(companyId, workerId).then(({ data }) => {
+      if (!cancelled) setSenders(data)
     })
     return () => {
       cancelled = true
@@ -191,6 +197,11 @@ export const ChatPane: React.FC = () => {
               thread.map((msg, i) => {
                 const prev = thread[i - 1]
                 const mine = msg.senderRole === 'company'
+                // Attribute a teammate's message (company-side, not my own).
+                const senderName =
+                  msg.senderRole === 'company' && msg.sentBy !== user?.id
+                    ? senders[msg.sentBy]
+                    : undefined
                 const newDay =
                   !prev ||
                   new Date(prev.sentAt).toDateString() !== new Date(msg.sentAt).toDateString()
@@ -205,6 +216,14 @@ export const ChatPane: React.FC = () => {
                         <div
                           className={`${styles.bubbleTime} ${mine ? styles.bubbleTimeMine : ''}`}
                         >
+                          {senderName && (
+                            <>
+                              <strong style={{ fontWeight: 'var(--kt-weight-bold)' }}>
+                                {senderName}
+                              </strong>
+                              {' · '}
+                            </>
+                          )}
                           {msg.applicationId && msg.jobTitle && (
                             <>
                               <Link

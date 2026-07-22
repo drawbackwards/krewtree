@@ -1,4 +1,4 @@
-import { supabase, getCurrentUserId } from '@/lib/supabase'
+import { supabase, getActiveCompanyId } from '@/lib/supabase'
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -210,7 +210,7 @@ export async function getWorkerFeedbackHistory(
 export async function getFeedbackForApplication(
   applicationId: string
 ): Promise<{ data: FeedbackRecord | null; error: string | null }> {
-  const companyId = await getCurrentUserId()
+  const companyId = await getActiveCompanyId()
   if (!companyId) return { data: null, error: 'Not authenticated.' }
 
   const { data, error } = await supabase
@@ -267,7 +267,7 @@ export async function getFeedbackStatusForApplications(
 ): Promise<{ data: Record<string, FeedbackStatus>; error: string | null }> {
   if (applicationIds.length === 0) return { data: {}, error: null }
 
-  const companyId = await getCurrentUserId()
+  const companyId = await getActiveCompanyId()
   if (!companyId) return { data: {}, error: 'Not authenticated.' }
 
   const { data, error } = await supabase
@@ -300,7 +300,7 @@ export async function getFeedbackStatusForApplications(
 export async function submitFeedback(
   input: SubmitFeedbackInput
 ): Promise<{ data: { id: string } | null; error: string | null }> {
-  const companyId = await getCurrentUserId()
+  const companyId = await getActiveCompanyId()
   if (!companyId) return { data: null, error: 'Not authenticated.' }
 
   const { data, error } = await supabase

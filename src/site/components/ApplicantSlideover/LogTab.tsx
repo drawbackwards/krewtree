@@ -123,6 +123,7 @@ export const LogTab: React.FC<LogTabProps> = ({ applicationId, stages }) => {
                     title={formatFullDateTime(event.createdAt)}
                   >
                     {formatLogTimestamp(event.createdAt)}
+                    {event.actor && event.actor !== 'System' ? ` · ${event.actor}` : ''}
                   </time>
                 </div>
               </li>

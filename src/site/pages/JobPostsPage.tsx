@@ -155,7 +155,7 @@ const SortIndicator: React.FC<{ active: boolean; direction: SortDir }> = ({
 // ── Main component ────────────────────────────────────────────────────────────
 
 export const JobPostsPage: React.FC = () => {
-  const { user } = useAuth()
+  const { activeCompanyId } = useAuth()
   const navigate = useNavigate()
 
   const [allJobs, setAllJobs] = useState<Job[]>([])
@@ -189,13 +189,13 @@ export const JobPostsPage: React.FC = () => {
   const [archiveTarget, setArchiveTarget] = useState<Job | null>(null)
 
   useEffect(() => {
-    if (!user?.id) return
+    if (!activeCompanyId) return
     setLoading(true)
-    getCompanyJobs(user.id).then(({ data }) => {
+    getCompanyJobs(activeCompanyId).then(({ data }) => {
       setAllJobs(data ?? [])
       setLoading(false)
     })
-  }, [user?.id])
+  }, [activeCompanyId])
 
   // Clear selection when filters/sort/page change
   useEffect(() => {

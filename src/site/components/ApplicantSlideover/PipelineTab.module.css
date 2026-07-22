@@ -19,16 +19,30 @@
 .stageBlock {
   padding: 16px 0 12px;
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  flex-direction: column;
+  gap: 6px;
   border-bottom: 1px solid var(--kt-border);
   margin-bottom: 16px;
 }
 
 .stageName {
   font-size: var(--kt-text-md);
+  font-weight: var(--kt-weight-semibold);
+  color: var(--kt-text);
+}
+
+.stageMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.metaRow {
+  font-size: var(--kt-text-xs);
+  color: var(--kt-text-muted);
+}
+
+.metaLabel {
   font-weight: var(--kt-weight-semibold);
   color: var(--kt-text);
 }

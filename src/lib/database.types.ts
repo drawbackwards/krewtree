@@ -334,6 +334,8 @@ export type Database = {
           job_id: string
           match_score: number
           notes: string
+          stage_moved_at: string | null
+          stage_moved_by: string | null
           status: string
           status_updated_at: string | null
           updated_at: string
@@ -351,6 +353,8 @@ export type Database = {
           job_id: string
           match_score?: number
           notes?: string
+          stage_moved_at?: string | null
+          stage_moved_by?: string | null
           status?: string
           status_updated_at?: string | null
           updated_at?: string
@@ -368,6 +372,8 @@ export type Database = {
           job_id?: string
           match_score?: number
           notes?: string
+          stage_moved_at?: string | null
+          stage_moved_by?: string | null
           status?: string
           status_updated_at?: string | null
           updated_at?: string
@@ -433,6 +439,79 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: 'company_additional_locations_company_id_fkey'
+            columns: ['company_id']
+            isOneToOne: false
+            referencedRelation: 'company_profiles'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      company_invites: {
+        Row: {
+          company_id: string
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          invited_by: string | null
+          role: string
+          status: string
+          token_hash: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          email: string
+          expires_at?: string
+          id?: string
+          invited_by?: string | null
+          role: string
+          status?: string
+          token_hash: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          invited_by?: string | null
+          role?: string
+          status?: string
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'company_invites_company_id_fkey'
+            columns: ['company_id']
+            isOneToOne: false
+            referencedRelation: 'company_profiles'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      company_members: {
+        Row: {
+          company_id: string
+          created_at: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'company_members_company_id_fkey'
             columns: ['company_id']
             isOneToOne: false
             referencedRelation: 'company_profiles'
@@ -654,6 +733,7 @@ export type Database = {
           profile_complete_pct: number
           regulix_connected: boolean
           review_count: number
+          seat_cap: number
           service_area_override: string
           service_area_radius: number
           size: string
@@ -696,6 +776,7 @@ export type Database = {
           profile_complete_pct?: number
           regulix_connected?: boolean
           review_count?: number
+          seat_cap?: number
           service_area_override?: string
           service_area_radius?: number
           size?: string
@@ -738,6 +819,7 @@ export type Database = {
           profile_complete_pct?: number
           regulix_connected?: boolean
           review_count?: number
+          seat_cap?: number
           service_area_override?: string
           service_area_radius?: number
           size?: string
@@ -2501,7 +2583,7 @@ export type Database = {
         }[]
       }
       get_conversation_summaries: {
-        Args: never
+        Args: { p_company_id?: string }
         Returns: {
           company_id: string
           company_name: string
@@ -2523,12 +2605,43 @@ export type Database = {
         }[]
       }
       get_unread_message_count: {
-        Args: never
+        Args: { p_company_id?: string }
         Returns: number
       }
       get_company_dashboard: {
-        Args: never
+        Args: { p_company_id: string }
         Returns: Json
+      }
+      accept_company_invite: {
+        Args: { p_token: string }
+        Returns: string
+      }
+      create_company_invite: {
+        Args: { p_company_id: string; p_email: string; p_role: string }
+        Returns: { invite_id: string; token: string }[]
+      }
+      get_company_members: {
+        Args: { p_company_id: string }
+        Returns: {
+          user_id: string
+          role: string
+          created_at: string
+          email: string
+          first_name: string
+          last_name: string
+        }[]
+      }
+      transfer_company_ownership: {
+        Args: { p_company_id: string; p_new_owner: string }
+        Returns: undefined
+      }
+      get_thread_senders: {
+        Args: { p_company_id: string; p_worker_id: string }
+        Returns: { user_id: string; display_name: string }[]
+      }
+      create_company: {
+        Args: { p_name: string; p_industry?: string }
+        Returns: string
       }
       search_jobs: {
         Args: {

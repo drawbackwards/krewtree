@@ -5,7 +5,7 @@
 // company_id explicitly for defensive query planning + readability.
 // ────────────────────────────────────────────────────────────────────────────
 
-import { supabase, getCurrentUserId } from '../../lib/supabase'
+import { supabase, getCurrentUserId, getActiveCompanyId } from '../../lib/supabase'
 import { getCompanyJobs } from './jobService'
 import {
   getCityCoords as resolveCityCoords,
@@ -85,7 +85,7 @@ type ServiceError = string | null
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
 async function currentCompanyId(): Promise<string | null> {
-  return getCurrentUserId()
+  return getActiveCompanyId()
 }
 
 /** Shape of a row returned from getKrew's embedded select on worker_profiles. */
