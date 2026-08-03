@@ -2616,6 +2616,10 @@ export type Database = {
         Args: { p_token: string }
         Returns: string
       }
+      get_invite_email: {
+        Args: { p_token: string }
+        Returns: string
+      }
       create_company_invite: {
         Args: { p_company_id: string; p_email: string; p_role: string }
         Returns: { invite_id: string; token: string }[]

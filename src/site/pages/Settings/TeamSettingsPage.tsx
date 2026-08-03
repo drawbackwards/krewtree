@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { Badge, Button, EmptyState, Input, Modal, Select, Spinner } from '../../../components'
+import { OverflowMenu, type OverflowItem } from '../../components/OverflowMenu/OverflowMenu'
 import { useAuth } from '../../context/AuthContext'
 import {
   changeMemberRole,
@@ -52,6 +53,7 @@ export const TeamSettingsPage: React.FC = () => {
   const [copied, setCopied] = useState(false)
 
   const [transferTarget, setTransferTarget] = useState<TeamMember | null>(null)
+  const [removeTarget, setRemoveTarget] = useState<TeamMember | null>(null)
   const [busyUserId, setBusyUserId] = useState<string | null>(null)
 
   const load = useCallback(async () => {
@@ -106,11 +108,11 @@ export const TeamSettingsPage: React.FC = () => {
     setBusyUserId(null)
   }
 
-  const handleRemove = async (m: TeamMember) => {
-    if (!activeCompanyId) return
-    if (!window.confirm(`Remove ${m.displayName} from the team?`)) return
-    setBusyUserId(m.userId)
-    await removeMember(activeCompanyId, m.userId)
+  const handleRemove = async () => {
+    if (!activeCompanyId || !removeTarget) return
+    setBusyUserId(removeTarget.userId)
+    await removeMember(activeCompanyId, removeTarget.userId)
+    setRemoveTarget(null)
     await load()
     setBusyUserId(null)
   }
@@ -126,7 +128,7 @@ export const TeamSettingsPage: React.FC = () => {
 
   const roleBadge = (role: string) => (
     <Badge variant={role === 'owner' ? 'primary' : role === 'admin' ? 'info' : 'neutral'}>
-      {role}
+      {role.charAt(0).toUpperCase() + role.slice(1)}
     </Badge>
   )
 
@@ -166,6 +168,15 @@ export const TeamSettingsPage: React.FC = () => {
           {members.map((m) => {
             const isSelf = m.userId === user?.id
             const isOwnerRow = m.role === 'owner'
+            // "Make owner" and "Remove" live in the row overflow menu; both open
+            // a confirmation modal rather than acting immediately.
+            const menuItems: OverflowItem[] = []
+            if (isOwner && !isOwnerRow) {
+              menuItems.push({ label: 'Make owner', onClick: () => setTransferTarget(m) })
+            }
+            if (canManage && !isOwnerRow && !isSelf) {
+              menuItems.push({ label: 'Remove', danger: true, onClick: () => setRemoveTarget(m) })
+            }
             return (
               <div key={m.userId} style={rowStyle}>
                 <div style={{ minWidth: 0 }}>
@@ -177,37 +188,21 @@ export const TeamSettingsPage: React.FC = () => {
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   {/* Owner/admins can change other members' roles; the owner seat
-                      is fixed and only moves via "Transfer ownership". */}
+                      is fixed and only moves via "Make owner" (transfer). */}
                   {canManage && !isOwnerRow && !isSelf ? (
-                    <Select
-                      size="sm"
-                      value={m.role}
-                      disabled={busyUserId === m.userId}
-                      options={ROLE_OPTIONS}
-                      onChange={(e) => handleRoleChange(m, e.target.value as 'admin' | 'member')}
-                    />
+                    <div style={{ width: 140 }}>
+                      <Select
+                        value={m.role}
+                        disabled={busyUserId === m.userId}
+                        options={ROLE_OPTIONS}
+                        onChange={(e) => handleRoleChange(m, e.target.value as 'admin' | 'member')}
+                      />
+                    </div>
                   ) : (
                     roleBadge(m.role)
                   )}
-                  {canManage && !isOwnerRow && !isSelf && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      disabled={busyUserId === m.userId}
-                      onClick={() => handleRemove(m)}
-                    >
-                      Remove
-                    </Button>
-                  )}
-                  {isOwner && !isOwnerRow && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      disabled={busyUserId === m.userId}
-                      onClick={() => setTransferTarget(m)}
-                    >
-                      Make owner
-                    </Button>
+                  {menuItems.length > 0 && (
+                    <OverflowMenu items={menuItems} label={`Actions for ${m.displayName}`} />
                   )}
                 </div>
               </div>
@@ -335,6 +330,32 @@ export const TeamSettingsPage: React.FC = () => {
         <p style={{ margin: 0, fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text)' }}>
           {transferTarget?.displayName} will become the owner of this company, with full control
           including billing and deletion. You will become an admin. This cannot be undone by you.
+        </p>
+      </Modal>
+
+      <Modal
+        open={!!removeTarget}
+        onClose={() => setRemoveTarget(null)}
+        size="sm"
+        title="Remove teammate?"
+        footer={
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+            <Button variant="ghost" onClick={() => setRemoveTarget(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              onClick={handleRemove}
+              disabled={busyUserId === removeTarget?.userId}
+            >
+              Remove
+            </Button>
+          </div>
+        }
+      >
+        <p style={{ margin: 0, fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text)' }}>
+          {removeTarget?.displayName} will lose access to this company, including its applicants,
+          jobs, pipeline, and messages. You can re-invite them later.
         </p>
       </Modal>
     </div>

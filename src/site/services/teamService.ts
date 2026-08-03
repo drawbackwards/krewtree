@@ -135,6 +135,19 @@ export async function acceptInvite(
   return { data: { companyId: data as string }, error: null }
 }
 
+/**
+ * Look up the email a pending invite was addressed to, so the join page can
+ * prefill and lock it. Returns null for an invalid/expired token (and on error).
+ * The token is the secret; a holder is entitled to see the invited email.
+ */
+export async function getInviteEmail(
+  token: string
+): Promise<{ data: string | null; error: string | null }> {
+  const { data, error } = await supabase.rpc('get_invite_email', { p_token: token })
+  if (error) return { data: null, error: mapError(error.message) }
+  return { data: (data as string | null) ?? null, error: null }
+}
+
 export async function changeMemberRole(
   companyId: string,
   userId: string,
@@ -175,6 +188,8 @@ export async function transferOwnership(
 function mapError(msg: string): string {
   if (msg.includes('seat_cap_reached')) return 'This company has reached its seat limit.'
   if (msg.includes('invalid_or_expired')) return 'This invite link is invalid or has expired.'
+  if (msg.includes('email_mismatch'))
+    return 'This invite was sent to a different email address. Sign in with the invited email to accept.'
   if (msg.includes('not_authorized') || msg.includes('insufficient_privilege'))
     return 'You do not have permission to do that.'
   if (msg.includes('invalid_role')) return 'Invalid role.'

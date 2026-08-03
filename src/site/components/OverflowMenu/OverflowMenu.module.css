@@ -1,0 +1,54 @@
+.overflowBtn {
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: var(--kt-radius-sm);
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--kt-text-muted);
+  flex-shrink: 0;
+  transition: background 100ms ease;
+}
+
+.overflowBtn:hover {
+  background: var(--kt-secondary);
+  color: var(--kt-text);
+}
+
+/* Overflow dropdown — portaled to body, positioned via inline style */
+.overflowMenu {
+  position: fixed;
+  z-index: 1000;
+  background: var(--kt-surface);
+  border: 0.5px solid var(--kt-border);
+  border-radius: var(--kt-radius-md);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  min-width: 160px;
+  padding: 4px 0;
+  overflow: hidden;
+}
+
+.overflowItem {
+  width: 100%;
+  padding: 8px 14px;
+  border: none;
+  background: transparent;
+  font-family: var(--kt-font-sans);
+  font-size: var(--kt-text-sm);
+  color: var(--kt-text);
+  text-align: left;
+  cursor: pointer;
+  display: block;
+  transition: background 80ms ease;
+}
+
+.overflowItem:hover {
+  background: var(--kt-secondary);
+}
+
+.overflowItem.danger {
+  color: var(--kt-danger, #dc2626);
+}
