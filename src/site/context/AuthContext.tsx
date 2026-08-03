@@ -51,6 +51,19 @@ interface AuthState {
     hqCity?: string,
     hqState?: string
   ) => Promise<{ error: string | null; persona?: Persona; userId?: string }>
+  /**
+   * Sign up a user who is joining an EXISTING company via an invite. Unlike
+   * signUp('company', …) this passes no company metadata, so handle_new_user
+   * creates no company profile / owner seat — accept_company_invite() attaches
+   * the seat and sets the company role. Only the name rides on metadata (team
+   * lists read first/last name from raw_user_meta_data).
+   */
+  signUpInvite: (
+    email: string,
+    password: string,
+    firstName: string,
+    lastName: string
+  ) => Promise<{ error: string | null; userId?: string }>
   logout: () => Promise<void>
   resendVerificationEmail: () => Promise<{ error: string | null }>
   /** Initiates an email change — Supabase sends a confirmation link to the new address. */
@@ -74,6 +87,7 @@ const AuthContext = createContext<AuthState>({
   createCompany: async () => ({ companyId: null, error: null }),
   login: async () => ({ error: null, persona: undefined }),
   signUp: async () => ({ error: null, persona: undefined, userId: undefined }),
+  signUpInvite: async () => ({ error: null, userId: undefined }),
   logout: async () => {},
   resendVerificationEmail: async () => ({ error: null }),
   updateEmail: async () => ({ error: null }),
@@ -258,6 +272,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     []
   )
 
+  const signUpInvite = useCallback(
+    async (
+      email: string,
+      password: string,
+      firstName: string,
+      lastName: string
+    ): Promise<{ error: string | null; userId?: string }> => {
+      // No `role` in metadata on purpose: handle_new_user only provisions a
+      // company profile / owner seat when role === 'company'. An invited seat
+      // must NOT get its own company — accept_company_invite() sets the company
+      // role and membership. Persona is applied by the accept flow.
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            first_name: firstName,
+            last_name: lastName,
+          },
+        },
+      })
+      if (error) return { error: error.message }
+      if (!data.user) return { error: 'Sign-up failed. No user returned.' }
+      return { error: null, userId: data.user.id }
+    },
+    []
+  )
+
   const resendVerificationEmail = useCallback(async (): Promise<{ error: string | null }> => {
     const { error } = await supabase.auth.resend({ type: 'signup', email: user?.email ?? '' })
     if (error) return { error: error.message }
@@ -353,6 +395,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       createCompany,
       login,
       signUp,
+      signUpInvite,
       logout,
       resendVerificationEmail,
       updateEmail,
@@ -371,6 +414,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       createCompany,
       login,
       signUp,
+      signUpInvite,
       logout,
       resendVerificationEmail,
       updateEmail,

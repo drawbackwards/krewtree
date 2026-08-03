@@ -62,8 +62,13 @@ export const LoginPage: React.FC = () => {
   const [authError, setAuthError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // unused — kept for type check
-  void searchParams
+  // Where to go after login. An invite link sends people here with
+  // ?redirect=/site/join?token=… so they land back on the join page and
+  // auto-accept. Only same-origin app paths are honored (guards against an
+  // open-redirect via a crafted ?redirect=https://evil…).
+  const redirect = searchParams.get('redirect')
+  const safeRedirect =
+    redirect && redirect.startsWith('/') && !redirect.startsWith('//') ? redirect : null
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -76,6 +81,10 @@ export const LoginPage: React.FC = () => {
       return
     }
     setPassword('')
+    if (safeRedirect) {
+      navigate(safeRedirect)
+      return
+    }
     navigate(persona === 'company' ? '/site/dashboard/company' : '/site/dashboard/worker')
   }
 

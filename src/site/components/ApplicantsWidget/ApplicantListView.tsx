@@ -1,12 +1,11 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { createPortal } from 'react-dom'
+import React, { useCallback, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Modal, Tooltip } from '../../../components'
 import { RejectConfirmModal } from '../RejectConfirmModal/RejectConfirmModal'
+import { OverflowMenu } from '../OverflowMenu/OverflowMenu'
 import type { CompanyApplicant } from '../../types'
 import { advanceApplicant, rejectApplicant, hireApplicant } from '../../services/applicantService'
 import {
-  DotsHorizontalIcon,
   FlagFilledIcon,
   HourglassFilledIcon,
   RegulixMarkIcon,
@@ -55,75 +54,6 @@ const Avatar: React.FC<{ url: string; initials: string }> = ({ url, initials }) 
     {url ? <img src={url} alt="" className={styles.avatarImg} /> : initials.slice(0, 2)}
   </div>
 )
-
-// ── Overflow menu ──────────────────────────────────────────────────────────
-
-type OverflowItem = { label: string; danger?: boolean; onClick: () => void }
-
-const OverflowMenu: React.FC<{ items: OverflowItem[] }> = ({ items }) => {
-  const [open, setOpen] = useState(false)
-  const [pos, setPos] = useState({ top: 0, right: 0 })
-  const btnRef = useRef<HTMLButtonElement>(null)
-  const menuRef = useRef<HTMLDivElement>(null)
-
-  const handleToggle = () => {
-    if (!open && btnRef.current) {
-      const r = btnRef.current.getBoundingClientRect()
-      setPos({ top: r.bottom + 4, right: window.innerWidth - r.right })
-    }
-    setOpen((v) => !v)
-  }
-
-  useEffect(() => {
-    if (!open) return
-    const h = (e: MouseEvent) => {
-      if (btnRef.current?.contains(e.target as Node) || menuRef.current?.contains(e.target as Node))
-        return
-      setOpen(false)
-    }
-    document.addEventListener('mousedown', h)
-    return () => document.removeEventListener('mousedown', h)
-  }, [open])
-
-  return (
-    <>
-      <button
-        ref={btnRef}
-        type="button"
-        className={styles.overflowBtn}
-        onClick={handleToggle}
-        aria-label="More actions"
-      >
-        <DotsHorizontalIcon size={14} />
-      </button>
-      {open &&
-        createPortal(
-          <div
-            ref={menuRef}
-            className={styles.overflowMenu}
-            style={{ top: pos.top, right: pos.right }}
-          >
-            {items.map((item) => (
-              <button
-                key={item.label}
-                type="button"
-                className={[styles.overflowItem, item.danger ? styles.danger : '']
-                  .filter(Boolean)
-                  .join(' ')}
-                onClick={() => {
-                  item.onClick()
-                  setOpen(false)
-                }}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>,
-          document.body
-        )}
-    </>
-  )
-}
 
 // ── Main component ─────────────────────────────────────────────────────────
 
