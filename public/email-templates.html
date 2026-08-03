@@ -1,0 +1,1298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Krewtree emails preview</title>
+<style>
+  :root {
+    --header-bg: #0A232D;
+    --button-bg: #6D7531;
+    --footer-bg: #F6F2E8;
+    --canvas-bg: #FFFFFF;
+    --card-bg: #FFFFFF;
+    --body-text: #1C3D4A;
+    --muted-text: #6B7280;
+    --border: #E5E7EB;
+    --secondary-card-bg: #F9FAFB;
+    --toc-bg: #FAFAFB;
+    --meta-bg: #F5F5F7;
+    --tag-tx: #ECFDF5;
+    --tag-tx-text: #065F46;
+    --tag-com: #FEF3C7;
+    --tag-com-text: #92400E;
+    --tag-sec: #FEE2E2;
+    --tag-sec-text: #991B1B;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: var(--body-text);
+    background: transparent;
+  }
+  .app {
+    display: flex;
+    height: 100vh;
+  }
+
+  /* -------- Sticky TOC sidebar -------- */
+  .toc {
+    width: 280px;
+    flex-shrink: 0;
+    overflow-y: auto;
+    border-right: 1px solid var(--border);
+    background: var(--toc-bg);
+    padding: 24px 20px 60px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  .toc-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--body-text);
+    margin: 0 0 4px 0;
+  }
+  .toc-subtitle {
+    font-size: 12px;
+    color: var(--muted-text);
+    margin: 0 0 24px 0;
+  }
+  .toc-persona {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted-text);
+    margin: 20px 0 8px 0;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+  .toc-category {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--body-text);
+    margin: 14px 0 4px 0;
+  }
+  .toc ul {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 4px 0;
+  }
+  .toc li {
+    margin: 0;
+  }
+  .toc a {
+    display: block;
+    padding: 4px 8px;
+    color: var(--muted-text);
+    text-decoration: none;
+    border-radius: 4px;
+    font-size: 13px;
+    line-height: 1.35;
+  }
+  .toc a:hover {
+    background: #EEF2F5;
+    color: var(--body-text);
+  }
+  .toc a.active {
+    background: #E0E7EB;
+    color: var(--body-text);
+    font-weight: 500;
+  }
+  .toc .digest-item a {
+    font-style: italic;
+  }
+
+  /* -------- Content column -------- */
+  .content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 40px 48px 200px 48px;
+    background: transparent;
+  }
+  .content-header {
+    max-width: 680px;
+    margin: 0 auto 32px auto;
+  }
+  .content-header h1 {
+    font-size: 24px;
+    margin: 0 0 4px 0;
+  }
+  .content-header p {
+    font-size: 14px;
+    color: var(--muted-text);
+    margin: 0;
+  }
+  .persona-heading {
+    max-width: 680px;
+    margin: 48px auto 24px auto;
+    font-size: 22px;
+    font-weight: 700;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--body-text);
+  }
+  .category-heading {
+    max-width: 680px;
+    margin: 40px auto 16px auto;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--muted-text);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  /* -------- Preview block (metadata + email) -------- */
+  .preview {
+    max-width: 680px;
+    margin: 0 auto 56px auto;
+    scroll-margin-top: 24px;
+  }
+  .preview-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--body-text);
+    margin: 0 0 12px 0;
+  }
+  .preview-name .preview-id {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: var(--muted-text);
+    background: var(--meta-bg);
+    padding: 2px 6px;
+    border-radius: 3px;
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+
+  .metadata {
+    background: var(--meta-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin: 0 0 16px 0;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+  .metadata-row {
+    display: grid;
+    grid-template-columns: 110px 1fr;
+    gap: 8px;
+    padding: 3px 0;
+  }
+  .metadata-label {
+    color: var(--muted-text);
+    font-weight: 500;
+  }
+  .metadata-value {
+    color: var(--body-text);
+  }
+  .tag {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 1px 8px;
+    border-radius: 999px;
+  }
+  .tag.tx { background: var(--tag-tx); color: var(--tag-tx-text); }
+  .tag.com { background: var(--tag-com); color: var(--tag-com-text); }
+  .tag.sec { background: var(--tag-sec); color: var(--tag-sec-text); }
+
+  /* -------- Email frame (matches the production template) -------- */
+  .email {
+    max-width: 600px;
+    width: 100%;
+    margin: 0;
+  }
+  .email-inner {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .email-header {
+    background: var(--header-bg);
+    padding: 20px 32px;
+  }
+  .email-header img {
+    height: 32px;
+    width: auto;
+    display: block;
+  }
+  .email-body {
+    background: var(--card-bg);
+    padding: 32px;
+  }
+  h1.email-heading {
+    font-size: 22px;
+    line-height: 30px;
+    font-weight: 600;
+    color: var(--body-text);
+    margin: 0 0 16px 0;
+  }
+  p.email-text {
+    font-size: 15px;
+    line-height: 24px;
+    color: var(--body-text);
+    margin: 0 0 16px 0;
+  }
+  .email-secondary-card {
+    background: var(--secondary-card-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px 20px;
+    margin: 8px 0 20px 0;
+  }
+  .email-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--body-text);
+    margin: 0 0 4px 0;
+  }
+  .email-meta {
+    font-size: 13px;
+    color: var(--muted-text);
+    margin: 0;
+  }
+  .email-button {
+    display: inline-block;
+    background: var(--button-bg);
+    color: #FFFFFF;
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-size: 15px;
+    font-weight: 600;
+    text-decoration: none;
+    line-height: 20px;
+    margin: 8px 0;
+  }
+  .email-signoff {
+    font-size: 15px;
+    line-height: 24px;
+    color: var(--body-text);
+    margin: 16px 0 0 0;
+  }
+
+  /* Digest structure */
+  .digest-subgroup {
+    margin: 0 0 20px 0;
+  }
+  .digest-subgroup:last-child {
+    margin-bottom: 0;
+  }
+  .digest-subgroup-header {
+    padding: 0 0 6px 0;
+    border-bottom: 1px solid var(--border);
+    margin: 0 0 4px 0;
+  }
+  .digest-subgroup-title {
+    font-size: 16px;
+    line-height: 22px;
+    font-weight: 600;
+    color: var(--body-text);
+    margin: 0;
+  }
+  .digest-subgroup-title a {
+    color: var(--body-text);
+    text-decoration: none;
+  }
+  .digest-item {
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .digest-item-title {
+    font-size: 15px;
+    line-height: 22px;
+    color: var(--body-text);
+    margin: 0 0 2px 0;
+  }
+  .digest-item-title a {
+    color: var(--body-text);
+    text-decoration: none;
+  }
+  .digest-item-meta {
+    font-size: 13px;
+    line-height: 18px;
+    color: var(--muted-text);
+    margin: 0;
+  }
+
+  .email-footer {
+    background: var(--footer-bg);
+    padding: 24px 32px;
+    border-top: 1px solid var(--border);
+  }
+  .email-footer p {
+    font-size: 13px;
+    line-height: 20px;
+    color: var(--muted-text);
+    margin: 0 0 8px 0;
+  }
+  .email-footer a {
+    color: var(--muted-text);
+    text-decoration: underline;
+  }
+  .email-footer-address {
+    font-size: 12px;
+    line-height: 18px;
+    margin: 16px 0 12px 0 !important;
+  }
+  .email-footer-legal {
+    font-size: 12px;
+    line-height: 18px;
+    margin: 0 !important;
+  }
+</style>
+</head>
+<body>
+  <div class="app">
+    <aside class="toc" id="toc"></aside>
+    <main class="content" id="content">
+      <div class="content-header">
+        <h1>Krewtree email templates</h1>
+        <p>42 previews. Company first, then Worker. Category order matches the notifications settings UI. Digests appear at the end of each category.</p>
+      </div>
+    </main>
+  </div>
+
+<script>
+// =============================================================================
+// EMAIL DATA
+// Each entry is a preview. See render.js at bottom for the rendering pipeline.
+// =============================================================================
+
+const LOGO_URL = 'https://ryigaxihlfqdwgjbgmcg.supabase.co/storage/v1/object/public/avatars/brand/krewtree-logo-horizontal-white.png';
+
+const CATEGORY_LABELS = {
+  applicants: 'Applicants',
+  messages: 'Messages',
+  jobs: 'Jobs',
+  pipeline: 'Pipeline',
+  account: 'Account',
+  regulix: 'Regulix',
+  security: 'Security',
+  applications: 'Applications',
+};
+
+// Category order per the settings UI. Company & worker have different orders.
+const CATEGORY_ORDER_COMPANY = ['applicants', 'messages', 'jobs', 'pipeline', 'account', 'regulix'];
+const CATEGORY_ORDER_WORKER = ['messages', 'jobs', 'applications', 'account', 'regulix'];
+
+const EMAILS = [
+  // ========== COMPANY / APPLICANTS ==========
+  {
+    id: 'c1', section: 'company', category: 'applicants',
+    name: 'New application received',
+    subject: 'Sarah Chen applied to Line Cook',
+    preheader: 'Sarah Chen applied. Their profile is ready to review.',
+    trigger: 'Worker submits an application',
+    canSpamClass: 'tx',
+    optOutable: true,
+    type: 'transactional',
+    heading: 'New applicant on Line Cook',
+    body: 'Sarah Chen just applied to your Line Cook posting. Their profile lists 4 years of prep experience and one active certification.',
+    secondary: { name: 'Sarah Chen', meta: 'Applied to Line Cook' },
+    ctaLabel: 'Review applicant', ctaUrl: '#',
+  },
+  {
+    id: 'c2', section: 'company', category: 'applicants',
+    name: 'Applicant withdrew',
+    subject: 'Sarah Chen withdrew from Line Cook',
+    preheader: 'They removed their application. No action required.',
+    trigger: 'Worker withdraws their application',
+    canSpamClass: 'tx',
+    optOutable: true,
+    type: 'transactional',
+    heading: 'An applicant withdrew from Line Cook',
+    body: 'Sarah Chen withdrew their application for Line Cook. No action is required. Their profile is still visible if you want to reach out about a future role.',
+    secondary: { name: 'Sarah Chen', meta: 'Withdrew from Line Cook' },
+    ctaLabel: 'View profile', ctaUrl: '#',
+  },
+  {
+    id: 'c3', section: 'company', category: 'applicants',
+    name: 'Applicants daily digest',
+    subject: 'Your hiring recap for today',
+    preheader: "You've received 5 applications today.",
+    trigger: 'Scheduled daily',
+    sendTime: 'Daily at 14:00 UTC (7am PT, 8am AZ). Sent 7 days a week. Suppressed if the recipient has no events for the period.',
+    canSpamClass: 'tx',
+    optOutable: true,
+    type: 'digest',
+    heading: 'Your hiring recap for today',
+    body: "You've received 5 applications today.",
+    subGroups: [
+      { title: 'Line Cook', items: [
+        { title: 'Sarah Chen applied' },
+        { title: 'Devon Park withdrew', meta: 'Application withdrawn' },
+      ]},
+      { title: 'Sous Chef', items: [
+        { title: 'Marcus Torres applied' },
+        { title: 'Jamie Rivera applied' },
+      ]},
+      { title: 'Prep Cook', items: [
+        { title: 'Alex Kim applied' },
+      ]},
+    ],
+    ctaLabel: 'Go to dashboard', ctaUrl: '#',
+  },
+
+  // ========== COMPANY / MESSAGES ==========
+  {
+    id: 'c4', section: 'company', category: 'messages',
+    name: 'New message from a worker',
+    subject: 'New message from Jamie Rivera about Prep Cook',
+    preheader: 'About your Prep Cook posting: "Hi, I noticed the shift schedule is..."',
+    trigger: 'Worker sends a message',
+    canSpamClass: 'tx',
+    optOutable: true,
+    type: 'transactional',
+    heading: 'New message from Jamie Rivera',
+    body: 'Jamie Rivera sent you a message about your Prep Cook posting.',
+    secondary: { name: '"Hi, I noticed the shift schedule mentions weekends. Are those required or optional? Thanks!"', meta: 'Prep Cook' },
+    ctaLabel: 'Read message', ctaUrl: '#',
+  },
+  {
+    id: 'c5', section: 'company', category: 'messages',
+    name: 'Messages daily digest',
+    subject: 'Your message recap for today',
+    preheader: "You've received 3 new messages today.",
+    trigger: 'Scheduled daily',
+    sendTime: 'Daily at 14:00 UTC (7am PT, 8am AZ). Sent 7 days a week. Suppressed if the recipient has no events for the period.',
+    canSpamClass: 'tx',
+    optOutable: true,
+    type: 'digest',
+    heading: 'Your message recap for today',
+    body: "You've received 3 new messages today.",
+    subGroups: [
+      { title: 'Jamie Rivera', items: [
+        { title: 'About your Prep Cook posting', meta: '1 unread' },
+      ]},
+      { title: 'Marcus Torres', items: [
+        { title: 'Re: Sous Chef availability', meta: '1 unread' },
+      ]},
+      { title: 'Sarah Chen', items: [
+        { title: 'Follow-up on Line Cook interview', meta: '1 unread' },
+      ]},
+    ],
+    ctaLabel: 'Go to messages', ctaUrl: '#',
+  },
+
+  // ========== COMPANY / JOBS ==========
+  {
+    id: 'c6', section: 'company', category: 'jobs',
+    name: 'Job nearing its closing date',
+    subject: 'Heads up, Line Cook closes in 3 days',
+    preheader: 'Extend the closing date or let it close automatically on July 26.',
+    trigger: 'Scheduled check when jobs approach closing_date',
+    canSpamClass: 'tx',
+    optOutable: true,
+    type: 'transactional',
+    heading: 'Line Cook closes in 3 days',
+    body: 'Your Line Cook posting is set to close on July 26, 2026. You can extend the closing date, close it now, or let it close automatically.',
+    secondary: { name: 'Line Cook', meta: '12 active applicants · Closes July 26, 2026' },
+    ctaLabel: 'Manage this job', ctaUrl: '#',
+  },
+  {
+    id: 'c7', section: 'company', category: 'jobs',
+    name: 'Job auto-closed',
+    subject: 'Line Cook has closed',
+    preheader: 'It reached its closing date on July 26. Reopen it any time.',
+    trigger: 'System closes job at its closing_date',
+    canSpamClass: 'tx',
+    optOutable: true,
+    type: 'transactional',
+    heading: 'Line Cook was closed automatically',
+    body: 'Your Line Cook posting reached its closing date on July 26, 2026 and was closed. You can reactivate it or leave it archived.',
+    secondary: { name: 'Line Cook', meta: 'Closed July 26, 2026 · 18 total applicants' },
+    ctaLabel: 'View job', ctaUrl: '#',
+  },
+  {
+    id: 'c8', section: 'company', category: 'jobs',
+    name: 'Paid job boost ended',
+    subject: 'Your Line Cook boost has ended',
+    preheader: 'Boosted placement returned to standard on July 22.',
+    trigger: 'Boost expires',
+    canSpamClass: 'tx',
+    optOutable: true,
+    type: 'transactional',
+    heading: 'The paid boost on Line Cook ended',
+    body: 'The paid boost on your Line Cook posting ended on July 22, 2026. The posting is still active with standard placement.',
+    secondary: { name: 'Line Cook · 7-day boost', meta: '9 applicants during boost · Standard placement resumed' },
+    ctaLabel: 'Boost again', ctaUrl: '#',
+  },
+  {
+    id: 'c9', section: 'company', category: 'jobs',
+    name: 'Job reactivated',
+    subject: 'Line Cook is live again',
+    preheader: 'A paused job you posted is now visible to workers.',
+    trigger: 'User reactivates a paused job',
+    canSpamClass: 'tx',
+    optOutable: true,
+    type: 'transactional',
+    heading: 'Line Cook is active again',
+    body: "You reactivated your Line Cook posting. It's now visible to workers and can receive applications.",
+    secondary: { name: 'Line Cook', meta: 'Reactivated July 23, 2026 at 9:14 AM MST' },
+    ctaLabel: 'View job', ctaUrl: '#',
+  },
+  {
+    id: 'c10', section: 'company', category: 'jobs',
+    name: 'Jobs daily digest',
+    subject: "Today's updates on your jobs",
+    preheader: '4 job-related updates today.',
+    trigger: 'Scheduled daily',
+    sendTime: 'Daily at 14:00 UTC (7am PT, 8am AZ). Sent 7 days a week. Suppressed if the recipient has no events for the period.',
+    canSpamClass: 'tx',
+    optOutable: true,
+    type: 'digest',
+    heading: "Today's updates on your jobs",
+    body: 'You have 4 updates on your job postings today.',
+    subGroups: [
+      { title: 'Line Cook', items: [
+        { title: 'Boost ended', meta: 'Standard placement resumed' },
+        { title: 'Closes in 3 days', meta: 'Set to auto-close July 26' },
+      ]},
+      { title: 'Sous Chef', items: [
+        { title: 'Reactivated', meta: 'Now visible to workers' },
+      ]},
+      { title: 'Prep Cook', items: [
+        { title: 'Closed automatically', meta: 'Reached closing date · 18 total applicants' },
+      ]},
+    ],
+    ctaLabel: 'Go to My Jobs', ctaUrl: '#',
+  },
+
+  // ========== COMPANY / PIPELINE ==========
+  {
+    id: 'c11', section: 'company', category: 'pipeline',
+    name: 'Applicant flagged for attention',
+    subject: 'Sarah Chen needs your attention on Line Cook',
+    preheader: "They're stalled at Interview and need your attention.",
+    trigger: 'SLA timer expires or a stage rule flags the applicant',
+    canSpamClass: 'tx',
+    optOutable: true,
+    type: 'transactional',
+    heading: 'An applicant is flagged for attention',
+    body: 'Sarah Chen has been flagged for attention at the Interview stage of your Line Cook pipeline. Review or move them forward to keep the process on track.',
+    secondary: { name: 'Sarah Chen', meta: 'Line Cook · Stalled at Interview' },
+    ctaLabel: 'Review applicant', ctaUrl: '#',
+  },
+  {
+    id: 'c12', section: 'company', category: 'pipeline',
+    name: 'Pipeline daily digest',
+    subject: 'Applicants who need your attention today',
+    preheader: '3 applicants need attention today.',
+    trigger: 'Scheduled daily',
+    sendTime: 'Daily at 14:00 UTC (7am PT, 8am AZ). Sent 7 days a week. Suppressed if the recipient has no events for the period.',
+    canSpamClass: 'tx',
+    optOutable: true,
+    type: 'digest',
+    heading: 'Applicants who need your attention today',
+    body: '3 applicants need your attention today.',
+    subGroups: [
+      { title: 'Line Cook', items: [
+        { title: 'Sarah Chen', meta: 'Stalled at Interview' },
+        { title: 'Devon Park', meta: 'Stalled at Offer' },
+      ]},
+      { title: 'Sous Chef', items: [
+        { title: 'Marcus Torres', meta: 'Stalled at Review' },
+      ]},
+    ],
+    ctaLabel: 'Go to pipeline', ctaUrl: '#',
+  },
+
+  // ========== COMPANY / ACCOUNT ==========
+  {
+    id: 'c13', section: 'company', category: 'security',
+    name: 'Password changed',
+    subject: 'Your Krewtree password was changed',
+    preheader: "If you didn't do this, secure your account immediately.",
+    trigger: 'User successfully changes their password',
+    canSpamClass: 'sec',
+    optOutable: false,
+    type: 'transactional',
+    heading: 'Your password was changed',
+    body: "The password on your Krewtree account was changed on July 23, 2026 at 11:14 AM MST. If you made this change, you're all set. If you don't recognize this activity, secure your account now.",
+    secondary: { name: 'Chrome on macOS', meta: 'Phoenix, AZ · July 23, 2026 at 11:14 AM MST' },
+    ctaLabel: 'Secure my account', ctaUrl: '#',
+  },
+  {
+    id: 'c14', section: 'company', category: 'security',
+    name: 'Email changed',
+    subject: 'Your Krewtree email was changed',
+    preheader: "If you didn't do this, secure your account immediately.",
+    trigger: 'User successfully changes their account email',
+    canSpamClass: 'sec',
+    optOutable: false,
+    type: 'transactional',
+    heading: 'Your email address was changed',
+    body: "The email address on your Krewtree account was changed on July 23, 2026. If you made this change, you're all set. If you don't recognize this activity, secure your account now.",
+    secondary: { name: 'sarah@newdomain.com', meta: 'Changed from sarah@olddomain.com · July 23, 2026 at 11:14 AM MST' },
+    ctaLabel: 'Secure my account', ctaUrl: '#',
+    footNote: 'Sent to the previous email address. A confirmation is also sent to the new address.',
+  },
+  {
+    id: 'c15', section: 'company', category: 'security',
+    name: 'Phone number changed',
+    subject: 'Your Krewtree phone number was changed',
+    preheader: "If you didn't do this, secure your account immediately.",
+    trigger: 'User successfully changes their phone number',
+    canSpamClass: 'sec',
+    optOutable: false,
+    type: 'transactional',
+    heading: 'Your phone number was changed',
+    body: "The phone number on your Krewtree account was changed on July 23, 2026 at 11:14 AM MST. If you made this change, you're all set. If you don't recognize this activity, secure your account now.",
+    secondary: { name: '+1 (602) 555-•••2', meta: 'Changed from +1 (602) 555-•••7 · July 23, 2026' },
+    ctaLabel: 'Secure my account', ctaUrl: '#',
+  },
+  {
+    id: 'c16', section: 'company', category: 'security',
+    name: 'New sign-in from a new device',
+    subject: 'New sign-in to Krewtree from Phoenix, AZ',
+    preheader: 'A new sign-in on Chrome from Phoenix, AZ. Was this you?',
+    trigger: 'Sign-in from a device or IP the user has not used before',
+    canSpamClass: 'sec',
+    optOutable: false,
+    type: 'transactional',
+    heading: 'New sign-in from a new device',
+    body: "We noticed a new sign-in to your Krewtree account. If this was you, no action is needed. If you don't recognize this activity, change your password immediately and review recent account activity.",
+    secondary: { name: 'Chrome on macOS', meta: 'Phoenix, AZ · July 23, 2026 at 11:42 PM MST' },
+    ctaLabel: 'Review activity', ctaUrl: '#',
+  },
+  {
+    id: 'c17', section: 'company', category: 'account',
+    name: 'Verify your email',
+    subject: 'Verify your email to finish setting up Krewtree',
+    preheader: "You'll unlock posting jobs and messaging workers once verified.",
+    trigger: 'On signup and on email change',
+    canSpamClass: 'tx',
+    optOutable: false,
+    type: 'transactional',
+    heading: 'Verify your email',
+    body: "Confirm that sarah@company.com belongs to you. Once verified, you'll unlock the full Krewtree experience: posting jobs, messaging workers, and managing applicants.",
+    ctaLabel: 'Verify email', ctaUrl: '#',
+    signOff: "If you didn't create a Krewtree account, you can safely ignore this email.",
+  },
+  {
+    id: 'c18', section: 'company', category: 'account',
+    name: 'Company profile completeness dropped',
+    subject: 'Your Krewtree profile is missing some info',
+    preheader: 'Complete profiles get more applicants and better matches.',
+    trigger: 'Field removed drops completeness below threshold',
+    canSpamClass: 'tx',
+    optOutable: true,
+    type: 'transactional',
+    heading: 'Your company profile completeness dropped',
+    body: 'Some info was recently removed from your company profile. Complete profiles get more applicants, better matches, and stronger trust signals with workers.',
+    secondary: { name: 'Missing: About, Team size, Benefits', meta: 'Profile completeness now 62% (was 91%)' },
+    ctaLabel: 'Complete profile', ctaUrl: '#',
+  },
+  {
+    id: 'c19', section: 'company', category: 'account',
+    name: 'License expiring',
+    subject: 'Your AZ Contractor License expires in 30 days',
+    preheader: 'Renew before August 22, 2026 to keep it active on your profile.',
+    trigger: 'Scheduled check 30 days before license expiry',
+    canSpamClass: 'tx',
+    optOutable: true,
+    type: 'transactional',
+    heading: 'AZ Contractor License expires soon',
+    body: 'Your AZ Contractor License expires on August 22, 2026. Renew it in your company profile to keep it active. Expired licenses are removed from your public profile automatically.',
+    secondary: { name: 'AZ Contractor License #ROC298471', meta: 'Expires August 22, 2026 (30 days)' },
+    ctaLabel: 'Update license', ctaUrl: '#',
+  },
+  {
+    id: 'c20', section: 'company', category: 'account',
+    name: 'License expired',
+    subject: 'Your AZ Contractor License has expired',
+    preheader: "It's been removed from your public profile.",
+    trigger: 'License expiry date reached',
+    canSpamClass: 'tx',
+    optOutable: true,
+    type: 'transactional',
+    heading: 'AZ Contractor License has expired',
+    body: 'Your AZ Contractor License expired on July 22, 2026 and has been removed from your public company profile. Renew it or add a replacement to restore visibility.',
+    secondary: { name: 'AZ Contractor License #ROC298471', meta: 'Expired July 22, 2026 · Removed from public profile' },
+    ctaLabel: 'Renew license', ctaUrl: '#',
+  },
+  {
+    id: 'c21', section: 'company', category: 'account',
+    name: 'Account deletion grace ending',
+    subject: 'Your Krewtree account will be deleted in 3 days',
+    preheader: 'Cancel deletion before July 26, 2026 to keep your data.',
+    trigger: 'Scheduled during the account deletion grace period',
+    canSpamClass: 'tx',
+    optOutable: true,
+    type: 'transactional',
+    heading: 'Your account will be deleted soon',
+    body: "You requested account deletion on July 9, 2026. Your account and all associated data will be permanently deleted on July 26, 2026 (3 days from now). You can cancel deletion until then.",
+    secondary: { name: 'Deletion scheduled', meta: 'July 26, 2026 at 12:00 AM MST · All data purged' },
+    ctaLabel: 'Cancel deletion', ctaUrl: '#',
+  },
+  {
+    id: 'c22', section: 'company', category: 'security',
+    name: 'Payment charge failed',
+    subject: "We couldn't process your Krewtree payment",
+    preheader: 'Update your payment method to avoid service interruption.',
+    trigger: 'Payment provider (Stripe) reports a failed charge',
+    canSpamClass: 'sec',
+    optOutable: false,
+    type: 'transactional',
+    heading: 'A payment on your account failed',
+    body: "We couldn't process the $29.00 charge on your Krewtree account today. Update your payment method to keep your subscription active and avoid service interruption. We'll retry automatically in 3 days.",
+    secondary: { name: 'Card ending in 4242', meta: '$29.00 · July 23, 2026 · Next retry July 26, 2026' },
+    ctaLabel: 'Update payment', ctaUrl: '#',
+  },
+  {
+    id: 'c23', section: 'company', category: 'account',
+    name: 'Payment method expiring',
+    subject: 'Your payment method expires this month',
+    preheader: 'Update before July 31, 2026 to keep billing active.',
+    trigger: 'Scheduled 30 days before payment method expiry',
+    canSpamClass: 'tx',
+    optOutable: true,
+    type: 'transactional',
+    heading: 'Your payment method expires soon',
+    body: 'The card on file ending in 4242 expires on July 31, 2026. Update it before your next billing cycle to avoid a failed charge and any service interruption.',
+    secondary: { name: 'Card ending in 4242', meta: 'Visa · Expires 07/26' },
+    ctaLabel: 'Update payment method', ctaUrl: '#',
+  },
+
+  // ========== COMPANY / REGULIX ==========
+  {
+    id: 'c24', section: 'company', category: 'regulix',
+    name: 'Regulix connection severed',
+    subject: 'Your Regulix connection has ended',
+    preheader: 'Reconnect to keep compliance features working.',
+    trigger: 'OAuth token expiration, revoked access, or manual disconnect',
+    canSpamClass: 'tx',
+    optOutable: true,
+    type: 'transactional',
+    heading: 'Your Regulix connection was disconnected',
+    body: 'The connection between your Krewtree account and Regulix ended on July 23, 2026. Reconnect to keep time tracking, timesheets, scheduling, and compliance document collection working across both platforms.',
+    secondary: { name: 'Regulix workspace: Sunset Restaurant Group', meta: 'Disconnected July 23, 2026 · Reason: OAuth token expired' },
+    ctaLabel: 'Reconnect Regulix', ctaUrl: '#',
+  },
+
+  // ========== WORKER / MESSAGES ==========
+  {
+    id: 'w1', section: 'worker', category: 'messages',
+    name: 'New message received',
+    subject: 'New message from Sunset Restaurant Group',
+    preheader: 'About your application for Line Cook: "Hi Sarah, we\'d love to..."',
+    trigger: 'Company sends a message to a worker',
+    canSpamClass: 'tx',
+    optOutable: true,
+    type: 'transactional',
+    heading: 'New message from Sunset Restaurant Group',
+    body: 'Sunset Restaurant Group sent you a message about your application for Line Cook.',
+    secondary: { name: '"Hi Sarah, we\'d love to schedule a quick call to talk about the role. Do you have time this week?"', meta: 'Line Cook' },
+    ctaLabel: 'Read message', ctaUrl: '#',
+  },
+  {
+    id: 'w2', section: 'worker', category: 'messages',
+    name: 'Messages daily digest',
+    subject: 'Your message recap for today',
+    preheader: "You've received 2 new messages today.",
+    trigger: 'Scheduled daily',
+    sendTime: 'Daily at 14:00 UTC (7am PT, 8am AZ). Sent 7 days a week. Suppressed if the recipient has no events for the period.',
+    canSpamClass: 'tx',
+    optOutable: true,
+    type: 'digest',
+    heading: 'Your message recap for today',
+    body: "You've received 2 new messages today.",
+    subGroups: [
+      { title: 'Sunset Restaurant Group', items: [
+        { title: 'About your Line Cook application', meta: '1 unread' },
+      ]},
+      { title: 'Verde Kitchen', items: [
+        { title: 'Interview scheduling', meta: '1 unread' },
+      ]},
+    ],
+    ctaLabel: 'Go to messages', ctaUrl: '#',
+  },
+
+  // ========== WORKER / JOBS ==========
+  {
+    id: 'w3', section: 'worker', category: 'jobs',
+    name: 'New job matches your skills',
+    subject: '4 new jobs match your profile today',
+    preheader: 'Line Cook at Sunset Restaurant Group and 3 others.',
+    trigger: 'Scheduled matching engine finds new matches',
+    sendTime: 'Daily at 14:00 UTC (7am PT, 8am AZ). Sent 7 days a week. Suppressed if no new matches for the recipient.',
+    canSpamClass: 'tx',
+    optOutable: true,
+    type: 'digest',
+    heading: '4 new jobs match your profile',
+    body: '4 new jobs were posted today that fit your skills and preferences.',
+    subGroups: [
+      { title: 'Line Cook · Sunset Restaurant Group', items: [
+        { title: 'Phoenix, AZ · Full-time · $22–26/hr', meta: 'Regulix Ready employer' },
+      ]},
+      { title: 'Sous Chef · Verde Kitchen', items: [
+        { title: 'Scottsdale, AZ · Full-time · $28–34/hr' },
+      ]},
+      { title: 'Prep Cook · Coastal Table', items: [
+        { title: 'Tempe, AZ · Part-time · $18–20/hr' },
+      ]},
+      { title: 'Line Cook · Nightshade Bar', items: [
+        { title: 'Phoenix, AZ · Full-time · $23–27/hr' },
+      ]},
+    ],
+    ctaLabel: 'See all matches', ctaUrl: '#',
+  },
+  {
+    id: 'w4', section: 'worker', category: 'jobs',
+    name: 'Saved job closing soon',
+    subject: 'Heads up, a job you saved closes in 3 days',
+    preheader: 'You saved this job. Apply before July 26 if you\'re still interested.',
+    trigger: 'Scheduled check when saved job approaches closing_date',
+    canSpamClass: 'tx',
+    optOutable: true,
+    type: 'transactional',
+    heading: 'A saved job is closing soon',
+    body: "Line Cook at Sunset Restaurant Group closes on July 26, 2026. If you're still interested, apply soon.",
+    secondary: { name: 'Line Cook · Sunset Restaurant Group', meta: 'Phoenix, AZ · Full-time · $22–26/hr · Closes July 26' },
+    ctaLabel: 'View job', ctaUrl: '#',
+  },
+  {
+    id: 'w5', section: 'worker', category: 'jobs',
+    name: 'Saved job was closed',
+    subject: 'A job you saved has closed',
+    preheader: 'The employer closed this job before you applied.',
+    trigger: 'Job closes while worker has it saved (and did not apply)',
+    canSpamClass: 'tx',
+    optOutable: true,
+    type: 'transactional',
+    heading: 'A saved job was closed',
+    body: "Line Cook at Sunset Restaurant Group was closed on July 23, 2026. Similar jobs are still open. Take a look.",
+    secondary: { name: 'Line Cook · Sunset Restaurant Group', meta: 'Closed July 23, 2026' },
+    ctaLabel: 'See similar jobs', ctaUrl: '#',
+  },
+  {
+    id: 'w6', section: 'worker', category: 'jobs',
+    name: 'Job you applied to was updated',
+    subject: 'The Line Cook job you applied to was updated',
+    preheader: 'Pay range and shift times changed. Review the update.',
+    trigger: 'Employer edits a job the worker applied to',
+    canSpamClass: 'tx',
+    optOutable: true,
+    type: 'transactional',
+    heading: 'A job you applied to was updated',
+    body: 'Sunset Restaurant Group updated the Line Cook posting on July 23, 2026. The changes may affect your interest. Take a look.',
+    secondary: { name: 'Line Cook · Sunset Restaurant Group', meta: 'Updated: Pay range now $24–28/hr (was $22–26/hr) · Shift times revised' },
+    ctaLabel: 'View job', ctaUrl: '#',
+  },
+  {
+    id: 'w7', section: 'worker', category: 'jobs',
+    name: 'Jobs weekly digest',
+    subject: "This week's job matches",
+    preheader: '12 new jobs matched your profile this week.',
+    trigger: 'Scheduled weekly',
+    sendTime: 'Sundays at 01:00 UTC (Sunday 6pm PT, 6pm AZ). Suppressed if the recipient has no matches for the week.',
+    canSpamClass: 'tx',
+    optOutable: true,
+    type: 'digest',
+    heading: "This week's job matches",
+    body: '12 new jobs matched your profile this week.',
+    subGroups: [
+      { title: 'Top matches', items: [
+        { title: 'Line Cook · Sunset Restaurant Group', meta: 'Phoenix, AZ · $22–26/hr · Regulix Ready' },
+        { title: 'Sous Chef · Verde Kitchen', meta: 'Scottsdale, AZ · $28–34/hr' },
+        { title: 'Line Cook · Nightshade Bar', meta: 'Phoenix, AZ · $23–27/hr' },
+      ]},
+      { title: 'Saved jobs updated', items: [
+        { title: 'Prep Cook · Coastal Table: pay range raised', meta: '$18–20/hr → $20–22/hr' },
+      ]},
+      { title: 'Other matches', items: [
+        { title: '8 more matches', meta: 'See them all on the Browse Jobs page' },
+      ]},
+    ],
+    ctaLabel: 'See all matches', ctaUrl: '#',
+  },
+
+  // ========== WORKER / APPLICATIONS ==========
+  {
+    id: 'w8', section: 'worker', category: 'applications',
+    name: 'Application in review',
+    subject: 'Sunset Restaurant Group is reviewing your application',
+    preheader: 'Your application for Line Cook moved from Applied to In Review.',
+    trigger: 'Employer moves application into any Review stage',
+    canSpamClass: 'tx',
+    optOutable: true,
+    type: 'transactional',
+    heading: 'Your application is being reviewed',
+    body: "Sunset Restaurant Group started reviewing your application for Line Cook. You'll hear back if they want to move forward.",
+    secondary: { name: 'Line Cook · Sunset Restaurant Group', meta: 'Moved to In Review · July 23, 2026' },
+    ctaLabel: 'View application', ctaUrl: '#',
+  },
+  {
+    id: 'w9', section: 'worker', category: 'applications',
+    name: "You've been hired",
+    subject: "You've been hired at Sunset Restaurant Group",
+    preheader: 'Congratulations. Next steps are inside.',
+    trigger: 'Employer marks applicant as hired',
+    canSpamClass: 'tx',
+    optOutable: true,
+    type: 'transactional',
+    heading: "You've been hired",
+    body: "Sunset Restaurant Group hired you for the Line Cook position. They'll reach out about start date, paperwork, and next steps. Congratulations.",
+    secondary: { name: 'Line Cook · Sunset Restaurant Group', meta: 'Hired July 23, 2026 · $24/hr · Phoenix, AZ' },
+    ctaLabel: 'View offer details', ctaUrl: '#',
+  },
+  {
+    id: 'w10', section: 'worker', category: 'applications',
+    name: 'Application not selected',
+    subject: 'An update on your Line Cook application from Sunset',
+    preheader: 'Sunset Restaurant Group decided to move forward with other candidates.',
+    trigger: 'Employer marks applicant as rejected',
+    canSpamClass: 'tx',
+    optOutable: true,
+    type: 'transactional',
+    heading: 'Update on your application',
+    body: "Sunset Restaurant Group decided not to move forward with your application for Line Cook. This isn't a reflection of your skills. Many factors go into hiring decisions.",
+    secondary: { name: 'Line Cook · Sunset Restaurant Group', meta: 'Not selected · July 23, 2026' },
+    signOff: 'We wish you the best in your search. Similar jobs are still open.',
+    ctaLabel: 'See similar jobs', ctaUrl: '#',
+  },
+  {
+    id: 'w11', section: 'worker', category: 'applications',
+    name: 'Position closed',
+    subject: 'The Line Cook position at Sunset has closed',
+    preheader: 'Sunset Restaurant Group closed Line Cook. It\'s no longer accepting applications.',
+    trigger: 'Employer closes a job while worker has an active application',
+    canSpamClass: 'tx',
+    optOutable: true,
+    type: 'transactional',
+    heading: 'A position you applied to was closed',
+    body: 'Sunset Restaurant Group closed the Line Cook role on July 23, 2026. Your application was archived. Similar jobs are still open.',
+    secondary: { name: 'Line Cook · Sunset Restaurant Group', meta: 'Position closed · July 23, 2026' },
+    ctaLabel: 'See similar jobs', ctaUrl: '#',
+  },
+  {
+    id: 'w12', section: 'worker', category: 'applications',
+    name: 'Applications daily digest',
+    subject: 'Your application updates for today',
+    preheader: '3 updates on your applications today.',
+    trigger: 'Scheduled daily',
+    sendTime: 'Daily at 14:00 UTC (7am PT, 8am AZ). Sent 7 days a week. Suppressed if the recipient has no events for the period.',
+    canSpamClass: 'tx',
+    optOutable: true,
+    type: 'digest',
+    heading: 'Your application updates for today',
+    body: 'You have 3 updates on your applications today.',
+    subGroups: [
+      { title: 'Line Cook · Sunset Restaurant Group', items: [
+        { title: "You've been hired", meta: 'Offer details available · $24/hr' },
+      ]},
+      { title: 'Sous Chef · Verde Kitchen', items: [
+        { title: 'Moved to In Review' },
+      ]},
+      { title: 'Prep Cook · Coastal Table', items: [
+        { title: 'Application not selected', meta: 'Similar jobs available' },
+      ]},
+    ],
+    ctaLabel: 'Go to My Applications', ctaUrl: '#',
+  },
+
+  // ========== WORKER / ACCOUNT ==========
+  {
+    id: 'w13', section: 'worker', category: 'security',
+    name: 'Password changed',
+    subject: 'Your Krewtree password was changed',
+    preheader: "If you didn't do this, secure your account immediately.",
+    trigger: 'User successfully changes their password',
+    canSpamClass: 'sec',
+    optOutable: false,
+    type: 'transactional',
+    heading: 'Your password was changed',
+    body: "The password on your Krewtree account was changed on July 23, 2026 at 11:14 AM MST. If you made this change, you're all set. If you don't recognize this activity, secure your account now.",
+    secondary: { name: 'Safari on iPhone', meta: 'Phoenix, AZ · July 23, 2026 at 11:14 AM MST' },
+    ctaLabel: 'Secure my account', ctaUrl: '#',
+  },
+  {
+    id: 'w14', section: 'worker', category: 'security',
+    name: 'Email changed',
+    subject: 'Your Krewtree email was changed',
+    preheader: "If you didn't do this, secure your account immediately.",
+    trigger: 'User successfully changes their account email',
+    canSpamClass: 'sec',
+    optOutable: false,
+    type: 'transactional',
+    heading: 'Your email address was changed',
+    body: "The email address on your Krewtree account was changed on July 23, 2026. If you made this change, you're all set. If you don't recognize this activity, secure your account now.",
+    secondary: { name: 'sarah.chen@newdomain.com', meta: 'Changed from sarah.chen@olddomain.com · July 23, 2026' },
+    ctaLabel: 'Secure my account', ctaUrl: '#',
+    footNote: 'Sent to the previous email address. A confirmation is also sent to the new address.',
+  },
+  {
+    id: 'w15', section: 'worker', category: 'security',
+    name: 'Phone number changed',
+    subject: 'Your Krewtree phone number was changed',
+    preheader: "If you didn't do this, secure your account immediately.",
+    trigger: 'User successfully changes their phone number',
+    canSpamClass: 'sec',
+    optOutable: false,
+    type: 'transactional',
+    heading: 'Your phone number was changed',
+    body: "The phone number on your Krewtree account was changed on July 23, 2026 at 11:14 AM MST. If you made this change, you're all set. If you don't recognize this activity, secure your account now.",
+    secondary: { name: '+1 (602) 555-•••2', meta: 'Changed from +1 (602) 555-•••7 · July 23, 2026' },
+    ctaLabel: 'Secure my account', ctaUrl: '#',
+  },
+  {
+    id: 'w16', section: 'worker', category: 'security',
+    name: 'New sign-in from a new device',
+    subject: 'New sign-in to Krewtree from Tucson, AZ',
+    preheader: 'A new sign-in on Safari from Tucson, AZ. Was this you?',
+    trigger: 'Sign-in from a device or IP the user has not used before',
+    canSpamClass: 'sec',
+    optOutable: false,
+    type: 'transactional',
+    heading: 'New sign-in from a new device',
+    body: "We noticed a new sign-in to your Krewtree account. If this was you, no action is needed. If you don't recognize this activity, change your password immediately and review recent account activity.",
+    secondary: { name: 'Safari on iPhone', meta: 'Tucson, AZ · July 23, 2026 at 11:42 PM MST' },
+    ctaLabel: 'Review activity', ctaUrl: '#',
+  },
+  {
+    id: 'w17', section: 'worker', category: 'account',
+    name: 'Profile completeness dropped',
+    subject: 'Your Krewtree profile is missing some info',
+    preheader: 'Complete profiles get more matches and interview invitations.',
+    trigger: 'Field removed drops completeness below threshold',
+    canSpamClass: 'tx',
+    optOutable: true,
+    type: 'transactional',
+    heading: 'Your profile completeness dropped',
+    body: 'Some info was recently removed from your worker profile. Complete profiles get better job matches, more interview invitations, and higher visibility with employers.',
+    secondary: { name: 'Missing: Certifications, References, Availability', meta: 'Profile completeness now 58% (was 87%)' },
+    ctaLabel: 'Complete profile', ctaUrl: '#',
+  },
+
+  // ========== WORKER / REGULIX ==========
+  {
+    id: 'w18', section: 'worker', category: 'regulix',
+    name: 'Regulix connection severed',
+    subject: 'Your Regulix connection has ended',
+    preheader: 'Reconnect to keep time tracking, scheduling, and compliance working.',
+    trigger: 'OAuth token expiration, revoked access, or manual disconnect',
+    canSpamClass: 'tx',
+    optOutable: true,
+    type: 'transactional',
+    heading: 'Your Regulix connection was disconnected',
+    body: 'The connection between your Krewtree account and Regulix ended on July 23, 2026. Reconnect to keep time tracking, timesheets, scheduling, and compliance features working across both platforms.',
+    secondary: { name: 'Regulix workspace', meta: 'Disconnected July 23, 2026 · Reason: OAuth token expired' },
+    ctaLabel: 'Reconnect Regulix', ctaUrl: '#',
+  },
+];
+
+
+// =============================================================================
+// RENDER
+// =============================================================================
+
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function tagFor(cls) {
+  const label = { tx: 'Transactional', com: 'Commercial', sec: 'Security' }[cls] || cls;
+  return `<span class="tag ${cls}">${label}</span>`;
+}
+
+function renderMetadata(email) {
+  const canSpamText = {
+    tx: 'Transactional / relationship (16 CFR 316.3(c))',
+    com: 'Commercial (16 CFR 316.3(a))',
+    sec: 'Security (transactional, non-optional by policy)',
+  }[email.canSpamClass];
+
+  const optOutText = email.optOutable ? 'Yes, via notification preferences' : 'No, sent regardless of preferences';
+
+  return `
+    <div class="metadata">
+      <div class="metadata-row"><span class="metadata-label">Subject</span><span class="metadata-value">${escapeHtml(email.subject)}</span></div>
+      <div class="metadata-row"><span class="metadata-label">Preheader</span><span class="metadata-value">${escapeHtml(email.preheader)}</span></div>
+      <div class="metadata-row"><span class="metadata-label">Category</span><span class="metadata-value">${escapeHtml(CATEGORY_LABELS[email.category])}</span></div>
+      <div class="metadata-row"><span class="metadata-label">Trigger</span><span class="metadata-value">${escapeHtml(email.trigger)}</span></div>
+      ${email.sendTime ? `<div class="metadata-row"><span class="metadata-label">Send time</span><span class="metadata-value">${escapeHtml(email.sendTime)}</span></div>` : ''}
+      <div class="metadata-row"><span class="metadata-label">Class</span><span class="metadata-value">${tagFor(email.canSpamClass)} <span style="margin-left:6px;color:var(--muted-text);">${escapeHtml(canSpamText)}</span></span></div>
+      <div class="metadata-row"><span class="metadata-label">Opt-out</span><span class="metadata-value">${escapeHtml(optOutText)}</span></div>
+      ${email.footNote ? `<div class="metadata-row"><span class="metadata-label">Note</span><span class="metadata-value" style="font-style:italic;">${escapeHtml(email.footNote)}</span></div>` : ''}
+    </div>
+  `;
+}
+
+function renderFooter(email) {
+  const isSecurity = email.canSpamClass === 'sec' || !email.optOutable;
+  const category = email.category === 'security' ? null : email.category;
+  const prefsLine = isSecurity
+    ? `<p>This is a ${email.canSpamClass === 'sec' ? 'security' : 'required'} notification and cannot be turned off in your preferences.</p>`
+    : `<p><a href="#">Manage ${escapeHtml(CATEGORY_LABELS[email.category])} notification preferences</a></p>`;
+  const unsubLine = email.optOutable
+    ? ' · <a href="#">Unsubscribe</a>'
+    : '';
+
+  return `
+    <div class="email-footer">
+      ${prefsLine}
+      <p>You&rsquo;re receiving this because you have a Krewtree account.</p>
+      <p class="email-footer-address">
+        Krewtree<br />
+        [Street Address Placeholder]<br />
+        [City, State ZIP Placeholder]
+      </p>
+      <p class="email-footer-legal">
+        <a href="#">Privacy</a> · <a href="#">Terms</a>${unsubLine}
+      </p>
+    </div>
+  `;
+}
+
+function renderTransactionalBody(email) {
+  const secondary = email.secondary
+    ? `<div class="email-secondary-card">
+         <p class="email-name">${escapeHtml(email.secondary.name)}</p>
+         <p class="email-meta">${escapeHtml(email.secondary.meta)}</p>
+       </div>`
+    : '';
+  const cta = email.ctaLabel && email.ctaUrl
+    ? `<div><a href="${escapeHtml(email.ctaUrl)}" class="email-button">${escapeHtml(email.ctaLabel)}</a></div>`
+    : '';
+  const signOff = email.signOff
+    ? `<p class="email-signoff">${escapeHtml(email.signOff)}</p>`
+    : '';
+
+  return `
+    <h1 class="email-heading">${escapeHtml(email.heading)}</h1>
+    <p class="email-text">${escapeHtml(email.body)}</p>
+    ${secondary}
+    ${cta}
+    ${signOff}
+  `;
+}
+
+function renderDigestBody(email) {
+  const subs = (email.subGroups || []).map((sg) => `
+    <div class="digest-subgroup">
+      <div class="digest-subgroup-header">
+        <p class="digest-subgroup-title"><a href="#">${escapeHtml(sg.title)}</a></p>
+      </div>
+      ${sg.items.map((item) => `
+        <div class="digest-item">
+          <p class="digest-item-title"><a href="#">${escapeHtml(item.title)}</a></p>
+          ${item.meta ? `<p class="digest-item-meta">${escapeHtml(item.meta)}</p>` : ''}
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+  const cta = email.ctaLabel && email.ctaUrl
+    ? `<div style="padding-top: 20px;"><a href="${escapeHtml(email.ctaUrl)}" class="email-button">${escapeHtml(email.ctaLabel)}</a></div>`
+    : '';
+
+  return `
+    <h1 class="email-heading">${escapeHtml(email.heading)}</h1>
+    <p class="email-text">${escapeHtml(email.body)}</p>
+    ${subs}
+    ${cta}
+  `;
+}
+
+function renderEmail(email) {
+  const body = email.type === 'digest' ? renderDigestBody(email) : renderTransactionalBody(email);
+  return `
+    <section id="${email.id}" class="preview">
+      <div class="preview-name"><span class="preview-id">${email.id.toUpperCase()}</span>${escapeHtml(email.name)}</div>
+      ${renderMetadata(email)}
+      <div class="email">
+        <div class="email-inner">
+          <div class="email-header">
+            <img src="${LOGO_URL}" alt="Krewtree" />
+          </div>
+          <div class="email-body">${body}</div>
+          ${renderFooter(email)}
+        </div>
+      </div>
+    </section>
+  `;
+}
+
+function renderSection(section, categoryOrder) {
+  const sectionEmails = EMAILS.filter((e) => e.section === section);
+  const label = section === 'company' ? 'Company' : 'Worker';
+  const parts = [`<h2 class="persona-heading" id="${section}">${label} emails</h2>`];
+
+  categoryOrder.forEach((cat) => {
+    // For UI-order display, group by settings category; treat 'security' as part of 'account'.
+    const catEmails = sectionEmails.filter((e) => e.category === cat || (cat === 'account' && e.category === 'security'));
+    if (catEmails.length === 0) return;
+    parts.push(`<h3 class="category-heading" id="${section}-${cat}">${CATEGORY_LABELS[cat]}</h3>`);
+    catEmails.forEach((e) => parts.push(renderEmail(e)));
+  });
+
+  return parts.join('');
+}
+
+function renderToc() {
+  const parts = [
+    '<div class="toc-title">Krewtree emails</div>',
+    '<div class="toc-subtitle">42 previews. 24 company, 18 worker.</div>',
+  ];
+
+  [
+    { section: 'company', label: 'Company', order: CATEGORY_ORDER_COMPANY },
+    { section: 'worker', label: 'Worker', order: CATEGORY_ORDER_WORKER },
+  ].forEach(({ section, label, order }) => {
+    parts.push(`<div class="toc-persona">${label}</div>`);
+    const sectionEmails = EMAILS.filter((e) => e.section === section);
+    order.forEach((cat) => {
+      const catEmails = sectionEmails.filter((e) => e.category === cat || (cat === 'account' && e.category === 'security'));
+      if (catEmails.length === 0) return;
+      parts.push(`<div class="toc-category">${CATEGORY_LABELS[cat]}</div>`);
+      parts.push('<ul>');
+      catEmails.forEach((e) => {
+        const isDigest = e.type === 'digest';
+        parts.push(`<li class="${isDigest ? 'digest-item' : ''}"><a href="#${e.id}">${escapeHtml(e.name)}</a></li>`);
+      });
+      parts.push('</ul>');
+    });
+  });
+
+  return parts.join('');
+}
+
+function activateTocOnScroll() {
+  const links = Array.from(document.querySelectorAll('.toc a'));
+  const sections = links.map((a) => document.getElementById(a.getAttribute('href').slice(1))).filter(Boolean);
+  const container = document.getElementById('content');
+
+  function update() {
+    const scrollTop = container.scrollTop;
+    let active = sections[0];
+    for (const s of sections) {
+      if (s.offsetTop - 60 <= scrollTop) active = s;
+    }
+    links.forEach((a) => a.classList.toggle('active', a.getAttribute('href') === '#' + active.id));
+  }
+  container.addEventListener('scroll', update, { passive: true });
+  update();
+}
+
+// Populate the page
+document.getElementById('toc').innerHTML = renderToc();
+const contentEl = document.getElementById('content');
+contentEl.insertAdjacentHTML('beforeend',
+  renderSection('company', CATEGORY_ORDER_COMPANY) +
+  renderSection('worker', CATEGORY_ORDER_WORKER)
+);
+activateTocOnScroll();
+</script>
+</body>
+</html>
