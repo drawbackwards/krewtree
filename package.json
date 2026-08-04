@@ -15,7 +15,13 @@
     "typecheck": "tsc --noEmit",
     "prepare": "husky",
     "test": "vitest",
-    "test:ui": "vitest --ui"
+    "test:ui": "vitest --ui",
+    "db:status": "supabase projects list",
+    "db:link:dev": "supabase link --project-ref ryigaxihlfqdwgjbgmcg",
+    "db:link:prod": "supabase link --project-ref ivbmjtngsasrlblzhfxj",
+    "db:diff": "supabase db diff",
+    "db:push": "supabase db push",
+    "db:reset:local": "supabase db reset"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
