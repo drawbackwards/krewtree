@@ -5,6 +5,9 @@ import './styles/global.css'
 import App from './App'
 import { ToastProvider } from './components'
 import { ErrorBoundary } from './components/ErrorBoundary/ErrorBoundary'
+import { initSentry } from './lib/sentry'
+
+initSentry()
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
