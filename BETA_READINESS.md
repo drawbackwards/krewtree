@@ -28,12 +28,16 @@ Do this first so everything below is built and tested in the right place.
         security) vs `src/site/data/industries.ts` (warehousing/cleaning/food_service/freelance)
   - [x] Fill prod ref `ivbmjtngsasrlblzhfxj` into `package.json` + `ENVIRONMENTS.md` (2026-08-04)
   - [x] Separate Vercel environments (prod vars → prod, preview/dev → dev) (2026-08-04)
-  - [ ] Prod Auth: "Confirm email" ON, site URL + redirects → prod domain
-- [ ] **Upgrade Supabase to Pro** (unblocks real backups) — in progress
+  - [x] Prod Auth: site URL + redirects → prod domain saved; "Confirm email"
+        is ON by default on new hosted projects (2026-08-04). NOTE: emails
+        won't actually deliver until Resend/SMTP is wired (Phase 2)
+- [x] **Upgrade Supabase to Pro** (unblocks real backups) — both dev + prod on
+      Pro (2026-08-04)
   - [ ] Verify automated daily backups are on for prod
   - [ ] Confirm point-in-time-recovery expectations
-- [ ] **Finish deferred cron work**
-  - [ ] Schedule `hard_delete_expired_companies()` (pg_cron already enabled;
+- [x] **Finish deferred cron work** (2026-08-04)
+  - [x] Schedule `hard_delete_expired_companies()` — daily 04:00 UTC via
+        `20260804000001`; applied to prod + dev (pg_cron already enabled;
         `publish_scheduled_jobs` already registered)
 
 ---
