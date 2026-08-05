@@ -5,12 +5,18 @@ import { getSelectableIndustries } from '../../data/industries'
 import { US_STATE_OPTIONS } from '../../data/usStates'
 import { KrewtreeLogo, KrewtreeBgMark } from '../../components/Logo'
 import { useAuth } from '../../context/AuthContext'
+import { FEATURES } from '../../config/features'
 import styles from './CompanySignupPage.module.css'
 
 const BENEFITS = [
   { key: 'clipboard', label: 'Post unlimited jobs — 14-day free trial, no credit card' },
   { key: 'users', label: 'Reach verified skilled-trades workers' },
-  { key: 'zap', label: 'Hire same-day with Regulix Ready applicants' },
+  {
+    key: 'zap',
+    label: FEATURES.regulix
+      ? 'Hire same-day with Regulix Ready applicants'
+      : 'Review applicants and hire with confidence',
+  },
   { key: 'inbox', label: 'Applicant tracking + direct messaging included' },
 ]
 
@@ -248,8 +254,9 @@ export const CompanySignupPage: React.FC = () => {
                 maxWidth: 340,
               }}
             >
-              Post jobs and find Regulix Ready workers who can start the same day they're hired — no
-              paperwork delays.
+              {FEATURES.regulix
+                ? "Post jobs and find Regulix Ready workers who can start the same day they're hired — no paperwork delays."
+                : 'Post jobs and find verified skilled-trades workers ready to get to work.'}
             </p>
             <div className={styles.benefitsList}>
               {BENEFITS.map(({ key, label }) => (
@@ -490,7 +497,7 @@ export const CompanySignupPage: React.FC = () => {
           color: 'rgba(229,218,195,0.15)',
         }}
       >
-        A Regulix Partner Platform · © 2026 krewtree
+        {FEATURES.regulix ? 'A Regulix Partner Platform · © 2026 krewtree' : '© 2026 krewtree'}
       </p>
     </div>
   )

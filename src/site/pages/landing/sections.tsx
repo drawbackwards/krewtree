@@ -102,7 +102,7 @@ export const HowItWorksSection = () => (
           {
             num: '02',
             title: 'Connect',
-            body: 'Workers browse and apply to jobs across industries. Companies post jobs and find qualified, hire-ready applicants.',
+            body: 'Workers browse and apply to open jobs. Companies post jobs and find qualified, hire-ready applicants.',
           },
           {
             num: '03',

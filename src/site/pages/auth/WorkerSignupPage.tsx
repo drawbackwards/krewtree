@@ -4,13 +4,19 @@ import { Button, Input, Checkbox } from '../../../components'
 import { getSelectableIndustries } from '../../data/industries'
 import { KrewtreeLogo, KrewtreeBgMark } from '../../components/Logo'
 import { useAuth } from '../../context/AuthContext'
+import { FEATURES } from '../../config/features'
 import { BriefcaseIcon, ShieldCheckIcon, LightningIcon, SparkleIcon } from '../../icons'
 import styles from './WorkerSignupPage.module.css'
 
 const BENEFITS: { icon: React.ReactNode; label: string }[] = [
   { icon: <BriefcaseIcon size={15} />, label: 'Browse skilled-trades jobs near you' },
   { icon: <ShieldCheckIcon size={15} />, label: 'One profile works everywhere you want to work' },
-  { icon: <LightningIcon size={15} />, label: 'Get Regulix Ready — get hired the same day' },
+  {
+    icon: <LightningIcon size={15} />,
+    label: FEATURES.regulix
+      ? 'Get Regulix Ready — get hired the same day'
+      : 'Apply in minutes with one profile',
+  },
   { icon: <SparkleIcon size={15} />, label: 'Free to sign up, always' },
 ]
 
@@ -192,7 +198,7 @@ export const WorkerSignupPage: React.FC = () => {
                 maxWidth: 340,
               }}
             >
-              Create a free profile and get connected to employers across every industry.
+              Create a free profile and get connected to employers hiring in the skilled trades.
             </p>
             <div className={styles.benefitsList}>
               {BENEFITS.map(({ icon, label }) => (
@@ -561,7 +567,7 @@ export const WorkerSignupPage: React.FC = () => {
           color: 'rgba(229,218,195,0.15)',
         }}
       >
-        A Regulix Partner Platform · © 2026 krewtree
+        {FEATURES.regulix ? 'A Regulix Partner Platform · © 2026 krewtree' : '© 2026 krewtree'}
       </p>
     </div>
   )

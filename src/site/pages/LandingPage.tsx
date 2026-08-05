@@ -136,8 +136,8 @@ const HeroDefault = () => {
             }}
           >
             {FEATURES.regulix
-              ? 'Find jobs across every industry, build a verified profile, and get hired faster with Regulix.'
-              : 'Find jobs across every industry, build a verified profile, and connect with companies hiring now.'}
+              ? 'Find skilled-trades work, build a verified profile, and get hired faster with Regulix.'
+              : 'Find skilled-trades work, build a verified profile, and connect with companies hiring now.'}
           </p>
           <ul
             style={{
@@ -261,7 +261,7 @@ const HeroDefault = () => {
           >
             {FEATURES.regulix
               ? 'Post jobs, find verified workers, and hire people who can start tomorrow — paperwork already done.'
-              : 'Post jobs across every industry and find verified workers ready to get to work.'}
+              : 'Post skilled-trades jobs and find verified workers ready to get to work.'}
           </p>
           <ul
             style={{
