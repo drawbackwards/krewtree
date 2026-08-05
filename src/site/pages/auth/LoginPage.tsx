@@ -47,7 +47,7 @@ const StatIcon = ({ icon }: { icon: string }) => {
 }
 
 const STATS = [
-  { icon: 'hardhat', label: '54,000+ active workers across 8 industries' },
+  { icon: 'hardhat', label: 'Verified skilled-trades workers' },
   { icon: 'building', label: '620+ verified companies actively hiring' },
   { icon: 'zap', label: 'Same-day hiring with Regulix Ready workers' },
 ]

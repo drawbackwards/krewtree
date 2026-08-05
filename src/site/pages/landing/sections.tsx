@@ -1,8 +1,9 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button, Badge } from '../../../components'
-// TODO: replace with real Supabase queries for featured industries and jobs
-import { industries, jobs } from '../../data/mock'
+// TODO: replace with real Supabase queries for featured jobs
+import { jobs } from '../../data/mock'
+import { getSelectableIndustries } from '../../data/industries'
 import { JobCard } from '../../components/JobCard/JobCard'
 import { FEATURES } from '../../config/features'
 import { CheckIcon } from '../../icons'
@@ -277,7 +278,7 @@ export const IndustriesSection = () => {
             margin: '0 auto',
           }}
         >
-          {industries.map((ind) => (
+          {getSelectableIndustries().map((ind) => (
             <button
               key={ind.id}
               onClick={() => navigate(`/site/jobs?industry=${ind.slug}`)}
@@ -317,15 +318,6 @@ export const IndustriesSection = () => {
                   }}
                 >
                   {ind.name}
-                </p>
-                <p
-                  style={{
-                    fontSize: 'var(--kt-text-xs)',
-                    color: 'var(--kt-text-muted)',
-                    marginTop: 2,
-                  }}
-                >
-                  {ind.jobCount.toLocaleString()} jobs
                 </p>
               </div>
             </button>

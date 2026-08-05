@@ -150,7 +150,7 @@ const HeroDefault = () => {
             }}
           >
             {[
-              'Browse 12,400+ live jobs',
+              'Browse open jobs',
               'Build a verified work profile',
               FEATURES.regulix
                 ? 'Get Regulix Ready — hire same day'
@@ -274,7 +274,7 @@ const HeroDefault = () => {
             }}
           >
             {[
-              'Post jobs across every industry',
+              'Post jobs and reach skilled workers',
               FEATURES.regulix
                 ? 'Find Regulix Ready workers instantly'
                 : 'Find verified workers instantly',
@@ -315,58 +315,9 @@ const HeroDefault = () => {
         </button>
       </div>
 
-      {/* Stats */}
-      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 var(--kt-space-6) 72px' }}>
-        <div
-          className={styles.statsGrid}
-          style={{
-            display: 'flex',
-            justifyContent: 'center',
-            gap: 0,
-            paddingTop: 40,
-            flexWrap: 'wrap',
-          }}
-        >
-          {[
-            { num: '12,400+', label: 'Active Jobs' },
-            { num: '54,000+', label: 'Workers' },
-            { num: '620+', label: 'Verified Companies' },
-            { num: '8', label: 'Industries' },
-          ].map((s, i, arr) => (
-            <div
-              key={s.num}
-              className={styles.statItem}
-              style={{
-                flex: '1 0 120px',
-                textAlign: 'center',
-                padding: '0 32px',
-                borderRight: i < arr.length - 1 ? '1px solid var(--kt-border)' : 'none',
-                marginBottom: 16,
-              }}
-            >
-              <div
-                style={{
-                  fontSize: 'clamp(22px, 2.5vw, 34px)',
-                  fontWeight: 'var(--kt-weight-bold)',
-                  color: 'var(--kt-text)',
-                  lineHeight: 1,
-                }}
-              >
-                {s.num}
-              </div>
-              <div
-                style={{
-                  fontSize: 'var(--kt-text-sm)',
-                  color: 'var(--kt-text-muted)',
-                  marginTop: 4,
-                }}
-              >
-                {s.label}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+      {/* Stats row removed for beta — the prior figures (active jobs, workers,
+          companies, industries) were placeholder/mock numbers. Restore with a
+          real-metrics source once we have one. */}
     </section>
   )
 }

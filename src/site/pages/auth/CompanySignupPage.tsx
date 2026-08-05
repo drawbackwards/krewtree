@@ -9,7 +9,7 @@ import styles from './CompanySignupPage.module.css'
 
 const BENEFITS = [
   { key: 'clipboard', label: 'Post unlimited jobs — 14-day free trial, no credit card' },
-  { key: 'users', label: 'Access 54,000+ verified workers across 8 industries' },
+  { key: 'users', label: 'Reach verified skilled-trades workers' },
   { key: 'zap', label: 'Hire same-day with Regulix Ready applicants' },
   { key: 'inbox', label: 'Applicant tracking + direct messaging included' },
 ]
