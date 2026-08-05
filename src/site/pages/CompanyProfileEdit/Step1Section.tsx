@@ -1,14 +1,14 @@
 import React, { useRef, useState } from 'react'
 import { Button, Input, Select, MultiSelect, Checkbox } from '../../../components'
 import { ImageCropModal } from '../../components/ImageCropModal'
-import { INDUSTRIES } from '../../data/industries'
+import { getSelectableIndustries } from '../../data/industries'
 import { US_STATE_OPTIONS } from '../../data/usStates'
 import { useAuth } from '../../context/AuthContext'
 import { uploadCompanyLogo, updateCompanyLogoUrl } from '../../services/companyService'
 import type { Step1Data } from './types'
 import styles from './CompanyProfileEdit.module.css'
 
-const INDUSTRY_OPTIONS = INDUSTRIES.map((i) => ({ value: i.slug, label: i.name }))
+const INDUSTRY_OPTIONS = getSelectableIndustries().map((i) => ({ value: i.slug, label: i.name }))
 
 export const Step1Section: React.FC<{
   data: Step1Data

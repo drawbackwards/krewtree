@@ -6,9 +6,9 @@ import { FEATURES } from '../config/features'
 import { CheckIcon } from '../icons'
 import styles from './landing/LandingHero.module.css'
 import {
-  FeaturedJobsSection,
+  // FeaturedJobsSection — hidden until real jobs exist (see composition below)
   HowItWorksSection,
-  IndustriesSection,
+  // IndustriesSection — hidden for construction-only beta (see composition below)
   RegulixBannerSection,
   CTASection,
   FooterSection,
@@ -136,8 +136,8 @@ const HeroDefault = () => {
             }}
           >
             {FEATURES.regulix
-              ? 'Find jobs across every industry, build a verified profile, and get hired faster with Regulix.'
-              : 'Find jobs across every industry, build a verified profile, and connect with companies hiring now.'}
+              ? 'Find skilled-trades work, build a verified profile, and get hired faster with Regulix.'
+              : 'Find skilled-trades work, build a verified profile, and connect with companies hiring now.'}
           </p>
           <ul
             style={{
@@ -150,7 +150,7 @@ const HeroDefault = () => {
             }}
           >
             {[
-              'Browse 12,400+ live jobs',
+              'Browse open jobs',
               'Build a verified work profile',
               FEATURES.regulix
                 ? 'Get Regulix Ready — hire same day'
@@ -261,7 +261,7 @@ const HeroDefault = () => {
           >
             {FEATURES.regulix
               ? 'Post jobs, find verified workers, and hire people who can start tomorrow — paperwork already done.'
-              : 'Post jobs across every industry and find verified workers ready to get to work.'}
+              : 'Post skilled-trades jobs and find verified workers ready to get to work.'}
           </p>
           <ul
             style={{
@@ -274,7 +274,7 @@ const HeroDefault = () => {
             }}
           >
             {[
-              'Post jobs across every industry',
+              'Post jobs and reach skilled workers',
               FEATURES.regulix
                 ? 'Find Regulix Ready workers instantly'
                 : 'Find verified workers instantly',
@@ -315,58 +315,9 @@ const HeroDefault = () => {
         </button>
       </div>
 
-      {/* Stats */}
-      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 var(--kt-space-6) 72px' }}>
-        <div
-          className={styles.statsGrid}
-          style={{
-            display: 'flex',
-            justifyContent: 'center',
-            gap: 0,
-            paddingTop: 40,
-            flexWrap: 'wrap',
-          }}
-        >
-          {[
-            { num: '12,400+', label: 'Active Jobs' },
-            { num: '54,000+', label: 'Workers' },
-            { num: '620+', label: 'Verified Companies' },
-            { num: '8', label: 'Industries' },
-          ].map((s, i, arr) => (
-            <div
-              key={s.num}
-              className={styles.statItem}
-              style={{
-                flex: '1 0 120px',
-                textAlign: 'center',
-                padding: '0 32px',
-                borderRight: i < arr.length - 1 ? '1px solid var(--kt-border)' : 'none',
-                marginBottom: 16,
-              }}
-            >
-              <div
-                style={{
-                  fontSize: 'clamp(22px, 2.5vw, 34px)',
-                  fontWeight: 'var(--kt-weight-bold)',
-                  color: 'var(--kt-text)',
-                  lineHeight: 1,
-                }}
-              >
-                {s.num}
-              </div>
-              <div
-                style={{
-                  fontSize: 'var(--kt-text-sm)',
-                  color: 'var(--kt-text-muted)',
-                  marginTop: 4,
-                }}
-              >
-                {s.label}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+      {/* Stats row removed for beta — the prior figures (active jobs, workers,
+          companies, industries) were placeholder/mock numbers. Restore with a
+          real-metrics source once we have one. */}
     </section>
   )
 }
@@ -377,9 +328,11 @@ const HeroDefault = () => {
 export const LandingPage: React.FC = () => (
   <div style={{ minHeight: '100vh', background: 'var(--kt-bg)' }}>
     <HeroDefault />
-    <FeaturedJobsSection />
+    {/* Featured jobs hidden until real jobs exist (was mock sponsored jobs).
+        Restore <FeaturedJobsSection /> when featured jobs come from a real query. */}
     <HowItWorksSection />
-    <IndustriesSection />
+    {/* Browse-by-industry hidden for the construction-only beta. Restore
+        <IndustriesSection /> when more industries are supported. */}
     <RegulixBannerSection />
     <CTASection />
     <FooterSection />

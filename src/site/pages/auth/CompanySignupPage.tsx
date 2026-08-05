@@ -1,16 +1,22 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Button, Input, Select, Checkbox } from '../../../components'
-import { INDUSTRIES } from '../../data/industries'
+import { getSelectableIndustries } from '../../data/industries'
 import { US_STATE_OPTIONS } from '../../data/usStates'
 import { KrewtreeLogo, KrewtreeBgMark } from '../../components/Logo'
 import { useAuth } from '../../context/AuthContext'
+import { FEATURES } from '../../config/features'
 import styles from './CompanySignupPage.module.css'
 
 const BENEFITS = [
   { key: 'clipboard', label: 'Post unlimited jobs — 14-day free trial, no credit card' },
-  { key: 'users', label: 'Access 54,000+ verified workers across 8 industries' },
-  { key: 'zap', label: 'Hire same-day with Regulix Ready applicants' },
+  { key: 'users', label: 'Reach verified skilled-trades workers' },
+  {
+    key: 'zap',
+    label: FEATURES.regulix
+      ? 'Hire same-day with Regulix Ready applicants'
+      : 'Review applicants and hire with confidence',
+  },
   { key: 'inbox', label: 'Applicant tracking + direct messaging included' },
 ]
 
@@ -85,7 +91,7 @@ export const CompanySignupPage: React.FC = () => {
   const [authError, setAuthError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const industryOptions = INDUSTRIES.map((ind) => ({
+  const industryOptions = getSelectableIndustries().map((ind) => ({
     value: ind.slug,
     label: ind.name,
   }))
@@ -248,8 +254,9 @@ export const CompanySignupPage: React.FC = () => {
                 maxWidth: 340,
               }}
             >
-              Post jobs and find Regulix Ready workers who can start the same day they're hired — no
-              paperwork delays.
+              {FEATURES.regulix
+                ? "Post jobs and find Regulix Ready workers who can start the same day they're hired — no paperwork delays."
+                : 'Post jobs and find verified skilled-trades workers ready to get to work.'}
             </p>
             <div className={styles.benefitsList}>
               {BENEFITS.map(({ key, label }) => (
@@ -284,35 +291,8 @@ export const CompanySignupPage: React.FC = () => {
               ))}
             </div>
 
-            {/* Social proof tile */}
-            <div
-              className={styles.socialProof}
-              style={{
-                marginTop: 40,
-                padding: '16px 20px 16px 0',
-              }}
-            >
-              <span
-                style={{
-                  fontSize: 'var(--kt-text-2xl)',
-                  fontWeight: 'var(--kt-weight-bold)',
-                  color: 'var(--kt-sand-300)',
-                  lineHeight: 1,
-                }}
-              >
-                620+
-              </span>
-              <span
-                style={{
-                  fontSize: 'var(--kt-text-xs)',
-                  color: 'rgba(255,255,255,0.75)',
-                  marginTop: 4,
-                  letterSpacing: '0.02em',
-                }}
-              >
-                verified companies hiring on krewtree
-              </span>
-            </div>
+            {/* Social-proof stat removed for beta — "620+ verified companies"
+                was a placeholder. Restore with a real count once we have one. */}
           </div>
 
           {/* Right — white card */}
@@ -517,7 +497,7 @@ export const CompanySignupPage: React.FC = () => {
           color: 'rgba(229,218,195,0.15)',
         }}
       >
-        A Regulix Partner Platform · © 2026 krewtree
+        {FEATURES.regulix ? 'A Regulix Partner Platform · © 2026 krewtree' : '© 2026 krewtree'}
       </p>
     </div>
   )

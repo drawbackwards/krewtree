@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Button, Input } from '../../../components'
 import { KrewtreeLogo, KrewtreeBgMark } from '../../components/Logo'
 import { useAuth } from '../../context/AuthContext'
+import { FEATURES } from '../../config/features'
 import styles from './LoginPage.module.css'
 
 // ── SVG stat icons ─────────────────────────────────────────────────────────────
@@ -47,9 +48,14 @@ const StatIcon = ({ icon }: { icon: string }) => {
 }
 
 const STATS = [
-  { icon: 'hardhat', label: '54,000+ active workers across 8 industries' },
-  { icon: 'building', label: '620+ verified companies actively hiring' },
-  { icon: 'zap', label: 'Same-day hiring with Regulix Ready workers' },
+  { icon: 'hardhat', label: 'Verified skilled-trades workers' },
+  { icon: 'building', label: 'Local companies actively hiring' },
+  {
+    icon: 'zap',
+    label: FEATURES.regulix
+      ? 'Same-day hiring with Regulix Ready workers'
+      : 'Message and hire workers directly',
+  },
 ]
 
 // ── Page ───────────────────────────────────────────────────────────────────────
@@ -348,7 +354,7 @@ export const LoginPage: React.FC = () => {
           letterSpacing: '0.02em',
         }}
       >
-        A Regulix Partner Platform · © 2026 krewtree
+        {FEATURES.regulix ? 'A Regulix Partner Platform · © 2026 krewtree' : '© 2026 krewtree'}
       </p>
     </div>
   )

@@ -188,7 +188,7 @@ export const SignupRolePage: React.FC = () => {
               }}
             >
               {[
-                'Browse 12,400+ live jobs',
+                'Browse open jobs',
                 'One profile works everywhere',
                 FEATURES.regulix ? 'Become Regulix Ready' : 'Apply in minutes',
               ].map((item) => (
@@ -305,8 +305,8 @@ export const SignupRolePage: React.FC = () => {
               }}
             >
               {[
-                'Post jobs across every industry',
-                'Access 54,000+ verified workers',
+                'Post skilled-trades jobs',
+                'Reach verified skilled-trades workers',
                 FEATURES.regulix ? 'Hire same-day — no delays' : 'Manage applicants in one place',
               ].map((item) => (
                 <li

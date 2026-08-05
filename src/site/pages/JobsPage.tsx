@@ -4,7 +4,8 @@ import { Input, Badge } from '../../components'
 import { JobCard } from '../components/JobCard/JobCard'
 import { QuickApplyModal } from '../components/QuickApplyModal/QuickApplyModal'
 import type { SavedSearch, Job } from '../types'
-import { industries, locationRegions } from '../data/mock'
+import { locationRegions } from '../data/mock'
+import { getSelectableIndustries } from '../data/industries'
 import { searchJobs, getJobFacetCounts, getAppliedJobIds } from '../services/jobService'
 import {
   getCityCoords,
@@ -978,7 +979,7 @@ export const JobsPage: React.FC = () => {
               </div>
 
               <FilterSection title="Industry">
-                {industries.map((ind) => (
+                {getSelectableIndustries().map((ind) => (
                   <CheckFilter
                     key={ind.id}
                     label={ind.name}
@@ -1550,7 +1551,7 @@ export const JobsPage: React.FC = () => {
 
               {/* Industry */}
               <FilterSection title="Industry">
-                {industries.map((ind) => (
+                {getSelectableIndustries().map((ind) => (
                   <CheckFilter
                     key={ind.id}
                     label={ind.name}
