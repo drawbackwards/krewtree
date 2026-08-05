@@ -6,9 +6,9 @@ import { FEATURES } from '../config/features'
 import { CheckIcon } from '../icons'
 import styles from './landing/LandingHero.module.css'
 import {
-  FeaturedJobsSection,
+  // FeaturedJobsSection — hidden until real jobs exist (see composition below)
   HowItWorksSection,
-  IndustriesSection,
+  // IndustriesSection — hidden for construction-only beta (see composition below)
   RegulixBannerSection,
   CTASection,
   FooterSection,
@@ -328,9 +328,11 @@ const HeroDefault = () => {
 export const LandingPage: React.FC = () => (
   <div style={{ minHeight: '100vh', background: 'var(--kt-bg)' }}>
     <HeroDefault />
-    <FeaturedJobsSection />
+    {/* Featured jobs hidden until real jobs exist (was mock sponsored jobs).
+        Restore <FeaturedJobsSection /> when featured jobs come from a real query. */}
     <HowItWorksSection />
-    <IndustriesSection />
+    {/* Browse-by-industry hidden for the construction-only beta. Restore
+        <IndustriesSection /> when more industries are supported. */}
     <RegulixBannerSection />
     <CTASection />
     <FooterSection />

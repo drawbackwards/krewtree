@@ -8,7 +8,7 @@ import { BriefcaseIcon, ShieldCheckIcon, LightningIcon, SparkleIcon } from '../.
 import styles from './WorkerSignupPage.module.css'
 
 const BENEFITS: { icon: React.ReactNode; label: string }[] = [
-  { icon: <BriefcaseIcon size={15} />, label: 'Browse 12,400+ jobs across 8 industries' },
+  { icon: <BriefcaseIcon size={15} />, label: 'Browse skilled-trades jobs near you' },
   { icon: <ShieldCheckIcon size={15} />, label: 'One profile works everywhere you want to work' },
   { icon: <LightningIcon size={15} />, label: 'Get Regulix Ready — get hired the same day' },
   { icon: <SparkleIcon size={15} />, label: 'Free to sign up, always' },
@@ -229,35 +229,8 @@ export const WorkerSignupPage: React.FC = () => {
               ))}
             </div>
 
-            {/* Social proof tile */}
-            <div
-              className={styles.socialProof}
-              style={{
-                marginTop: 40,
-                padding: '16px 20px 16px 0',
-              }}
-            >
-              <span
-                style={{
-                  fontSize: 'var(--kt-text-2xl)',
-                  fontWeight: 'var(--kt-weight-bold)',
-                  color: 'var(--kt-sand-300)',
-                  lineHeight: 1,
-                }}
-              >
-                54,000+
-              </span>
-              <span
-                style={{
-                  fontSize: 'var(--kt-text-xs)',
-                  color: 'rgba(255,255,255,0.75)',
-                  marginTop: 4,
-                  letterSpacing: '0.02em',
-                }}
-              >
-                workers already on krewtree
-              </span>
-            </div>
+            {/* Social-proof stat removed for beta — "54,000+ workers" was a
+                placeholder. Restore with a real count once we have one. */}
           </div>
 
           {/* Right — white card */}

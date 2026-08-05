@@ -284,35 +284,8 @@ export const CompanySignupPage: React.FC = () => {
               ))}
             </div>
 
-            {/* Social proof tile */}
-            <div
-              className={styles.socialProof}
-              style={{
-                marginTop: 40,
-                padding: '16px 20px 16px 0',
-              }}
-            >
-              <span
-                style={{
-                  fontSize: 'var(--kt-text-2xl)',
-                  fontWeight: 'var(--kt-weight-bold)',
-                  color: 'var(--kt-sand-300)',
-                  lineHeight: 1,
-                }}
-              >
-                620+
-              </span>
-              <span
-                style={{
-                  fontSize: 'var(--kt-text-xs)',
-                  color: 'rgba(255,255,255,0.75)',
-                  marginTop: 4,
-                  letterSpacing: '0.02em',
-                }}
-              >
-                verified companies hiring on krewtree
-              </span>
-            </div>
+            {/* Social-proof stat removed for beta — "620+ verified companies"
+                was a placeholder. Restore with a real count once we have one. */}
           </div>
 
           {/* Right — white card */}
