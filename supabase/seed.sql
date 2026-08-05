@@ -17,7 +17,12 @@ INSERT INTO industries (id, name, slug, color, job_count) VALUES
   ('transportation','Transportation','transportation', '#0A232D', 1677),
   ('manufacturing', 'Manufacturing', 'manufacturing',  '#454545', 1389),
   ('landscaping',   'Landscaping',   'landscaping',   '#4d5a16',  894),
-  ('security',      'Security',      'security',      '#164355',  762);
+  ('security',      'Security',      'security',      '#164355',  762)
+ON CONFLICT (id) DO UPDATE SET
+  name = EXCLUDED.name,
+  slug = EXCLUDED.slug,
+  color = EXCLUDED.color,
+  job_count = EXCLUDED.job_count;
 
 -- Skills are seeded via migration 20260428000001_sync_skills.sql
 
