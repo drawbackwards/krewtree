@@ -651,7 +651,7 @@ export const FooterSection = () => (
         color: 'rgba(229,218,195,0.4)',
       }}
     >
-      {['About', 'Employers', 'Workers', 'Industries', 'Privacy', 'Terms'].map((l) => (
+      {['Privacy', 'Terms'].map((l) => (
         <a
           key={l}
           href="#"
