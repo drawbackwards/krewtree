@@ -29,6 +29,9 @@ dist/
 # Local project log — running summary, not for version control
 PROJECT_LOG.md
 
+# Local beta-readiness checklist — internal planning, not for version control
+BETA_READINESS.md
+
 # Local budgeting spreadsheets — not project code
 krewtree-expense-table.xlsx
 krewtree-monthly-budget.xlsx
