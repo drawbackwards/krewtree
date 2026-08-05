@@ -1,8 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Button, Input, Checkbox } from '../../../components'
-// TODO: replace with real Supabase query for industries list
-import { industries } from '../../data/mock'
+import { getSelectableIndustries } from '../../data/industries'
 import { KrewtreeLogo, KrewtreeBgMark } from '../../components/Logo'
 import { useAuth } from '../../context/AuthContext'
 import { BriefcaseIcon, ShieldCheckIcon, LightningIcon, SparkleIcon } from '../../icons'
@@ -49,6 +48,10 @@ export const WorkerSignupPage: React.FC = () => {
 
   const [authError, setAuthError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Industries a user may pick — gated to construction for beta (see
+  // SELECTABLE_INDUSTRY_IDS in data/industries.ts). Full list stays intact.
+  const industryChoices = getSelectableIndustries()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -404,7 +407,7 @@ export const WorkerSignupPage: React.FC = () => {
                     {selectedIndustries.length === 0
                       ? 'Select industries…'
                       : selectedIndustries.length === 1
-                        ? (industries.find((i) => i.slug === selectedIndustries[0])?.name ??
+                        ? (industryChoices.find((i) => i.slug === selectedIndustries[0])?.name ??
                           '1 selected')
                         : `${selectedIndustries.length} industries selected`}
                   </span>
@@ -446,7 +449,7 @@ export const WorkerSignupPage: React.FC = () => {
                       overflow: 'hidden',
                     }}
                   >
-                    {industries.map((ind) => {
+                    {industryChoices.map((ind) => {
                       const active = selectedIndustries.includes(ind.slug)
                       return (
                         <button

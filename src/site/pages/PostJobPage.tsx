@@ -14,6 +14,7 @@ import {
   DotsVerticalIcon,
 } from '../icons'
 import { industries } from '../data/mock'
+import { getSelectableIndustries } from '../data/industries'
 import { FEATURES } from '../config/features'
 import {
   createJob,
@@ -712,7 +713,8 @@ export const PostJobPage: React.FC = () => {
                   required
                   options={[
                     { value: '', label: 'Select an industry…' },
-                    ...industries.map((i) => ({ value: i.slug, label: i.name })),
+                    // Gated to construction for beta; resolution above still uses the full list.
+                    ...getSelectableIndustries().map((i) => ({ value: i.slug, label: i.name })),
                   ]}
                 />
               </FieldRow>
