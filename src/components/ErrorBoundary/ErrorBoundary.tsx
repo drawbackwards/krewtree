@@ -1,4 +1,5 @@
 import React from 'react'
+import { reportError } from '../../lib/sentry'
 
 interface State {
   hasError: boolean
@@ -10,6 +11,10 @@ export class ErrorBoundary extends React.Component<React.PropsWithChildren, Stat
 
   static getDerivedStateFromError(error: Error): State {
     return { hasError: true, error }
+  }
+
+  componentDidCatch(error: Error, info: React.ErrorInfo): void {
+    reportError(error, { componentStack: info.componentStack })
   }
 
   render() {
