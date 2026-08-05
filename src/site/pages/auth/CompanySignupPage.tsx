@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Button, Input, Select, Checkbox } from '../../../components'
-import { INDUSTRIES } from '../../data/industries'
+import { getSelectableIndustries } from '../../data/industries'
 import { US_STATE_OPTIONS } from '../../data/usStates'
 import { KrewtreeLogo, KrewtreeBgMark } from '../../components/Logo'
 import { useAuth } from '../../context/AuthContext'
@@ -85,7 +85,7 @@ export const CompanySignupPage: React.FC = () => {
   const [authError, setAuthError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const industryOptions = INDUSTRIES.map((ind) => ({
+  const industryOptions = getSelectableIndustries().map((ind) => ({
     value: ind.slug,
     label: ind.name,
   }))

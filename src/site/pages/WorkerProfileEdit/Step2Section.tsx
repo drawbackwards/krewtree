@@ -1,6 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { Button, Input } from '../../../components'
-import { INDUSTRIES, searchSkills, getSkillsByIndustry } from '../../data/industries'
+import {
+  INDUSTRIES,
+  getSelectableIndustries,
+  searchSkills,
+  getSkillsByIndustry,
+} from '../../data/industries'
 import type { SkillTag } from '../../data/industries'
 import { PlusIcon, XIcon } from './icons'
 import type { ProfileSkill, ProfileCert, Step2Data } from './types'
@@ -524,7 +529,7 @@ export const Step2Section: React.FC<{
 }> = ({ workerIndustries, allData, onChange, onAddIndustry, onRemoveIndustry }) => {
   const [addDropOpen, setAddDropOpen] = useState(false)
   const dropRef = useRef<HTMLDivElement>(null)
-  const available = INDUSTRIES.filter((i) => !workerIndustries.includes(i.id))
+  const available = getSelectableIndustries().filter((i) => !workerIndustries.includes(i.id))
 
   useEffect(() => {
     const fn = (e: MouseEvent) => {

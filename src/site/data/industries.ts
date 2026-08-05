@@ -707,6 +707,21 @@ export const INDUSTRIES: IndustryDef[] = [
 export const getIndustryById = (id: string): IndustryDef | undefined =>
   INDUSTRIES.find((i) => i.id === id)
 
+/**
+ * Industries currently offered in SELECTION UIs (signup + profile pickers).
+ *
+ * Beta ships skilled-trades only, so selection is limited to construction. This
+ * is deliberately the ONLY gate — the full `INDUSTRIES` list, every industry's
+ * skills, the `industries`/`skills` DB rows, and all services stay intact and
+ * keep resolving any industry for DISPLAY. To roll out another industry later,
+ * flesh out its `skills` above and add its id here; no other plumbing changes.
+ */
+export const SELECTABLE_INDUSTRY_IDS: readonly string[] = ['construction']
+
+/** The subset of `INDUSTRIES` a user may pick right now. See {@link SELECTABLE_INDUSTRY_IDS}. */
+export const getSelectableIndustries = (): IndustryDef[] =>
+  INDUSTRIES.filter((i) => SELECTABLE_INDUSTRY_IDS.includes(i.id))
+
 export const getSkillsByIndustry = (industryId: string): SkillTag[] =>
   INDUSTRIES.find((i) => i.id === industryId)?.skills ?? []
 
