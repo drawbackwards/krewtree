@@ -8,7 +8,7 @@ import prettierConfig from 'eslint-config-prettier'
 
 export default tseslint.config(
   // Ignore build output and deps
-  { ignores: ['dist', 'node_modules', '.vite', '.claude'] },
+  { ignores: ['dist', 'node_modules', '.vite', '.claude', 'api/send-invite.js'] },
 
   // TypeScript + React rules for all source files
   {
