@@ -297,20 +297,16 @@ export const LoginPage: React.FC = () => {
                   >
                     Password
                   </label>
-                  <button
-                    type="button"
+                  <Link
+                    to="/site/forgot-password"
                     style={{
-                      background: 'none',
-                      border: 'none',
-                      cursor: 'pointer',
                       fontSize: 'var(--kt-text-sm)',
                       color: 'var(--kt-accent)',
-                      fontFamily: 'var(--kt-font-sans)',
-                      padding: 0,
+                      textDecoration: 'none',
                     }}
                   >
                     Forgot password?
-                  </button>
+                  </Link>
                 </div>
                 <Input
                   id="login-password"
