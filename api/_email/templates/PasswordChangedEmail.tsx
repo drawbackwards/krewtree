@@ -3,8 +3,8 @@
  * password change (both personas). Non-optoutable security category.
  */
 
-import { TransactionalEmail } from '../TransactionalEmail'
-import { DetailRows } from './parts'
+import { TransactionalEmail } from '../TransactionalEmail.js'
+import { DetailRows } from './parts.js'
 
 export const passwordChangedSubject = 'Your Krewtree password was changed'
 

@@ -29,7 +29,7 @@ import {
   URLS,
   preferencesUrl,
   type NotificationCategory,
-} from './emailConstants'
+} from './emailConstants.js'
 
 export interface EmailLayoutProps {
   /** 40-100 chars. Extends the subject, does not repeat it. */

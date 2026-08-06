@@ -2,8 +2,8 @@
  * Security notice: the account phone number was changed. Non-optoutable.
  */
 
-import { TransactionalEmail } from '../TransactionalEmail'
-import { DetailRows } from './parts'
+import { TransactionalEmail } from '../TransactionalEmail.js'
+import { DetailRows } from './parts.js'
 
 export const phoneChangedSubject = 'Your Krewtree phone number was changed'
 

@@ -20,8 +20,8 @@
 // ============================================================
 import * as React from 'react'
 import { createClient } from '@supabase/supabase-js'
-import { InviteEmail } from './_email/templates/InviteEmail'
-import { sendKrewtreeEmail } from './_email/sendEmail'
+import { InviteEmail } from './_email/templates/InviteEmail.js'
+import { sendKrewtreeEmail } from './_email/sendEmail.js'
 
 // Minimal structural types for the Vercel Node request/response — avoids a
 // dependency on @vercel/node just for two interfaces.

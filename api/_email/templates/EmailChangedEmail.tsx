@@ -3,8 +3,8 @@
  * address after a successful email change (both personas). Non-optoutable.
  */
 
-import { TransactionalEmail } from '../TransactionalEmail'
-import { DetailRows } from './parts'
+import { TransactionalEmail } from '../TransactionalEmail.js'
+import { DetailRows } from './parts.js'
 
 export const emailChangedSubject = 'Your Krewtree email was changed'
 

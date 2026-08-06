@@ -7,7 +7,7 @@
  * so it uses the transactional footer (no preferences link). See docs/EMAIL_SETUP.md.
  */
 
-import { TransactionalEmail } from '../TransactionalEmail'
+import { TransactionalEmail } from '../TransactionalEmail.js'
 
 export const resetPasswordSubject = 'Reset your Krewtree password'
 
