@@ -3,8 +3,8 @@
  * Non-optoutable. The subject includes the location, so it is a function.
  */
 
-import { TransactionalEmail } from '../TransactionalEmail'
-import { DetailRows } from './parts'
+import { TransactionalEmail } from '../TransactionalEmail.js'
+import { DetailRows } from './parts.js'
 
 export const newSignInSubject = (location: string): string =>
   `New sign-in to Krewtree from ${location}`

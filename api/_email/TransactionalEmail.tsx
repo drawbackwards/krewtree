@@ -16,8 +16,8 @@ import {
   EmailLayout,
   EmailSecondaryCard,
   EmailText,
-} from './EmailLayout'
-import type { NotificationCategory } from './emailConstants'
+} from './EmailLayout.js'
+import type { NotificationCategory } from './emailConstants.js'
 
 export interface TransactionalEmailProps {
   /** Invisible preview text shown in inbox list, 40-100 chars. */

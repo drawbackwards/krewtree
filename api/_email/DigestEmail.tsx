@@ -15,8 +15,8 @@
 
 import * as React from 'react'
 import { Hr, Link, Section, Text } from '@react-email/components'
-import { EmailButton, EmailHeading, EmailLayout, EmailText } from './EmailLayout'
-import { COLORS, type NotificationCategory } from './emailConstants'
+import { EmailButton, EmailHeading, EmailLayout, EmailText } from './EmailLayout.js'
+import { COLORS, type NotificationCategory } from './emailConstants.js'
 
 export interface DigestItem {
   title: string

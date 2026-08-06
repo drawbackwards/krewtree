@@ -20,7 +20,7 @@
 
 import { Resend } from 'resend'
 import type * as React from 'react'
-import { SENDER, unsubscribeUrl as buildUnsubscribeUrl } from './emailConstants'
+import { SENDER, unsubscribeUrl as buildUnsubscribeUrl } from './emailConstants.js'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 

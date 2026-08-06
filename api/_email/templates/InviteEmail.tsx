@@ -8,8 +8,8 @@
  */
 
 import { Section } from '@react-email/components'
-import { EmailButton, EmailHeading, EmailLayout, EmailText } from '../EmailLayout'
-import { COLORS } from '../emailConstants'
+import { EmailButton, EmailHeading, EmailLayout, EmailText } from '../EmailLayout.js'
+import { COLORS } from '../emailConstants.js'
 
 export interface InviteEmailProps {
   /** Company the invitee is being asked to join. */

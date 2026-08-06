@@ -7,7 +7,7 @@
  * substitutes the real link at send time. See docs/EMAIL_SETUP.md.
  */
 
-import { TransactionalEmail } from '../TransactionalEmail'
+import { TransactionalEmail } from '../TransactionalEmail.js'
 
 export const verifyEmailSubject = 'Verify your email to finish setting up Krewtree'
 

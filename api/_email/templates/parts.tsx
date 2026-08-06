@@ -3,7 +3,7 @@
  */
 
 import { Text } from '@react-email/components'
-import { COLORS } from '../emailConstants'
+import { COLORS } from '../emailConstants.js'
 
 /**
  * Two-line content for a TransactionalEmail `secondaryCard`: a bold title line
