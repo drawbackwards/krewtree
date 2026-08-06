@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext'
 import { acceptInvite, getInviteEmail } from '../services/teamService'
 
 /**
- * Landing page for a company invite link (/site/join?token=…). The invitee must
+ * Landing page for a company invite link (/join?token=…). The invitee must
  * be signed in to accept (acceptance binds the seat to their auth user).
  *
  * If they are logged out we let them create an account or log in RIGHT HERE.
@@ -84,11 +84,11 @@ export const AcceptInvitePage: React.FC = () => {
         // ignore persistence failure
       }
       await refreshMemberships()
-      navigate('/site/dashboard/company', { replace: true })
+      navigate('/dashboard/company', { replace: true })
     })
   }, [isLoading, token, isLoggedIn, refreshMemberships, navigate, setPersona])
 
-  const returnTo = token ? `/site/join?token=${encodeURIComponent(token)}` : '/site/join'
+  const returnTo = token ? `/join?token=${encodeURIComponent(token)}` : '/join'
 
   const handleJoin = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault()
@@ -159,7 +159,7 @@ export const AcceptInvitePage: React.FC = () => {
           Invitation problem
         </h1>
         <p style={{ color: 'var(--kt-danger)', margin: 0, textAlign: 'center' }}>{error}</p>
-        <Button variant="outline" onClick={() => navigate('/site')}>
+        <Button variant="outline" onClick={() => navigate('/')}>
           Go home
         </Button>
       </>
@@ -241,7 +241,7 @@ export const AcceptInvitePage: React.FC = () => {
           Already have an account?{' '}
           <button
             type="button"
-            onClick={() => navigate(`/site/login?redirect=${encodeURIComponent(returnTo)}`)}
+            onClick={() => navigate(`/login?redirect=${encodeURIComponent(returnTo)}`)}
             style={{
               background: 'none',
               border: 'none',

@@ -61,7 +61,7 @@ export const Navbar: React.FC = () => {
     }
     setCreateOpen(false)
     setNewCompanyName('')
-    navigate('/site/settings/profile')
+    navigate('/settings/profile')
   }
   const location = useLocation()
   const navigate = useNavigate()
@@ -215,7 +215,7 @@ export const Navbar: React.FC = () => {
   const handleLogout = () => {
     setAvatarMenuOpen(false)
     logout()
-    navigate('/site')
+    navigate('/')
   }
 
   const firstName: string = user?.user_metadata?.first_name ?? ''
@@ -251,10 +251,10 @@ export const Navbar: React.FC = () => {
 
   // Logged-in users land on their own dashboard from the logo; visitors go home.
   const logoTarget = !isLoggedIn
-    ? '/site'
+    ? '/'
     : persona === 'company'
-      ? '/site/dashboard/company'
-      : '/site/dashboard/worker'
+      ? '/dashboard/company'
+      : '/dashboard/worker'
 
   return (
     <nav className={styles.nav}>
@@ -270,32 +270,32 @@ export const Navbar: React.FC = () => {
             {persona === 'worker' && (
               <>
                 <Link
-                  to="/site/dashboard/worker"
-                  className={[styles.link, isActive('/site/dashboard')].filter(Boolean).join(' ')}
+                  to="/dashboard/worker"
+                  className={[styles.link, isActive('/dashboard')].filter(Boolean).join(' ')}
                 >
                   Dashboard
                 </Link>
                 <Link
-                  to="/site/jobs"
-                  className={[styles.link, isActive('/site/jobs')].filter(Boolean).join(' ')}
+                  to="/jobs"
+                  className={[styles.link, isActive('/jobs')].filter(Boolean).join(' ')}
                 >
                   Find Jobs
                 </Link>
                 <Link
-                  to={`/site/profile/${user!.id}`}
-                  className={[styles.link, isActive('/site/profile')].filter(Boolean).join(' ')}
+                  to={`/profile/${user!.id}`}
+                  className={[styles.link, isActive('/profile')].filter(Boolean).join(' ')}
                 >
                   My Profile
                 </Link>
                 <Link
-                  to="/site/saved-jobs"
-                  className={[styles.link, isActive('/site/saved-jobs')].filter(Boolean).join(' ')}
+                  to="/saved-jobs"
+                  className={[styles.link, isActive('/saved-jobs')].filter(Boolean).join(' ')}
                 >
                   Saved Jobs
                 </Link>
                 <Link
-                  to="/site/messages"
-                  className={[styles.link, isActive('/site/messages')].filter(Boolean).join(' ')}
+                  to="/messages"
+                  className={[styles.link, isActive('/messages')].filter(Boolean).join(' ')}
                 >
                   {messagesLabel}
                 </Link>
@@ -304,38 +304,34 @@ export const Navbar: React.FC = () => {
             {persona === 'company' && (
               <>
                 <Link
-                  to="/site/dashboard/company"
-                  className={[styles.link, isActive('/site/dashboard/company')]
+                  to="/dashboard/company"
+                  className={[styles.link, isActive('/dashboard/company')]
                     .filter(Boolean)
                     .join(' ')}
                 >
                   Dashboard
                 </Link>
                 <Link
-                  to="/site/discover"
-                  className={[styles.link, isActive('/site/discover')].filter(Boolean).join(' ')}
+                  to="/discover"
+                  className={[styles.link, isActive('/discover')].filter(Boolean).join(' ')}
                 >
                   Discover
                 </Link>
                 <Link
-                  to="/site/dashboard/krew"
-                  className={[styles.link, isActive('/site/dashboard/krew')]
-                    .filter(Boolean)
-                    .join(' ')}
+                  to="/dashboard/krew"
+                  className={[styles.link, isActive('/dashboard/krew')].filter(Boolean).join(' ')}
                 >
                   My Krew
                 </Link>
                 <Link
-                  to="/site/dashboard/jobs"
-                  className={[styles.link, isActive('/site/dashboard/jobs')]
-                    .filter(Boolean)
-                    .join(' ')}
+                  to="/dashboard/jobs"
+                  className={[styles.link, isActive('/dashboard/jobs')].filter(Boolean).join(' ')}
                 >
                   My Jobs
                 </Link>
                 <Link
-                  to="/site/messages"
-                  className={[styles.link, isActive('/site/messages')].filter(Boolean).join(' ')}
+                  to="/messages"
+                  className={[styles.link, isActive('/messages')].filter(Boolean).join(' ')}
                 >
                   {messagesLabel}
                 </Link>
@@ -350,13 +346,13 @@ export const Navbar: React.FC = () => {
             /* ── Logged out: show auth buttons only ── */
             <>
               <Link
-                to="/site/login"
-                className={[styles.link, isActive('/site/login')].filter(Boolean).join(' ')}
+                to="/login"
+                className={[styles.link, isActive('/login')].filter(Boolean).join(' ')}
               >
                 Log in
               </Link>
               <Link
-                to="/site/signup"
+                to="/signup"
                 style={{
                   background: 'var(--kt-navy-900)',
                   color: 'white',
@@ -378,7 +374,7 @@ export const Navbar: React.FC = () => {
             /* ── Logged in: post a job, bell, avatar dropdown ── */
             <>
               {persona === 'company' && (
-                <Link to="/site/post-job" className={styles.postJobBtn}>
+                <Link to="/post-job" className={styles.postJobBtn}>
                   +<span className={styles.postJobLabel}>&nbsp;Post a Job</span>
                 </Link>
               )}
@@ -456,7 +452,7 @@ export const Navbar: React.FC = () => {
                               onClick={() => {
                                 setActiveCompany(m.companyId)
                                 setAvatarMenuOpen(false)
-                                navigate('/site/dashboard/company')
+                                navigate('/dashboard/company')
                               }}
                             >
                               <Avatar
@@ -502,7 +498,7 @@ export const Navbar: React.FC = () => {
                             role="menuitem"
                             onClick={() => {
                               setAvatarMenuOpen(false)
-                              navigate('/site/settings')
+                              navigate('/settings')
                             }}
                           >
                             <span className={styles.menuIconSlot}>
@@ -523,7 +519,7 @@ export const Navbar: React.FC = () => {
                         role="menuitem"
                         onClick={() => {
                           setAvatarMenuOpen(false)
-                          navigate('/site/settings/my-profile')
+                          navigate('/settings/my-profile')
                         }}
                       >
                         <span className={styles.menuIconSlot}>

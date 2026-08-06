@@ -3,21 +3,21 @@ import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import styles from './SettingsLayout.module.css'
 
-// Personal-settings pages; everything else under /site/settings is company.
-const PERSONAL_PATHS = new Set(['/site/settings/my-profile', '/site/settings/notifications'])
+// Personal-settings pages; everything else under /settings is company.
+const PERSONAL_PATHS = new Set(['/settings/my-profile', '/settings/notifications'])
 
 type NavItem = { to: string; label: string }
 
 const ORG_NAV: NavItem[] = [
-  { to: '/site/settings/profile', label: 'Profile' },
-  { to: '/site/settings/team', label: 'Team' },
-  { to: '/site/settings/pipeline', label: 'Pipeline' },
-  { to: '/site/settings/templates', label: 'Templates' },
+  { to: '/settings/profile', label: 'Profile' },
+  { to: '/settings/team', label: 'Team' },
+  { to: '/settings/pipeline', label: 'Pipeline' },
+  { to: '/settings/templates', label: 'Templates' },
 ]
-const ACCOUNT_NAV: NavItem[] = [{ to: '/site/settings/account', label: 'Account & billing' }]
+const ACCOUNT_NAV: NavItem[] = [{ to: '/settings/account', label: 'Account & billing' }]
 const PERSONAL_NAV: NavItem[] = [
-  { to: '/site/settings/my-profile', label: 'My profile' },
-  { to: '/site/settings/notifications', label: 'Notifications' },
+  { to: '/settings/my-profile', label: 'My profile' },
+  { to: '/settings/notifications', label: 'Notifications' },
 ]
 
 const NavList: React.FC<{ items: NavItem[] }> = ({ items }) => (

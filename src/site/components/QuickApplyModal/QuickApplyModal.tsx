@@ -163,7 +163,7 @@ export const QuickApplyModal: React.FC<QuickApplyModalProps> = ({
                 className={styles.cancelBtn}
                 onClick={() => {
                   handleClose()
-                  navigate('/site/jobs')
+                  navigate('/jobs')
                 }}
               >
                 Browse Jobs

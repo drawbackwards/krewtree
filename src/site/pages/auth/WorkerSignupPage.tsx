@@ -86,7 +86,7 @@ export const WorkerSignupPage: React.FC = () => {
 
     setPassword('')
     setConfirmPassword('')
-    navigate('/site/dashboard/worker')
+    navigate('/dashboard/worker')
   }
 
   return (
@@ -114,11 +114,7 @@ export const WorkerSignupPage: React.FC = () => {
           alignItems: 'center',
         }}
       >
-        <Link
-          to="/site"
-          style={{ display: 'inline-flex', lineHeight: 0 }}
-          aria-label="krewtree home"
-        >
+        <Link to="/" style={{ display: 'inline-flex', lineHeight: 0 }} aria-label="krewtree home">
           <KrewtreeLogo height={30} onDark accentColor="white" />
         </Link>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -129,7 +125,7 @@ export const WorkerSignupPage: React.FC = () => {
             Already have an account?
           </span>
           <Link
-            to="/site/login"
+            to="/login"
             style={{
               background: 'rgba(229,218,195,0.1)',
               color: 'var(--kt-sand-300)',
@@ -538,7 +534,7 @@ export const WorkerSignupPage: React.FC = () => {
                 Need to create a company account?{' '}
                 <button
                   type="button"
-                  onClick={() => navigate('/site/signup')}
+                  onClick={() => navigate('/signup')}
                   style={{
                     background: 'none',
                     border: 'none',

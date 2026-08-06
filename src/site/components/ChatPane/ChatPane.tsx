@@ -132,7 +132,7 @@ export const ChatPane: React.FC = () => {
 
   function handleOpenInbox(): void {
     closeChat()
-    navigate(`/site/messages?dm=${target!.workerId}`)
+    navigate(`/messages?dm=${target!.workerId}`)
   }
 
   return (
@@ -226,10 +226,7 @@ export const ChatPane: React.FC = () => {
                           )}
                           {msg.applicationId && msg.jobTitle && (
                             <>
-                              <Link
-                                to={`/site/jobs/${msg.jobId}`}
-                                className={styles.bubbleTimeLink}
-                              >
+                              <Link to={`/jobs/${msg.jobId}`} className={styles.bubbleTimeLink}>
                                 Re: {msg.jobTitle}
                               </Link>
                               {' · '}

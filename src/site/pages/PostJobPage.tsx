@@ -399,7 +399,7 @@ export const PostJobPage: React.FC = () => {
       }
       setScheduledSubmit(!!publishAt)
       setSubmitted(true)
-      setTimeout(() => navigate(publishAt ? '/site/dashboard/jobs' : `/site/jobs/${editId}`), 2500)
+      setTimeout(() => navigate(publishAt ? '/dashboard/jobs' : `/jobs/${editId}`), 2500)
     } else {
       const { data, error } = await createJob({
         companyId: activeCompanyId,
@@ -412,10 +412,7 @@ export const PostJobPage: React.FC = () => {
       }
       setScheduledSubmit(!!publishAt)
       setSubmitted(true)
-      setTimeout(
-        () => navigate(publishAt ? '/site/dashboard/jobs' : `/site/jobs/${data?.id ?? ''}`),
-        2500
-      )
+      setTimeout(() => navigate(publishAt ? '/dashboard/jobs' : `/jobs/${data?.id ?? ''}`), 2500)
     }
   }
 
@@ -444,7 +441,7 @@ export const PostJobPage: React.FC = () => {
     }
     setDraftSubmit(true)
     setSubmitted(true)
-    setTimeout(() => navigate('/site/dashboard/jobs'), 2000)
+    setTimeout(() => navigate('/dashboard/jobs'), 2000)
   }
 
   const scheduleValid = !!scheduleAt && new Date(scheduleAt).getTime() > Date.now()
@@ -1421,7 +1418,7 @@ export const PostJobPage: React.FC = () => {
               type="button"
               variant="ghost"
               size="md"
-              onClick={() => navigate('/site/dashboard/company')}
+              onClick={() => navigate('/dashboard/company')}
             >
               Cancel
             </Button>

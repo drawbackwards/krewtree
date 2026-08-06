@@ -27,11 +27,7 @@ export const SignupRolePage: React.FC = () => {
         }}
       >
         {/* Logo */}
-        <Link
-          to="/site"
-          style={{ display: 'inline-flex', lineHeight: 0 }}
-          aria-label="krewtree home"
-        >
+        <Link to="/" style={{ display: 'inline-flex', lineHeight: 0 }} aria-label="krewtree home">
           <KrewtreeLogo height={30} onDark={false} />
         </Link>
 
@@ -44,7 +40,7 @@ export const SignupRolePage: React.FC = () => {
             Already have an account?
           </span>
           <Link
-            to="/site/login"
+            to="/login"
             style={{
               background: 'transparent',
               color: 'var(--kt-text)',
@@ -110,7 +106,7 @@ export const SignupRolePage: React.FC = () => {
         <div className={styles.cardGrid}>
           {/* Worker track */}
           <Link
-            to="/site/signup/worker"
+            to="/signup/worker"
             className={styles.card}
             style={{
               background: 'var(--kt-navy-900)',
@@ -227,7 +223,7 @@ export const SignupRolePage: React.FC = () => {
 
           {/* Company track */}
           <Link
-            to="/site/signup/company"
+            to="/signup/company"
             className={styles.card}
             style={{
               background: 'var(--kt-olive-700)',
@@ -353,7 +349,7 @@ export const SignupRolePage: React.FC = () => {
         >
           Already have an account?{' '}
           <Link
-            to="/site/login"
+            to="/login"
             style={{
               color: 'var(--kt-text)',
               fontWeight: 'var(--kt-weight-semibold)',

@@ -611,7 +611,7 @@ export const CompanyProfileEditPage: React.FC = () => {
           <Button
             variant="outline"
             size="md"
-            onClick={() => safeNavigate(`/site/company/${activeCompanyId}`)}
+            onClick={() => safeNavigate(`/company/${activeCompanyId}`)}
           >
             View public profile
           </Button>

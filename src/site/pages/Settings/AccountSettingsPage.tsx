@@ -71,7 +71,7 @@ export const AccountSettingsPage: React.FC = () => {
     await logout()
     setIsDeleting(false)
     setDeleteOpen(false)
-    navigate('/site')
+    navigate('/')
   }
 
   return (

@@ -66,7 +66,7 @@ export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({
       </div>
 
       <div className={styles.footer}>
-        <Link to="/site/notifications" className={styles.viewAllLink}>
+        <Link to="/notifications" className={styles.viewAllLink}>
           View all
         </Link>
       </div>

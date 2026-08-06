@@ -280,7 +280,7 @@ export type ApplicationStatus =
 export type SlaState = 'none' | 'approaching' | 'breached'
 
 // ---- Company Applicant (for cross-job pipeline views) ----
-// Used by the company dashboard widget and /site/dashboard/applicants.
+// Used by the company dashboard widget and /dashboard/applicants.
 export type CompanyApplicant = {
   id: string // application id
   workerId: string

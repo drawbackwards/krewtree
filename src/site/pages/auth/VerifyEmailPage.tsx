@@ -25,11 +25,7 @@ export const VerifyEmailPage: React.FC = () => {
   }
 
   const dashboard =
-    persona === 'company'
-      ? '/site/dashboard/company'
-      : persona === 'worker'
-        ? '/site/dashboard/worker'
-        : '/site'
+    persona === 'company' ? '/dashboard/company' : persona === 'worker' ? '/dashboard/worker' : '/'
 
   if (isLoading) {
     return (
@@ -83,7 +79,7 @@ export const VerifyEmailPage: React.FC = () => {
         title="This link has expired"
         subtitle="Email verification links expire after a while. Sign in to request a new one."
       />
-      <Link to="/site/login" style={{ textDecoration: 'none' }}>
+      <Link to="/login" style={{ textDecoration: 'none' }}>
         <Button variant="primary" size="lg" fullWidth>
           Go to sign in
         </Button>

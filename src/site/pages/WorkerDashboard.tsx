@@ -400,12 +400,12 @@ export const WorkerDashboard: React.FC = () => {
             </p>
           </div>
           <div className={styles.headerActions}>
-            <Link to={`/site/profile/${user?.id}`} style={{ textDecoration: 'none' }}>
+            <Link to={`/profile/${user?.id}`} style={{ textDecoration: 'none' }}>
               <Button type="button" variant="outline" size="sm">
                 View profile
               </Button>
             </Link>
-            <Link to="/site/profile/edit" style={{ textDecoration: 'none' }}>
+            <Link to="/profile/edit" style={{ textDecoration: 'none' }}>
               <Button type="button" variant="primary" size="sm">
                 Edit profile
               </Button>
@@ -459,7 +459,7 @@ export const WorkerDashboard: React.FC = () => {
             {/* Header */}
             <div className={styles.tableCardHeader}>
               <h2 className={styles.tableCardTitle}>My applications</h2>
-              <Link to="/site/applications" className={styles.tableCardLink}>
+              <Link to="/applications" className={styles.tableCardLink}>
                 View all →
               </Link>
             </div>
@@ -480,7 +480,7 @@ export const WorkerDashboard: React.FC = () => {
               <div className={styles.emptyRow}>
                 No applications yet.{' '}
                 <Link
-                  to="/site/jobs"
+                  to="/jobs"
                   style={{
                     color: 'var(--kt-navy-600)',
                     fontWeight: 'var(--kt-weight-bold)',
@@ -502,7 +502,7 @@ export const WorkerDashboard: React.FC = () => {
                 {
                   label: 'View job',
                   mobileOnly: true,
-                  onClick: () => navigate(`/site/jobs/${app.jobId}`),
+                  onClick: () => navigate(`/jobs/${app.jobId}`),
                 },
               ]
               if (canAction) {
@@ -528,7 +528,7 @@ export const WorkerDashboard: React.FC = () => {
                   className={`${styles.row} ${styles.appsRow} ${app.stage === 'Closed' ? styles.rowClosed : ''}`}
                 >
                   <div className={styles.titleCell}>
-                    <Link to={`/site/jobs/${app.jobId}`} className={styles.titleLink}>
+                    <Link to={`/jobs/${app.jobId}`} className={styles.titleLink}>
                       {app.jobTitle}
                     </Link>
                     <div className={styles.subtitleText}>{app.companyName}</div>
@@ -551,7 +551,7 @@ export const WorkerDashboard: React.FC = () => {
                   </div>
 
                   <div className={styles.actionsCell}>
-                    <Link to={`/site/jobs/${app.jobId}`} style={{ textDecoration: 'none' }}>
+                    <Link to={`/jobs/${app.jobId}`} style={{ textDecoration: 'none' }}>
                       <button type="button" className={styles.primaryAction}>
                         View job
                       </button>
@@ -723,7 +723,7 @@ export const WorkerDashboard: React.FC = () => {
                   Dismiss
                 </button>
                 <Link
-                  to="/site/profile/edit"
+                  to="/profile/edit"
                   style={{
                     fontSize: 'var(--kt-text-sm)',
                     fontWeight: 'var(--kt-weight-bold)',
@@ -765,7 +765,7 @@ export const WorkerDashboard: React.FC = () => {
         <div className={styles.tableCard}>
           <div className={styles.tableCardHeader}>
             <h2 className={styles.tableCardTitle}>Saved jobs</h2>
-            <Link to="/site/saved-jobs" className={styles.tableCardLink}>
+            <Link to="/saved-jobs" className={styles.tableCardLink}>
               View all →
             </Link>
           </div>
@@ -774,7 +774,7 @@ export const WorkerDashboard: React.FC = () => {
             <div className={styles.emptyRow}>
               No saved jobs yet.{' '}
               <Link
-                to="/site/jobs"
+                to="/jobs"
                 style={{
                   color: 'var(--kt-navy-600)',
                   fontWeight: 'var(--kt-weight-bold)',
@@ -809,7 +809,7 @@ export const WorkerDashboard: React.FC = () => {
                       {isClosed ? (
                         <span className={styles.titleStruck}>{sj.jobTitle}</span>
                       ) : (
-                        <Link to={`/site/jobs/${sj.jobId}`} className={styles.titleLink}>
+                        <Link to={`/jobs/${sj.jobId}`} className={styles.titleLink}>
                           {sj.jobTitle}
                         </Link>
                       )}
@@ -891,7 +891,7 @@ export const WorkerDashboard: React.FC = () => {
         <div className={styles.newJobsContainer}>
           <div className={styles.newJobsHeader}>
             <h2 className={styles.sectionTitle}>New job matches</h2>
-            <Link to="/site/jobs" className={styles.tableCardLink}>
+            <Link to="/jobs" className={styles.tableCardLink}>
               Browse all jobs →
             </Link>
           </div>
@@ -900,7 +900,7 @@ export const WorkerDashboard: React.FC = () => {
             <div className={styles.emptyCard}>
               Add your skills to your profile to get personalised job recommendations.{' '}
               <Link
-                to="/site/profile/edit"
+                to="/profile/edit"
                 style={{
                   color: 'var(--kt-navy-600)',
                   fontWeight: 'var(--kt-weight-bold)',
@@ -928,7 +928,7 @@ export const WorkerDashboard: React.FC = () => {
                 <div className={styles.emptyCard}>
                   No new jobs available right now.{' '}
                   <Link
-                    to="/site/jobs"
+                    to="/jobs"
                     style={{
                       color: 'var(--kt-navy-600)',
                       fontWeight: 'var(--kt-weight-bold)',
@@ -947,11 +947,7 @@ export const WorkerDashboard: React.FC = () => {
                       .slice(0, 2)
                       .toUpperCase()
                     return (
-                      <Link
-                        key={job.jobId}
-                        to={`/site/jobs/${job.jobId}`}
-                        className={styles.newJobCard}
-                      >
+                      <Link key={job.jobId} to={`/jobs/${job.jobId}`} className={styles.newJobCard}>
                         <div className={styles.newJobCardHeader}>
                           <div className={styles.newJobCardLogo}>{initials}</div>
                           <div className={styles.newJobCardTitle}>{job.jobTitle}</div>

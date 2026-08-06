@@ -356,7 +356,7 @@ async function handler(req, res) {
     res.status(400).json({ error: "invalid_request" });
     return;
   }
-  const joinUrl = `${siteOrigin(req)}/site/join?token=${encodeURIComponent(body.token)}`;
+  const joinUrl = `${siteOrigin(req)}/join?token=${encodeURIComponent(body.token)}`;
   const company = body.companyName || "a company";
   const subject = `You're invited to join ${company} on Krewtree`;
   try {

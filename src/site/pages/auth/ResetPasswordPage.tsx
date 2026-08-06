@@ -61,7 +61,7 @@ export const ResetPasswordPage: React.FC = () => {
           title="This link has expired"
           subtitle="Password reset links can only be used once and expire after an hour. Request a fresh one to continue."
         />
-        <Link to="/site/forgot-password" style={{ textDecoration: 'none' }}>
+        <Link to="/forgot-password" style={{ textDecoration: 'none' }}>
           <Button variant="primary" size="lg" fullWidth>
             Request a new link
           </Button>
@@ -84,10 +84,10 @@ export const ResetPasswordPage: React.FC = () => {
           onClick={() =>
             navigate(
               persona === 'company'
-                ? '/site/dashboard/company'
+                ? '/dashboard/company'
                 : persona === 'worker'
-                  ? '/site/dashboard/worker'
-                  : '/site/login'
+                  ? '/dashboard/worker'
+                  : '/login'
             )
           }
         >

@@ -66,7 +66,7 @@ export const WeekCalendarWidget: React.FC<Props> = ({ companyId }) => {
     <div className={styles.widget}>
       <div className={styles.header}>
         <h2 className={styles.title}>This week</h2>
-        <Link to="/site/dashboard/interviews" className={styles.viewAll}>
+        <Link to="/dashboard/interviews" className={styles.viewAll}>
           View full calendar →
         </Link>
       </div>

@@ -68,7 +68,7 @@ interface AuthState {
   resendVerificationEmail: () => Promise<{ error: string | null }>
   /** Initiates an email change — Supabase sends a confirmation link to the new address. */
   updateEmail: (newEmail: string) => Promise<{ error: string | null }>
-  /** Sends a password-reset (recovery) email to the address, linking back to /site/reset-password. */
+  /** Sends a password-reset (recovery) email to the address, linking back to /reset-password. */
   requestPasswordReset: (email: string) => Promise<{ error: string | null }>
   /** Sets a new password for the current (recovery) session. */
   updatePassword: (newPassword: string) => Promise<{ error: string | null }>
@@ -321,7 +321,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const requestPasswordReset = useCallback(
     async (email: string): Promise<{ error: string | null }> => {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/site/reset-password`,
+        redirectTo: `${window.location.origin}/reset-password`,
       })
       return { error: error?.message ?? null }
     },

@@ -368,7 +368,7 @@ export const DiscoverPage: React.FC = () => {
   }
 
   const handleViewProfile = (worker: DiscoverWorker): void => {
-    navigate(`/site/profile/${worker.id}`)
+    navigate(`/profile/${worker.id}`)
   }
 
   // Direct messages don't require an application — open the docked chat

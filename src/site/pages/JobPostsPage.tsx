@@ -388,7 +388,7 @@ export const JobPostsPage: React.FC = () => {
   return (
     <div className={styles.page}>
       <div className={styles.container}>
-        <Link to="/site/dashboard/company" className={styles.breadcrumb}>
+        <Link to="/dashboard/company" className={styles.breadcrumb}>
           ← Back to dashboard
         </Link>
 
@@ -562,7 +562,7 @@ export const JobPostsPage: React.FC = () => {
               {allJobs.length === 0 ? (
                 <>
                   No job posts yet.{' '}
-                  <Link to="/site/post-job" style={{ color: 'var(--kt-primary)' }}>
+                  <Link to="/post-job" style={{ color: 'var(--kt-primary)' }}>
                     Post your first job →
                   </Link>
                 </>
@@ -579,11 +579,11 @@ export const JobPostsPage: React.FC = () => {
             const overflowItems: OverflowItem[] =
               job.status === 'active'
                 ? [
-                    { label: 'Edit', onClick: () => navigate(`/site/post-job/${job.id}`) },
+                    { label: 'Edit', onClick: () => navigate(`/post-job/${job.id}`) },
                     { label: 'Pause', onClick: () => setPauseTarget(job) },
                     {
                       label: 'Duplicate',
-                      onClick: () => navigate(`/site/post-job?duplicate=${job.id}`),
+                      onClick: () => navigate(`/post-job?duplicate=${job.id}`),
                     },
                     { label: 'Boost', onClick: () => setBoostTarget(job) },
                     {
@@ -594,11 +594,11 @@ export const JobPostsPage: React.FC = () => {
                   ]
                 : job.status === 'draft'
                   ? [
-                      { label: 'Edit', onClick: () => navigate(`/site/post-job/${job.id}`) },
+                      { label: 'Edit', onClick: () => navigate(`/post-job/${job.id}`) },
                       { label: 'Publish now', onClick: () => handlePublishNow(job.id) },
                       {
                         label: 'Duplicate',
-                        onClick: () => navigate(`/site/post-job?duplicate=${job.id}`),
+                        onClick: () => navigate(`/post-job?duplicate=${job.id}`),
                       },
                       {
                         label: 'Delete',
@@ -608,11 +608,11 @@ export const JobPostsPage: React.FC = () => {
                     ]
                   : job.status === 'scheduled'
                     ? [
-                        { label: 'Edit', onClick: () => navigate(`/site/post-job/${job.id}`) },
+                        { label: 'Edit', onClick: () => navigate(`/post-job/${job.id}`) },
                         { label: 'Publish now', onClick: () => handlePublishNow(job.id) },
                         {
                           label: 'Duplicate',
-                          onClick: () => navigate(`/site/post-job?duplicate=${job.id}`),
+                          onClick: () => navigate(`/post-job?duplicate=${job.id}`),
                         },
                         {
                           label: 'Archive',
@@ -622,10 +622,10 @@ export const JobPostsPage: React.FC = () => {
                       ]
                     : job.status === 'paused'
                       ? [
-                          { label: 'Edit', onClick: () => navigate(`/site/post-job/${job.id}`) },
+                          { label: 'Edit', onClick: () => navigate(`/post-job/${job.id}`) },
                           {
                             label: 'Duplicate',
-                            onClick: () => navigate(`/site/post-job?duplicate=${job.id}`),
+                            onClick: () => navigate(`/post-job?duplicate=${job.id}`),
                           },
                           {
                             label: 'Archive',
@@ -636,7 +636,7 @@ export const JobPostsPage: React.FC = () => {
                       : [
                           {
                             label: 'Duplicate',
-                            onClick: () => navigate(`/site/post-job?duplicate=${job.id}`),
+                            onClick: () => navigate(`/post-job?duplicate=${job.id}`),
                           },
                           { label: 'Delete', danger: true, onClick: () => {} },
                         ]
@@ -646,7 +646,7 @@ export const JobPostsPage: React.FC = () => {
                 <button
                   type="button"
                   className={styles.primaryAction}
-                  onClick={() => navigate(`/site/dashboard/applicants?job=${job.id}`)}
+                  onClick={() => navigate(`/dashboard/applicants?job=${job.id}`)}
                 >
                   View applicants
                 </button>
@@ -654,7 +654,7 @@ export const JobPostsPage: React.FC = () => {
                 <button
                   type="button"
                   className={styles.primaryAction}
-                  onClick={() => navigate(`/site/post-job/${job.id}`)}
+                  onClick={() => navigate(`/post-job/${job.id}`)}
                 >
                   Continue editing
                 </button>
@@ -695,7 +695,7 @@ export const JobPostsPage: React.FC = () => {
                   />
                 </div>
                 <div className={styles.jobTitleCell}>
-                  <Link to={`/site/jobs/${job.id}`} className={styles.jobTitleLink}>
+                  <Link to={`/jobs/${job.id}`} className={styles.jobTitleLink}>
                     {job.title}
                   </Link>
                 </div>

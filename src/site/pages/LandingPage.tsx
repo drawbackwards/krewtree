@@ -68,7 +68,7 @@ const HeroDefault = () => {
         <button
           onClick={() => {
             setPersona('worker')
-            navigate('/site/signup/worker')
+            navigate('/signup/worker')
           }}
           style={{
             background: 'var(--kt-navy-900)',
@@ -192,7 +192,7 @@ const HeroDefault = () => {
         <button
           onClick={() => {
             setPersona('company')
-            navigate('/site/signup/company')
+            navigate('/signup/company')
           }}
           style={{
             background: 'var(--kt-olive-700)',

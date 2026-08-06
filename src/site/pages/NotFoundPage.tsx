@@ -15,10 +15,10 @@ export const NotFoundPage: React.FC = () => {
 
   const home =
     isLoggedIn && persona === 'company'
-      ? '/site/dashboard/company'
+      ? '/dashboard/company'
       : isLoggedIn && persona === 'worker'
-        ? '/site/dashboard/worker'
-        : '/site'
+        ? '/dashboard/worker'
+        : '/'
 
   return (
     <div

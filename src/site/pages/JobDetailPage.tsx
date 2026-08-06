@@ -163,7 +163,7 @@ export const JobDetailPage: React.FC = () => {
         >
           Job not found
         </p>
-        <Button variant="primary" onClick={() => navigate('/site/jobs')}>
+        <Button variant="primary" onClick={() => navigate('/jobs')}>
           Back to Jobs
         </Button>
       </div>
@@ -198,7 +198,7 @@ export const JobDetailPage: React.FC = () => {
       <div style={{ background: 'var(--kt-surface)' }}>
         <div className={styles.breadcrumbInner}>
           <Link
-            to="/site/jobs"
+            to="/jobs"
             style={{
               color: 'var(--kt-text-muted)',
               fontSize: 'var(--kt-text-sm)',
@@ -308,7 +308,7 @@ export const JobDetailPage: React.FC = () => {
                   }}
                 >
                   <Link
-                    to={`/site/company/${job.companyId}`}
+                    to={`/company/${job.companyId}`}
                     style={{
                       fontSize: 'var(--kt-text-md)',
                       color: 'var(--kt-primary)',
@@ -389,7 +389,7 @@ export const JobDetailPage: React.FC = () => {
           <div className={styles.headerButtons}>
             {isCompany ? (
               <>
-                <Link to={`/site/post-job/${job.id}`} style={{ textDecoration: 'none' }}>
+                <Link to={`/post-job/${job.id}`} style={{ textDecoration: 'none' }}>
                   <Button variant="primary" style={{ width: '100%' }}>
                     Edit Job
                   </Button>
@@ -478,9 +478,7 @@ export const JobDetailPage: React.FC = () => {
                   .filter(Boolean)
                   .join(' ')}
                 onClick={() =>
-                  navigate(
-                    tab === 'analytics' ? `/site/jobs/${job.id}/analytics` : `/site/jobs/${job.id}`
-                  )
+                  navigate(tab === 'analytics' ? `/jobs/${job.id}/analytics` : `/jobs/${job.id}`)
                 }
               >
                 {tab === 'details' ? 'Job Details' : 'Analytics'}
@@ -529,7 +527,7 @@ export const JobDetailPage: React.FC = () => {
                     </p>
                   </div>
                   <Link
-                    to="/site/dashboard/company"
+                    to="/dashboard/company"
                     style={{ marginLeft: 'auto', textDecoration: 'none', flexShrink: 0 }}
                   >
                     <Button variant="accent" size="sm">
@@ -843,7 +841,7 @@ export const JobDetailPage: React.FC = () => {
                           </div>
                         </div>
 
-                        <Link to="/site/pipeline" style={{ textDecoration: 'none' }}>
+                        <Link to="/pipeline" style={{ textDecoration: 'none' }}>
                           <button
                             style={{
                               width: '100%',
@@ -1082,7 +1080,7 @@ export const JobDetailPage: React.FC = () => {
                       </span>
                     </div>
                     <Link
-                      to={`/site/company/${job.companyId}`}
+                      to={`/company/${job.companyId}`}
                       style={{
                         fontSize: 'var(--kt-text-xs)',
                         color: 'var(--kt-primary)',
@@ -1096,7 +1094,7 @@ export const JobDetailPage: React.FC = () => {
                 )}
 
                 <Link
-                  to={`/site/company/${job.companyId}`}
+                  to={`/company/${job.companyId}`}
                   style={{ textDecoration: 'none', display: 'block', marginTop: 12 }}
                 >
                   <button
@@ -1147,7 +1145,7 @@ export const JobDetailPage: React.FC = () => {
                     similarJobs.map((j) => (
                       <Link
                         key={j.id}
-                        to={`/site/jobs/${j.id}`}
+                        to={`/jobs/${j.id}`}
                         state={{ source: 'similar' }}
                         style={{
                           textDecoration: 'none',

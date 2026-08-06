@@ -48,7 +48,7 @@ export const WorkerMatchesTab: React.FC<WorkerMatchesTabProps> = ({ matches, loa
     // path. If we navigate synchronously, that effect fires afterwards and
     // calls setSearchParams against our new path, clobbering the push.
     closeAllDrawers()
-    setTimeout(() => navigate(`/site/jobs/${jobId}`), 0)
+    setTimeout(() => navigate(`/jobs/${jobId}`), 0)
   }
 
   if (loading) {

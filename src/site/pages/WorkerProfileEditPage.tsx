@@ -518,7 +518,7 @@ export const WorkerProfileEditPage: React.FC = () => {
     } else {
       const key = storageKey(user?.id)
       if (key) localStorage.removeItem(key)
-      setTimeout(() => navigate(`/site/profile/${user!.id}`), 1500)
+      setTimeout(() => navigate(`/profile/${user!.id}`), 1500)
     }
   }
 
@@ -578,11 +578,7 @@ export const WorkerProfileEditPage: React.FC = () => {
             </p>
           </div>
           {!isCreate && user && (
-            <Button
-              variant="outline"
-              size="md"
-              onClick={() => safeNavigate(`/site/profile/${user.id}`)}
-            >
+            <Button variant="outline" size="md" onClick={() => safeNavigate(`/profile/${user.id}`)}>
               View Profile
             </Button>
           )}

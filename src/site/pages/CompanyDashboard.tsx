@@ -651,7 +651,7 @@ const ActiveJobsModule: React.FC<ActiveJobsModuleProps> = ({ rows }) => {
       {/* Header */}
       <div className={dashStyles.jobsWidgetHeader}>
         <h2 className={dashStyles.jobsWidgetTitle}>Active jobs</h2>
-        <Link to="/site/dashboard/jobs" className={dashStyles.jobsWidgetLink}>
+        <Link to="/dashboard/jobs" className={dashStyles.jobsWidgetLink}>
           View all jobs →
         </Link>
       </div>
@@ -688,7 +688,7 @@ const ActiveJobsModule: React.FC<ActiveJobsModuleProps> = ({ rows }) => {
             >
               No active job postings yet.
             </p>
-            <Link to="/site/post-job" style={{ textDecoration: 'none' }}>
+            <Link to="/post-job" style={{ textDecoration: 'none' }}>
               <Button variant="accent" size="sm">
                 Post your first job
               </Button>
@@ -706,7 +706,7 @@ const ActiveJobsModule: React.FC<ActiveJobsModuleProps> = ({ rows }) => {
             <div style={{ minWidth: 0 }}>
               <button
                 type="button"
-                onClick={() => navigate(`/site/jobs/${job.id}`)}
+                onClick={() => navigate(`/jobs/${job.id}`)}
                 className={dashStyles.jobTitleBtn}
               >
                 {job.title}

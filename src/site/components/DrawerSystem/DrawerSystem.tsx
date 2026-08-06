@@ -32,7 +32,7 @@ export const DrawerSystem: React.FC = () => {
   const { stack, popDrawer, closeAllDrawers } = useDrawerStack()
 
   // Route change closes the whole stack. Drawer actions that navigate (e.g.
-  // "Message" → /site/messages) must NOT pop the stack themselves: on pages
+  // "Message" → /messages) must NOT pop the stack themselves: on pages
   // that mirror the drawer into the URL (KrewPage's drawer ↔ URL sync), the
   // synchronous pop re-renders the page before the route transition commits,
   // and its sync effect fires a competing navigation that clobbers the

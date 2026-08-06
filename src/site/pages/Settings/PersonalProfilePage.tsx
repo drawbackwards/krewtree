@@ -187,7 +187,7 @@ export const PersonalProfilePage: React.FC = () => {
         description="To change your password, sign out and use the password reset flow from the sign-in page."
       >
         <div>
-          <Button variant="outline" onClick={() => navigate('/site/login')}>
+          <Button variant="outline" onClick={() => navigate('/login')}>
             Go to sign-in
           </Button>
         </div>
