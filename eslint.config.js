@@ -81,6 +81,21 @@ export default tseslint.config(
     },
   },
 
+  // Server-side email templates (api/_email + api functions). These render HTML
+  // emails, where CSS custom properties are unsupported, so inline hex colors
+  // are required (mirrors public/email-templates.html). Digest rows are ephemeral
+  // event lists with no stable id, so array-index keys are acceptable here.
+  {
+    files: ['api/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-syntax': 'off',
+      'react/no-array-index-key': 'off',
+      // Not a browser/HMR context — email template modules legitimately export
+      // helper constants/functions (subjects) alongside their component.
+      'react-refresh/only-export-components': 'off',
+    },
+  },
+
   // Disable all Prettier-conflicting ESLint formatting rules (must be last)
   prettierConfig,
 )
