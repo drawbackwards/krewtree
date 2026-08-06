@@ -217,7 +217,7 @@ export const ApplicationsPage: React.FC = () => {
               {applications.length === 0 ? (
                 <>
                   No applications yet.{' '}
-                  <Link to="/site/jobs" className={styles.emptyLink}>
+                  <Link to="/jobs" className={styles.emptyLink}>
                     Browse jobs →
                   </Link>
                 </>
@@ -268,7 +268,7 @@ export const ApplicationsPage: React.FC = () => {
                   .join(' ')}
               >
                 <div className={styles.jobTitleCell}>
-                  <Link to={`/site/jobs/${app.jobId}`} className={styles.jobTitleLink}>
+                  <Link to={`/jobs/${app.jobId}`} className={styles.jobTitleLink}>
                     {app.jobTitle}
                   </Link>
                   <span className={styles.companyName}>{app.companyName}</span>
@@ -289,7 +289,7 @@ export const ApplicationsPage: React.FC = () => {
                 </div>
 
                 <div className={styles.actionsCell}>
-                  <Link to={`/site/jobs/${app.jobId}`} className={styles.primaryAction}>
+                  <Link to={`/jobs/${app.jobId}`} className={styles.primaryAction}>
                     View job
                   </Link>
                   {overflowItems.length > 0 && <OverflowMenu items={overflowItems} />}

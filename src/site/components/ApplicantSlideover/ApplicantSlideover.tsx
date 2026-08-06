@@ -183,7 +183,7 @@ export const ApplicantSlideover: React.FC<ApplicantSlideoverProps> = ({
   }
 
   const handleMessage = (): void => {
-    navigate(`/site/messages?application=${entry.applicationId}`)
+    navigate(`/messages?application=${entry.applicationId}`)
     onClose()
   }
 
@@ -247,7 +247,7 @@ export const ApplicantSlideover: React.FC<ApplicantSlideoverProps> = ({
                 {
                   label: 'Open full profile',
                   onClick: () => {
-                    navigate(`/site/profile/${applicant.workerId}`)
+                    navigate(`/profile/${applicant.workerId}`)
                     onClose()
                   },
                 },

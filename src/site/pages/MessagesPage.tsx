@@ -405,8 +405,8 @@ export const MessagesPage: React.FC = () => {
                       <Link
                         to={
                           isCompany
-                            ? `/site/profile/${selected.workerId}`
-                            : `/site/company/${selected.companyId}`
+                            ? `/profile/${selected.workerId}`
+                            : `/company/${selected.companyId}`
                         }
                         className={styles.threadJobLink}
                       >
@@ -460,7 +460,7 @@ export const MessagesPage: React.FC = () => {
                                 {msg.applicationId && msg.jobTitle && (
                                   <>
                                     <Link
-                                      to={`/site/jobs/${msg.jobId}`}
+                                      to={`/jobs/${msg.jobId}`}
                                       className={styles.bubbleTimeLink}
                                     >
                                       Re: {msg.jobTitle}

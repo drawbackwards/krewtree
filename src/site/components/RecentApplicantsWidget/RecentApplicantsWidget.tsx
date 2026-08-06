@@ -54,7 +54,7 @@ export const RecentApplicantsWidget: React.FC<RecentApplicantsWidgetProps> = ({
               </span>
             )}
           </div>
-          <Link to="/site/dashboard/applicants" className={styles.viewAll}>
+          <Link to="/dashboard/applicants" className={styles.viewAll}>
             View all →
           </Link>
         </div>
@@ -94,7 +94,7 @@ export const RecentApplicantsWidget: React.FC<RecentApplicantsWidgetProps> = ({
                     </button>
                   </div>
                   <div className={styles.jobCell}>
-                    <Link to="/site/dashboard/jobs" className={styles.jobLink}>
+                    <Link to="/dashboard/jobs" className={styles.jobLink}>
                       {a.jobTitle}
                     </Link>
                   </div>

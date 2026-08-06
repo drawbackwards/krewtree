@@ -3,7 +3,7 @@ import React, { createContext, useCallback, useContext, useMemo, useState } from
 // Chat pane state — a LinkedIn-style docked chat for direct messages.
 // Company pages (Discover, My Krew, WorkerDrawer) call openChat() with the
 // worker to talk to; ChatPane renders the conversation bottom-right without
-// navigating away. The full inbox lives on /site/messages.
+// navigating away. The full inbox lives on /messages.
 
 export type ChatTarget = {
   workerId: string

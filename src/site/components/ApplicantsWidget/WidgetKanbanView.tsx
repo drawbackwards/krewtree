@@ -369,7 +369,7 @@ const KanbanColumn: React.FC<ColumnProps> = ({
       ))}
       {moreCount > 0 && (
         <Link
-          to={`/site/dashboard/applicants?stage=${encodeURIComponent(stage.id)}`}
+          to={`/dashboard/applicants?stage=${encodeURIComponent(stage.id)}`}
           className={styles.moreLink}
         >
           +{moreCount} more

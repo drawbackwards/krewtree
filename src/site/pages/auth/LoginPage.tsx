@@ -69,7 +69,7 @@ export const LoginPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Where to go after login. An invite link sends people here with
-  // ?redirect=/site/join?token=… so they land back on the join page and
+  // ?redirect=/join?token=… so they land back on the join page and
   // auto-accept. Only same-origin app paths are honored (guards against an
   // open-redirect via a crafted ?redirect=https://evil…).
   const redirect = searchParams.get('redirect')
@@ -91,7 +91,7 @@ export const LoginPage: React.FC = () => {
       navigate(safeRedirect)
       return
     }
-    navigate(persona === 'company' ? '/site/dashboard/company' : '/site/dashboard/worker')
+    navigate(persona === 'company' ? '/dashboard/company' : '/dashboard/worker')
   }
 
   return (
@@ -117,11 +117,7 @@ export const LoginPage: React.FC = () => {
           alignItems: 'center',
         }}
       >
-        <Link
-          to="/site"
-          style={{ display: 'inline-flex', lineHeight: 0 }}
-          aria-label="krewtree home"
-        >
+        <Link to="/" style={{ display: 'inline-flex', lineHeight: 0 }} aria-label="krewtree home">
           <KrewtreeLogo height={30} onDark={false} />
         </Link>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -132,7 +128,7 @@ export const LoginPage: React.FC = () => {
             New to krewtree?
           </span>
           <Link
-            to="/site/signup"
+            to="/signup"
             style={{
               background: 'var(--kt-navy-900)',
               color: 'white',
@@ -298,7 +294,7 @@ export const LoginPage: React.FC = () => {
                     Password
                   </label>
                   <Link
-                    to="/site/forgot-password"
+                    to="/forgot-password"
                     style={{
                       fontSize: 'var(--kt-text-sm)',
                       color: 'var(--kt-accent)',

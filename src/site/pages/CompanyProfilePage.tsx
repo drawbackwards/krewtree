@@ -268,7 +268,7 @@ export const CompanyProfilePage: React.FC = () => {
         <p style={{ color: 'var(--kt-text-muted)', margin: 0 }}>
           This company may have been deleted or moved.
         </p>
-        <Button variant="outline" onClick={() => navigate('/site/jobs')}>
+        <Button variant="outline" onClick={() => navigate('/jobs')}>
           Browse jobs
         </Button>
       </div>
@@ -407,11 +407,11 @@ export const CompanyProfilePage: React.FC = () => {
             </div>
             <div className={styles.profileActions}>
               {isOwnProfile ? (
-                <Button variant="primary" onClick={() => navigate('/site/settings/profile')}>
+                <Button variant="primary" onClick={() => navigate('/settings/profile')}>
                   Edit profile
                 </Button>
               ) : (
-                <Button variant="primary" onClick={() => navigate('/site/messages')}>
+                <Button variant="primary" onClick={() => navigate('/messages')}>
                   Message company
                 </Button>
               )}

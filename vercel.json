@@ -1,6 +1,9 @@
 {
   "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
-  "redirects": [{ "source": "/", "destination": "/site", "permanent": false }],
+  "redirects": [
+    { "source": "/site", "destination": "/", "permanent": true },
+    { "source": "/site/:path*", "destination": "/:path*", "permanent": true }
+  ],
   "headers": [
     {
       "source": "/(.*)",

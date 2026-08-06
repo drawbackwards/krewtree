@@ -55,7 +55,7 @@ export const JobCard: React.FC<JobCardProps> = ({
 }) => {
   const navigate = useNavigate()
   const openJob = (): void => {
-    navigate(`/site/jobs/${job.id}`, { state: { source, searchKeyword } })
+    navigate(`/jobs/${job.id}`, { state: { source, searchKeyword } })
   }
   const SKILL_LIMIT = 3
   const applied = !!appliedAt

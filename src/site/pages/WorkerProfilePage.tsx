@@ -383,7 +383,7 @@ export const WorkerProfilePage: React.FC = () => {
             {/* Actions */}
             <div className={styles.profileActions}>
               {isOwnProfile ? (
-                <Button variant="primary" size="md" onClick={() => navigate('/site/profile/edit')}>
+                <Button variant="primary" size="md" onClick={() => navigate('/profile/edit')}>
                   Edit profile
                 </Button>
               ) : (
@@ -938,11 +938,7 @@ export const WorkerProfilePage: React.FC = () => {
                 )}
                 {isOwnProfile && (
                   <div>
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      onClick={() => navigate('/site/profile/edit')}
-                    >
+                    <Button variant="primary" size="sm" onClick={() => navigate('/profile/edit')}>
                       Build your profile
                     </Button>
                   </div>

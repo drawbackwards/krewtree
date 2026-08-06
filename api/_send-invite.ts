@@ -115,7 +115,7 @@ export default async function handler(req: RequestLike, res: ResponseLike): Prom
     return
   }
 
-  const joinUrl = `${siteOrigin(req)}/site/join?token=${encodeURIComponent(body.token)}`
+  const joinUrl = `${siteOrigin(req)}/join?token=${encodeURIComponent(body.token)}`
   const company = body.companyName || 'a company'
   const subject = `You're invited to join ${company} on Krewtree`
 

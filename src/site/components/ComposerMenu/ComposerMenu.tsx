@@ -118,7 +118,7 @@ export const ComposerMenu: React.FC<{
                   ) : templates.length === 0 ? (
                     <p className={styles.hint}>
                       No templates yet.{' '}
-                      <Link to="/site/settings/templates" className={styles.hintLink}>
+                      <Link to="/settings/templates" className={styles.hintLink}>
                         Create one
                       </Link>
                     </p>

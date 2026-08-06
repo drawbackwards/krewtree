@@ -96,11 +96,11 @@ export const ApplicantListView: React.FC<Props> = ({
       <div className={styles.emptyState}>
         <p className={styles.emptyText}>No applicants yet.</p>
         {hasJobs ? (
-          <Link to="/site/jobs" className={styles.emptyLink}>
+          <Link to="/jobs" className={styles.emptyLink}>
             Share your job posts →
           </Link>
         ) : (
-          <Link to="/site/post-job" className={styles.emptyLink}>
+          <Link to="/post-job" className={styles.emptyLink}>
             Post your first job →
           </Link>
         )}

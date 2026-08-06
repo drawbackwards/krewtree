@@ -231,7 +231,7 @@ export const TemplatesSettingsPage: React.FC = () => {
         description="Reusable job postings your team has saved. Load one from the Post a Job screen to prefill the form. Save a new one there with “Save as template”."
         action={
           !loading && templates.length > 0 ? (
-            <Button variant="outline" size="sm" onClick={() => navigate('/site/post-job')}>
+            <Button variant="outline" size="sm" onClick={() => navigate('/post-job')}>
               New
             </Button>
           ) : undefined
@@ -243,7 +243,7 @@ export const TemplatesSettingsPage: React.FC = () => {
           <EmptyState
             message="No job templates yet. Save a posting as a template from the Post a Job screen to reuse it later."
             action={
-              <Button variant="outline" size="sm" onClick={() => navigate('/site/post-job')}>
+              <Button variant="outline" size="sm" onClick={() => navigate('/post-job')}>
                 + New job template
               </Button>
             }
@@ -432,7 +432,7 @@ export const TemplatesSettingsPage: React.FC = () => {
             </Button>
             <Button
               variant="primary"
-              onClick={() => viewTarget && navigate(`/site/post-job?template=${viewTarget.id}`)}
+              onClick={() => viewTarget && navigate(`/post-job?template=${viewTarget.id}`)}
             >
               Use to create a job
             </Button>

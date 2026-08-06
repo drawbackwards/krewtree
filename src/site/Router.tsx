@@ -152,11 +152,11 @@ const AppLayout: React.FC = () => (
 const RequireAuth: React.FC<{ persona?: Persona }> = ({ persona }) => {
   const { isLoggedIn, isLoading, persona: userPersona } = useAuth()
   if (isLoading) return null
-  if (!isLoggedIn) return <Navigate to="/site/login" replace />
+  if (!isLoggedIn) return <Navigate to="/login" replace />
   if (persona && userPersona !== persona) {
     return (
       <Navigate
-        to={userPersona === 'company' ? '/site/dashboard/company' : '/site/dashboard/worker'}
+        to={userPersona === 'company' ? '/dashboard/company' : '/dashboard/worker'}
         replace
       />
     )
@@ -170,16 +170,16 @@ const SettingsIndexRedirect: React.FC = () => {
   const { persona } = useAuth()
   return (
     <Navigate
-      to={persona === 'company' ? '/site/settings/profile' : '/site/settings/notifications'}
+      to={persona === 'company' ? '/settings/profile' : '/settings/notifications'}
       replace
     />
   )
 }
 
-// Legacy `/site/dashboard/applicants/worker/:workerId` → unified public profile.
+// Legacy `/dashboard/applicants/worker/:workerId` → unified public profile.
 const RedirectWorkerToProfile: React.FC = () => {
   const { workerId } = useParams<{ workerId: string }>()
-  return <Navigate to={`/site/profile/${workerId}`} replace />
+  return <Navigate to={`/profile/${workerId}`} replace />
 }
 
 export const SiteRouter: React.FC = () => (
@@ -188,69 +188,66 @@ export const SiteRouter: React.FC = () => (
     <Suspense fallback={<RouteFallback />}>
       <Routes>
         {/* ── Auth routes — no Navbar ──────────────────────────────────── */}
-        <Route path="/site/login" element={<LoginPage />} />
-        <Route path="/site/signup" element={<SignupRolePage />} />
-        <Route path="/site/signup/worker" element={<WorkerSignupPage />} />
-        <Route path="/site/signup/company" element={<CompanySignupPage />} />
-        <Route path="/site/forgot-password" element={<ForgotPasswordPage />} />
-        <Route path="/site/reset-password" element={<ResetPasswordPage />} />
-        <Route path="/site/verify-email" element={<VerifyEmailPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignupRolePage />} />
+        <Route path="/signup/worker" element={<WorkerSignupPage />} />
+        <Route path="/signup/company" element={<CompanySignupPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/verify-email" element={<VerifyEmailPage />} />
 
         {/* ── App routes — full Navbar via AppLayout ───────────────────── */}
         <Route element={<AppLayout />}>
           {/* Public */}
-          <Route path="/site" element={<LandingPage />} />
-          <Route path="/site/jobs" element={<JobsPage />} />
-          <Route path="/site/jobs/:id" element={<JobDetailPage />} />
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/jobs" element={<JobsPage />} />
+          <Route path="/jobs/:id" element={<JobDetailPage />} />
           {/* Analytics is an owner-only tab inside JobDetailPage; this path just
               deep-links that tab (JobDetailPage gates it to the job owner). */}
-          <Route path="/site/jobs/:id/analytics" element={<JobDetailPage />} />
-          <Route path="/site/profile/:id" element={<WorkerProfilePage />} />
-          <Route path="/site/company/:id" element={<CompanyProfilePage />} />
+          <Route path="/jobs/:id/analytics" element={<JobDetailPage />} />
+          <Route path="/profile/:id" element={<WorkerProfilePage />} />
+          <Route path="/company/:id" element={<CompanyProfilePage />} />
           {/* Company invite acceptance — works logged-out (prompts sign-in). */}
-          <Route path="/site/join" element={<AcceptInvitePage />} />
+          <Route path="/join" element={<AcceptInvitePage />} />
 
           {/* Worker-only */}
           <Route element={<RequireAuth persona="worker" />}>
-            <Route path="/site/dashboard/worker" element={<WorkerDashboard />} />
-            <Route path="/site/profile/edit" element={<WorkerProfileEditPage />} />
-            <Route path="/site/profile/create" element={<WorkerProfileEditPage />} />
-            <Route path="/site/saved-jobs" element={<SavedJobsPage />} />
-            <Route path="/site/applications" element={<ApplicationsPage />} />
-            <Route path="/site/referrals" element={<ReferralPage />} />
+            <Route path="/dashboard/worker" element={<WorkerDashboard />} />
+            <Route path="/profile/edit" element={<WorkerProfileEditPage />} />
+            <Route path="/profile/create" element={<WorkerProfileEditPage />} />
+            <Route path="/saved-jobs" element={<SavedJobsPage />} />
+            <Route path="/applications" element={<ApplicationsPage />} />
+            <Route path="/referrals" element={<ReferralPage />} />
           </Route>
 
           {/* Company-only */}
           <Route element={<RequireAuth persona="company" />}>
-            <Route path="/site/dashboard/company" element={<CompanyDashboard />} />
-            <Route path="/site/dashboard/krew" element={<KrewPage />} />
-            <Route path="/site/discover" element={<DiscoverPage />} />
-            <Route path="/site/dashboard/jobs" element={<JobPostsPage />} />
-            <Route path="/site/dashboard/applicants" element={<AllApplicantsPage />} />
+            <Route path="/dashboard/company" element={<CompanyDashboard />} />
+            <Route path="/dashboard/krew" element={<KrewPage />} />
+            <Route path="/discover" element={<DiscoverPage />} />
+            <Route path="/dashboard/jobs" element={<JobPostsPage />} />
+            <Route path="/dashboard/applicants" element={<AllApplicantsPage />} />
             {/* Legacy applicant-profile URL — the page merged into the public
                 worker profile. Redirect (preserving the worker id) for any
                 bookmarks/deep links still pointing here. */}
             <Route
-              path="/site/dashboard/applicants/worker/:workerId"
+              path="/dashboard/applicants/worker/:workerId"
               element={<RedirectWorkerToProfile />}
             />
-            <Route path="/site/pipeline" element={<PipelinePage />} />
-            <Route path="/site/post-job" element={<PostJobPage />} />
-            <Route path="/site/post-job/:id" element={<PostJobPage />} />
-            <Route
-              path="/site/company/edit"
-              element={<Navigate to="/site/settings/profile" replace />}
-            />
+            <Route path="/pipeline" element={<PipelinePage />} />
+            <Route path="/post-job" element={<PostJobPage />} />
+            <Route path="/post-job/:id" element={<PostJobPage />} />
+            <Route path="/company/edit" element={<Navigate to="/settings/profile" replace />} />
           </Route>
 
           {/* Requires auth (any persona) */}
           <Route element={<RequireAuth />}>
-            <Route path="/site/messages" element={<MessagesPage />} />
-            <Route path="/site/notifications" element={<NotificationsPage />} />
+            <Route path="/messages" element={<MessagesPage />} />
+            <Route path="/notifications" element={<NotificationsPage />} />
             {/* Settings shell is shared: the Notifications tab is personal and
                 available to both personas; organization tabs are nested behind
                 a company guard below. */}
-            <Route path="/site/settings" element={<SettingsLayout />}>
+            <Route path="/settings" element={<SettingsLayout />}>
               <Route index element={<SettingsIndexRedirect />} />
               <Route path="my-profile" element={<PersonalProfilePage />} />
               <Route path="notifications" element={<NotificationsSettingsPage />} />
@@ -260,7 +257,7 @@ export const SiteRouter: React.FC = () => (
                 <Route path="templates" element={<TemplatesSettingsPage />} />
                 <Route
                   path="pipeline-tasks"
-                  element={<Navigate to="/site/settings/pipeline" replace />}
+                  element={<Navigate to="/settings/pipeline" replace />}
                 />
                 <Route path="account" element={<AccountSettingsPage />} />
                 <Route path="team" element={<TeamSettingsPage />} />

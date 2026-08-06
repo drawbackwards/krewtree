@@ -133,7 +133,7 @@ export const WorkerDrawer: React.FC<WorkerDrawerProps> = ({
                   label: 'Open full profile',
                   onClick: () => {
                     // Same as handleMessage: route change closes the drawer.
-                    navigate(`/site/profile/${entry.workerId}`)
+                    navigate(`/profile/${entry.workerId}`)
                   },
                 },
               ]}

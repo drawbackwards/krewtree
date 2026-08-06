@@ -347,7 +347,7 @@ export const AllApplicantsPage: React.FC = () => {
   // Rows ARE applications, so Message deep-links straight into the thread —
   // MessagesPage handles never-messaged applications via getConversationStub.
   const handleMessage = (id: string) => {
-    navigate(`/site/messages?application=${id}`)
+    navigate(`/messages?application=${id}`)
   }
   const handleAddNote = async (id: string) => {
     const text = window.prompt('Add a note about this applicant:')
@@ -460,7 +460,7 @@ export const AllApplicantsPage: React.FC = () => {
   return (
     <div className={styles.page}>
       <div className={styles.container}>
-        <Link to="/site/dashboard/company" className={styles.breadcrumb}>
+        <Link to="/dashboard/company" className={styles.breadcrumb}>
           ← Back to dashboard
         </Link>
 

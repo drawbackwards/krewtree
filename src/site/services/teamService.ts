@@ -151,7 +151,7 @@ export async function createInvite(
   if (error) return { data: null, error: mapError(error.message) }
   const row = Array.isArray(data) ? data[0] : data
   if (!row) return { data: null, error: 'invite_failed' }
-  const link = `${window.location.origin}/site/join?token=${row.token}`
+  const link = `${window.location.origin}/join?token=${row.token}`
   // Best-effort email delivery; the returned link is the fallback.
   const { sent } = await sendInviteEmail(email, row.token, context)
   return { data: { inviteId: row.invite_id, link, emailed: sent }, error: null }

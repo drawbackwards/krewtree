@@ -6,7 +6,7 @@ import { AuthCardShell, AuthCardHeader } from './AuthCardShell'
 
 /**
  * Request a password reset. Collects an email and triggers the Supabase recovery
- * email (which links back to /site/reset-password). Always shows the same
+ * email (which links back to /reset-password). Always shows the same
  * "check your inbox" confirmation regardless of whether the address exists, so
  * the form can't be used to enumerate accounts.
  */
@@ -69,7 +69,7 @@ export const ForgotPasswordPage: React.FC = () => {
           .
         </p>
         <Link
-          to="/site/login"
+          to="/login"
           style={{
             fontSize: 'var(--kt-text-sm)',
             fontWeight: 'var(--kt-weight-bold)',

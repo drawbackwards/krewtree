@@ -117,7 +117,7 @@ export const ApplicantsWidget: React.FC<Props> = ({ view, onViewChange, companyI
                 Kanban
               </button>
             </div>
-            <Link to="/site/dashboard/applicants" className={styles.viewAll}>
+            <Link to="/dashboard/applicants" className={styles.viewAll}>
               View all →
             </Link>
           </div>

@@ -13,7 +13,7 @@ interface Props {
 
 export const JobCell: React.FC<Props> = ({ jobId, jobTitle, jobStatus }) => (
   <div className={styles.cell}>
-    <Link to={`/site/jobs/${jobId}`} className={styles.link}>
+    <Link to={`/jobs/${jobId}`} className={styles.link}>
       {jobTitle}
     </Link>
     {jobStatus === 'paused' && (

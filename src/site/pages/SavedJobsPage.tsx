@@ -144,7 +144,7 @@ export const SavedJobsPage: React.FC = () => {
                 : `${savedJobs.length} saved position${savedJobs.length !== 1 ? 's' : ''}`}
             </p>
           </div>
-          <Link to="/site/jobs">
+          <Link to="/jobs">
             <Button variant="primary" size="sm">
               Browse more jobs
             </Button>
@@ -197,7 +197,7 @@ export const SavedJobsPage: React.FC = () => {
                 <BookmarkFilledIcon size={36} />
               </div>
               No saved jobs yet.{' '}
-              <Link to="/site/jobs" className={styles.emptyLink}>
+              <Link to="/jobs" className={styles.emptyLink}>
                 Browse jobs →
               </Link>
             </div>
@@ -235,7 +235,7 @@ export const SavedJobsPage: React.FC = () => {
                   {isClosed ? (
                     <span className={styles.jobTitleStruck}>{sj.jobTitle}</span>
                   ) : (
-                    <Link to={`/site/jobs/${sj.jobId}`} className={styles.jobTitleLink}>
+                    <Link to={`/jobs/${sj.jobId}`} className={styles.jobTitleLink}>
                       {sj.jobTitle}
                     </Link>
                   )}
@@ -266,7 +266,7 @@ export const SavedJobsPage: React.FC = () => {
 
                 <div className={styles.actionsCell}>
                   {!isClosed && (
-                    <Link to={`/site/jobs/${sj.jobId}`} className={styles.primaryAction}>
+                    <Link to={`/jobs/${sj.jobId}`} className={styles.primaryAction}>
                       View job
                     </Link>
                   )}

@@ -35,12 +35,12 @@ export const AuthCardShell: React.FC<{
         padding: '24px 32px',
       }}
     >
-      <Link to="/site" style={{ display: 'inline-flex', lineHeight: 0 }} aria-label="krewtree home">
+      <Link to="/" style={{ display: 'inline-flex', lineHeight: 0 }} aria-label="krewtree home">
         <KrewtreeLogo height={30} onDark={false} />
       </Link>
       {topRight ?? (
         <Link
-          to="/site/login"
+          to="/login"
           style={{
             fontSize: 'var(--kt-text-sm)',
             fontWeight: 'var(--kt-weight-semibold)',

@@ -498,7 +498,7 @@ const HistoryCard: React.FC<{
         <div className={styles.finishedGrid}>
           <div className={styles.finishedLeft}>
             <span className={styles.date}>{dateLine}</span>
-            <Link to={`/site/jobs/${card.jobId}`} className={styles.titleLink}>
+            <Link to={`/jobs/${card.jobId}`} className={styles.titleLink}>
               <span className={styles.jobTitle}>{card.jobTitle}</span>
             </Link>
             {metaRow}
@@ -529,7 +529,7 @@ const HistoryCard: React.FC<{
     <article className={[styles.card, treatment].join(' ')}>
       <div className={styles.topRow}>
         <h4 className={styles.title}>
-          <Link to={`/site/jobs/${card.jobId}`} className={styles.titleLink}>
+          <Link to={`/jobs/${card.jobId}`} className={styles.titleLink}>
             {card.jobTitle}
           </Link>
         </h4>

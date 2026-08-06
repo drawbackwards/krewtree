@@ -94,7 +94,7 @@ export const CompanyCompletenessWidget: React.FC<Props> = ({ data }) => {
         <button type="button" onClick={handleDismiss} className={styles.dismissBtn}>
           Dismiss
         </button>
-        <Link to="/site/settings/profile" className={styles.editLink}>
+        <Link to="/settings/profile" className={styles.editLink}>
           Edit profile →
         </Link>
       </div>

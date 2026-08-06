@@ -58,7 +58,7 @@ export const FeaturedJobsSection = () => {
           <Button
             className={s.featuredBrowseBtn}
             variant="outline"
-            onClick={() => navigate('/site/jobs')}
+            onClick={() => navigate('/jobs')}
           >
             Browse All Jobs →
           </Button>
@@ -281,7 +281,7 @@ export const IndustriesSection = () => {
           {getSelectableIndustries().map((ind) => (
             <button
               key={ind.id}
-              onClick={() => navigate(`/site/jobs?industry=${ind.slug}`)}
+              onClick={() => navigate(`/jobs?industry=${ind.slug}`)}
               style={{
                 background: 'var(--kt-surface)',
                 border: 'none',
@@ -600,10 +600,10 @@ export const CTASection = () => {
           className={s.ctaButtons}
           style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}
         >
-          <Button variant="secondary" size="xl" onClick={() => navigate('/site/signup/worker')}>
+          <Button variant="secondary" size="xl" onClick={() => navigate('/signup/worker')}>
             Find Jobs Now
           </Button>
-          <Button variant="accent" size="xl" onClick={() => navigate('/site/signup/company')}>
+          <Button variant="accent" size="xl" onClick={() => navigate('/signup/company')}>
             Post a Job
           </Button>
         </div>

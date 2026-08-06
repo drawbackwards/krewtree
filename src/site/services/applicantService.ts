@@ -1,7 +1,7 @@
 // ============================================================
 // KREWTREE — Applicant Service
 // Company-side read/write API for the applicant pipeline
-// (dashboard widget + /site/dashboard/applicants page).
+// (dashboard widget + /dashboard/applicants page).
 //
 // All reads + mutations hit Supabase. RLS on `applications`,
 // `jobs`, and `application_notes` scopes per-company access.
