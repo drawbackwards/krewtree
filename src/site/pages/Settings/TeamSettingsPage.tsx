@@ -15,6 +15,7 @@ import {
   type TeamMember,
 } from '../../services/teamService'
 import { SettingsPageHeader } from './SettingsPageHeader'
+import { userDisplayName } from '../../utils/userName'
 
 const card: React.CSSProperties = {
   background: 'var(--kt-surface)',
@@ -37,9 +38,11 @@ const muted: React.CSSProperties = { fontSize: 'var(--kt-text-sm)', color: 'var(
 const ROLE_OPTIONS = roleOptions
 
 export const TeamSettingsPage: React.FC = () => {
-  const { user, activeCompanyId, companyRole } = useAuth()
+  const { user, activeCompanyId, companyRole, memberships } = useAuth()
   const canManage = companyRole === 'owner' || companyRole === 'admin'
   const isOwner = companyRole === 'owner'
+  const activeCompanyName =
+    memberships.find((m) => m.companyId === activeCompanyId)?.companyName || ''
 
   const [members, setMembers] = useState<TeamMember[]>([])
   const [invites, setInvites] = useState<PendingInvite[]>([])
@@ -50,6 +53,7 @@ export const TeamSettingsPage: React.FC = () => {
   const [inviteStatus, setInviteStatus] = useState<'idle' | 'sending' | 'error'>('idle')
   const [inviteError, setInviteError] = useState('')
   const [inviteLink, setInviteLink] = useState<string | null>(null)
+  const [inviteEmailed, setInviteEmailed] = useState(false)
   const [copied, setCopied] = useState(false)
 
   const [transferTarget, setTransferTarget] = useState<TeamMember | null>(null)
@@ -77,7 +81,10 @@ export const TeamSettingsPage: React.FC = () => {
     setInviteStatus('sending')
     setInviteError('')
     setInviteLink(null)
-    const { data, error } = await createInvite(activeCompanyId, inviteEmail.trim(), inviteRole)
+    const { data, error } = await createInvite(activeCompanyId, inviteEmail.trim(), inviteRole, {
+      companyName: activeCompanyName,
+      inviterName: userDisplayName(user),
+    })
     if (error || !data) {
       setInviteStatus('error')
       setInviteError(error ?? 'Could not create invite.')
@@ -86,6 +93,7 @@ export const TeamSettingsPage: React.FC = () => {
     setInviteStatus('idle')
     setInviteEmail('')
     setInviteLink(data.link)
+    setInviteEmailed(data.emailed)
     setCopied(false)
     load()
   }
@@ -275,8 +283,9 @@ export const TeamSettingsPage: React.FC = () => {
               }}
             >
               <p style={{ margin: 0, fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text)' }}>
-                Invite created. Email delivery isn't set up yet, so share this link with your
-                teammate for now:
+                {inviteEmailed
+                  ? 'Invite sent by email. You can also share this link directly:'
+                  : 'Invite created. Share this link with your teammate:'}
               </p>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 <Input readOnly value={inviteLink} onFocus={(e) => e.currentTarget.select()} />

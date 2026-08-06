@@ -19,7 +19,9 @@ which, how migrations flow, and the rules that keep prod safe.
   - Preview / Development environments → **dev** project URL + anon key
 
 Server-only secrets (e.g. `RESEND_API_KEY`) are set per-environment in Vercel
-and are **not** `VITE_`-prefixed, so they never enter the browser bundle.
+and are **not** `VITE_`-prefixed, so they never enter the browser bundle. Use a
+separate Resend key per lane (dev key → Preview/Development, prod key →
+Production). Full email setup lives in `docs/EMAIL_SETUP.md`.
 
 ## Migration workflow
 

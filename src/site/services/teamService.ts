@@ -79,32 +79,70 @@ export async function listPendingInvites(
   return { data: invites, error: null }
 }
 
-/**
- * Deliver an invite link to the invitee by email.
- *
- * TODO(email): NOT IMPLEMENTED. krewtree has no transactional email provider
- * wired yet (see PROJECT_LOG pre-launch checklist). When one is added, send the
- * invite email from here (ideally server-side — a Vercel function or Supabase
- * Edge Function invoked by create_company_invite so the token never round-trips
- * through the browser). Until then this is a no-op and createInvite() also
- * returns the link so an admin can share it manually as a fallback.
- */
-export async function sendInviteEmail(_email: string, _link: string): Promise<void> {
-  // Intentionally a no-op until email delivery is set up.
-  return
+/** Optional display context for the invite email. */
+export interface InviteEmailContext {
+  companyName?: string
+  inviterName?: string
 }
 
 /**
- * Create an invite. The intended UX is that the invitee receives the link by
- * email (see sendInviteEmail). Email delivery is not built yet, so the raw token
- * link is also returned for manual sharing — it is returned only here (the DB
- * stores just its hash) and cannot be recovered later.
+ * Deliver an invite by email via the `/api/send-invite` Vercel function (Resend).
+ *
+ * Best-effort by design: it passes only the invite TOKEN (the function rebuilds
+ * the join link from a trusted origin, so the browser can't inject a phishing
+ * URL) plus the caller's Supabase JWT so the function can authenticate. It never
+ * throws — the manual copyable link returned by createInvite() is the fallback,
+ * which matters in two cases the caller shouldn't have to reason about:
+ *   • local `vite dev` doesn't serve `/api`, so the fetch just fails; and
+ *   • until mail.krewtree.com is verified in Resend, delivery to anyone but the
+ *     Resend account's own address 403s (see docs/EMAIL_SETUP.md).
+ * Returns whether the send was accepted so callers can adjust copy later.
+ */
+export async function sendInviteEmail(
+  email: string,
+  token: string,
+  context?: InviteEmailContext
+): Promise<{ sent: boolean }> {
+  try {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+    if (!session) return { sent: false }
+    const res = await fetch('/api/send-invite', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({
+        email,
+        token,
+        companyName: context?.companyName,
+        inviterName: context?.inviterName,
+      }),
+    })
+    return { sent: res.ok }
+  } catch {
+    return { sent: false }
+  }
+}
+
+/**
+ * Create an invite. The invitee receives the link by email (see
+ * sendInviteEmail); the raw token link is ALSO returned here for manual sharing,
+ * because email delivery is not guaranteed yet (unverified sending domain). It
+ * is returned only here — the DB stores just its hash — and cannot be recovered
+ * later.
  */
 export async function createInvite(
   companyId: string,
   email: string,
-  role: Exclude<CompanyRole, 'owner'>
-): Promise<{ data: { inviteId: string; link: string } | null; error: string | null }> {
+  role: Exclude<CompanyRole, 'owner'>,
+  context?: InviteEmailContext
+): Promise<{
+  data: { inviteId: string; link: string; emailed: boolean } | null
+  error: string | null
+}> {
   const { data, error } = await supabase.rpc('create_company_invite', {
     p_company_id: companyId,
     p_email: email,
@@ -114,9 +152,9 @@ export async function createInvite(
   const row = Array.isArray(data) ? data[0] : data
   if (!row) return { data: null, error: 'invite_failed' }
   const link = `${window.location.origin}/site/join?token=${row.token}`
-  // Fire the (currently no-op) email delivery; the manual link is the fallback.
-  await sendInviteEmail(email, link)
-  return { data: { inviteId: row.invite_id, link }, error: null }
+  // Best-effort email delivery; the returned link is the fallback.
+  const { sent } = await sendInviteEmail(email, row.token, context)
+  return { data: { inviteId: row.invite_id, link, emailed: sent }, error: null }
 }
 
 export async function revokeInvite(inviteId: string): Promise<{ error: string | null }> {
