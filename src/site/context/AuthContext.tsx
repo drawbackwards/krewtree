@@ -68,6 +68,10 @@ interface AuthState {
   resendVerificationEmail: () => Promise<{ error: string | null }>
   /** Initiates an email change — Supabase sends a confirmation link to the new address. */
   updateEmail: (newEmail: string) => Promise<{ error: string | null }>
+  /** Sends a password-reset (recovery) email to the address, linking back to /site/reset-password. */
+  requestPasswordReset: (email: string) => Promise<{ error: string | null }>
+  /** Sets a new password for the current (recovery) session. */
+  updatePassword: (newPassword: string) => Promise<{ error: string | null }>
   /** Set persona without changing auth state (used on landing/signup choice screens) */
   setPersona: (p: Persona) => void
 }
@@ -91,6 +95,8 @@ const AuthContext = createContext<AuthState>({
   logout: async () => {},
   resendVerificationEmail: async () => ({ error: null }),
   updateEmail: async () => ({ error: null }),
+  requestPasswordReset: async () => ({ error: null }),
+  updatePassword: async () => ({ error: null }),
   setPersona: () => {},
 })
 
@@ -312,6 +318,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { error: null }
   }, [])
 
+  const requestPasswordReset = useCallback(
+    async (email: string): Promise<{ error: string | null }> => {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/site/reset-password`,
+      })
+      return { error: error?.message ?? null }
+    },
+    []
+  )
+
+  const updatePassword = useCallback(
+    async (newPassword: string): Promise<{ error: string | null }> => {
+      const { error } = await supabase.auth.updateUser({ password: newPassword })
+      return { error: error?.message ?? null }
+    },
+    []
+  )
+
   const logout = useCallback(async () => {
     await supabase.auth.signOut()
     setPersonaState(null)
@@ -399,6 +423,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       logout,
       resendVerificationEmail,
       updateEmail,
+      requestPasswordReset,
+      updatePassword,
       setPersona,
     }),
     [
@@ -418,6 +444,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       logout,
       resendVerificationEmail,
       updateEmail,
+      requestPasswordReset,
+      updatePassword,
       setPersona,
     ]
   )

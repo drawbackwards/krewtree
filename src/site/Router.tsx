@@ -99,6 +99,18 @@ const WorkerSignupPage = lazy(() =>
 const CompanySignupPage = lazy(() =>
   import('./pages/auth/CompanySignupPage').then((m) => ({ default: m.CompanySignupPage }))
 )
+const ForgotPasswordPage = lazy(() =>
+  import('./pages/auth/ForgotPasswordPage').then((m) => ({ default: m.ForgotPasswordPage }))
+)
+const ResetPasswordPage = lazy(() =>
+  import('./pages/auth/ResetPasswordPage').then((m) => ({ default: m.ResetPasswordPage }))
+)
+const VerifyEmailPage = lazy(() =>
+  import('./pages/auth/VerifyEmailPage').then((m) => ({ default: m.VerifyEmailPage }))
+)
+const NotFoundPage = lazy(() =>
+  import('./pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage }))
+)
 
 // Centered spinner shown while a route chunk downloads. Kept minimal so the
 // flash on fast connections is unobtrusive.
@@ -180,6 +192,9 @@ export const SiteRouter: React.FC = () => (
         <Route path="/site/signup" element={<SignupRolePage />} />
         <Route path="/site/signup/worker" element={<WorkerSignupPage />} />
         <Route path="/site/signup/company" element={<CompanySignupPage />} />
+        <Route path="/site/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/site/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/site/verify-email" element={<VerifyEmailPage />} />
 
         {/* ── App routes — full Navbar via AppLayout ───────────────────── */}
         <Route element={<AppLayout />}>
@@ -253,8 +268,8 @@ export const SiteRouter: React.FC = () => (
             </Route>
           </Route>
 
-          {/* Catch-all redirect */}
-          <Route path="*" element={<Navigate to="/site" replace />} />
+          {/* Catch-all — real 404 page (keeps the navbar) */}
+          <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>
     </Suspense>
