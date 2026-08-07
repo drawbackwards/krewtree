@@ -457,6 +457,16 @@ export const AllApplicantsPage: React.FC = () => {
         ? 'No applicants'
         : `Showing ${pageStart}–${pageEnd} of ${total} applicant${total === 1 ? '' : 's'}`
 
+  // Separates "nothing matches these filters" from "no applicants yet" (a brand-
+  // new company / freshly posted job) in the empty state.
+  const hasApplicantFilters =
+    filters.search.trim() !== '' ||
+    filters.stageId !== 'all' ||
+    filters.jobId !== 'all' ||
+    filters.regulixOnly ||
+    filters.appliedFrom !== null ||
+    filters.appliedTo !== null
+
   return (
     <div className={styles.page}>
       <div className={styles.container}>
@@ -687,7 +697,11 @@ export const AllApplicantsPage: React.FC = () => {
               </div>
 
               {rows.length === 0 ? (
-                <div className={styles.emptyRow}>No applicants match the current filters.</div>
+                <div className={styles.emptyRow}>
+                  {hasApplicantFilters
+                    ? 'No applicants match the current filters.'
+                    : 'No applicants yet — when someone applies to one of your jobs, they’ll appear here.'}
+                </div>
               ) : (
                 rows.map((a) => {
                   const isSelected = selected.has(a.id)

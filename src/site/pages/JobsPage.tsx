@@ -366,6 +366,17 @@ export const JobsPage: React.FC = () => {
     | 'nearest'
   // Distance anchor: defaults to the worker's saved city when unset.
   const nearParam = searchParams.get('near') ?? ''
+  // Whether the user has narrowed the results at all. Drives the difference
+  // between "nothing matches your filters" (their search is too tight) and
+  // "no jobs posted yet" (an empty/early marketplace) in the zero-results state.
+  const hasActiveFilters =
+    searchQ.trim() !== '' ||
+    selectedIndustries.length > 0 ||
+    selectedTypes.length > 0 ||
+    regulixOnly ||
+    sponsoredOnly ||
+    payRangeIdx > 0 ||
+    nearParam.trim() !== ''
   const [nearCity, nearState] = useMemo(() => {
     const m = /^([^,]+?)\s*,\s*([A-Za-z]{2})$/.exec(nearParam.trim())
     return m ? [m[1], m[2].toUpperCase()] : [null, null]
@@ -1326,10 +1337,12 @@ export const JobsPage: React.FC = () => {
                       marginBottom: 8,
                     }}
                   >
-                    No jobs match your filters
+                    {hasActiveFilters ? 'No jobs match your filters' : 'No jobs posted yet'}
                   </p>
                   <p style={{ fontSize: 'var(--kt-text-sm)' }}>
-                    Try adjusting your search or clearing some filters.
+                    {hasActiveFilters
+                      ? 'Try adjusting your search or clearing some filters.'
+                      : 'New jobs are added regularly — check back soon, or save a search to get notified when a match is posted.'}
                   </p>
                 </div>
               ) : (
