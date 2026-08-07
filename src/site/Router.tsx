@@ -111,6 +111,12 @@ const VerifyEmailPage = lazy(() =>
 const NotFoundPage = lazy(() =>
   import('./pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage }))
 )
+const TermsPage = lazy(() =>
+  import('./pages/legal/TermsPage').then((m) => ({ default: m.TermsPage }))
+)
+const PrivacyPage = lazy(() =>
+  import('./pages/legal/PrivacyPage').then((m) => ({ default: m.PrivacyPage }))
+)
 
 // Centered spinner shown while a route chunk downloads. Kept minimal so the
 // flash on fast connections is unobtrusive.
@@ -209,6 +215,10 @@ export const SiteRouter: React.FC = () => (
           <Route path="/company/:id" element={<CompanyProfilePage />} />
           {/* Company invite acceptance — works logged-out (prompts sign-in). */}
           <Route path="/join" element={<AcceptInvitePage />} />
+
+          {/* Public legal pages (shells — final copy pending). */}
+          <Route path="/terms" element={<TermsPage />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
 
           {/* Worker-only */}
           <Route element={<RequireAuth persona="worker" />}>
