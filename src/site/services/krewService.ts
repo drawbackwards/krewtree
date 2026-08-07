@@ -128,11 +128,15 @@ function mapWorker(row: KrewRelWithProfile): KrewWorker {
 // non-fatal — we render workers with 0 matches rather than block the page.
 type MatchCountRow = { worker_id: string; matches: number; strong_matches: number }
 
-async function fetchMatchCounts(workerIds: string[]): Promise<Map<string, MatchCountRow>> {
+async function fetchMatchCounts(
+  workerIds: string[],
+  companyId: string
+): Promise<Map<string, MatchCountRow>> {
   const map = new Map<string, MatchCountRow>()
   if (workerIds.length === 0) return map
   const { data, error } = await supabase.rpc('compute_krew_match_counts', {
     p_worker_ids: workerIds,
+    p_company_id: companyId,
   })
   if (error || !data) return map
   for (const row of data as MatchCountRow[]) {
@@ -151,7 +155,9 @@ export type KrewMatchCounts = Record<string, { matchesCount: number; strongMatch
 export async function getKrewMatchCounts(
   workerIds: string[]
 ): Promise<{ data: KrewMatchCounts; error: ServiceError }> {
-  const counts = await fetchMatchCounts(workerIds)
+  const companyId = await currentCompanyId()
+  if (!companyId) return { data: {}, error: 'Not signed in' }
+  const counts = await fetchMatchCounts(workerIds, companyId)
   const out: KrewMatchCounts = {}
   for (const [id, row] of counts) {
     out[id] = { matchesCount: row.matches, strongMatchesCount: row.strong_matches }
@@ -243,6 +249,7 @@ export async function getKrew(
   if (matchDriven) {
     const search = opts.search?.trim()
     const { data, error } = await supabase.rpc('rank_krew_by_matches', {
+      p_company_id: companyId,
       p_search: search && search.length > 0 ? search : null,
       p_sources: opts.sources && opts.sources.length > 0 ? opts.sources : null,
       p_list_id: opts.listId ?? null,
