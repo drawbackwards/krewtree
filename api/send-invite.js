@@ -51,7 +51,7 @@ var FONTS = {
 };
 var SENDER = {
   fromName: "Krewtree",
-  fromEmail: "notifications@krewtree.com",
+  fromEmail: "noreply@mail.krewtree.com",
   replyTo: "support@krewtree.com",
   unsubscribeMailto: "unsubscribe@krewtree.com"
 };
