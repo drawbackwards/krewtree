@@ -1,5 +1,14 @@
 import React, { useCallback, useEffect, useState } from 'react'
-import { Badge, Button, EmptyState, Input, Modal, Select, Spinner } from '../../../components'
+import {
+  Badge,
+  Button,
+  EmptyState,
+  Input,
+  Modal,
+  Select,
+  Spinner,
+  useToast,
+} from '../../../components'
 import { OverflowMenu, type OverflowItem } from '../../components/OverflowMenu/OverflowMenu'
 import { useAuth } from '../../context/AuthContext'
 import {
@@ -43,6 +52,7 @@ export const TeamSettingsPage: React.FC = () => {
   const isOwner = companyRole === 'owner'
   const activeCompanyName =
     memberships.find((m) => m.companyId === activeCompanyId)?.companyName || ''
+  const { toast } = useToast()
 
   const [members, setMembers] = useState<TeamMember[]>([])
   const [invites, setInvites] = useState<PendingInvite[]>([])
@@ -53,7 +63,8 @@ export const TeamSettingsPage: React.FC = () => {
   const [inviteStatus, setInviteStatus] = useState<'idle' | 'sending' | 'error'>('idle')
   const [inviteError, setInviteError] = useState('')
   const [inviteLink, setInviteLink] = useState<string | null>(null)
-  const [inviteEmailed, setInviteEmailed] = useState(false)
+  // Only set when the email failed to send — drives the manual-link fallback.
+  const [sentToEmail, setSentToEmail] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
 
   const [transferTarget, setTransferTarget] = useState<TeamMember | null>(null)
@@ -78,10 +89,12 @@ export const TeamSettingsPage: React.FC = () => {
 
   const handleInvite = async () => {
     if (!activeCompanyId || !inviteEmail.trim()) return
+    const invitedEmail = inviteEmail.trim()
     setInviteStatus('sending')
     setInviteError('')
     setInviteLink(null)
-    const { data, error } = await createInvite(activeCompanyId, inviteEmail.trim(), inviteRole, {
+    setSentToEmail(null)
+    const { data, error } = await createInvite(activeCompanyId, invitedEmail, inviteRole, {
       companyName: activeCompanyName,
       inviterName: userDisplayName(user),
     })
@@ -92,9 +105,15 @@ export const TeamSettingsPage: React.FC = () => {
     }
     setInviteStatus('idle')
     setInviteEmail('')
-    setInviteLink(data.link)
-    setInviteEmailed(data.emailed)
     setCopied(false)
+    if (data.emailed) {
+      // Delivered — a toast is the whole confirmation; no token in the UI.
+      toast({ variant: 'success', title: `Invite sent to ${invitedEmail}` })
+    } else {
+      // Email didn't send — fall back to the manual copyable link.
+      setSentToEmail(invitedEmail)
+      setInviteLink(data.link)
+    }
     load()
   }
 
@@ -271,7 +290,7 @@ export const TeamSettingsPage: React.FC = () => {
               {inviteError}
             </p>
           )}
-          {inviteLink && (
+          {sentToEmail && inviteLink && (
             <div
               style={{
                 display: 'flex',
@@ -283,9 +302,8 @@ export const TeamSettingsPage: React.FC = () => {
               }}
             >
               <p style={{ margin: 0, fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text)' }}>
-                {inviteEmailed
-                  ? 'Invite sent by email. You can also share this link directly:'
-                  : 'Invite created. Share this link with your teammate:'}
+                Invite created, but we couldn&rsquo;t email it to <strong>{sentToEmail}</strong>.
+                Share this link with them directly:
               </p>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 <Input readOnly value={inviteLink} onFocus={(e) => e.currentTarget.select()} />

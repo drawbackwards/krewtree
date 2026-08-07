@@ -83,6 +83,7 @@ export async function listPendingInvites(
 export interface InviteEmailContext {
   companyName?: string
   inviterName?: string
+  role?: Exclude<CompanyRole, 'owner'>
 }
 
 /**
@@ -119,6 +120,7 @@ export async function sendInviteEmail(
         token,
         companyName: context?.companyName,
         inviterName: context?.inviterName,
+        role: context?.role,
       }),
     })
     return { sent: res.ok }
@@ -129,10 +131,10 @@ export async function sendInviteEmail(
 
 /**
  * Create an invite. The invitee receives the link by email (see
- * sendInviteEmail); the raw token link is ALSO returned here for manual sharing,
- * because email delivery is not guaranteed yet (unverified sending domain). It
- * is returned only here — the DB stores just its hash — and cannot be recovered
- * later.
+ * sendInviteEmail). The raw token link is also returned here so the UI can fall
+ * back to manual sharing IF the email fails to send; on success the UI shows
+ * "Invite sent" and never surfaces the token. It is returned only here — the DB
+ * stores just its hash — and cannot be recovered later.
  */
 export async function createInvite(
   companyId: string,
@@ -152,8 +154,9 @@ export async function createInvite(
   const row = Array.isArray(data) ? data[0] : data
   if (!row) return { data: null, error: 'invite_failed' }
   const link = `${window.location.origin}/join?token=${row.token}`
-  // Best-effort email delivery; the returned link is the fallback.
-  const { sent } = await sendInviteEmail(email, row.token, context)
+  // Best-effort email delivery; the returned link is the fallback. Thread the
+  // invited role through so the email states what the invitee is joining as.
+  const { sent } = await sendInviteEmail(email, row.token, { ...context, role })
   return { data: { inviteId: row.invite_id, link, emailed: sent }, error: null }
 }
 
