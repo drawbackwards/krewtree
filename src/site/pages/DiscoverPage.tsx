@@ -732,9 +732,13 @@ export const DiscoverPage: React.FC = () => {
           ) : workers.length === 0 ? (
             <div className={styles.emptyState}>
               <SearchIcon size={36} />
-              <p className={styles.emptyTitle}>No workers match your filters</p>
+              <p className={styles.emptyTitle}>
+                {hasActiveFilters ? 'No workers match your filters' : 'No workers yet'}
+              </p>
               <p className={styles.emptyBody}>
-                Try adjusting your search or clearing some filters.
+                {hasActiveFilters
+                  ? 'Try adjusting your search or clearing some filters.'
+                  : 'As workers join and complete their profiles, they’ll show up here to browse and add to your krew.'}
               </p>
             </div>
           ) : (
