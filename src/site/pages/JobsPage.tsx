@@ -1327,7 +1327,14 @@ export const JobsPage: React.FC = () => {
                 <div
                   style={{ textAlign: 'center', padding: '60px 0', color: 'var(--kt-text-muted)' }}
                 >
-                  <div style={{ marginBottom: 12, color: 'var(--kt-text-muted)' }}>
+                  <div
+                    style={{
+                      marginBottom: 12,
+                      color: 'var(--kt-text-muted)',
+                      display: 'flex',
+                      justifyContent: 'center',
+                    }}
+                  >
                     <SearchIcon size={40} />
                   </div>
                   <p
