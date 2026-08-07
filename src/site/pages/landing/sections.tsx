@@ -1,5 +1,5 @@
 import React from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Button, Badge } from '../../../components'
 // TODO: replace with real Supabase queries for featured jobs
 import { jobs } from '../../data/mock'
@@ -651,16 +651,19 @@ export const FooterSection = () => (
         color: 'rgba(229,218,195,0.4)',
       }}
     >
-      {['Privacy', 'Terms'].map((l) => (
-        <a
-          key={l}
-          href="#"
+      {[
+        { label: 'Privacy', to: '/privacy' },
+        { label: 'Terms', to: '/terms' },
+      ].map(({ label, to }) => (
+        <Link
+          key={label}
+          to={to}
           style={{ color: 'inherit', textDecoration: 'none' }}
           onMouseOver={(e) => (e.currentTarget.style.color = 'var(--kt-sand-400)')}
           onMouseOut={(e) => (e.currentTarget.style.color = 'rgba(229,218,195,0.4)')}
         >
-          {l}
-        </a>
+          {label}
+        </Link>
       ))}
     </div>
     <span
