@@ -1,5 +1,14 @@
 import React, { useCallback, useEffect, useState } from 'react'
-import { Badge, Button, EmptyState, Input, Modal, Select, Spinner } from '../../../components'
+import {
+  Badge,
+  Button,
+  EmptyState,
+  Input,
+  Modal,
+  Select,
+  Spinner,
+  useToast,
+} from '../../../components'
 import { OverflowMenu, type OverflowItem } from '../../components/OverflowMenu/OverflowMenu'
 import { useAuth } from '../../context/AuthContext'
 import {
@@ -43,6 +52,7 @@ export const TeamSettingsPage: React.FC = () => {
   const isOwner = companyRole === 'owner'
   const activeCompanyName =
     memberships.find((m) => m.companyId === activeCompanyId)?.companyName || ''
+  const { toast } = useToast()
 
   const [members, setMembers] = useState<TeamMember[]>([])
   const [invites, setInvites] = useState<PendingInvite[]>([])
@@ -53,7 +63,7 @@ export const TeamSettingsPage: React.FC = () => {
   const [inviteStatus, setInviteStatus] = useState<'idle' | 'sending' | 'error'>('idle')
   const [inviteError, setInviteError] = useState('')
   const [inviteLink, setInviteLink] = useState<string | null>(null)
-  const [inviteEmailed, setInviteEmailed] = useState(false)
+  // Only set when the email failed to send — drives the manual-link fallback.
   const [sentToEmail, setSentToEmail] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
 
@@ -95,12 +105,15 @@ export const TeamSettingsPage: React.FC = () => {
     }
     setInviteStatus('idle')
     setInviteEmail('')
-    setSentToEmail(invitedEmail)
-    setInviteEmailed(data.emailed)
-    // Only surface the raw link when the email did NOT send — otherwise the
-    // email is the delivery path and the token stays out of the UI.
-    setInviteLink(data.emailed ? null : data.link)
     setCopied(false)
+    if (data.emailed) {
+      // Delivered — a toast is the whole confirmation; no token in the UI.
+      toast({ variant: 'success', title: `Invite sent to ${invitedEmail}` })
+    } else {
+      // Email didn't send — fall back to the manual copyable link.
+      setSentToEmail(invitedEmail)
+      setInviteLink(data.link)
+    }
     load()
   }
 
@@ -277,28 +290,7 @@ export const TeamSettingsPage: React.FC = () => {
               {inviteError}
             </p>
           )}
-          {sentToEmail && inviteEmailed && (
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 4,
-                background: 'var(--kt-surface-alt)',
-                borderRadius: 'var(--kt-radius-md)',
-                padding: 12,
-              }}
-            >
-              <p style={{ margin: 0, fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text)' }}>
-                Invite sent to <strong>{sentToEmail}</strong>.
-              </p>
-              <p style={{ margin: 0, ...muted }}>
-                They&rsquo;ll get an email with a link to join {activeCompanyName}. It appears under
-                Pending invites below until they accept.
-              </p>
-            </div>
-          )}
-
-          {sentToEmail && !inviteEmailed && inviteLink && (
+          {sentToEmail && inviteLink && (
             <div
               style={{
                 display: 'flex',
