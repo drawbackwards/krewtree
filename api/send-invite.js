@@ -237,8 +237,9 @@ var secondaryCardStyle = {
 
 // api/_email/templates/InviteEmail.tsx
 import { jsx as jsx2, jsxs as jsxs2 } from "react/jsx-runtime";
-function InviteEmail({ companyName, inviterName, joinUrl }) {
-  const lead = inviterName ? `${inviterName} invited you to join ${companyName} on Krewtree.` : `You've been invited to join ${companyName} on Krewtree.`;
+function InviteEmail({ companyName, inviterName, role, joinUrl }) {
+  const roleLabel = role === "admin" ? "an admin" : role === "member" ? "a team member" : null;
+  const lead = inviterName ? `${inviterName} invited you to join ${companyName} on Krewtree${roleLabel ? ` as ${roleLabel}` : ""}.` : `You've been invited to join ${companyName} on Krewtree${roleLabel ? ` as ${roleLabel}` : ""}.`;
   return /* @__PURE__ */ jsxs2(
     EmailLayout,
     {
@@ -257,7 +258,8 @@ function InviteEmail({ companyName, inviterName, joinUrl }) {
           "Or paste this link into your browser:",
           /* @__PURE__ */ jsx2("br", {}),
           /* @__PURE__ */ jsx2("a", { href: joinUrl, style: { color: COLORS.bodyText, wordBreak: "break-all" }, children: joinUrl })
-        ] })
+        ] }),
+        /* @__PURE__ */ jsx2(EmailText, { children: "This invitation expires in 7 days. If you weren\u2019t expecting it, you can ignore this email." })
       ]
     }
   );
@@ -313,7 +315,8 @@ function parseBody(raw) {
     email: b.email.trim(),
     token: b.token,
     companyName: typeof b.companyName === "string" ? b.companyName.trim() : void 0,
-    inviterName: typeof b.inviterName === "string" ? b.inviterName.trim() : void 0
+    inviterName: typeof b.inviterName === "string" ? b.inviterName.trim() : void 0,
+    role: b.role === "admin" || b.role === "member" ? b.role : void 0
   };
 }
 function siteOrigin(req) {
@@ -366,6 +369,7 @@ async function handler(req, res) {
       react: React.createElement(InviteEmail, {
         companyName: company,
         inviterName: body.inviterName,
+        role: body.role,
         joinUrl
       }),
       // Dedupe retries of the same invite (token is unique per invite).

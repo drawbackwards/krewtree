@@ -16,14 +16,17 @@ export interface InviteEmailProps {
   companyName: string
   /** Display name of the person who sent the invite, if known. */
   inviterName?: string
+  /** Seat role the invitee is being granted, if known. */
+  role?: 'admin' | 'member'
   /** Tokenized /site/join link. */
   joinUrl: string
 }
 
-export function InviteEmail({ companyName, inviterName, joinUrl }: InviteEmailProps) {
+export function InviteEmail({ companyName, inviterName, role, joinUrl }: InviteEmailProps) {
+  const roleLabel = role === 'admin' ? 'an admin' : role === 'member' ? 'a team member' : null
   const lead = inviterName
-    ? `${inviterName} invited you to join ${companyName} on Krewtree.`
-    : `You've been invited to join ${companyName} on Krewtree.`
+    ? `${inviterName} invited you to join ${companyName} on Krewtree${roleLabel ? ` as ${roleLabel}` : ''}.`
+    : `You've been invited to join ${companyName} on Krewtree${roleLabel ? ` as ${roleLabel}` : ''}.`
 
   return (
     <EmailLayout
@@ -47,6 +50,11 @@ export function InviteEmail({ companyName, inviterName, joinUrl }: InviteEmailPr
         <a href={joinUrl} style={{ color: COLORS.bodyText, wordBreak: 'break-all' }}>
           {joinUrl}
         </a>
+      </EmailText>
+
+      <EmailText>
+        This invitation expires in 7 days. If you weren&rsquo;t expecting it, you can ignore this
+        email.
       </EmailText>
     </EmailLayout>
   )

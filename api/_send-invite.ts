@@ -40,6 +40,7 @@ interface InviteBody {
   token: string
   companyName?: string
   inviterName?: string
+  role?: 'admin' | 'member'
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -65,6 +66,7 @@ function parseBody(raw: unknown): InviteBody | null {
     token: b.token,
     companyName: typeof b.companyName === 'string' ? b.companyName.trim() : undefined,
     inviterName: typeof b.inviterName === 'string' ? b.inviterName.trim() : undefined,
+    role: b.role === 'admin' || b.role === 'member' ? b.role : undefined,
   }
 }
 
@@ -126,6 +128,7 @@ export default async function handler(req: RequestLike, res: ResponseLike): Prom
       react: React.createElement(InviteEmail, {
         companyName: company,
         inviterName: body.inviterName,
+        role: body.role,
         joinUrl,
       }),
       // Dedupe retries of the same invite (token is unique per invite).

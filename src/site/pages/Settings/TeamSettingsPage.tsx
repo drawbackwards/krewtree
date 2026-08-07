@@ -54,6 +54,7 @@ export const TeamSettingsPage: React.FC = () => {
   const [inviteError, setInviteError] = useState('')
   const [inviteLink, setInviteLink] = useState<string | null>(null)
   const [inviteEmailed, setInviteEmailed] = useState(false)
+  const [sentToEmail, setSentToEmail] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
 
   const [transferTarget, setTransferTarget] = useState<TeamMember | null>(null)
@@ -78,10 +79,12 @@ export const TeamSettingsPage: React.FC = () => {
 
   const handleInvite = async () => {
     if (!activeCompanyId || !inviteEmail.trim()) return
+    const invitedEmail = inviteEmail.trim()
     setInviteStatus('sending')
     setInviteError('')
     setInviteLink(null)
-    const { data, error } = await createInvite(activeCompanyId, inviteEmail.trim(), inviteRole, {
+    setSentToEmail(null)
+    const { data, error } = await createInvite(activeCompanyId, invitedEmail, inviteRole, {
       companyName: activeCompanyName,
       inviterName: userDisplayName(user),
     })
@@ -92,8 +95,11 @@ export const TeamSettingsPage: React.FC = () => {
     }
     setInviteStatus('idle')
     setInviteEmail('')
-    setInviteLink(data.link)
+    setSentToEmail(invitedEmail)
     setInviteEmailed(data.emailed)
+    // Only surface the raw link when the email did NOT send — otherwise the
+    // email is the delivery path and the token stays out of the UI.
+    setInviteLink(data.emailed ? null : data.link)
     setCopied(false)
     load()
   }
@@ -271,7 +277,28 @@ export const TeamSettingsPage: React.FC = () => {
               {inviteError}
             </p>
           )}
-          {inviteLink && (
+          {sentToEmail && inviteEmailed && (
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 4,
+                background: 'var(--kt-surface-alt)',
+                borderRadius: 'var(--kt-radius-md)',
+                padding: 12,
+              }}
+            >
+              <p style={{ margin: 0, fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text)' }}>
+                Invite sent to <strong>{sentToEmail}</strong>.
+              </p>
+              <p style={{ margin: 0, ...muted }}>
+                They&rsquo;ll get an email with a link to join {activeCompanyName}. It appears under
+                Pending invites below until they accept.
+              </p>
+            </div>
+          )}
+
+          {sentToEmail && !inviteEmailed && inviteLink && (
             <div
               style={{
                 display: 'flex',
@@ -283,9 +310,8 @@ export const TeamSettingsPage: React.FC = () => {
               }}
             >
               <p style={{ margin: 0, fontSize: 'var(--kt-text-sm)', color: 'var(--kt-text)' }}>
-                {inviteEmailed
-                  ? 'Invite sent by email. You can also share this link directly:'
-                  : 'Invite created. Share this link with your teammate:'}
+                Invite created, but we couldn&rsquo;t email it to <strong>{sentToEmail}</strong>.
+                Share this link with them directly:
               </p>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 <Input readOnly value={inviteLink} onFocus={(e) => e.currentTarget.select()} />
