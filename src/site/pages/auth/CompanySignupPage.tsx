@@ -5,6 +5,7 @@ import { getSelectableIndustries } from '../../data/industries'
 import { US_STATE_OPTIONS } from '../../data/usStates'
 import { KrewtreeLogo, KrewtreeBgMark } from '../../components/Logo'
 import { useAuth } from '../../context/AuthContext'
+import { TermsAgreementLabel } from '../legal/TermsAgreementLabel'
 import { FEATURES } from '../../config/features'
 import styles from './CompanySignupPage.module.css'
 
@@ -426,7 +427,7 @@ export const CompanySignupPage: React.FC = () => {
               <Checkbox
                 checked={termsAgreed}
                 onChange={(e) => setTermsAgreed(e.target.checked)}
-                label="I agree to the Terms of Service and Privacy Policy"
+                label={<TermsAgreementLabel />}
                 required
               />
 

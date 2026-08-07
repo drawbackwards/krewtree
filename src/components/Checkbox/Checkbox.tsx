@@ -6,7 +6,7 @@ export interface CheckboxProps extends Omit<
   React.InputHTMLAttributes<HTMLInputElement>,
   'type' | 'size'
 > {
-  label?: string
+  label?: React.ReactNode
   helperText?: string
   error?: string
   indeterminate?: boolean

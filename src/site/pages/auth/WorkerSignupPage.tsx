@@ -4,6 +4,7 @@ import { Button, Input, Checkbox } from '../../../components'
 import { getSelectableIndustries } from '../../data/industries'
 import { KrewtreeLogo, KrewtreeBgMark } from '../../components/Logo'
 import { useAuth } from '../../context/AuthContext'
+import { TermsAgreementLabel } from '../legal/TermsAgreementLabel'
 import { FEATURES } from '../../config/features'
 import { BriefcaseIcon, ShieldCheckIcon, LightningIcon, SparkleIcon } from '../../icons'
 import styles from './WorkerSignupPage.module.css'
@@ -495,7 +496,7 @@ export const WorkerSignupPage: React.FC = () => {
                 <Checkbox
                   checked={termsAgreed}
                   onChange={(e) => setTermsAgreed(e.target.checked)}
-                  label="I agree to the Terms of Service and Privacy Policy"
+                  label={<TermsAgreementLabel />}
                   required
                 />
               </div>
