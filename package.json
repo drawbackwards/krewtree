@@ -23,7 +23,9 @@
     "db:link:dev": "supabase link --project-ref ryigaxihlfqdwgjbgmcg",
     "db:link:prod": "supabase link --project-ref ivbmjtngsasrlblzhfxj",
     "db:diff": "supabase db diff",
-    "db:push": "supabase db push",
+    "db:push": "node scripts/db-push.mjs",
+    "db:push:dev": "node scripts/db-push.mjs dev",
+    "db:push:prod": "node scripts/db-push.mjs prod",
     "db:reset:local": "supabase db reset"
   },
   "dependencies": {
