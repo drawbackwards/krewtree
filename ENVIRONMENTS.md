@@ -28,18 +28,30 @@ Production). Full email setup lives in `docs/EMAIL_SETUP.md`.
 Schema lives in `supabase/migrations/` (CLI-managed). To apply migrations:
 
 ```bash
-# 1. Confirm which project you're linked to BEFORE any push
-npm run db:status
-
-# 2. Link the lane you intend to target
-npm run db:link:dev     # or: npm run db:link:prod
-
-# 3. Push pending migrations to the linked remote
-npm run db:push
+# Push pending migrations — name the target explicitly:
+npm run db:push:dev      # dev
+npm run db:push:prod     # prod
 ```
 
+`db:push:dev` / `db:push:prod` run the guarded wrapper `scripts/db-push.mjs`,
+which makes the target **explicit and atomic** — you never rely on the current
+link state:
+
+1. it prints the lane (green **DEV** / red **PROD**) and won't continue until
+   you type the confirmation — `dev` for dev, the **full prod ref** for prod;
+2. it links that env and **re-reads the link to prove the switch took** — if the
+   link didn't change (e.g. interrupted at its password prompt) it aborts rather
+   than falling through to the previously-linked remote;
+3. it pushes (the Supabase CLI then shows its own DB-password + `[y/N]` migration
+   list — you must answer **y** for anything to apply);
+4. after a **prod** push it links back to **dev** automatically, so you never
+   linger on prod.
+
+Bare `npm run db:push` refuses and points you at the two explicit commands.
+`db:link:dev` / `db:link:prod` still exist for non-push tasks (`db:diff`, etc.).
+
 Standard flow for a schema change: write the migration, test it locally
-(`npm run db:reset:local`), push to **dev**, verify, then link **prod** and push.
+(`npm run db:reset:local`), `db:push:dev`, verify, then `db:push:prod`.
 
 ## Rules that keep prod safe
 
