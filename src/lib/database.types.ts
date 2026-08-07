@@ -2554,11 +2554,12 @@ export type Database = {
         }[]
       }
       compute_krew_match_counts: {
-        Args: { p_worker_ids: string[] }
+        Args: { p_worker_ids: string[]; p_company_id: string }
         Returns: { worker_id: string; matches: number; strong_matches: number }[]
       }
       rank_krew_by_matches: {
         Args: {
+          p_company_id: string
           p_search?: string | null
           p_sources?: string[] | null
           p_list_id?: string | null
