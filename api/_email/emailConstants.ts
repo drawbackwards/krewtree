@@ -27,13 +27,14 @@ export const FONTS = {
   sans: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
 } as const
 
-// TODO: replace placeholders with production values before first live send.
-// NOTE: `fromEmail` here is the eventual verified-domain sender. Until
-// mail.krewtree.com is verified in Resend, sendEmail.ts overrides the actual
-// `from` with the EMAIL_FROM env var (onboarding@resend.dev). See docs/EMAIL_SETUP.md.
+// `fromEmail` is the verified sending address (mail.krewtree.com is verified in
+// Resend as of 2026-08-07). sendEmail.ts still lets EMAIL_FROM override it, but
+// the default must be on the verified domain so sends work even without the env
+// var. reply-to / unsubscribe mailboxes on the root domain are header-only and
+// don't need Resend verification (they just need a real inbox to receive).
 export const SENDER = {
   fromName: 'Krewtree',
-  fromEmail: 'notifications@krewtree.com',
+  fromEmail: 'noreply@mail.krewtree.com',
   replyTo: 'support@krewtree.com',
   unsubscribeMailto: 'unsubscribe@krewtree.com',
 } as const
